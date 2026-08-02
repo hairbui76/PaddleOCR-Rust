@@ -250,6 +250,8 @@ impl<'a> ByteReader<'a> {
 mod tests {
     use super::{MAX_INPUT_BYTES, exercise};
 
+    const GENERATED_STRESS_CASES: usize = 4_096;
+
     #[test]
     fn byte_driven_fuzz_driver_handles_bounded_seed_corpus() {
         exercise(&[]);
@@ -264,5 +266,23 @@ mod tests {
             exercise(&input);
         }
         exercise(&vec![0xA5; MAX_INPUT_BYTES + 1]);
+    }
+
+    #[test]
+    fn byte_driven_fuzz_driver_handles_generated_stress_corpus() {
+        for case_index in 0..GENERATED_STRESS_CASES {
+            let length = match case_index {
+                0 => 0,
+                1 => MAX_INPUT_BYTES,
+                _ => (case_index * 193) % (MAX_INPUT_BYTES - 1) + 1,
+            };
+            let mut state = 0x9E37_79B9_u32 ^ case_index as u32;
+            let mut input = Vec::with_capacity(length);
+            for _ in 0..length {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                input.push((state >> 24) as u8);
+            }
+            exercise(&input);
+        }
     }
 }
