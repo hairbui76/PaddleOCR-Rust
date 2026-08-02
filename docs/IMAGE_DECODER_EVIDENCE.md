@@ -234,6 +234,53 @@ remains open. The temporary package must be discarded after recording this
 evidence; a future decision needs a maintained, reviewable, and reproducible
 qualification procedure.
 
+### Isolated OpenCV color/orientation probe (2026-08-02)
+
+A second disposable package outside this repository evaluated the same exact
+`image = 0.25.10` JPEG/PNG feature shape against the recorded external OpenCV
+environment. It used Rust `1.94.0`, Cargo `1.94.0`, `opencv-python-headless`
+5.0.0.93 (`cv2.__version__ = 5.0.0`), and NumPy 2.5.1. The Rust probe decoded
+each self-authored input with `ImageReader`, queried the decoder orientation,
+converted the resulting `DynamicImage` with `to_rgb8`, and reversed every
+component to compare BGR bytes with OpenCV. It then cloned the image and
+called `apply_orientation` before a second comparison. The probe did not read
+the upstream checkout, download an artifact, or execute inference.
+
+The external capture generator created small truecolor/BGRA/grayscale PNGs, a
+manually encoded indexed PNG with a `tRNS` palette, a manually encoded 16-bit
+grayscale PNG, a baseline JPEG, a progressive JPEG, and all eight EXIF
+orientation variants of the baseline JPEG. System Python 3.12.3 with Pillow
+10.2.0 created one self-authored CMYK JPEG. OpenCV decoded each input both as
+`IMREAD_COLOR | IMREAD_IGNORE_ORIENTATION` and as default `IMREAD_COLOR`.
+The Rust probe and generator source remained external; the exact Cargo
+manifest/lock/probe/primary-generator/CMYK-generator/capture SHA-256 values
+were respectively
+`3f001488a3d21d6b4d9031459beee08a5d8ce55de02643a7494885b907e0288a`,
+`1641ff27fba1cbd632ee4cf78a831b8cb42c2b0925fd9d77a3650b5dc54f81fd`,
+`361eb4336245467b4df9a22f4ccf78891b9aa22315708ba2d9f339f9bba030a9`,
+`a9875babe8b4ff1a3650d729546182404a9013d8f0ac21370dd5edbef0b469d1`,
+`b72a70764ea82d76f47780017066e5db54bdff31815cbf5aedc5b6b210e4646b`,
+and `20c70ac200f8cd784daa90e204bae6b9e03c30e665b69a9d5bab219125b48699`.
+The capture records every fixture's byte SHA-256 and comparison result; it is
+not a repository fixture or an accepted decoder test corpus.
+
+| Input class | Observed candidate BGR result compared with OpenCV | Decision-relevant finding |
+|---|---|---|
+| 8-bit truecolor, BGRA, grayscale, and indexed/tRNS PNG | Exact bytes and dimensions after explicit RGB-to-BGR reversal. | The fixed probe shows that alpha was discarded rather than composited and the selected PNG forms can be made BGR-equivalent through an explicit conversion. It does not establish all PNG semantics. |
+| JPEG baseline and progressive | Same dimensions; maximum component delta `2`, not exact bytes. | The independent JPEG decoders are not a byte-exact OpenCV replacement even for this small corpus. |
+| CMYK JPEG | Same dimensions; maximum component delta `1`, not exact bytes. | CMYK requires an explicit supported/unsupported policy and a larger oracle corpus; this one generated file is not enough to accept it. |
+| JPEG EXIF orientations 1–8 | `image` reported `NoTransforms`, `FlipHorizontal`, `Rotate180`, `FlipVertical`, `Rotate90FlipH`, `Rotate90`, `Rotate270FlipH`, and `Rotate270` respectively. Applying the returned orientation produced the same dimensions as default OpenCV, with the same JPEG maximum delta `2`. | Orientation is not automatically applied by this candidate path. A future Rust decoder must explicitly obtain and apply the metadata transform if it elects OpenCV-style default orientation semantics. |
+| 16-bit grayscale PNG | Same dimensions; one component differed by `1` for the fixed 16-bit values. | Non-8-bit conversion cannot be claimed byte-exact from this probe and needs a documented policy or an intentional rejection. |
+
+This evidence narrows the future implementation experiment but does not close
+`D-008`: it supplies neither an accepted supported-format policy nor a
+project-owned resource envelope, unsafe/supply-chain audit, malformed corpus,
+model-preprocessing comparison, or a tolerance decision for JPEG/16-bit
+differences. In particular, a component-level image difference cannot be
+silently treated as harmless for a model tensor. No Cargo dependency, decoder
+code, fixture, compatibility claim, or image-input behavior changed as a
+result of this external probe.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
