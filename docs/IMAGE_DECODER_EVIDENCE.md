@@ -522,17 +522,113 @@ checksum implementation ran, rule out every CPU-dispatch or unsafe path, prove
 all decoder inputs work on that CPU, establish resource safety, establish color
 or EXIF behaviour, or select the direct pair for `D-008`.
 
+### Direct-codec input-oracle replay and supply-chain check (2026-08-02)
+
+A further disposable Rust `1.94` package tested the direct-codec pair against
+the committed, self-authored
+[`classic-v1-image-inputs`](../tests/fixtures/classic-v1-image-inputs/)
+capture. It remained outside this repository and read only that JSON fixture;
+it did not access `PaddleOCR/`, download a model, execute inference, or add a
+project dependency, fixture, input policy, or supported capability. Its
+manifest selected the same direct codec shape:
+
+```toml
+jpeg-decoder = { version = "=0.3.2", default-features = false, features = ["platform_independent"] }
+png = "=0.18.1"
+```
+
+The temporary harness also pinned `base64` 0.22.1, `serde_json` 1.0.151, and
+soft-only `sha2` 0.10.9 solely to parse the committed capture and report
+digests. The final temporary manifest, lockfile, harness source, and
+portable-release executable had SHA-256 values
+`685f63f660bee31b2952acaba0411f6b3080a9327a10bd3f2629d60d6406c728`,
+`d33092924c3dd449fc1fa696eb7c3906926c6f898091b55a3077e5fa34d42cbd`,
+`1ec7ff10729c1a06a28a612d7ae0336612c2907c0328a63dddaa5444195bd32a`,
+and `87d0f223b58fcaa30a9e29310959e60a91cb26da9b94ae88e07608a922efee16`
+respectively. These identify unretained research artifacts only; they are not
+an accepted implementation recipe or a project lockfile.
+
+The harness selected the decoder from PNG/JPEG content signatures, not a
+filename hint. It bounded encoded input at 64 MiB, checked the 16,384-side and
+40,000,000-pixel limits immediately after header metadata, and set a 128 MiB
+decoder/output envelope for the experiment. Those are probe controls, not an
+accepted project contract. For PNG it used `EXPAND` and discarded alpha when
+making comparison BGR bytes; it deliberately rejected 16-bit PNG in its normal
+probe path. A separate diagnostic used `EXPAND | STRIP_16` only to measure the
+committed 16-bit fixture. For JPEG it kept `jpeg-decoder`'s metadata-driven
+default color transform, parsed the returned TIFF-form Exif bytes after decode,
+then applied one explicit orientation transform before RGB-to-BGR conversion.
+Forcing `ColorTransform::RGB` was not used for the reported result because it
+would ignore the JPEG's application color metadata.
+
+Both `cargo run --locked` and the portable release replay below completed with
+zero unexpected errors or caught panics:
+
+```text
+-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma
+```
+
+The portable build must not be described as a scalar-only PNG path:
+`simd-adler32` remains feature-enabled and may choose SSE/SSSE3 at runtime on
+a capable host. It is useful only to show that disabling AVX, AVX2, and FMA
+did not change this finite corpus result.
+
+| Corpus group | Direct-codec result against the recorded OpenCV BGR bytes | Disposition of the observation |
+|---|---|---|
+| Four 8-bit PNG cases: truecolor, RGBA, grayscale, indexed+tRNS | All dimensions and all BGR bytes were exact after `EXPAND`, alpha discard, and RGB-to-BGR conversion. | Positive finite evidence only; alpha semantics are still unselected. |
+| One 16-bit grayscale PNG | The normal probe rejected it explicitly. The separate diagnostic `STRIP_16` conversion happened to match this one OpenCV BGR output exactly. | Neither result selects a 16-bit policy. |
+| Baseline JPEG, progressive JPEG, and eight Exif JPEGs | All ten outputs had the expected dimensions; every JPEG differed in seven of eighteen BGR components with maximum absolute component delta `36`. Baseline direct BGR SHA-256 was `f060df3d12b0c4477b5ce2bfcfc64d2bdecf5aaec4a8d929f70c21a6950ab24d`. | This is materially less faithful to this corpus than the earlier `image` candidate's maximum delta `2`; no tolerance is accepted. |
+| Exif orientations 1–8 | The parsed values were 1 through 8. Applying the probe's eight explicit geometry mappings yielded byte-exact transforms of the direct baseline result, including the 2-by-3 to 3-by-2 swaps. | Geometry handling is internally consistent, but does not erase the JPEG color difference. |
+| Five negatives | Empty input, unknown bytes, truncated PNG, oversized PNG header, and PNG-with-`.jpg`-hint each produced the fixture's required control outcome. The oversized header was rejected before project pixel allocation. | A finite no-panic/error-mapping observation, not a hostile-input proof. |
+
+The exact release replay has the same five exact PNG/diagnostic outputs, ten
+non-exact JPEG outputs, component counts, maximum delta, BGR hashes, Exif
+mapping checks, and five passing negative controls as the debug replay. The
+large JPEG difference is consistent with codec-specific chroma reconstruction,
+but that is an inference rather than a proven root cause. No model tensor was
+tested, so the difference cannot be declared harmless.
+
+The codec-only transitive closure remained the ten packages named in the
+previous direct-codec section. Their manifest license expressions were
+reviewed as first-pass data: `jpeg-decoder`, `png`, `bitflags`, `cfg-if`,
+`crc32fast`, `fdeflate`, and `flate2` declare `MIT OR Apache-2.0`; `adler2`
+declares `0BSD OR MIT OR Apache-2.0`; `miniz_oxide` declares
+`MIT OR Zlib OR Apache-2.0`; and `simd-adler32` declares `MIT`. The selected
+`jpeg-decoder` feature compiles out its `arch` module and its crate root
+forbids unsafe code; the `png` crate root also forbids unsafe code. That does
+not extend to the whole closure: `simd-adler32` contains runtime-dispatched
+unsafe SIMD implementations, including an SSE/SSSE3 route, even though it has
+a scalar fallback. The graph still has no native zlib feature, but this is not
+a complete manual unsafe or notice audit.
+
+`cargo-audit` 0.22.2 was installed only under the temporary package and ran
+`cargo-audit audit --file Cargo.lock --json` successfully. It fetched the
+RustSec advisory database commit
+`308808d74a1462ec8b09c1e76938471c53b55dcc`, last updated
+`2026-08-02T15:17:32+02:00`, loaded 1,178 advisories, scanned the
+32-package temporary lockfile, and reported zero vulnerabilities. The tool
+emitted two permission warnings while probing host CA certificate paths, but
+the database fetch and audit both completed with exit code zero. This is a
+date- and lockfile-specific advisory result, not a permanent supply-chain
+approval, a license/notice conclusion, or a waiver of future audit/fuzzing
+requirements.
+
+The new replay makes the direct pair a useful comparison/control path but a
+weaker current JPEG candidate than the minimal `image` configuration for this
+specific corpus. It does not select `image`, reject the direct pair forever,
+resolve `D-008`, close `IMG-DEC-001`, or authorize decoder implementation.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
 |---|---|---|---|
 | Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Exact dependency/supply-chain review; resource-limit spike; BGR/alpha/EXIF oracle comparison; malformed-input tests; MSRV and binary measurements. | First candidate in pre-gate isolated research; not selected. |
 | Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, and proof that it improves M2 oracle fidelity enough to justify the boundary. | Not evaluated; no dependency or implementation is authorized. |
-| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 spike above is pre-gate evidence only; no candidate is accepted. |
+| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it is a non-leading comparison route, not an accepted candidate. |
 
 Subject to the unresolved gates, the evidence supports continuing qualification
 of the minimal `image` feature configuration while retaining the direct-codec
-pair as a distinct non-selected comparison route. That is not `D-008`
+pair as a distinct non-leading comparison route. That is not `D-008`
 resolution: exact behaviour and resource safety are more important than the
 library name.
 
@@ -595,6 +691,8 @@ and preprocessing semantics.
 - [`moxcms` 0.8.1](https://docs.rs/moxcms/0.8.1/moxcms/)
 - [`png` 0.18.1](https://docs.rs/png/0.18.1/png/)
 - [`jpeg-decoder` 0.3.2](https://docs.rs/jpeg-decoder/0.3.2/jpeg_decoder/)
+- [`cargo-audit` 0.22.2](https://crates.io/crates/cargo-audit/0.22.2)
+- [RustSec advisory database](https://github.com/RustSec/advisory-db)
 - [OpenCV image-codec documentation, version 4.5.5](https://docs.opencv.org/4.5.5/d4/da8/group__imgcodecs.html)
 
 The external documentation informs a candidate evaluation only. It does not
