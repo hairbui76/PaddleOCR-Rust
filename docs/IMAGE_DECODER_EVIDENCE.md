@@ -335,11 +335,62 @@ decode, so this pairing offers neither a safe orientation parser nor a chosen
 orientation policy. The direct `png` graph is not equally scalar: `png` 0.18.1
 enables `miniz_oxide`'s `simd` feature, and its `fdeflate` dependency enables
 `simd-adler32` defaults. The reviewed checksum implementation has runtime
-CPU-feature dispatch with a scalar fallback, but no actual no-AVX execution or
-complete unsafe audit was performed. PNG also documents its limits as best
-effort. Therefore this experiment makes the direct pair a factual alternative,
-not an accepted decoder route or a reason to weaken the existing resource,
-orientation, color, fuzzing, supply-chain, or oracle gates.
+CPU-feature dispatch with a scalar fallback. The initial tiny probe did not
+execute without AVX; the separately scoped QEMU execution below covers one
+successful no-AVX path, but not a complete unsafe audit. PNG also documents
+its limits as best effort. Therefore this experiment makes the direct pair a
+factual alternative, not an accepted decoder route or a reason to weaken the
+existing resource, orientation, color, fuzzing, supply-chain, or oracle gates.
+
+### Isolated no-AVX QEMU execution (2026-08-02)
+
+A fourth disposable package recreated the exact direct-codec dependency shape
+with Rust `1.94.0` and an offline locked build. It compiled a `static-pie`
+executable using:
+
+```text
+-C target-cpu=x86-64 -C target-feature=+crt-static,-avx,-avx2,-fma
+```
+
+The temporary manifest, lockfile, probe source, initramfs init script, release
+executable, QEMU log, and downloaded guest-kernel package SHA-256 values were,
+respectively,
+`013f95c2bde82a87c13f1f8739f018636a1f299ba898ff1a48f440fe533e43de`,
+`80b3ab2be152353daa168458d59939bb3e02c23030aad67921ed614e3328b069`,
+`b05fc7e64a949896e75f1978c688d38cf52cb0c6884c05b816c94e23161ee41d`,
+`c3d467031cce8c571096f6581df3cd8d54bea5de5d53213c25b04b415cb48270`,
+`849f10574bda52b9c81e15647e31ab208a39ae4669a763ea607b742463287c0f`,
+`bafaa1d38eb80580fabca6aa64efdd22b9e29cd55cf0d82b77094bbc25686345`,
+and `be2d970c035b7227362faa5972a3090cabb3cf6ad5284614ce98b2bd5f828f0a`.
+They identify temporary research artifacts only; none is a project input,
+fixture, dependency, binary, or retained model asset.
+
+The probe encoded and decoded a self-authored 2-by-1 RGB PNG and decoded the
+`jpeg-decoder` package's `benches/tower.jpg` only to exercise a successful JPEG
+path. The latter asset was embedded in the temporary executable, never copied
+into this repository, and had SHA-256
+`40b5ae0df66540ba3ac60edf2840b4b8edd0500706105f3b63083e3a8993119a`
+(70,657 bytes). It is not an image compatibility fixture or a redistribution.
+The locked graph remained the same ten registry packages recorded above.
+
+The executable ran first on the host, then inside a disposable initramfs under
+QEMU `9.0.2` TCG with one `qemu64` vCPU and 256 MiB memory. The guest kernel
+was extracted outside the repository from the configured Ubuntu archive's
+`linux-image-unsigned-7.0.0-28-generic` version `7.0.0-28.28~24.04.1` package;
+its package SHA-256 is recorded above. The guest's `/proc/cpuinfo` flags included
+only the expected baseline SSE/SSE2-era features and contained no `avx`,
+`avx2`, or `fma`. The host and guest both completed with exit status zero and
+printed the same deterministic result:
+
+```text
+direct-codec-noavx-ok png=2x1/png-bytes=70/png-fnv=2135d0191a95dd5a jpeg=512x512/jpeg-bytes=786432/jpeg-fnv=c5dc0a5a82f8ed16
+```
+
+This is evidence that the selected static executable can decode these two
+chosen inputs on one no-AVX/no-FMA x86-64 guest. It does not show which PNG
+checksum implementation ran, rule out every CPU-dispatch or unsafe path, prove
+all decoder inputs work on that CPU, establish resource safety, establish color
+or EXIF behaviour, or select the direct pair for `D-008`.
 
 ## Decision options and current recommendation
 
