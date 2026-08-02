@@ -281,18 +281,79 @@ silently treated as harmless for a model tensor. No Cargo dependency, decoder
 code, fixture, compatibility claim, or image-input behavior changed as a
 result of this external probe.
 
+### Isolated direct-codec spike (2026-08-02)
+
+A third disposable package outside this repository tested a lower-level
+pure-Rust pairing rather than the `image` facade:
+
+```toml
+jpeg-decoder = { version = "=0.3.2", default-features = false, features = ["platform_independent"] }
+png = "=0.18.1"
+```
+
+The package declared Rust `1.94`, was `publish = false`, and generated its
+small 2-by-1 RGB PNG/JPEG inputs with Pillow 10.2.0 outside this repository.
+It did not read `PaddleOCR/`, download an artifact, execute inference, or add
+a project dependency, fixture, lockfile, or input behavior. `cargo run --locked`
+passed in debug and release, and `cargo build --release --locked`
+passed with `rustc 1.94.0 (4a4ef493e 2026-03-02)` / `cargo 1.94.0
+(85eff7c80 2026-01-15)`. The isolated manifest, lockfile, probe, generator,
+PNG, and JPEG SHA-256 values were respectively
+`313e27f4ffc55e886874d61832f59e27bef53aa94536bb1f4bb6f2c811af6ce6`,
+`f700fdfe8a38428b461a42acc6e5c5055adcdeee9f54920012bc5f35170a0d97`,
+`63b4a878278ffe282956aa02fd77b451b2c23e21e520505c7ffd651388fc343b`,
+`949d2ec237b2d2a36685b307e852774664fb81b1c39ae52a709ee6cbbe9f6442`,
+`a4c468556ea0f17e53ef7c13d72e4748dce99268b794f2d9e7d6904b4160b93c`,
+and `df5080e952518da1c1cbf5ba7d04b9967261a1ac8ed8d920a86828be99637b3`.
+They identify the disposable experiment only. Its release executable was
+941,568 bytes before stripping and 783,184 bytes after `strip --strip-unneeded`;
+neither measurement is a PaddleOCR-Rust binary budget
+result.
+
+The generated lock resolved ten registry packages: `adler2` 2.0.1,
+`bitflags` 2.13.1, `cfg-if` 1.0.4, `crc32fast` 1.5.0, `fdeflate` 0.3.7,
+`flate2` 1.1.9, `jpeg-decoder` 0.3.2, `miniz_oxide` 0.8.9, `png` 0.18.1,
+and `simd-adler32` 0.3.10. The locked `flate2` route was its Rust `miniz_oxide`
+backend; no native zlib feature appeared in `cargo tree -e features`. This is
+not a license, advisory, native-boundary, or unsafe-code audit.
+
+The narrow probe checked the following without a panic:
+
+| Probe | Observed result | Limit of the observation |
+|---|---|---|
+| 2-by-1 RGB PNG, `Limits.bytes = 1024` | Header, frame, and six exact RGB bytes decoded. | Only one 8-bit RGB PNG; no alpha, palette, grayscale, 16-bit, ICC, APNG, or OpenCV comparison. |
+| Same PNG, `Limits.bytes = 0`; truncated PNG | Each returned an error from `read_info`. | `png::Limits` remains documented best effort and excludes caller-owned output allocations. |
+| 2-by-1 RGB JPEG, `set_max_decoding_buffer_size(1024)` | Metadata reported 2-by-1 and decoding returned six bytes. | It does not establish JPEG component values, BGR behavior, or OpenCV equivalence. |
+| Same JPEG, `set_max_decoding_buffer_size(0)`; truncated JPEG | Each returned an error from `decode`. | It is a tiny selected-path error probe, not a hostile corpus or no-panic proof. |
+| Checksum-corrected 16,385-by-16,385 PNG header; corresponding JPEG SOF header | `read_header_info` / `read_info` exposed the oversized dimensions without requesting pixel decode. | The project must enforce its own 16,384-side and 40,000,000-pixel limits immediately after safe metadata parsing; this does not measure intermediate allocation. |
+
+Source review found that `jpeg-decoder`'s `platform_independent` feature
+excludes its `arch` module and makes the crate forbid unsafe code, while
+disabling its default `rayon` feature removes the JPEG worker dependency. It
+still leaves M2 work: JPEG EXIF bytes become available only after successful
+decode, so this pairing offers neither a safe orientation parser nor a chosen
+orientation policy. The direct `png` graph is not equally scalar: `png` 0.18.1
+enables `miniz_oxide`'s `simd` feature, and its `fdeflate` dependency enables
+`simd-adler32` defaults. The reviewed checksum implementation has runtime
+CPU-feature dispatch with a scalar fallback, but no actual no-AVX execution or
+complete unsafe audit was performed. PNG also documents its limits as best
+effort. Therefore this experiment makes the direct pair a factual alternative,
+not an accepted decoder route or a reason to weaken the existing resource,
+orientation, color, fuzzing, supply-chain, or oracle gates.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
 |---|---|---|---|
 | Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Exact dependency/supply-chain review; resource-limit spike; BGR/alpha/EXIF oracle comparison; malformed-input tests; MSRV and binary measurements. | First candidate in pre-gate isolated research; not selected. |
 | Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, and proof that it improves M2 oracle fidelity enough to justify the boundary. | Not evaluated; no dependency or implementation is authorized. |
-| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | No candidate is currently accepted. |
+| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 spike above is pre-gate evidence only; no candidate is accepted. |
 
 Subject to the unresolved gates, the evidence supports continuing qualification
-of the minimal `image` feature configuration before adding a second candidate.
-That is not `D-008` resolution: exact behaviour and resource safety are more
-important than the library name.
+of the minimal `image` feature configuration while retaining the direct-codec
+pair as a distinct non-selected comparison route. That is not `D-008`
+resolution: exact behaviour and resource safety are more important than the
+library name.
 
 ## Required decision and implementation proof
 
@@ -342,6 +403,8 @@ and preprocessing semantics.
 - [`image` 0.25.10 feature listing](https://docs.rs/crate/image/0.25.10/features)
 - [`image::ImageDecoder` 0.25.10](https://docs.rs/image/0.25.10/image/trait.ImageDecoder.html)
 - [`image::Orientation` 0.25.10](https://docs.rs/image/0.25.10/image/metadata/enum.Orientation.html)
+- [`jpeg-decoder` 0.3.2 source package](https://docs.rs/crate/jpeg-decoder/0.3.2/source/)
+- [`png` 0.18.1 source package](https://docs.rs/crate/png/0.18.1/source/)
 - [`image::Limits` 0.25.10](https://docs.rs/image/0.25.10/image/struct.Limits.html)
 - [`image` 0.25.10 manifest](https://docs.rs/crate/image/0.25.10/source/Cargo.toml)
 - [`image` JPEG decoder source, 0.25.10](https://docs.rs/image/0.25.10/src/image/codecs/jpeg/decoder.rs.html)
