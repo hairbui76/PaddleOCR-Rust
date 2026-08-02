@@ -104,6 +104,11 @@ pub(crate) fn classic_db_binary_segmentation(
 mod tests {
     use super::*;
 
+    const DB_BOUNDARY_INPUT: &str =
+        include_str!("../tests/fixtures/classic-v1-db-map-boundaries/input.csv");
+    const DB_BOUNDARY_EXPECTED: &str =
+        include_str!("../tests/fixtures/classic-v1-db-map-boundaries/expected.csv");
+
     fn dimensions(width: u32, height: u32) -> ImageDimensions {
         match ImageDimensions::new(width, height) {
             Ok(value) => value,
@@ -118,6 +123,23 @@ mod tests {
         }
     }
 
+    fn parse_fixture_values<T>(fixture: &str, fixture_name: &str) -> Vec<T>
+    where
+        T: core::str::FromStr,
+        T::Err: core::fmt::Display,
+    {
+        fixture
+            .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .flat_map(|line| line.split(','))
+            .enumerate()
+            .map(|(index, value)| match value.parse::<T>() {
+                Ok(parsed) => parsed,
+                Err(error) => panic!("{fixture_name} value {index} is invalid {value:?}: {error}"),
+            })
+            .collect()
+    }
+
     #[test]
     fn classic_db_segmentation_excludes_the_threshold_and_preserves_row_order() {
         let map = must_ok(DetectorProbabilityMap::new(
@@ -129,6 +151,18 @@ mod tests {
 
         assert_eq!(bitmap.dimensions(), dimensions(2, 2));
         assert_eq!(bitmap.values(), &[0, 0, 1, 1]);
+    }
+
+    #[test]
+    fn classic_db_segmentation_matches_self_authored_boundary_fixture() {
+        let values = parse_fixture_values::<f32>(DB_BOUNDARY_INPUT, "DB boundary input");
+        let expected = parse_fixture_values::<u8>(DB_BOUNDARY_EXPECTED, "DB boundary expected");
+        let map = must_ok(DetectorProbabilityMap::new(dimensions(3, 2), &values));
+
+        let bitmap = must_ok(classic_db_binary_segmentation(map));
+
+        assert_eq!(bitmap.dimensions(), dimensions(3, 2));
+        assert_eq!(bitmap.values(), expected);
     }
 
     #[test]

@@ -1,0 +1,4 @@
+# PaddleOCR-Rust self-authored DB map fixture
+# dimensions: 3,2
+0.0,0.29999998,0.3
+0.30000004,1.0,-0.25

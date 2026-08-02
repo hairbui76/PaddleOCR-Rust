@@ -1,0 +1,35 @@
+{
+  "fixture_id": "classic-v1-ctc-greedy-path",
+  "kind": "component_unit",
+  "reviewed_on": "2026-08-02",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.csv",
+    "sha256": "aa3b07d0877196ef1d6f0879ef0c52171559474f48323b6a02091ecb5b26e951",
+    "sha256_scope": "UTF-8 bytes of input.csv.",
+    "provenance": "Self-authored finite score rows covering raw repeats, blank reset, and equal argmax ties.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/rec_postprocess.py:BaseRecLabelDecode",
+      "ppocr/postprocess/rec_postprocess.py:CTCLabelDecode"
+    ]
+  },
+  "artifacts": null,
+  "expected": {
+    "path": "expected.txt",
+    "schema_version": "paddleocr-rust/ctc-greedy-path/v1",
+    "sha256": "d0f436e7b70fdc3f10059a1e179a1912c65b4dea03527d16336e2bca3d7ca8fc",
+    "sha256_scope": "UTF-8 bytes of expected.txt.",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "ctc::tests::classic_ctc_matches_self_authored_greedy_path_fixture"
+  ],
+  "limitations": [
+    "This verifies only numeric greedy index selection and mean-score arithmetic.",
+    "It does not bind a dictionary, emit text, validate a model tensor ABI, or establish recognizer support."
+  ]
+}

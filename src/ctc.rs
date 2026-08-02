@@ -174,6 +174,11 @@ pub(crate) fn classic_ctc_greedy_indices(matrix: CtcScoreMatrix<'_>) -> Result<C
 mod tests {
     use super::*;
 
+    const CTC_GREEDY_INPUT: &str =
+        include_str!("../tests/fixtures/classic-v1-ctc-greedy-path/input.csv");
+    const CTC_GREEDY_EXPECTED: &str =
+        include_str!("../tests/fixtures/classic-v1-ctc-greedy-path/expected.txt");
+
     fn must_ok<T>(result: Result<T>) -> T {
         match result {
             Ok(value) => value,
@@ -186,6 +191,33 @@ mod tests {
             (actual - expected).abs() <= 1.0e-6,
             "actual {actual} did not equal expected {expected}"
         );
+    }
+
+    fn parse_score_fixture(fixture: &str) -> Vec<f32> {
+        fixture
+            .lines()
+            .filter(|line| !line.is_empty() && !line.starts_with('#'))
+            .flat_map(|line| line.split(','))
+            .enumerate()
+            .map(|(index, value)| match value.parse::<f32>() {
+                Ok(parsed) => parsed,
+                Err(error) => {
+                    panic!("CTC greedy input value {index} is invalid {value:?}: {error}")
+                }
+            })
+            .collect()
+    }
+
+    fn expected_fixture_field<'a>(fixture: &'a str, name: &str) -> &'a str {
+        fixture
+            .lines()
+            .filter_map(|line| {
+                line.strip_prefix(name)
+                    .and_then(|value| value.strip_prefix(':'))
+            })
+            .map(str::trim)
+            .next()
+            .unwrap_or_else(|| panic!("CTC greedy expected fixture is missing {name:?}"))
     }
 
     #[test]
@@ -225,6 +257,32 @@ mod tests {
 
         assert_eq!(path.class_indices(), &[1]);
         assert_close(path.mean_score(), 0.8);
+    }
+
+    #[test]
+    fn classic_ctc_matches_self_authored_greedy_path_fixture() {
+        let values = parse_score_fixture(CTC_GREEDY_INPUT);
+        let expected_indices = expected_fixture_field(CTC_GREEDY_EXPECTED, "class_indices")
+            .split(',')
+            .enumerate()
+            .map(|(index, value)| match value.parse::<u32>() {
+                Ok(parsed) => parsed,
+                Err(error) => {
+                    panic!("CTC greedy expected index {index} is invalid {value:?}: {error}")
+                }
+            })
+            .collect::<Vec<_>>();
+        let expected_mean =
+            match expected_fixture_field(CTC_GREEDY_EXPECTED, "mean_score").parse::<f32>() {
+                Ok(parsed) => parsed,
+                Err(error) => panic!("CTC greedy expected mean score is invalid: {error}"),
+            };
+        let matrix = must_ok(CtcScoreMatrix::new(9, 4, &values));
+
+        let path = must_ok(classic_ctc_greedy_indices(matrix));
+
+        assert_eq!(path.class_indices(), expected_indices);
+        assert_eq!(path.mean_score(), expected_mean);
     }
 
     #[test]
