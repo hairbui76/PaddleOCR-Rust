@@ -281,6 +281,51 @@ not identify the dispatched implementation, rule out other unsafe/CPU paths,
 prove resource or malformed-input safety, establish OpenCV color/orientation
 behaviour, or select `image` for `D-008`.
 
+### Isolated `image` bounded mutation corpus (2026-08-02)
+
+A fifth disposable package used the same exact `image` dependency shape to
+exercise a deliberately bounded self-authored malformed-input corpus. It built
+both debug and release static PIE executables with the same x86-64/no-AVX,
+no-AVX2, no-FMA flags. The temporary manifest, lockfile, probe source,
+initramfs init script, initramfs, debug executable, release executable, QEMU
+log, and temporary guest-kernel package SHA-256 values were, respectively,
+`8fee2770b880c4b8942aee388932a39ea9758eb59739fd995494681bf16aba61`,
+`b1e3bbd48a95532e23ccc76921598679a13e31dfa66614004d0c4674d6e2e2f6`,
+`ca8ef8e5624a1428cdf77607aab814b0cc3d9d52dc4b345857a479299c92fdb0`,
+`49d71ca0eaf5aa70f603ae64addda825b16dc6d88d031f24483d39500f00a000`,
+`351c18e760c422e8f67ce4574ce2f6eff21816464453835610a1bd395c5dd276`,
+`acde3cc74ccb271d6ed9cac8f92e0b80d3291444ad21bd66176e48b881ef30a2`,
+`93d6882f1f69e86e132681486396f1f3666f1deff5ed4db0a3276d7488c0ed2c`,
+`94ae544ad39edaa5629581fcebeac875264e171274470522308a3950f765d2be`,
+and `be2d970c035b7227362faa5972a3090cabb3cf6ad5284614ce98b2bd5f828f0a`.
+They identify only temporary evidence artifacts and are not retained in this
+repository.
+
+The probe generated a 75-byte PNG and a 642-byte JPEG from the same
+self-authored 2-by-1 RGB values, first checking valid decode behavior. For
+each format it then attempted every inclusive byte-prefix, one `^ 0xff`
+mutation at every byte position, and one forced-wrong format. Every decode
+used explicit 64-pixel width/height limits and `max_alloc = 64 KiB`, and was
+wrapped in `catch_unwind`. Thus the corpus contains 152 PNG attempts
+(`76 + 75 + 1`) and 1,286 JPEG attempts (`643 + 642 + 1`).
+
+With a 256 MiB host virtual-memory limit, both debug and release runs reported
+the identical result. The release binary then produced the same result in the
+one-vCPU/256 MiB QEMU `qemu64` guest whose CPU flags omit AVX/AVX2/FMA:
+
+```text
+image-mutation-ok png=attempts:152/ok:17/errors:135/panics:0 jpeg=attempts:1286/ok:507/errors:779/panics:0
+```
+
+The 507 successful JPEG cases are important: a decoder success must not be
+treated as evidence that an input was an unmodified or canonical JPEG, and the
+future project input policy must explicitly decide its truncation/permissive
+decode behavior. The zero caught panics are useful only for this tiny generated
+corpus. They do not cover aborts, hangs, out-of-memory behavior, arbitrary
+malformed images, metadata/color/orientation paths, SIMD/unsafe coverage, or
+the non-strict `max_alloc` limitation. This does not select `image` or permit a
+decoder implementation before `D-008` closes.
+
 ### Isolated OpenCV color/orientation probe (2026-08-02)
 
 A second disposable package outside this repository evaluated the same exact
