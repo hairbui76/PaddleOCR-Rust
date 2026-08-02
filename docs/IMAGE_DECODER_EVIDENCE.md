@@ -929,12 +929,36 @@ The hybrid control repeated the JPEG-only header checks: a modified 1-by-16,385
 SOF failed the typed side limit, and a 7,000-by-5,000 SOF failed the typed
 128 MiB estimated-memory limit before output-scale allocation. Its 1,440
 deterministic JPEG mutations again reported 733 successful decodes, 707
-errors, and zero caught panics. The prior direct-codec PNG mutation record is
-evidence for the same `png` version but was not falsely counted as a hybrid
-fuzz campaign. Debug scalar, debug `libjpeg-turbo-rs` SIMD, and release scalar
-host builds with AVX, AVX2, and FMA disabled produced the same finite results.
-No QEMU run of this exact combined package, general hostile corpus, allocation
-instrumentation, or full work-bound proof was performed.
+errors, and zero caught panics.
+
+### Hybrid PNG mutation follow-up (2026-08-02)
+
+A follow-up copied the prior disposable hybrid harness, changed only its
+source to add a PNG mutation loop, and retained the same manifest and lockfile.
+The resulting source SHA-256 was
+`5eae3f200c2411087fa6fc7c32200b020f1200258aa8a00e3aa06ec74d4392b8`;
+the manifest and lockfile hashes remain those recorded above. No dependency,
+fixture, model, or project source changed.
+
+For each of the five committed PNG streams—including the normal-route
+16-bit-policy rejection—the control applied 144 deterministic mutations:
+truncation, a one-bit flip, a byte overwrite, a one-byte insertion, byte
+duplication, or up to 32 appended pseudo-random bytes. Each derived input was
+fed through the same content dispatcher and normal (non-`normalize_to_color8`)
+PNG route inside `catch_unwind`. Across 720 attempts, the scalar debug,
+`libjpeg-turbo-rs` SIMD debug, and scalar release builds with
+`-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma` all reported 164
+successful decodes, 556 controlled errors, and zero caught Rust panics. The
+unchanged fourteen exact 8-bit controls, one labelled 16-bit diagnostic, five
+negative controls, JPEG mutation totals, and JPEG header checks also passed in
+each run.
+
+This is a bounded deterministic mutation signal for this exact combined
+control, not a general PNG fuzz campaign, parser safety proof, allocation or
+CPU-work proof, supported-format policy, or decoder selection. No QEMU run of
+this exact combined package, general hostile corpus, allocation
+instrumentation, concurrency proof, or full work-bound proof has been
+performed.
 
 `cargo-audit` scanned the exact 34-package lockfile against RustSec revision
 `d91a8fc9492378f23cba86b81770c6d16de6ebba`, loaded 1,186 advisories, and
