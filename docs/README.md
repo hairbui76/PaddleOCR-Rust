@@ -2,10 +2,13 @@
 
 This directory contains the supporting specifications, evidence packets,
 contracts, and planning records for PaddleOCR-Rust. The repository root keeps
-only the standard entrypoints: [README](../README.md),
-[AGENTS](../AGENTS.md), [CLAUDE](../CLAUDE.md),
-[CONTRIBUTING](../CONTRIBUTING.md), and the canonical
+only the discovery and authority entrypoints: [README](../README.md),
+[AGENTS](../AGENTS.md), [CLAUDE](../CLAUDE.md), and the canonical
 [ROADMAP](../ROADMAP.md).
+
+## Repository guides
+
+- [Contribution guide](CONTRIBUTING.md)
 
 ## Planning and governance
 

@@ -2,14 +2,14 @@
 
 ## Scope discipline
 
-Read `AGENTS.md`, `ROADMAP.md`, `docs/P0_DECISIONS.md`, `docs/API_CONTRACT.md`, and
-`docs/COMPATIBILITY.md` before changing behavior. Every change must map to a roadmap
+Read `../AGENTS.md`, `../ROADMAP.md`, `P0_DECISIONS.md`, `API_CONTRACT.md`, and
+`COMPATIBILITY.md` before changing behavior. Every change must map to a roadmap
 item and must not broaden a compatibility claim beyond its evidence.
 
-`PaddleOCR/` is a read-only symlink to an upstream Python reference. Never run
-a formatter, generator, package installation, test suite, Git mutation, or any
-other write-capable command through that path. The Rust project must build and
-test when that symlink target is absent.
+`../PaddleOCR/` is a read-only symlink to an upstream Python reference. Never
+run a formatter, generator, package installation, test suite, Git mutation, or
+any other write-capable command through that path. The Rust project must build
+and test when that symlink target is absent.
 
 ## Development gate
 
@@ -29,7 +29,7 @@ machine-specific linker path as a workaround.
 
 ## Fixtures and assets
 
-Read `tests/fixtures/README.md` and `docs/FIXTURE_AND_TOLERANCE_PLAN.md` before
+Read `../tests/fixtures/README.md` and `FIXTURE_AND_TOLERANCE_PLAN.md` before
 adding a fixture. Normal tests must not download models, use a GPU, require
 Python, or execute upstream. Do not add weights, fonts, datasets, dictionaries,
 converted artifacts, or unclear third-party files without provenance and

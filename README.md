@@ -30,6 +30,9 @@ Normal development and tests must not require Python, PaddleOCR/PaddleX, a GPU,
 network access, or model weights. Model files are intentionally local-only and
 are ignored by Git.
 
+Contributor workflow and submission requirements are in
+[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md).
+
 `Cargo.lock` is version-controlled for reproducible application/workspace
 resolution. Add or update it only through an intentional dependency change.
 
