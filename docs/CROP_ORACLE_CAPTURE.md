@@ -147,6 +147,32 @@ warp-to-source coordinates against the private plan. It therefore covers the
 mapping direction used by the crop sampler, while remaining limited to this
 recorded OpenCV environment and the self-authored cases.
 
+## Non-promoted optimization diagnostic
+
+On 2026-08-02, an isolated, developer-only deterministic corpus of 4,096
+self-authored BGR crops (3–16 pixel source sides, fixed seed, and strictly
+convex quadrilaterals) was compared against the recorded OpenCV environment.
+The current private Rust sampler differed from default `cv2.warpPerspective`
+on fifteen cases, each by one `uint8` byte. The same corpus produced seven
+one-byte differences between OpenCV's default path and
+`cv2.setUseOptimized(False)`, demonstrating that CPU-optimized interpolation
+is an independent numerical variable in that environment.
+
+Read-only OpenCV source inspection and a focused boundary probe established
+that fused multiply-add can change a value such as `89.499992` to exactly
+`89.500000` before byte conversion. A temporary Rust `f32::mul_add`
+experiment reduced the corpus count to thirteen mismatching cases but
+introduced five new mismatches; a weight-only variant produced sixteen. No
+FMA/SIMD implementation, fixture, tolerance change, or compatibility claim
+was promoted. The selected scalar operation order remains the checked Rust
+behavior, and the fourteen reviewed fixtures remain the only exact pixel
+evidence.
+
+Any future CPU-specific optimization work must first define the supported CPU
+feature policy and test a portable operation-order contract across its target
+matrix. It must not use a local OpenCV dispatch result as a universal pixel
+oracle.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.
