@@ -173,6 +173,30 @@ feature policy and test a portable operation-order contract across its target
 matrix. It must not use a local OpenCV dispatch result as a universal pixel
 oracle.
 
+## Portable crop operation profile
+
+The selected profile implements the `D-003` x86-64 baseline for the current
+private crop sampler. The `quality` GitHub Actions job compiles the workspace
+with:
+
+```text
+-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma
+```
+
+That CI setting is a checked baseline for the Rust code tested here, not proof
+that every supported compiler, CPU, or future distribution binary will produce
+bit-identical floating-point results. The current source-level contract also
+keeps `src/crop.rs` free of architecture intrinsics, runtime CPU feature
+dispatch, `target_feature` attributes, and `f32::mul_add`; the integration test
+`crop_sampler_retains_the_portable_cpu_operation_profile` guards that boundary.
+
+This profile preserves the existing scalar operation order rather than trying
+to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel
+equivalence, select an optimization implementation, or relax the fourteen
+reviewed fixture expectations. A future optimization proposal must update this
+policy first, retain a portable baseline regression, and provide separately
+reviewed numerical evidence before it changes the sampler.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.

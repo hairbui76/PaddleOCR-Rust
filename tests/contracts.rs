@@ -42,3 +42,25 @@ fn m2_contract_coverage_records_the_open_decision_boundaries() {
     assert!(coverage.contains("No supported artifact, download, cache, conversion, or backend."));
     assert!(coverage.contains("Bootstrap-only; not an OCR CLI."));
 }
+
+#[test]
+fn crop_sampler_retains_the_portable_cpu_operation_profile() {
+    let crop = include_str!("../src/crop.rs");
+    let policy = include_str!("../docs/CROP_ORACLE_CAPTURE.md");
+
+    for forbidden in [
+        "std::arch",
+        "is_x86_feature_detected",
+        "target_feature",
+        "f32::mul_add",
+    ] {
+        assert!(
+            !crop.contains(forbidden),
+            "portable crop sampler must not introduce {forbidden}"
+        );
+    }
+
+    assert!(policy.contains("## Portable crop operation profile"));
+    assert!(policy.contains("target-cpu=x86-64"));
+    assert!(policy.contains("target-feature=-avx,-avx2,-fma"));
+}
