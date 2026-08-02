@@ -33,6 +33,13 @@ No generated visualization, virtual environment, model binary, cache, upstream
 checkout, or external URL is a fixture. A fixture remains unavailable until its
 metadata is committed and reviewed; a catalog row is not a fixture itself.
 
+The crop-oracle regression
+`crop::tests::classic_crop_executes_every_captured_opencv_oracle_case` parses
+the committed capture document and executes every recorded input,
+quadrilateral, pre-rotation size, rotation decision, and output-byte array.
+Focused source tests retain the individual numerical regressions. This does
+not broaden the fixture into a general OpenCV or decoded-image oracle.
+
 The current five committed component fixture directories are also covered by
 the offline `tests/fixture_integrity.rs` integration gate. It parses each
 metadata record, validates baseline/provenance/profile requirements and direct

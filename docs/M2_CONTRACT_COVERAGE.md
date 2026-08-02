@@ -29,6 +29,12 @@ mean that M2 OCR is usable.
 | `M2-CLI-001` | [API_CONTRACT.md](API_CONTRACT.md) fixes stdout/privacy/schema principles; detailed command syntax, exit codes, multi-input behavior, and model-path handling are deliberately owned by `CLI-001`. | `src/main.rs` reports that OCR is unsupported and exits with the documented bootstrap failure behavior. | A functioning P6 API/schema plus a `CLI-001` contract that fixes arguments, exit codes, stderr, local model provisioning, and JSONL behavior. | Bootstrap-only; not an OCR CLI. |
 | `M2-MODEL-001` | [MODEL_CANDIDATES.md](MODEL_CANDIDATES.md), [CANDIDATE_PROVISIONING_LEDGER.md](CANDIDATE_PROVISIONING_LEDGER.md), [LICENSE_REVIEW.md](LICENSE_REVIEW.md), and [RUNTIME_RUBRIC.md](RUNTIME_RUBRIC.md). | Candidate revisions, known hashes, and a local-only verification procedure are recorded; no artifact resolver or runtime exists. | User-provisioned candidate files outside the repository, revision-specific provenance/terms, dictionary/operator validation, `RT-002`/`RT-003` evidence, `RT-004`, and `MODEL-DEC-001`. | No supported artifact, download, cache, conversion, or backend. |
 
+The crop-oracle consumer
+`crop::tests::classic_crop_executes_every_captured_opencv_oracle_case`
+executes every recorded case directly from the committed capture document.
+It is fixture-specific evidence only and does not change the current private
+implementation boundary.
+
 ## Cross-cutting contract gaps
 
 The following missing evidence blocks multiple rows and must not be papered over

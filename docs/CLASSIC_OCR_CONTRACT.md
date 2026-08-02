@@ -225,6 +225,14 @@ establish any broader OpenCV `INTER_CUBIC` rounding, fixed-point, or
 upstream-environment equivalence before M2 claims upstream pixel output
 compatibility.
 
+`crop::tests::classic_crop_executes_every_captured_opencv_oracle_case` parses
+the committed capture document during the normal offline Rust suite. It
+reconstructs all fifteen recorded BGR inputs and quadrilaterals, verifies
+their pre-rotation dimensions and rotation decisions, and byte-compares every
+result. The targeted source tests remain for the individual numerical
+boundaries. This fixture-driven coverage is not a general OpenCV or
+decoded-image equivalence claim.
+
 The crop type remains private and carries no BGR/RGB, alpha, decoder, EXIF, or
 public API decision. Those semantics remain `IMG-DEC-001`, `IMG-001`, and
 `IMG-002` work.

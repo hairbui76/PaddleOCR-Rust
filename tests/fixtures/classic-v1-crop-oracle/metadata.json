@@ -44,6 +44,7 @@
     "provenance": "OpenCV 5.0.0 cv2.getPerspectiveTransform with destination/source order reversed, then cv2.perspectiveTransform at four destination boundaries and one interior coordinate per case."
   },
   "tests": [
+    "crop::tests::classic_crop_executes_every_captured_opencv_oracle_case",
     "crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases",
     "crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases",
     "crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases",

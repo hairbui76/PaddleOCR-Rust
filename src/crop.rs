@@ -273,12 +273,15 @@ fn pixel_offset(dimensions: ImageDimensions, channels: usize, x: u32, y: u32) ->
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::BTreeSet;
+
     use crate::{
         error::{Error, InputViolation},
         geometry::classic_perspective_crop_plan,
         types::{MAX_IMAGE_PIXELS, Point, Quadrilateral},
     };
     use base64::{Engine as _, engine::general_purpose::STANDARD};
+    use serde_json::Value;
 
     const CAPTURED_OPENCV_CROP_ORACLE: &str =
         include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
@@ -337,6 +340,103 @@ mod tests {
         assert_eq!(crop.dimensions(), expected_dimensions, "{fixture_id}");
         assert_eq!(crop.channels(), 3, "{fixture_id}");
         assert_eq!(crop.pixels(), expected_pixels, "{fixture_id}");
+    }
+
+    fn capture_object<'a>(value: &'a Value, field: &str, context: &str) -> &'a Value {
+        match value.get(field) {
+            Some(value) if value.is_object() => value,
+            Some(_) => panic!("{context} field {field:?} must be an object"),
+            None => panic!("{context} is missing required field {field:?}"),
+        }
+    }
+
+    fn capture_array<'a>(value: &'a Value, field: &str, context: &str) -> &'a [Value] {
+        match value.get(field).and_then(Value::as_array) {
+            Some(values) => values,
+            None => panic!("{context} field {field:?} must be an array"),
+        }
+    }
+
+    fn capture_string<'a>(value: &'a Value, field: &str, context: &str) -> &'a str {
+        match value.get(field).and_then(Value::as_str) {
+            Some(value) => value,
+            None => panic!("{context} field {field:?} must be a string"),
+        }
+    }
+
+    fn capture_u32(value: &Value, context: &str) -> u32 {
+        match value.as_u64().and_then(|value| u32::try_from(value).ok()) {
+            Some(value) => value,
+            None => panic!("{context} must be a u32"),
+        }
+    }
+
+    fn capture_f32(value: &Value, context: &str) -> f32 {
+        let value = match value.as_f64() {
+            Some(value) => value,
+            None => panic!("{context} must be a number"),
+        };
+        assert!(
+            value.is_finite() && value >= f64::from(f32::MIN) && value <= f64::from(f32::MAX),
+            "{context} must fit a finite f32"
+        );
+        value as f32
+    }
+
+    fn capture_bgr_pixels(
+        case: &Value,
+        role: &str,
+        fixture_id: &str,
+    ) -> (ImageDimensions, Vec<u8>) {
+        let context = format!("{fixture_id} {role}");
+        let payload = capture_object(case, role, &context);
+        assert_eq!(
+            capture_string(payload, "channel_order", &context),
+            "BGR",
+            "{context} channel order"
+        );
+        assert_eq!(
+            capture_string(payload, "dtype", &context),
+            "uint8",
+            "{context} dtype"
+        );
+        let shape = capture_array(payload, "shape", &context);
+        assert_eq!(shape.len(), 3, "{context} must have HWC shape");
+        let height = capture_u32(&shape[0], &format!("{context} shape height"));
+        let width = capture_u32(&shape[1], &format!("{context} shape width"));
+        let channels = capture_u32(&shape[2], &format!("{context} shape channels"));
+        assert_eq!(channels, 3, "{context} must retain three BGR channels");
+        let dimensions = dimensions(width, height);
+        let pixels = match STANDARD.decode(capture_string(payload, "base64", &context)) {
+            Ok(value) => value,
+            Err(error) => panic!("{context} base64 is invalid: {error}"),
+        };
+        let expected_length = match usize::try_from(dimensions.pixels()) {
+            Ok(value) => match value.checked_mul(3) {
+                Some(value) => value,
+                None => panic!("{context} byte length overflows usize"),
+            },
+            Err(_) => panic!("{context} pixel count does not fit usize"),
+        };
+        assert_eq!(pixels.len(), expected_length, "{context} byte length");
+        (dimensions, pixels)
+    }
+
+    fn capture_points(case: &Value, fixture_id: &str) -> [Point; 4] {
+        let context = format!("{fixture_id} points");
+        let values = capture_array(case, "points", &context);
+        assert_eq!(values.len(), 4, "{context} must have four corners");
+        core::array::from_fn(|index| {
+            let coordinates = match values[index].as_array() {
+                Some(value) => value,
+                None => panic!("{context} corner {index} must be an array"),
+            };
+            assert_eq!(coordinates.len(), 2, "{context} corner {index} must be XY");
+            point(
+                capture_f32(&coordinates[0], &format!("{context} corner {index} x")),
+                capture_f32(&coordinates[1], &format!("{context} corner {index} y")),
+            )
+        })
     }
 
     fn patterned_bgr_pixels(width: u32, height: u32, seed: u8) -> Vec<u8> {
@@ -739,6 +839,85 @@ mod tests {
                 expected_dimensions.pixels() as usize * usize::from(channels),
                 "case {case_index}"
             );
+        }
+    }
+
+    #[test]
+    fn classic_crop_executes_every_captured_opencv_oracle_case() {
+        let capture: Value = match serde_json::from_str(CAPTURED_OPENCV_CROP_ORACLE) {
+            Ok(value) => value,
+            Err(error) => panic!("crop capture fixture is not valid JSON: {error}"),
+        };
+        assert_eq!(
+            capture_string(&capture, "schema_version", "crop capture fixture"),
+            "paddleocr-rust/crop-oracle/v1"
+        );
+        let cases = capture_array(&capture, "cases", "crop capture fixture");
+        assert_eq!(cases.len(), 15, "crop capture fixture case count");
+        let mut fixture_ids = BTreeSet::new();
+
+        for case in cases {
+            let fixture_id = capture_string(case, "fixture_id", "crop capture case");
+            assert!(
+                fixture_ids.insert(fixture_id),
+                "duplicate crop capture fixture {fixture_id:?}"
+            );
+            let (source_dimensions, source_pixels) = capture_bgr_pixels(case, "input", fixture_id);
+            let source = must_ok(InterleavedImage::new(source_dimensions, 3, source_pixels));
+            let plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
+                capture_points(case, fixture_id),
+            ))));
+
+            let pre_rotation = capture_object(
+                case,
+                "pre_rotation_output",
+                &format!("{fixture_id} pre-rotation"),
+            );
+            assert_eq!(
+                plan.warp_width(),
+                capture_u32(
+                    match pre_rotation.get("width") {
+                        Some(value) => value,
+                        None => panic!("{fixture_id} pre-rotation is missing width"),
+                    },
+                    &format!("{fixture_id} pre-rotation width"),
+                ),
+                "{fixture_id} pre-rotation width"
+            );
+            assert_eq!(
+                plan.warp_height(),
+                capture_u32(
+                    match pre_rotation.get("height") {
+                        Some(value) => value,
+                        None => panic!("{fixture_id} pre-rotation is missing height"),
+                    },
+                    &format!("{fixture_id} pre-rotation height"),
+                ),
+                "{fixture_id} pre-rotation height"
+            );
+            let expected_rotation = match case
+                .get("rotates_counter_clockwise")
+                .and_then(Value::as_bool)
+            {
+                Some(value) => value,
+                None => panic!("{fixture_id} rotates_counter_clockwise must be a boolean"),
+            };
+            assert_eq!(
+                plan.rotates_counter_clockwise(),
+                expected_rotation,
+                "{fixture_id} rotation decision"
+            );
+
+            let (expected_dimensions, expected_pixels) =
+                capture_bgr_pixels(case, "output", fixture_id);
+            let crop = must_ok(classic_perspective_crop(&source, plan));
+            assert_eq!(
+                crop.dimensions(),
+                expected_dimensions,
+                "{fixture_id} dimensions"
+            );
+            assert_eq!(crop.channels(), 3, "{fixture_id} channels");
+            assert_eq!(crop.pixels(), expected_pixels, "{fixture_id} pixels");
         }
     }
 
