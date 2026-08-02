@@ -41,3 +41,9 @@ Write code, identifiers, comments, tests, configuration, and repository
 documentation in English. Keep public behavior, model identity, constraints,
 and known differences precise. Do not present the project as an official
 PaddlePaddle or PaddleOCR release.
+
+By submitting a contribution for inclusion, contributors offer their original
+work under Apache-2.0 unless the maintainers explicitly approve a separately
+licensed third-party component with its required notices. Do not submit model
+weights, datasets, fonts, dictionaries, converted artifacts, or other assets
+whose provenance and terms have not been reviewed.

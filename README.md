@@ -53,6 +53,11 @@ Supporting specifications and evidence packets are indexed in
 
 ## License
 
-This repository is licensed under Apache-2.0. See `LICENSE` and `NOTICE`.
-Weights, datasets, fonts, dictionaries, and third-party artifacts require
-separate provenance and license review before use or distribution.
+Project-authored source code, documentation, and self-authored fixtures in
+this repository are licensed under Apache-2.0 unless a file carries an
+explicit third-party notice. See `LICENSE` and `NOTICE`.
+
+This project license does not grant rights to PaddleOCR model weights,
+datasets, fonts, dictionaries, converted artifacts, or other third-party
+materials. Those assets remain excluded from the repository unless their
+separate provenance and license review is complete.

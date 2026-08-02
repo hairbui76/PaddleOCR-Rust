@@ -1,7 +1,7 @@
 # Identity and License Evidence Record
 
 Roadmap item: DEC-001 (decision-support evidence)
-Status: Evidence complete; bootstrap decision recorded in P0_DECISIONS.md
+Status: Decision complete; Apache-2.0 scope confirmed in P0_DECISIONS.md
 Prepared: 2026-08-02
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
@@ -38,7 +38,8 @@ adapted source file carries one, or if a third-party dependency requires one.
 
 | Material | Current project rule | Evidence required before use or distribution |
 |---|---|---|
-| Original Rust source | May use the project's eventual selected license. | Project owner and license decision. |
+| Original Rust source | Apache-2.0. | Project user confirmed the license scope on 2026-08-02; see `P0_DECISIONS.md`, `LICENSE`, and `NOTICE`. |
+| Project-authored documentation and self-authored fixtures | Apache-2.0 unless a file carries an explicit third-party notice. | Project user confirmed the license scope on 2026-08-02; source/provenance review still applies to any adapted or external material. |
 | Adapted upstream source or non-trivial translations | Avoid unless necessary; preserve applicable copyright/license/notice text and identify modifications. | File-level provenance and license review. |
 | Public API names or behavioral descriptions | May describe compatibility factually. | Wording must not imply an official PaddlePaddle/PaddleOCR release or endorsement. |
 | Name, logo, or branding | Do not select or use an official-looking name, logo, or claim of affiliation by default. | Explicit branding review and, if necessary, permission. |
@@ -46,14 +47,20 @@ adapted source file carries one, or if a third-party dependency requires one.
 | Dictionaries, fonts, fixtures, and datasets | Do not copy by default. | Asset-specific license/provenance and test-fixture approval. |
 | Rust crates and native libraries | Select only after the runtime/decoder decision. | Per-dependency license, platform, `unsafe`, and notice review. |
 
-## Non-binding project-license direction
+## Confirmed project-license disposition
 
-Apache-2.0 is a plausible candidate for the Rust project because it is
-compatible with the upstream source license and clearly accommodates retained
-notices for any future adapted material. It is not selected by this record.
+On 2026-08-02, the project user confirmed that all project-authored repository
+content will be open source and publicly accessible. The project therefore
+selects Apache-2.0 for original Rust source, project-authored documentation,
+and self-authored fixtures. No dual license is currently approved. `LICENSE`
+contains the full terms and `NOTICE` records the independent-project boundary.
 
-The following conditions remain regardless of the eventual project-source
-license:
+This license choice covers only material for which PaddleOCR-Rust contributors
+can grant rights. It does not license any PaddleOCR source, model weights,
+datasets, fonts, dictionaries, converted output, native dependency, or other
+third-party asset.
+
+The following conditions remain under the selected project-source license:
 
 1. Do not represent the project as an official PaddlePaddle or PaddleOCR
    release.
@@ -66,20 +73,19 @@ license:
 5. Include required third-party notices in a release when the selected
    dependencies or adapted material require them.
 
-## Decisions still required
+## Remaining decisions
 
 | Decision | Must be supplied or approved | Why it cannot be inferred |
 |---|---|---|
 | Project identity | Package/repository display name, crate name, owner/copyright holder, and non-affiliation wording. | Crate availability, ownership, and branding risk are external facts and policy choices. |
-| Project source license | A specific SPDX expression and whether dual licensing is intended. | Apache compatibility does not dictate the project's chosen terms. |
+| Project source license | Resolved: Apache-2.0 for project-authored source, documentation, and self-authored fixtures; no dual license. | The direct user decision is recorded in `P0_DECISIONS.md`; it does not change third-party asset terms. |
 | Attribution policy | Location and format for upstream/third-party attribution, if material is adapted. | It depends on material actually retained. |
 | Model/asset distribution policy | Local-only, opt-in download, or approved bundled artifacts. | It depends on individual asset terms and release intent. |
 | Contribution policy | Whether contributors must sign a CLA/DCO or follow another policy. | It is a project-governance choice, not an upstream requirement for an independent port. |
 
 ## Completion condition for DEC-001
 
-`DEC-001` can become Done only after the user approves the project identity and
-license direction, a concrete license file and attribution policy are created
-in this repository, and the roadmap records the decision. Asset-specific
-reviews remain separate work under `LIC-001` and must precede any artifact
-distribution.
+`DEC-001` is Done: the project user approved the identity and Apache-2.0
+license direction, `LICENSE` and `NOTICE` are present, and the roadmap records
+the decision. Asset-specific reviews remain separate work under `LIC-001` and
+must precede any artifact distribution.
