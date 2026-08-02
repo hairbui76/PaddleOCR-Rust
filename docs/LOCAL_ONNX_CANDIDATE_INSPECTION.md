@@ -61,6 +61,34 @@ Sigmoid, Slice, Softmax, Sqrt, Squeeze, Sub, Transpose, and Unsqueeze.
 These are graph facts for runtime qualification. They do not select a runtime
 or demonstrate that any particular backend supports the graphs correctly.
 
+## Serialized preprocessing declaration audit
+
+This is a read-only comparison of the two exact local `inference.yml` files
+with the pinned PaddleOCR transform implementations. It neither instantiates
+those Python operators nor processes an image. The YAML is a package metadata
+lead, not proof that a future ONNX runtime invokes the same operator path or
+receives the same tensor bytes.
+
+| Role | Exact serialized declaration | Pinned source-level implication | M2 disposition |
+|---|---|---|---|
+| Detector | `DecodeImage` declares BGR/HWC; `DetResizeForTest` is `null`; `NormalizeImage` declares `scale: 1./255.`, HWC `mean=[0.485, 0.456, 0.406]`, and `std=[0.229, 0.224, 0.225]`; `ToCHWImage` follows. | A no-argument `DetResizeForTest` constructor at the pinned baseline chooses `limit_side_len=736`, `limit_type="min"`, and `max_side_limit=4000`. It pads inputs with `height + width < 64` before resize. The normalization and CHW transpose agree structurally with the M2 detector rule, but the implicit resize mode does not. | The frozen M2 profile uses `limit_side_len=960`, `limit_type="max"`, and the same `4000` secondary limit. The candidate YAML must not be consumed as M2 preprocessing without a contract amendment or tensor/output evidence that validates an explicit M2 preprocessing path. |
+| Recognizer | `DecodeImage` declares BGR/HWC and `RecResizeImg` declares only `image_shape=[3, 48, 320]`; the YAML does not serialize `infer_mode`, `eval_mode`, `character_dict_path`, `padding`, or interpolation. | With the pinned constructor defaults alone, `RecResizeImg` uses `resize_norm_img`: aspect-ratio resize to height 48 with `ceil`, width capped at 320, OpenCV linear interpolation, BGR-to-CHW transpose, `/255`, `(value - 0.5) / 0.5`, and zero right padding. A caller can change that branch by injecting omitted arguments. | The base shape and default normalization path resemble the M2 single-crop rule, but batching, dynamic width, actual caller options, interpolation bytes, and model-output consequences remain unverified. No recognizer preprocessing compatibility claim follows. |
+
+The detector default is a material manifest conflict in addition to the
+already recorded DB threshold conflict. It follows directly from the exact
+`DetResizeForTest: null` YAML declaration and the `else` branch of
+`ppocr/data/imaug/operators.py:DetResizeForTest.__init__` at baseline
+`2661c7c0ef5c613e8f93c6e93b2e052399f0f854`; it is not inferred from a model
+run. The recognizer observations similarly follow only from the serialized
+fields and source defaults in `ppocr/data/imaug/rec_img_aug.py:RecResizeImg`
+and `resize_norm_img`.
+
+Before any Rust tensor implementation may use either path, `IMG-DEC-001`,
+`IMG-002`, `TEN-001`, `PRE-001`, artifact terms, and raw-tensor validation must
+establish the real selected-runtime input contract. In particular, a runtime
+must not silently substitute the candidate's detector `736/min` defaults for
+the public M2 `960/max` profile.
+
 ## Recognizer CTC dictionary index inspection
 
 This is a read-only, source-level ABI inspection of the exact local recognizer

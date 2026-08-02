@@ -141,12 +141,22 @@ declares `thresh: 0.2`, `box_thresh: 0.45`, `unclip_ratio: 1.4`, and
 `max_candidates: 3000`. Those values conflict with the deliberately selected
 M2 classic profile (`0.3`, `0.6`, `1.5`, and `1000`).
 
+The same exact detector YAML declares `DetResizeForTest: null`. At the pinned
+PaddleOCR baseline, applying that no-argument declaration through the named
+operator's constructor selects its implicit `736/min` resize policy and a
+`4000` maximum-side limit. The frozen M2 profile instead uses `960/max` with
+the same `4000` secondary limit. This is a source-level configuration conflict,
+not a model-output result: a later runtime may supply different operator
+arguments, but Rust must never silently adopt either unverified path. The
+read-only derivation and recognizer-default caveats are recorded in
+[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
+
 `CLASSIC_OCR_CONTRACT.md` remains the public M2 behavior authority. A runtime
-must not silently consume the candidate manifest's thresholds. Before the
-candidate can be accepted, P3/P5 must demonstrate that it produces the
-documented detector map and that applying the M2 profile is valid; otherwise
-the contract must be amended with reviewed fixture evidence or the candidate
-must be rejected.
+must not silently consume the candidate manifest's thresholds or resize
+defaults. Before the candidate can be accepted, P3/P5 must demonstrate that
+it produces the documented detector map and that applying the M2 profile is
+valid; otherwise the contract must be amended with reviewed fixture evidence
+or the candidate must be rejected.
 
 Similarly, the recognizer candidate is exported from a CTC+NRTR multi-head
 architecture but exposes a CTC-shaped fetch. M2 supports only the validated

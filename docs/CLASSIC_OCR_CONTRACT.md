@@ -62,9 +62,11 @@ The model manifest may not silently override this public profile. If the exact
 artifact requires a materially different preprocess/postprocess contract, the
 change requires a contract amendment, compatibility ledger update, and fixture
 evidence before release. `MODEL_CANDIDATES.md` records a current example: the
-candidate v6 detector manifest has DB thresholds that differ from M2, and the
-candidate recognizer has a CTC+NRTR multi-head architecture while M2 exposes
-only the verified CTC fetch path.
+candidate v6 detector manifest has DB thresholds that differ from M2 and a
+`DetResizeForTest: null` declaration whose pinned source default is
+`736/min` rather than M2's `960/max`; the candidate recognizer has a CTC+NRTR
+multi-head architecture while M2 exposes only the verified CTC fetch path.
+These are candidate-source facts, not proof of a runtime tensor path.
 
 The browser implementation is an independent source of DB/CTC evidence, not
 the M2 default contract. Its detector parser fallback uses an `unclipRatio` of
