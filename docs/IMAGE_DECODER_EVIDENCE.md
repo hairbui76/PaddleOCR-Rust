@@ -221,18 +221,65 @@ decision-relevant facts:
   AVX/SSE/AVX512/NEON feature is selected. These are source-level observations,
   not a baseline-CPU execution proof or a completed unsafe-code audit.
 
-No no-AVX execution evidence was generated: `qemu-x86_64` user-mode was not
-installed. `qemu-system-x86_64` was present, but no suitable guest or test
-harness was prepared or run. `cargo-audit`, `cargo-deny`, and `cargo-license`
-were also unavailable. The spike did not perform an advisory/license audit,
-native-boundary review, fuzzing, a malicious corpus run, EXIF/BGR/alpha/oracle
-comparison, or any model integration.
+The initial Cargo spike did not include no-AVX execution. The separately scoped
+QEMU run below now covers one selected PNG/JPEG success and strict-dimension
+error path, but not a complete unsafe-code or dispatch audit. `cargo-audit`,
+`cargo-deny`, and `cargo-license` were unavailable. The spikes did not perform
+an advisory/license audit, native-boundary review, fuzzing, a malicious corpus
+run, EXIF/BGR/alpha/oracle comparison, or any model integration.
 
 Accordingly, this spike does not select `image`, add a project dependency, or
 change any image input behavior. `IMG-DEC-001` remains Planned and `D-008`
 remains open. The temporary package must be discarded after recording this
 evidence; a future decision needs a maintained, reviewable, and reproducible
 qualification procedure.
+
+### Isolated `image` no-AVX QEMU execution (2026-08-02)
+
+A separate disposable Rust `1.94.0` package rebuilt the same exact minimal
+`image` feature shape as a `static-pie` executable with an offline locked
+graph and:
+
+```text
+-C target-cpu=x86-64 -C target-feature=+crt-static,-avx,-avx2,-fma
+```
+
+Its manifest, lockfile, probe source, initramfs init script, release binary,
+QEMU log, and temporary guest-kernel package SHA-256 values were,
+respectively,
+`780ad94205312414c168a13c031990bf71329ac5caaf9b99b5206f4a28cbf039`,
+`f53925f3b6dfb1f5578d154cf54ad0e4f03ee29505f8da834fd42b73dfbc3cc1`,
+`b0b1d0bf94c68bb4c4d96d7646a86926d8ed5f67f2ae547fca54e5234a2a7851`,
+`e01b2923e2eee9c12d1ee04caf5cbc2ae816788e252df6b99100b380d649e3bf`,
+`3cc5fe2898de541f32cb330746ebce100bb7219a368317c23998007a2b30d68c`,
+`053f691001d28f84c42d64859b009aaf8939133464d5a32d61c8c6ef5bef9914`,
+and `be2d970c035b7227362faa5972a3090cabb3cf6ad5284614ce98b2bd5f828f0a`.
+These identify disposable evidence only; none is a project dependency, input,
+fixture, binary, or retained asset.
+
+The probe used `PngEncoder` and `JpegEncoder` at quality 90 to make one
+self-authored 2-by-1 RGB input, then decoded each byte stream with an explicitly
+selected `ImageReader` format. It set strict `max_image_width = 2` and
+`max_image_height = 1` plus `max_alloc = 1024`; the PNG round trip preserved
+the six RGB bytes exactly, the JPEG result had the expected 2-by-1 / six-byte
+RGB shape, and a separate `max_image_width = 1` decode returned an error for
+both formats. This is a selected API/error probe, not proof that `max_alloc`
+is strict or that other inputs cannot panic.
+
+The static executable first ran on the host, then in a disposable QEMU `9.0.2`
+TCG guest with one `qemu64` vCPU and 256 MiB memory. The guest's recorded
+`/proc/cpuinfo` flags omit `avx`, `avx2`, and `fma`; it exited zero and matched
+the host's output:
+
+```text
+image-noavx-ok png-bytes=75/png-fnv=2135d0191a95dd5a jpeg-bytes=642/jpeg-fnv=2ad1ed0e4ef5d182
+```
+
+This shows one `image` 0.25.10 JPEG/PNG code path can run without AVX/FMA even
+though its locked graph retains optional architecture-specific code. It does
+not identify the dispatched implementation, rule out other unsafe/CPU paths,
+prove resource or malformed-input safety, establish OpenCV color/orientation
+behaviour, or select `image` for `D-008`.
 
 ### Isolated OpenCV color/orientation probe (2026-08-02)
 
