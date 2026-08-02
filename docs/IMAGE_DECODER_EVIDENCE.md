@@ -882,6 +882,78 @@ not a selected decoder. It supplies no PNG route, no project dependency, no
 public input policy, no decoder implementation, and no closure of `D-008` or
 `IMG-DEC-001`.
 
+### Hybrid `libjpeg-turbo-rs` + `png` control (2026-08-02)
+
+To test the promising JPEG control alongside the already examined native-Rust
+PNG path, a second disposable Rust `1.94` package combined the exact scalar
+JPEG candidate with `png` `0.18.1`:
+
+```toml
+libjpeg-turbo-rs = { version = "=0.8.0", default-features = false, features = ["std"] }
+png = "=0.18.1"
+```
+
+Its manifest, lockfile, and harness source had SHA-256 values
+`07fd6abd0ec59f12000277db1b5f7af6607f0228778d718154b541484b8105ea`,
+`92fe78da653962bf2b9477f563ac3bd1e6857b0d154187f5504c2140c0603ea9`,
+and `81c1b0a380c5e152c10b74c6890fcfab6dd20093e6c67e43265b3fae9491a594`.
+The 34-package lock pinned the `libjpeg-turbo-rs` checksum recorded above and
+the `png` `0.18.1` checksum
+`60769b8b31b2a9f263dae2776c37b1b28ae246943cf719eb6946a1db05128a61`.
+It contained no `cc`, `cmake`, `bindgen`, or `pkg-config` package. As with the
+other spikes, these are unretained external research artifacts, not repository
+dependencies or a deployment guarantee.
+
+The control used content signatures rather than a filename hint and applied
+the following experimental bounds: 64 MiB encoded input, 16,384-pixel sides,
+40,000,000 pixels, 128 MiB decoder/project BGR buffers, and 100 JPEG scans.
+All fourteen normal 8-bit controls were byte-exact to the frozen OpenCV BGR
+capture: four PNGs (RGB, RGBA with discarded alpha, grayscale, and indexed
+`tRNS`) plus the baseline, progressive, and eight Exif-oriented JPEGs. JPEG
+used strict warnings and the candidate's own Exif orientation application.
+The five negative controls all had their required result: empty input,
+unknown bytes, malformed PNG, the oversized PNG header before a project pixel
+buffer, and content-name confusion. This is exact only for the listed fixture
+streams and control implementation; it does not define project support for
+the relevant PNG/JPEG classes.
+
+The normal control deliberately rejected 16-bit PNG rather than silently
+choosing a conversion policy. A separately labelled diagnostic used the
+`png` crate's `normalize_to_color8()` transform. It had the expected 3-by-2
+geometry and happened to be BGR-byte-exact for the one committed 16-bit PNG.
+One small conversion is not a supported 16-bit policy, color-management
+result, or guarantee for other depths/transfer functions; the input class
+remains unresolved at the public boundary.
+
+The hybrid control repeated the JPEG-only header checks: a modified 1-by-16,385
+SOF failed the typed side limit, and a 7,000-by-5,000 SOF failed the typed
+128 MiB estimated-memory limit before output-scale allocation. Its 1,440
+deterministic JPEG mutations again reported 733 successful decodes, 707
+errors, and zero caught panics. The prior direct-codec PNG mutation record is
+evidence for the same `png` version but was not falsely counted as a hybrid
+fuzz campaign. Debug scalar, debug `libjpeg-turbo-rs` SIMD, and release scalar
+host builds with AVX, AVX2, and FMA disabled produced the same finite results.
+No QEMU run of this exact combined package, general hostile corpus, allocation
+instrumentation, or full work-bound proof was performed.
+
+`cargo-audit` scanned the exact 34-package lockfile against RustSec revision
+`d91a8fc9492378f23cba86b81770c6d16de6ebba`, loaded 1,186 advisories, and
+reported no vulnerability records. It emitted the same two host
+CA-certificate permission warnings. Metadata listed compatible license
+expressions as first-pass data: `libjpeg-turbo-rs` and `png` are `MIT OR
+Apache-2.0`; the known `png` closure includes `simd-adler32` (MIT),
+`miniz_oxide` (`MIT OR Zlib OR Apache-2.0`), and the other previously
+reviewed compatible expressions. This is not a complete source/provenance,
+notice, vulnerability, or distribution review.
+
+The combined path inherits both unresolved unsafe surfaces: the JPEG crate
+uses unchecked/raw-pointer operations even without its optional SIMD feature,
+and the PNG closure includes `simd-adler32` runtime-SIMD unsafe code even
+though `png` itself forbids unsafe code. Consequently, this is a particularly
+useful finite comparison route, not a decision. It adds no dependency, image
+implementation, supported-format policy, or OCR claim, and `D-008` and
+`IMG-DEC-001` remain open.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
@@ -889,11 +961,12 @@ public input policy, no decoder implementation, and no closure of `D-008` or
 | Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Complete unsafe/native/notice review; strict allocation/CPU-resource proof; broader malicious/fuzz corpus; model-preprocessing comparison; and a supported/unsupported policy for divergent JPEG/16-bit/alpha/ICC cases. | Full committed input-oracle replay and first-pass advisory/license graph review are recorded, but no candidate is selected. |
 | Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, a runnable Rust binding, and proof that the selected build improves M2 oracle fidelity enough to justify the boundary. | A command-level libjpeg-turbo control is byte-exact for the ten committed JPEGs, but no Rust binding or deployment configuration is qualified or authorized. |
 | Evaluate `libjpeg-turbo-rs` 0.8.0 as a JPEG-only route | Its recorded scalar and SIMD controls are byte-exact for the ten committed JPEGs without a C build dependency. | Full source/provenance/notice/unsafe review; broader bounded hostile corpus; independent allocation/work measurements; concurrency and CPU-portability qualification; and a complete PNG/input-policy route. | Exact finite JPEG and header-limit controls are recorded, but its unchecked/raw-pointer/SIMD surface and all non-JPEG work remain open; it is not selected. |
+| Evaluate `libjpeg-turbo-rs` 0.8.0 plus `png` 0.18.1 | The combined scalar/SIMD control is byte-exact for all fourteen committed 8-bit PNG/JPEG inputs and handles the five negative controls without a C build dependency. | The separate JPEG and PNG unsafe closures; full hostile corpus; allocation/work/concurrency/physical-baseline CPU proof; 16-bit/color/ICC/APNG policy; and complete notices/provenance review. | Useful exact finite combined control only. It deliberately rejects 16-bit PNG in normal mode and has no selected input contract or decoder implementation. |
 | Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it remains a comparison route, not an accepted candidate. |
 
-Subject to the unresolved gates, the evidence supports retaining both
-pure-Rust paths and the native numerical control as distinct comparison routes
-while investigating whether one decoder can satisfy the actual image and
+Subject to the unresolved gates, the evidence supports retaining the direct,
+hybrid, facade, and native numerical paths as distinct comparison routes while
+investigating whether one decoder can satisfy the actual image and
 model-preprocessing contract. That is not `D-008` resolution: exact behaviour
 and resource safety are more important than the library name.
 
