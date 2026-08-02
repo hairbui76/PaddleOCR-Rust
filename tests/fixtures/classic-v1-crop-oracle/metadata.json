@@ -38,7 +38,8 @@
   "tests": [
     "crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases",
     "crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases",
-    "crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases"
+    "crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases",
+    "geometry::tests::classic_crop_plan_matches_recorded_opencv_interior_mappings"
   ],
   "limitations": [
     "This is an exact regression fixture only for its ten self-authored BGR cases and recorded capture environment.",

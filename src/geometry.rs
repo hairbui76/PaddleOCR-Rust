@@ -1347,6 +1347,80 @@ mod tests {
     }
 
     #[test]
+    fn classic_crop_plan_matches_recorded_opencv_interior_mappings() {
+        // The fixture records cv2.getPerspectiveTransform matrices for these
+        // self-authored BGR cases. Expected values below are independent
+        // cv2.perspectiveTransform evaluations at non-corner source points;
+        // this checks source-to-warp mapping rather than only our own inverse
+        // round trip. The crop fixture remains the authoritative provenance
+        // record for the matrices and capture environment.
+        const CAPTURED_OPENCV_CROP_ORACLE: &str =
+            include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
+        for fixture_id in [
+            "classic-v1-crop-oracle-phase-projective-bgr-8x8",
+            "classic-v1-crop-oracle-single-pixel-bgr-3x3",
+            "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
+        ] {
+            assert!(
+                CAPTURED_OPENCV_CROP_ORACLE.contains(fixture_id),
+                "fixture record is missing {fixture_id}"
+            );
+        }
+
+        let phase_plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
+            [
+                point(0.125, 0.375),
+                point(6.875, 0.625),
+                point(6.625, 6.875),
+                point(0.375, 6.625),
+            ],
+        ))));
+        assert_point_close_with_tolerance(
+            must_ok(phase_plan.map_source_to_warp(point(1.25, 2.75))),
+            point(0.945_537_9, 2.135_404_6),
+            2.0e-4,
+        );
+        assert_point_close_with_tolerance(
+            must_ok(phase_plan.map_source_to_warp(point(5.5, 4.125))),
+            point(4.858_648_3, 3.291_792_2),
+            2.0e-4,
+        );
+
+        let single_pixel_plan = must_ok(classic_perspective_crop_plan(must_ok(
+            Quadrilateral::new([
+                point(0.49, 0.49),
+                point(1.49, 0.49),
+                point(1.49, 1.49),
+                point(0.49, 1.49),
+            ]),
+        )));
+        assert_point_close_with_tolerance(
+            must_ok(single_pixel_plan.map_source_to_warp(point(0.8, 0.9))),
+            point(0.31, 0.409_999_97),
+            2.0e-4,
+        );
+
+        let tall_thin_plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
+            [
+                point(0.4, 0.1),
+                point(1.8, 0.2),
+                point(1.6, 7.9),
+                point(0.2, 7.6),
+            ],
+        ))));
+        assert_point_close_with_tolerance(
+            must_ok(tall_thin_plan.map_source_to_warp(point(1.0, 3.3))),
+            point(0.494_374_3, 2.909_733_8),
+            2.0e-4,
+        );
+        assert_point_close_with_tolerance(
+            must_ok(tall_thin_plan.map_source_to_warp(point(0.75, 6.1))),
+            point(0.368_594_86, 5.517_241),
+            2.0e-4,
+        );
+    }
+
+    #[test]
     fn classic_crop_plan_rejects_an_edge_that_truncates_to_zero() {
         let source = quadrilateral(0.0, 0.0, 0.9, 10.0);
 

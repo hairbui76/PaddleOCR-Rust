@@ -75,6 +75,12 @@ agreement is evidence only for these self-authored BGR cases and this recorded
 environment. It is not a claim of universal OpenCV interpolation parity,
 upstream-environment parity, decoded-image behavior, or OCR compatibility.
 
+`geometry::tests::classic_crop_plan_matches_recorded_opencv_interior_mappings`
+also checks selected non-corner source-to-warp coordinates against
+`cv2.perspectiveTransform` evaluations of the captured matrices for the phase,
+one-pixel, and tall-thin cases. This is narrow mapping evidence for those
+recorded matrices, not general OpenCV homography equivalence.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.
