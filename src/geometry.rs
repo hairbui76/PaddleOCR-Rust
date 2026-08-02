@@ -924,6 +924,11 @@ fn round_ties_to_even(value: f64) -> u32 {
 mod tests {
     use super::*;
 
+    const MINIMUM_AREA_CANDIDATE_INPUT: &str =
+        include_str!("../tests/fixtures/classic-v1-geometry-min-area-candidate/input.csv");
+    const MINIMUM_AREA_CANDIDATE_EXPECTED: &str =
+        include_str!("../tests/fixtures/classic-v1-geometry-min-area-candidate/expected.csv");
+
     fn dimensions(width: u32, height: u32) -> ImageDimensions {
         match ImageDimensions::new(width, height) {
             Ok(value) => value,
@@ -988,9 +993,39 @@ mod tests {
     {
         match value.parse() {
             Ok(parsed) => parsed,
-            Err(error) => panic!(
-                "inverse-mapping fixture line {line_number} has invalid {field} value {value:?}: {error}"
-            ),
+            Err(error) => {
+                panic!("fixture line {line_number} has invalid {field} value {value:?}: {error}")
+            }
+        }
+    }
+
+    fn parse_fixture_points(fixture: &str, fixture_name: &str) -> Vec<Point> {
+        fixture
+            .lines()
+            .enumerate()
+            .filter(|(_, line)| !line.is_empty() && !line.starts_with('#'))
+            .map(|(line_index, line)| {
+                let mut values = line.split(',');
+                let x = match values.next() {
+                    Some(value) => parse_or_panic::<f32>(value, "x", line_index + 1),
+                    None => panic!("{fixture_name} line {} is missing x", line_index + 1),
+                };
+                let y = match values.next() {
+                    Some(value) => parse_or_panic::<f32>(value, "y", line_index + 1),
+                    None => panic!("{fixture_name} line {} is missing y", line_index + 1),
+                };
+                if values.next().is_some() {
+                    panic!("{fixture_name} line {} has extra values", line_index + 1);
+                }
+                point(x, y)
+            })
+            .collect()
+    }
+
+    fn fixture_comment_value<'a>(fixture: &'a str, prefix: &str) -> &'a str {
+        match fixture.lines().find_map(|line| line.strip_prefix(prefix)) {
+            Some(value) => value.trim(),
+            None => panic!("fixture is missing comment prefix {prefix:?}"),
         }
     }
 
@@ -1685,6 +1720,31 @@ mod tests {
         assert_f64_close(candidate.short_side(), 6.0);
         let candidate_polygon = polygon(candidate.quadrilateral().points().to_vec());
         assert_f64_close(polygon_area(&candidate_polygon), 48.0);
+    }
+
+    #[test]
+    fn minimum_area_candidate_matches_self_authored_fixture() {
+        let input = polygon(parse_fixture_points(
+            MINIMUM_AREA_CANDIDATE_INPUT,
+            "minimum-area candidate input",
+        ));
+        let expected = parse_fixture_points(
+            MINIMUM_AREA_CANDIDATE_EXPECTED,
+            "minimum-area candidate expected",
+        );
+        let expected_short_side = parse_or_panic::<f64>(
+            fixture_comment_value(MINIMUM_AREA_CANDIDATE_EXPECTED, "# short_side:"),
+            "short_side",
+            0,
+        );
+
+        let candidate = must_some(must_ok(minimum_area_quad_candidate(&input)));
+
+        assert_eq!(
+            candidate.quadrilateral().points().as_slice(),
+            expected.as_slice()
+        );
+        assert_eq!(candidate.short_side(), expected_short_side);
     }
 
     #[test]

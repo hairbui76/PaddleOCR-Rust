@@ -1,0 +1,34 @@
+{
+  "fixture_id": "classic-v1-geometry-min-area-candidate",
+  "kind": "component_unit",
+  "reviewed_on": "2026-08-02",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.csv",
+    "sha256": "2237e24df3e7a18b47d9a94efb2f55a2c867212070018cc2d09a354383d25afd",
+    "sha256_scope": "UTF-8 bytes of input.csv.",
+    "provenance": "Self-authored concave and collinear polygon vertices for the private minimum-area candidate.",
+    "license": "Apache-2.0"
+  },
+  "expected": {
+    "path": "expected.csv",
+    "sha256": "466efd8f20603e1dba031ecd2f3daacb17667a796550f1ea3f88f6bc36eaa76e",
+    "sha256_scope": "UTF-8 bytes of expected.csv.",
+    "schema_version": "paddleocr-rust/minimum-area-quad-candidate/v1",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "artifacts": null,
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:get_mini_boxes"
+    ]
+  },
+  "tests": [
+    "geometry::tests::minimum_area_candidate_matches_self_authored_fixture"
+  ],
+  "limitations": [
+    "This verifies only the private convex-hull/per-edge minimum-area candidate.",
+    "It does not establish OpenCV minAreaRect, contour, polygon offset, detector, or OCR equivalence."
+  ]
+}

@@ -1,0 +1,6 @@
+# PaddleOCR-Rust expected minimum-area candidate
+# short_side: 6.0
+4.0,3.0
+12.0,3.0
+12.0,9.0
+4.0,9.0

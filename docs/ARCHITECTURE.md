@@ -15,7 +15,7 @@ has code and tests; empty module trees and speculative traits are avoided.
 |---|---|---|
 | `error` | Stable structured error categories and `Result` alias. | Public foundation API. |
 | `types` | Checked encoded-byte boundary, dimensions, geometry values, transforms, scores, model identity, page index, and recognized text. | Public foundation API; it does not decode images. |
-| `geometry` | Private classic detector resize/pad planning, detector-map-to-source rescale/round/clip, quadrilateral order/clip/filter, stable reading-order sort, polygon area/perimeter metrics, a bounded minimum-area quadrilateral candidate, and no-allocation perspective crop plan with forward/inverse homographies. | Early `GEO-001` slice; no image decode, contour extraction, polygon offset, OpenCV rectangle-equivalence claim, or public OCR API. |
+| `geometry` | Private classic detector resize/pad planning, detector-map-to-source rescale/round/clip, quadrilateral order/clip/filter, stable reading-order sort, polygon area/perimeter metrics, a bounded minimum-area quadrilateral candidate, and no-allocation perspective crop plan with forward/inverse homographies. | Completed `GEO-001` private foundation; no image decode, contour extraction, polygon offset, OpenCV rectangle-equivalence claim, or public OCR API. |
 | `db` | Private checked borrowed one-map DB segmentation with fixed strict M2 threshold and bounded byte-mask output. | `DB-001` only; no runtime tensor ABI, contours, scoring, polygon expansion, boxes, or detector support. |
 | `ctc` | Private checked borrowed one-matrix greedy CTC index decoding with classic tie/repeat/blank/mean rules. | `CTC-001` only; no dictionary, text, batch/runtime ABI, or recognizer support. |
 | `crop` | Private checked interleaved byte buffer plus perspective sampling, replicated borders, and discrete counter-clockwise post-warp rotation. | Early `CROP-001` slice; no decoder, color-space/alpha policy, public image type, or OpenCV bit-equivalence claim. |
@@ -30,7 +30,7 @@ roadmap items begin:
 | Boundary | Owning roadmap work | Required rule |
 |---|---|---|
 | Image decoding and remaining input limits | `IMG-*` | Decode checked untrusted bytes with explicit format, dimension, metadata, pixel, and allocation bounds. |
-| Remaining geometry operations | `GEO-*` | Preserve documented coordinate order and inverse transforms for clipping, contours, offsets, and polygons. |
+| Detector contour/offset postprocessing | `DET-003` | Preserve selected OpenCV-equivalent contour, rectangle, offset, score, scale, and output ordering semantics only after its runtime and fixture gates. |
 | Tensor preprocessing | `TEN-*`, `PRE-001` | Validate dtype, layout, shape, stride, normalization, and allocations. |
 | Artifact manifest/resolution | `MOD-*` | Require local identity, hash, format, tensor ABI, and provenance. |
 | Inference backend adapter | `RT-*` | Keep backend types private and validate every allocation/tensor boundary. |

@@ -23,10 +23,13 @@ Each fixture set must add a reviewable metadata record containing at least:
 
 ## Golden format
 
-Use UTF-8 JSON for structured expected results. A golden must record its schema
-version, fixture identifier, upstream baseline, model/artifact identity, and
-comparison tolerance in addition to its observable output. Golden review is a
-source-code review step; overwriting a snapshot is never evidence of parity.
+Use UTF-8 JSON for structured end-to-end expected results. A component-unit
+fixture may instead use a small UTF-8 CSV or text grammar when its metadata
+declares a schema version and comparison profile. A golden must record its
+schema version, fixture identifier, upstream baseline, model/artifact identity,
+and comparison tolerance in addition to its observable output. Golden review
+is a source-code review step; overwriting a snapshot is never evidence of
+parity.
 
 ## Safety rule
 
