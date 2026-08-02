@@ -149,6 +149,16 @@ or non-finite model-map data, and bound the generated mask. It does not
 validate runtime tensor rank/batching, implement any later step, or constitute
 a detector output/compatibility claim.
 
+`DB-002` consumes only that private binary bitmap and identifies bounded
+8-connected foreground components in deterministic row-major-seed order. Its
+output is limited to component pixel counts and inclusive map-coordinate
+bounds. It permits at most `1000` components and at most `1,000,000` pending
+scanline seeds per component, returning a resource error rather than silently
+dropping regions. It is not step 3: it does not implement OpenCV `RETR_LIST`,
+holes or hierarchy, `CHAIN_APPROX_SIMPLE`, contour points/order, minimum-area
+geometry, scores, unclip, rescaling, or a detector result. `DET-003` remains
+responsible for those semantics after its detector/runtime gates.
+
 The contour library, polygon offset implementation, rounding, and exact
 inverse-transform behavior must be chosen in P4/P5 only after differential
 fixtures prove the `QUALITY_PROFILE.md` geometry budget.

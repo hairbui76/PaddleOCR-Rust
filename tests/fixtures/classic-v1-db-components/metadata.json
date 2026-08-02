@@ -1,0 +1,34 @@
+{
+  "fixture_id": "classic-v1-db-components",
+  "kind": "component_unit",
+  "reviewed_on": "2026-08-02",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.csv",
+    "sha256": "f1f9193224c047ec3b04efaa8a38c927be2dbb2663f20cfcde19ff0348f2ee75",
+    "sha256_scope": "UTF-8 bytes of input.csv.",
+    "provenance": "Self-authored row-major zero/one bitmap exercising diagonal 8-connectivity and row-major component seeds.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:boxes_from_bitmap"
+    ]
+  },
+  "artifacts": null,
+  "expected": {
+    "path": "expected.csv",
+    "schema_version": "paddleocr-rust/db-components/v1",
+    "sha256": "a7a9a60add3db3d898ebc1af897a15723bbb92c6cb3e6904902d734368b27527",
+    "sha256_scope": "UTF-8 bytes of expected.csv.",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "db::tests::classic_db_components_match_self_authored_fixture"
+  ],
+  "limitations": [
+    "This verifies only a private bounded 8-connected component scan over an already thresholded bitmap.",
+    "It is not an OpenCV contour, hierarchy, CHAIN_APPROX_SIMPLE, score, geometry, detector result, or OCR output."
+  ]
+}

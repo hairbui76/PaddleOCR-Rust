@@ -38,6 +38,10 @@ not replace source review, artifact-term review, or oracle/model equivalence.
 Its dev-only SHA-256 implementation uses the `sha2` `force-soft` feature, so
 the hash check itself does not select a CPU-dispatched test path.
 
+`classic-v1-db-components` is a self-authored component-unit fixture. It
+records only private 8-connected bitmap components; it is not a model tensor,
+OpenCV contour, or detector result fixture.
+
 ## Golden format
 
 Use UTF-8 JSON for structured end-to-end expected results. A component-unit

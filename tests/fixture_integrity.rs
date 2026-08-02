@@ -52,6 +52,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
 
     let expected_ids = BTreeSet::from([
         "classic-v1-crop-oracle".to_owned(),
+        "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
