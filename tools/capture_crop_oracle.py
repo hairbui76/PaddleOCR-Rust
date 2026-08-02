@@ -214,6 +214,21 @@ CASES: tuple[CropCase, ...] = (
             (1.5553478002548218, 12.413676261901855),
         ),
     ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-perspective-lu-bgr-12x13",
+        description=(
+            "A high-variation BGR crop distinguishes OpenCV "
+            "getPerspectiveTransform float32 coefficient construction and "
+            "default LU solving from a generic f64 homography solve."
+        ),
+        rows=lcg_bgr_rows(12, 13, 384_875_819),
+        points=(
+            (1.9549548625946045, -1.7108573913574219),
+            (12.976837158203125, 0.12843433022499084),
+            (10.688947677612305, 12.063116073608398),
+            (-0.5748963952064514, 14.746376991271973),
+        ),
+    ),
 )
 
 

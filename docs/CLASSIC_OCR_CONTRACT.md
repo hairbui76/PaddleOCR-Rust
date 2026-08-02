@@ -200,9 +200,12 @@ bytes from OpenCV 5.0.0 / opencv-python-headless 5.0.0.93 for identity,
 replicated-border, fractional-projective, tall-rotation, non-linear interior,
 all-side-border, tall-projective, eighth-pixel, one-pixel, tall-thin, and a
 high-variation cubic-rounding case plus a high-variation cubic-weight-order
-case and a high-variation sampling-matrix case. Its `f32` sampler preserves
-OpenCV 5.0.0's four-weight construction order and its source-to-warp inversion
-plus row-evaluation boundary for those rounding cases. It proves an exact
+case, a high-variation sampling-matrix case, and a high-variation
+perspective-LU case. Its `f32` sampler preserves OpenCV 5.0.0's four-weight
+construction order and its source-to-warp inversion plus row-evaluation
+boundary; its private matrix construction preserves the reviewed float32
+coefficient products, equation order, default LU solve, and 3-by-3 inverse for
+the perspective-LU regression. It proves an exact
 regression only for those inputs and recorded environment; additional approved
 captures must
 establish any broader OpenCV `INTER_CUBIC` rounding, fixed-point, or

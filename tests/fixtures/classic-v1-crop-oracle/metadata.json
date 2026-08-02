@@ -5,8 +5,8 @@
   "contains_personal_data": false,
   "input": {
     "path": "capture.json#/cases/*/input",
-    "sha256": "74abe83c1505bb95ed6f1b7d23557916376c23b6fda68e3431f173fa04551c72",
-    "sha256_scope": "Concatenation of the thirteen raw C-order input byte arrays in capture document order.",
+    "sha256": "96721ab8bb51f6a40de1761068dd43dcb6378943fcfaad48af256296a8e0bd02",
+    "sha256_scope": "Concatenation of the fourteen raw C-order input byte arrays in capture document order.",
     "provenance": "Self-authored in-memory BGR uint8 values emitted by tools/capture_crop_oracle.py.",
     "license": "Apache-2.0"
   },
@@ -19,7 +19,7 @@
   "artifacts": null,
   "oracle": {
     "generator": "tools/capture_crop_oracle.py",
-    "capture_sha256": "2172254d8dd9d7fee979d61abf0fc3fe32a84572ffd0f44bc7bfe30626f1e07f",
+    "capture_sha256": "7dcb1acbf1cb7a1e70c1a211f4583f11c11e23af0c2bad12b21a7641d92e7751",
     "environment": {
       "python": "3.12.3",
       "numpy": "2.5.1",
@@ -32,15 +32,15 @@
     "path": "capture.json#/cases/*/output",
     "schema_version": "paddleocr-rust/crop-oracle/v1",
     "comparison_profile": "m2-unit-v1",
-    "sha256": "acbb9cc0f73b828bac63d4ea68da21892da88133c2380b60b55257285cfd9499",
-    "sha256_scope": "Concatenation of the thirteen raw C-order output byte arrays in capture document order."
+    "sha256": "275ec869d94fc15cb8ecd8c4ad7f8ccb0f50a747523036fb5ad6ddfd48b8859d",
+    "sha256_scope": "Concatenation of the fourteen raw C-order output byte arrays in capture document order."
   },
   "geometry_oracle": {
     "path": "inverse-mappings.csv",
     "schema_version": "paddleocr-rust/crop-inverse-mappings/v1",
     "comparison_profile": "m2-unit-v1",
-    "sha256": "b5daf2b1195ca9d63e2d5ab4e59c2f994d0c373122c2bb2857bb3c064e35aca5",
-    "sha256_scope": "All sixty-five non-comment CSV rows, generated in document order from the thirteen self-authored BGR crop cases.",
+    "sha256": "6fec6e7dd72f392d0b0ec100294649f0d8f1ade51c416cdbbcd75bc893d7b5a9",
+    "sha256_scope": "All seventy non-comment CSV rows, generated in document order from the fourteen self-authored BGR crop cases.",
     "provenance": "OpenCV 5.0.0 cv2.getPerspectiveTransform with destination/source order reversed, then cv2.perspectiveTransform at four destination boundaries and one interior coordinate per case."
   },
   "tests": [
@@ -50,11 +50,12 @@
     "crop::tests::classic_crop_matches_cubic_rounding_opencv_oracle_case",
     "crop::tests::classic_crop_matches_cubic_weight_construction_opencv_oracle_case",
     "crop::tests::classic_crop_matches_sampling_matrix_opencv_oracle_case",
+    "crop::tests::classic_crop_matches_perspective_lu_opencv_oracle_case",
     "geometry::tests::classic_crop_plan_matches_recorded_opencv_interior_mappings",
     "geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle"
   ],
   "limitations": [
-    "This is an exact regression fixture only for its thirteen self-authored BGR cases and recorded capture environment.",
+    "This is an exact regression fixture only for its fourteen self-authored BGR cases and recorded capture environment.",
     "It does not establish image-decoder, RGB/BGR conversion, alpha, orientation, detector, recognizer, model, or end-to-end OCR compatibility.",
     "It does not establish universal or upstream-environment OpenCV INTER_CUBIC bit equivalence."
   ]

@@ -862,6 +862,72 @@
         "width": 12
       },
       "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A high-variation BGR crop distinguishes OpenCV getPerspectiveTransform float32 coefficient construction and default LU solving from a generic f64 homography solve.",
+      "fixture_id": "classic-v1-crop-oracle-perspective-lu-bgr-12x13",
+      "input": {
+        "base64": "yy7p0C33KSIelk5ujfDBrper0ZCsNqrcFygzyjszOTAVQbCd2Gfj4rrH4IlGmYQ9wt/fN4GT7BE3Q8S0m23IMfYYc7dpa84FBFOw+gFoRSy2rY+kDtXUKqgpLL/lQqYqgSa1wn9+286NA8YpK0FNDiJZESApaqAs07heNf/JprJ+Ac8prIASgxtJfsKk7Hf6Z0tntqEioB9ZcaGjQvsu4mll7Rp2tIxvpjeLsr0WM42cEWY2NTM5EAx7kdt8uDdYcjEQh1nBeeFahvEuP02E5opauDWaN+MP854c8O3ATjR8ZgomwrMbK5qRCaxlCAKor/3dC3gqKzFISYU9TLuWHSEshXEU+Mqj+VmB5t+e2fs98ibTbG6yj3uOZF7CM8M9q879pqVk7qRBgFre0EzIihtVuG4FyCxELyKkNOyWIUAau8LIwC8Ijm9Q6dTPMSOF4WeQf8liYnI7X4Tk2zeLWCOE95uj86rBs7LXUOhS0p/ejXlvL8gxPKlEl9gWS3U6LeKWq4CweqVyOCEemphQEBRRGGql7YnMuHDFvJTt5CFUrmlEfsk0pEYVGUzZzq2UOV7hX4okcE7cLEiBxRtwymnoE3q4BaUt+yFjLgyljGq2hR8D",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "d5a4a83b9e614db7035e3aaad14006dfe289725605cdc3f0aeebbd10e13d2b1f",
+        "shape": [
+          13,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "LCEjnoWPm8y72oumT7HkBjI/ySk0WxUFL3xzP7u3QbCcMxg9nWGDmOK/2I+qa6/dHFR4hGkwXHklWJlFbc0pbsocoWZplWtBsd7hjD1jnWxud5HZba54ce1Rjs9aGNUAFtQA6l+OsHyFINreL5ZCNbqwWGxNoS+m2oiGvdaQR690WaiGTABfUXBJr7J5If+1e8B2EsMWtV4afSpWd8Co13rt6Gf2f3woaEVnYfxGvZx07CR3lo9qsUNzqK0WPp+UHm1kGF04MCRVuKp/blkun0qOq5prrfE1TDd/4pdMylebUoxVE9oA0sCrVE52lS0CYX9yF715EnJhbrS3bptfdDZQZVhPQMobT2taZ1Eu449pzbB2cvhsXzOjl4LraLyFGEpKNEthQow7hLKzyI4Sx5Tk4Uak2bhL/4dTsB68XHSiiH+hW2a0OLxIsEou8MqOQy604FGzfEAysVwWmR9sIlOvNOmGFz4lfqWQp6emutarZlKFoo5jaNNTW3VSdnjmyyCIQk6EmXBm3KKtpKJeF2F2xYaySbxPPqZPkdoWQntfZa6agkmpy4+d6KKaSWfPM0VKanHC1WTDsprw6EVNqlozNOpemaSClZCVW31RMlf6apMjUELVdiRg4VbQgFW/bWtJn6I3n3sNbDliKWfKNVn1XIomYkjeXzBo6jqvVXjrAK5hmGM2uBR0RCSPT1fQ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e3644a08b4e2b50dbb4d01a2fe64498c16d60a26a05c6cc9adcd4e2751f26caa",
+        "shape": [
+          16,
+          11,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.675048896683978,
+          0.10377036995691881,
+          -1.1421538186167768
+        ],
+        [
+          -0.1443628004158003,
+          0.8650883246940563,
+          1.7622655131304785
+        ],
+        [
+          -0.023532562208985187,
+          -0.006841862032112408,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          1.9549548625946045,
+          -1.7108573913574219
+        ],
+        [
+          12.976837158203125,
+          0.12843433022499084
+        ],
+        [
+          10.688947677612305,
+          12.063116073608398
+        ],
+        [
+          -0.5748963952064514,
+          14.746376991271973
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 16,
+        "width": 11
+      },
+      "rotates_counter_clockwise": false
     }
   ],
   "environment": {

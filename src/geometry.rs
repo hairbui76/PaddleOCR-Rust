@@ -121,51 +121,34 @@ struct ProjectiveTransform {
 
 impl ProjectiveTransform {
     fn inverse(self) -> Result<Self> {
-        let mut matrix = [[0.0; 6]; 3];
-        for (row, values) in matrix.iter_mut().enumerate() {
-            values[..3].copy_from_slice(&self.coefficients[row * 3..row * 3 + 3]);
-            values[row + 3] = 1.0;
+        let [a00, a01, a02, a10, a11, a12, a20, a21, a22] = self.coefficients;
+        let determinant = a00 * (a11 * a22 - a12 * a21) - a01 * (a10 * a22 - a12 * a20)
+            + a02 * (a10 * a21 - a11 * a20);
+        if !determinant.is_finite() {
+            return Err(Error::InvalidInput {
+                field: "perspective.matrix",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        if determinant == 0.0 {
+            return Err(Error::InvalidInput {
+                field: "perspective.matrix",
+                violation: InputViolation::DegenerateGeometry,
+            });
         }
 
-        for pivot_column in 0..3 {
-            let mut pivot_row = pivot_column;
-            for candidate_row in (pivot_column + 1)..3 {
-                if matrix[candidate_row][pivot_column].abs() > matrix[pivot_row][pivot_column].abs()
-                {
-                    pivot_row = candidate_row;
-                }
-            }
-            if matrix[pivot_row][pivot_column] == 0.0 {
-                return Err(Error::InvalidInput {
-                    field: "perspective.matrix",
-                    violation: InputViolation::DegenerateGeometry,
-                });
-            }
-            matrix.swap(pivot_column, pivot_row);
-
-            let pivot = matrix[pivot_column][pivot_column];
-            for entry in &mut matrix[pivot_column][pivot_column..] {
-                *entry /= pivot;
-            }
-            let pivot_values = matrix[pivot_column];
-            for (row_index, row_values) in matrix.iter_mut().enumerate() {
-                if row_index == pivot_column {
-                    continue;
-                }
-                let factor = row_values[pivot_column];
-                if factor == 0.0 {
-                    continue;
-                }
-                for (entry, pivot_entry) in row_values[pivot_column..]
-                    .iter_mut()
-                    .zip(pivot_values[pivot_column..].iter())
-                {
-                    *entry -= factor * *pivot_entry;
-                }
-            }
-        }
-
-        let coefficients = core::array::from_fn(|index| matrix[index / 3][index % 3 + 3]);
+        let reciprocal_determinant = 1.0 / determinant;
+        let coefficients = [
+            (a11 * a22 - a12 * a21) * reciprocal_determinant,
+            (a02 * a21 - a01 * a22) * reciprocal_determinant,
+            (a01 * a12 - a02 * a11) * reciprocal_determinant,
+            (a12 * a20 - a10 * a22) * reciprocal_determinant,
+            (a00 * a22 - a02 * a20) * reciprocal_determinant,
+            (a02 * a10 - a00 * a12) * reciprocal_determinant,
+            (a10 * a21 - a11 * a20) * reciprocal_determinant,
+            (a01 * a20 - a00 * a21) * reciprocal_determinant,
+            (a00 * a11 - a01 * a10) * reciprocal_determinant,
+        ];
         if coefficients.iter().any(|value| !value.is_finite()) {
             return Err(Error::InvalidInput {
                 field: "perspective.matrix",
@@ -388,22 +371,27 @@ pub(crate) fn classic_order_clip_filter_quad(
 pub(crate) fn classic_perspective_crop_plan(
     source: Quadrilateral,
 ) -> Result<ClassicPerspectiveCropPlan> {
-    let source_points = source.points().map(point_coordinates);
+    let source_coordinates = source.points().map(point_coordinates);
     let warp_width = truncated_crop_extent(
-        euclidean_distance(source_points[0], source_points[1])
-            .max(euclidean_distance(source_points[2], source_points[3])),
+        euclidean_distance(source_coordinates[0], source_coordinates[1]).max(euclidean_distance(
+            source_coordinates[2],
+            source_coordinates[3],
+        )),
         "classic_crop.width",
     )?;
     let warp_height = truncated_crop_extent(
-        euclidean_distance(source_points[0], source_points[3])
-            .max(euclidean_distance(source_points[1], source_points[2])),
+        euclidean_distance(source_coordinates[0], source_coordinates[3]).max(euclidean_distance(
+            source_coordinates[1],
+            source_coordinates[2],
+        )),
         "classic_crop.height",
     )?;
+    let source_points = source.points().map(|point| (point.x(), point.y()));
     let destination = [
         (0.0, 0.0),
-        (f64::from(warp_width), 0.0),
-        (f64::from(warp_width), f64::from(warp_height)),
-        (0.0, f64::from(warp_height)),
+        (warp_width as f32, 0.0),
+        (warp_width as f32, warp_height as f32),
+        (0.0, warp_height as f32),
     ];
     let source_to_warp = homography_for_corners(source_points, destination)?;
     let warp_to_source = source_to_warp.inverse()?;
@@ -844,35 +832,37 @@ fn truncated_crop_extent(value: f64, field: &'static str) -> Result<u32> {
 }
 
 fn homography_for_corners(
-    source: [(f64, f64); 4],
-    destination: [(f64, f64); 4],
+    source: [(f32, f32); 4],
+    destination: [(f32, f32); 4],
 ) -> Result<ProjectiveTransform> {
     let mut matrix = [[0.0; 9]; 8];
     for (index, ((source_x, source_y), (destination_x, destination_y))) in
         source.into_iter().zip(destination).enumerate()
     {
-        let horizontal_row = index * 2;
-        matrix[horizontal_row] = [
-            source_x,
-            source_y,
+        // Keep all horizontal equations before all vertical equations. OpenCV
+        // builds its getPerspectiveTransform system in this order; numerical
+        // row order affects the resulting finite-precision LU solution.
+        matrix[index] = [
+            f64::from(source_x),
+            f64::from(source_y),
             1.0,
             0.0,
             0.0,
             0.0,
-            -destination_x * source_x,
-            -destination_x * source_y,
-            destination_x,
+            f64::from(-source_x * destination_x),
+            f64::from(-source_y * destination_x),
+            f64::from(destination_x),
         ];
-        matrix[horizontal_row + 1] = [
+        matrix[index + 4] = [
             0.0,
             0.0,
             0.0,
-            source_x,
-            source_y,
+            f64::from(source_x),
+            f64::from(source_y),
             1.0,
-            -destination_y * source_x,
-            -destination_y * source_y,
-            destination_y,
+            f64::from(-source_x * destination_y),
+            f64::from(-source_y * destination_y),
+            f64::from(destination_y),
         ];
     }
 
@@ -905,6 +895,9 @@ fn solve_eight_by_eight(mut matrix: [[f64; 9]; 8]) -> Result<[f64; 8]> {
         });
     }
 
+    // This follows the pivot/elimination order of OpenCV's default `DECOMP_LU`
+    // solver for the 8-by-8 getPerspectiveTransform system. Keep the RHS
+    // separate from the factor matrix so its arithmetic remains observable.
     for pivot_column in 0..8 {
         let mut pivot_row = pivot_column;
         for candidate_row in (pivot_column + 1)..8 {
@@ -912,37 +905,38 @@ fn solve_eight_by_eight(mut matrix: [[f64; 9]; 8]) -> Result<[f64; 8]> {
                 pivot_row = candidate_row;
             }
         }
-        if matrix[pivot_row][pivot_column] == 0.0 {
+        if matrix[pivot_row][pivot_column].abs() < f64::EPSILON * 100.0 {
             return Err(Error::InvalidInput {
                 field: "perspective.matrix",
                 violation: InputViolation::DegenerateGeometry,
             });
         }
-        matrix.swap(pivot_column, pivot_row);
-
-        let pivot = matrix[pivot_column][pivot_column];
-        for entry in &mut matrix[pivot_column][pivot_column..] {
-            *entry /= pivot;
+        if pivot_row != pivot_column {
+            matrix.swap(pivot_column, pivot_row);
         }
+
+        let reciprocal_negative_pivot = -1.0 / matrix[pivot_column][pivot_column];
         let pivot_values = matrix[pivot_column];
-        for (row_index, row_values) in matrix.iter_mut().enumerate() {
-            if row_index == pivot_column {
-                continue;
-            }
-            let factor = row_values[pivot_column];
-            if factor == 0.0 {
-                continue;
-            }
-            for (entry, pivot_entry) in row_values[pivot_column..]
+        for lower_row in matrix.iter_mut().skip(pivot_column + 1) {
+            let factor = lower_row[pivot_column] * reciprocal_negative_pivot;
+            for (entry, pivot_entry) in lower_row[pivot_column + 1..8]
                 .iter_mut()
-                .zip(pivot_values[pivot_column..].iter())
+                .zip(pivot_values[pivot_column + 1..8].iter())
             {
-                *entry -= factor * *pivot_entry;
+                *entry += factor * *pivot_entry;
             }
+            lower_row[8] += factor * pivot_values[8];
         }
     }
 
-    let solution = matrix.map(|row| row[8]);
+    let mut solution = matrix.map(|row| row[8]);
+    for row in (0..8).rev() {
+        let mut value = solution[row];
+        for column in (row + 1)..8 {
+            value -= matrix[row][column] * solution[column];
+        }
+        solution[row] = value / matrix[row][row];
+    }
     if solution.iter().any(|value| !value.is_finite()) {
         return Err(Error::InvalidInput {
             field: "perspective.matrix",
@@ -1611,7 +1605,7 @@ mod tests {
         // The sidecar was captured from cv2.getPerspectiveTransform with the
         // destination/source order reversed, followed by
         // cv2.perspectiveTransform. It checks the pre-rotation warp-to-source
-        // direction used by the private crop sampler against all thirteen reviewed
+        // direction used by the private crop sampler against all fourteen reviewed
         // BGR cases, including each destination boundary and one interior
         // coordinate per case. It is a self-authored, environment-specific
         // component oracle rather than a general OpenCV-equivalence claim.
@@ -1619,7 +1613,7 @@ mod tests {
             include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
         const CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE: &str =
             include_str!("../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv");
-        const EXPECTED_FIXTURE_IDS: [&str; 13] = [
+        const EXPECTED_FIXTURE_IDS: [&str; 14] = [
             "classic-v1-crop-oracle-identity-bgr-3x2",
             "classic-v1-crop-oracle-border-replicate-bgr-3x2",
             "classic-v1-crop-oracle-projective-bgr-4x3",
@@ -1633,6 +1627,7 @@ mod tests {
             "classic-v1-crop-oracle-cubic-rounding-bgr-8x10",
             "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10",
             "classic-v1-crop-oracle-sampling-matrix-bgr-12x11",
+            "classic-v1-crop-oracle-perspective-lu-bgr-12x13",
         ];
 
         assert!(
@@ -1710,7 +1705,7 @@ mod tests {
             mapping_count += 1;
         }
 
-        assert_eq!(mapping_count, 65, "unexpected inverse-mapping sample count");
+        assert_eq!(mapping_count, 70, "unexpected inverse-mapping sample count");
         for fixture_id in EXPECTED_FIXTURE_IDS {
             let sample_count = CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE
                 .lines()
