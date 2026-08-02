@@ -540,6 +540,21 @@ mod tests {
     }
 
     #[test]
+    fn classic_db_components_match_an_independent_exhaustive_four_by_four_reference() {
+        for mask in 0_u32..(1_u32 << 16) {
+            let values = (0..16)
+                .map(|bit| u8::from((mask & (1_u32 << bit)) != 0))
+                .collect::<Vec<_>>();
+            let bitmap = binary_bitmap(4, 4, &values);
+
+            let actual = must_ok(classic_db_connected_components(&bitmap));
+            let expected = reference_components(4, 4, &values);
+
+            assert_eq!(actual, expected, "mask {mask:#018b}");
+        }
+    }
+
+    #[test]
     fn classic_db_components_reject_an_excess_of_isolated_regions() {
         let mut values = vec![0_u8; 2_001];
         for value in values.iter_mut().step_by(2) {
