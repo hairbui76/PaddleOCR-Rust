@@ -730,6 +730,72 @@
         "width": 6
       },
       "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A high-variation tall BGR crop catches the f32 cubic-weight construction order at a uint8 rounding boundary.",
+      "fixture_id": "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10",
+      "input": {
+        "base64": "n5K72zy2PkegloKwYF28YVMJpDhV/a0A+WGGuaYhZ0bGthNXBBiXhdWCF+Oj7kuXeGNuMfCCxMPQ9wAOkqUgMLfElbO+SM7m/TJw2NfA2GvwjrxPZRT04TYpzi9RYXG6+n0ykn1E5wFmZ4nfpmHDK2ttOKqR8pt/4BrnH5ZkVAXoZM7+bAwYDq0m1ShM5CFLb6aCu2le",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "742131d356d1ccb68020464706f2fcb599608c180d0a86332142a9ed2f32e668",
+        "shape": [
+          10,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "W1nAgXCDZd9Se2VR/wA69j0z6QBI/3OJly8lmDIyk4OywW+iw516s8+ngs3YXDn6k0JvZZ1uXcLUbrGiOECnn3tTh1VEBqCSfNW7f7V58owpUIBKNjLurzKP5EO9vj2KsBpMkj9cLbCvuH/ngHa6m1+3G4OBti5V",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4f33add350463114c519ec89a4619bb8a4ab9f0f850d8c6ee229d08a8b2d5530",
+        "shape": [
+          4,
+          10,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9481844790969645,
+          -0.03575293213243617,
+          -0.877201297379426
+        ],
+        [
+          0.037407898363193796,
+          0.8817575600355129,
+          0.5541712832409568
+        ],
+        [
+          -4.005754424486372e-05,
+          -0.008938233033109056,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.8999999761581421,
+          -0.6666666865348816
+        ],
+        [
+          5.142857074737549,
+          -0.846666693687439
+        ],
+        [
+          5.142857074737549,
+          9.526315689086914
+        ],
+        [
+          1.2899999618530273,
+          9.676315307617188
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 10,
+        "width": 4
+      },
+      "rotates_counter_clockwise": true
     }
   ],
   "environment": {

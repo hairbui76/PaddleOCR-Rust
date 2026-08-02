@@ -200,12 +200,11 @@ fn cubic_axis_samples(coordinate: f32, length: u32) -> [(u32, f32); 4] {
     debug_assert!(length > 0);
 
     let base = coordinate.floor();
-    [-1.0_f32, 0.0, 1.0, 2.0].map(|offset| {
+    let weights = cubic_weights(coordinate - base);
+    core::array::from_fn(|index| {
+        let offset = index as f32 - 1.0;
         let sample_coordinate = base + offset;
-        (
-            replicated_index(sample_coordinate, length),
-            cubic_weight(coordinate - sample_coordinate),
-        )
+        (replicated_index(sample_coordinate, length), weights[index])
     })
 }
 
@@ -219,19 +218,21 @@ fn replicated_index(coordinate: f32, length: u32) -> u32 {
     }
 }
 
-fn cubic_weight(distance: f32) -> f32 {
-    let distance = distance.abs();
-    let squared = distance * distance;
-    let cubed = squared * distance;
-    if distance <= 1.0 {
-        (CUBIC_COEFFICIENT + 2.0) * cubed - (CUBIC_COEFFICIENT + 3.0) * squared + 1.0
-    } else if distance < 2.0 {
-        CUBIC_COEFFICIENT * cubed - 5.0 * CUBIC_COEFFICIENT * squared
-            + 8.0 * CUBIC_COEFFICIENT * distance
-            - 4.0 * CUBIC_COEFFICIENT
-    } else {
-        0.0
-    }
+fn cubic_weights(alpha: f32) -> [f32; 4] {
+    debug_assert!((0.0..1.0).contains(&alpha));
+
+    // Preserve the OpenCV 5.0.0 bicubic weight construction order rather than
+    // using an algebraically equivalent distance polynomial. The two forms can
+    // differ at a uint8 rounding boundary after f32 arithmetic.
+    let alpha_squared = alpha * alpha;
+    let inverse = 1.0 - alpha;
+    let inverse_squared = inverse * inverse;
+    let first = CUBIC_COEFFICIENT * alpha * inverse_squared;
+    let fourth = CUBIC_COEFFICIENT * alpha_squared * inverse;
+    let second =
+        alpha_squared * ((CUBIC_COEFFICIENT + 2.0) * alpha - (CUBIC_COEFFICIENT + 3.0)) + 1.0;
+    let third = 1.0 - first - second - fourth;
+    [first, second, third, fourth]
 }
 
 fn saturating_round_to_u8(value: f32) -> u8 {
@@ -687,6 +688,37 @@ mod tests {
                 153, 80, 46, 17, 235, 64, 22, 210, 148, 50, 121, 89, 22, 173, 30, 108, 54, 56, 205,
                 107, 120, 40, 136, 38, 5, 46, 157, 134, 74, 196, 224, 176, 121, 230, 209, 127, 228,
                 198,
+            ],
+        );
+    }
+
+    #[test]
+    fn classic_crop_matches_cubic_weight_construction_opencv_oracle_case() {
+        const FIXTURE_ID: &str = "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10";
+        assert!(
+            CAPTURED_OPENCV_CROP_ORACLE.contains(FIXTURE_ID),
+            "fixture record is missing {FIXTURE_ID}"
+        );
+
+        assert_captured_bgr_crop(
+            FIXTURE_ID,
+            dimensions(5, 10),
+            &lcg_bgr_pixels(5, 10, 847_333),
+            [
+                (0.9, -0.666_666_7),
+                (5.142_857, -0.846_666_7),
+                (5.142_857, 9.526_316),
+                (1.29, 9.676_315),
+            ],
+            dimensions(10, 4),
+            &[
+                91, 89, 192, 129, 112, 131, 101, 223, 82, 123, 101, 81, 255, 0, 58, 246, 61, 51,
+                233, 0, 72, 255, 115, 137, 151, 47, 37, 152, 50, 50, 147, 131, 178, 193, 111, 162,
+                195, 157, 122, 179, 207, 167, 130, 205, 216, 92, 57, 250, 147, 66, 111, 101, 157,
+                110, 93, 194, 212, 110, 177, 162, 56, 64, 167, 159, 123, 83, 135, 85, 68, 6, 160,
+                146, 124, 213, 187, 127, 181, 121, 242, 140, 41, 80, 128, 74, 54, 50, 238, 175, 50,
+                143, 228, 67, 189, 190, 61, 138, 176, 26, 76, 146, 63, 92, 45, 176, 175, 184, 127,
+                231, 128, 118, 186, 155, 95, 183, 27, 131, 129, 182, 46, 85,
             ],
         );
     }

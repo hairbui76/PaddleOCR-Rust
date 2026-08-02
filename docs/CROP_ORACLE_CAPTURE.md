@@ -62,11 +62,20 @@ small fractional projective transform, the exact `height / width == 1.5`
 rotation boundary, a non-linear interior projective crop, a non-linear crop
 crossing every image side, a non-linear tall projective crop before rotation,
 eighth-pixel interior phases, a one-by-one fractional result, and a one-pixel
-wide tall projective result, and a high-variation case that crosses a cubic
-half-byte rounding boundary before tall-result rotation. The corpus is BGR only
-because the frozen M2 classic input contract starts from a decoded OpenCV-style
-BGR image.
+wide tall projective result, a high-variation case that crosses a cubic
+half-byte rounding boundary before tall-result rotation, and a high-variation
+tall crop that detects the `f32` cubic-weight construction order. The corpus is
+BGR only because the frozen M2 classic input contract starts from a decoded
+OpenCV-style BGR image.
 Decoder/color/alpha semantics remain separate `D-008` and `IMG-*` work.
+
+The latter regression follows the operation structure of OpenCV 5.0.0's
+`bicubicWeights` source implementation rather than treating an algebraically
+equivalent cubic polynomial as numerically interchangeable. It is a narrow
+source-level explanation for the recorded fixture, not copied OpenCV code or a
+general cross-version pixel-equivalence claim.
+
+- OpenCV 5.0.0 `bicubicWeights` source: https://github.com/opencv/opencv/blob/5.0.0/modules/imgproc/src/warp_kernels.simd.hpp#L7000-L7010
 
 ## Reviewed capture
 
@@ -74,15 +83,15 @@ The reviewed capture is
 [tests/fixtures/classic-v1-crop-oracle/capture.json](../tests/fixtures/classic-v1-crop-oracle/capture.json).
 It was captured on 2026-08-02 with Python 3.12.3, NumPy 2.5.1, OpenCV 5.0.0,
 and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
-`8c2407281ef005751b0ee3b03e9eade36341155a9a605e2865fb2aa3c27d7032`;
+`002e012b0a0b0b7ccd295625e9b9e4bbca75341bfa01b1bf9924a1e734c6295a`;
 [metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
 The sidecar
 [tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv](../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv)
-has SHA-256 `8d442923739321f59bc53ae44dc2141d054a6b8d66e6cd05a3a91119bd2e3ea8`.
-It records fifty-five `warp → source` points: the four pre-rotation destination
-boundaries and one interior coordinate for each of the eleven reviewed cases.
+has SHA-256 `2d1dbc630d4b4cb23c1e6796c3a4a595c16acb4a23a17f7abd22f4887a5c5196`.
+It records sixty `warp → source` points: the four pre-rotation destination
+boundaries and one interior coordinate for each of the twelve reviewed cases.
 The expected coordinates are independent OpenCV
 `cv2.getPerspectiveTransform(destination, source)` plus
 `cv2.perspectiveTransform` evaluations, not values calculated by Rust.
@@ -91,8 +100,9 @@ The offline Rust regressions
 `crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases` and
 `crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases`,
 `crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases`, and
-`crop::tests::classic_crop_matches_cubic_rounding_opencv_oracle_case` check all
-eleven recorded outputs without importing Python or OpenCV. Exact
+`crop::tests::classic_crop_matches_cubic_rounding_opencv_oracle_case`, and
+`crop::tests::classic_crop_matches_cubic_weight_construction_opencv_oracle_case`
+check all twelve recorded outputs without importing Python or OpenCV. Exact
 agreement is evidence only for these self-authored BGR cases and this recorded
 environment. It is not a claim of universal OpenCV interpolation parity,
 upstream-environment parity, decoded-image behavior, or OCR compatibility.
@@ -104,7 +114,7 @@ one-pixel, and tall-thin cases. This is narrow mapping evidence for those
 recorded matrices, not general OpenCV homography equivalence.
 
 `geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle`
-parses the sidecar offline and checks all fifty-five captured pre-rotation
+parses the sidecar offline and checks all sixty captured pre-rotation
 warp-to-source coordinates against the private plan. It therefore covers the
 mapping direction used by the crop sampler, while remaining limited to this
 recorded OpenCV environment and the self-authored cases.

@@ -185,6 +185,20 @@ CASES: tuple[CropCase, ...] = (
             (2.2030663, 11.573961),
         ),
     ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-cubic-weight-order-bgr-5x10",
+        description=(
+            "A high-variation tall BGR crop catches the f32 cubic-weight "
+            "construction order at a uint8 rounding boundary."
+        ),
+        rows=lcg_bgr_rows(5, 10, 847_333),
+        points=(
+            (0.9, -0.6666667),
+            (5.142857, -0.8466667),
+            (5.142857, 9.526316),
+            (1.29, 9.676315),
+        ),
+    ),
 )
 
 

@@ -1441,7 +1441,7 @@ mod tests {
         // The sidecar was captured from cv2.getPerspectiveTransform with the
         // destination/source order reversed, followed by
         // cv2.perspectiveTransform. It checks the pre-rotation warp-to-source
-        // direction used by the private crop sampler against all eleven reviewed
+        // direction used by the private crop sampler against all twelve reviewed
         // BGR cases, including each destination boundary and one interior
         // coordinate per case. It is a self-authored, environment-specific
         // component oracle rather than a general OpenCV-equivalence claim.
@@ -1449,7 +1449,7 @@ mod tests {
             include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
         const CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE: &str =
             include_str!("../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv");
-        const EXPECTED_FIXTURE_IDS: [&str; 11] = [
+        const EXPECTED_FIXTURE_IDS: [&str; 12] = [
             "classic-v1-crop-oracle-identity-bgr-3x2",
             "classic-v1-crop-oracle-border-replicate-bgr-3x2",
             "classic-v1-crop-oracle-projective-bgr-4x3",
@@ -1461,6 +1461,7 @@ mod tests {
             "classic-v1-crop-oracle-single-pixel-bgr-3x3",
             "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
             "classic-v1-crop-oracle-cubic-rounding-bgr-8x10",
+            "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10",
         ];
 
         assert!(
@@ -1538,7 +1539,7 @@ mod tests {
             mapping_count += 1;
         }
 
-        assert_eq!(mapping_count, 55, "unexpected inverse-mapping sample count");
+        assert_eq!(mapping_count, 60, "unexpected inverse-mapping sample count");
         for fixture_id in EXPECTED_FIXTURE_IDS {
             let sample_count = CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE
                 .lines()

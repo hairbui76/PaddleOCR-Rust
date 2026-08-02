@@ -199,8 +199,10 @@ It has a reviewed self-authored BGR component fixture in
 bytes from OpenCV 5.0.0 / opencv-python-headless 5.0.0.93 for identity,
 replicated-border, fractional-projective, tall-rotation, non-linear interior,
 all-side-border, tall-projective, eighth-pixel, one-pixel, tall-thin, and a
-high-variation cubic-rounding case. It proves an exact regression only for
-those inputs and recorded environment; additional approved captures must
+high-variation cubic-rounding case plus a high-variation cubic-weight-order
+case. Its `f32` sampler preserves OpenCV 5.0.0's four-weight construction
+order for this latter rounding boundary. It proves an exact regression only
+for those inputs and recorded environment; additional approved captures must
 establish any broader OpenCV `INTER_CUBIC` rounding, fixed-point, or
 upstream-environment equivalence before M2 claims upstream pixel output
 compatibility.
