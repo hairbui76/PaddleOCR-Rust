@@ -1,7 +1,7 @@
 # M2 Artifact License and Provenance Review
 
 Roadmap item: `LIC-001`  
-Status: In progress — preliminary remote and local package evidence recorded; no artifact is approved  
+Status: Blocked — preliminary remote and local package evidence is recorded, but no durable artifact-specific terms source has been located; no artifact is approved
 Prepared: 2026-08-02  
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
@@ -190,6 +190,44 @@ export, configuration, or distribution.
 - Pinned dictionary: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/ppocr/utils/dict/ppocrv6_dict.txt
 - Pinned source license: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/LICENSE
 - Pinned dictionary README: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/ppocr/utils/dict/README.md
+
+### Official PP-OCRv6 publication-page check
+
+The official PP-OCRv6 introduction confirms the public model-family context
+for the selected medium tier, including its CTC/NRTR inference architecture
+description and ONNX Runtime deployment mention. It does not state license or
+usage terms for model parameters, the official ONNX exports, the embedded
+dictionary, or derived artifacts. It is therefore availability and technical
+context evidence only, not a revision-specific asset-terms source.
+
+- Official PP-OCRv6 introduction: https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html
+
+## Current blocker and resumption condition
+
+`LIC-001` is blocked on a durable, publisher/rightsholder-issued terms source
+that applies to each exact M2 artifact file. The review has checked the
+revision-pinned Hugging Face metadata and trees, the corresponding ModelScope
+mirror metadata, the immutable PaddleX publisher path, the pinned PaddleOCR
+source license/dictionary trace, and the official PP-OCRv6 publication page.
+Those sources establish useful identity, availability, and source-code context,
+but none supplies the missing artifact-specific grant or notice set.
+
+Resume this item only when one of the following can be preserved in the
+evidence record for the selected immutable representation:
+
+1. A publisher/rightsholder-issued license or terms document that explicitly
+   covers the exact detector and recognizer files, their ONNX/static graph,
+   configuration, and embedded dictionary; or
+2. a publisher/rightsholder-issued statement that unambiguously ties an
+   existing license to the exact revision-pinned package files, including any
+   conversion/export and redistribution conditions.
+
+The closure source must have a stable locator or archived copy permitted for
+retention, identify the rightsholder/publisher relationship, and state the
+applicable distribution, modification, attribution, and notice obligations.
+It must be reviewed before accepting an artifact, producing a model-backed
+fixture, or resolving `MODEL-DEC-001`. A user-provisioned local copy alone
+does not satisfy this condition.
 
 ## Material-specific status
 
