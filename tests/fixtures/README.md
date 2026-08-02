@@ -21,6 +21,23 @@ Each fixture set must add a reviewable metadata record containing at least:
 - tolerance rule and the test(s) that enforce it;
 - whether the fixture contains personal data or restricted content.
 
+## Offline integrity gate
+
+`tests/fixture_integrity.rs` parses every committed `metadata.json` record and
+checks the current self-authored corpus without network access, Python, a GPU,
+or the upstream checkout. It requires the pinned baseline, a non-empty source
+reference/test/limitation record, explicit Apache-2.0 input provenance, null
+model artifacts, normal non-symlink paths, and a valid `m2-unit-v1` expected
+comparison profile. It verifies SHA-256 values for direct fixture files.
+
+For `classic-v1-crop-oracle`, the gate also verifies the full capture document,
+its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
+metadata's concatenated input/output digests across all reviewed cases. The
+gate proves repository fixture integrity and metadata consistency only; it does
+not replace source review, artifact-term review, or oracle/model equivalence.
+Its dev-only SHA-256 implementation uses the `sha2` `force-soft` feature, so
+the hash check itself does not select a CPU-dispatched test path.
+
 ## Golden format
 
 Use UTF-8 JSON for structured end-to-end expected results. A component-unit

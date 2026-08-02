@@ -33,6 +33,13 @@ No generated visualization, virtual environment, model binary, cache, upstream
 checkout, or external URL is a fixture. A fixture remains unavailable until its
 metadata is committed and reviewed; a catalog row is not a fixture itself.
 
+The current four committed component fixture directories are also covered by
+the offline `tests/fixture_integrity.rs` integration gate. It parses each
+metadata record, validates baseline/provenance/profile requirements and direct
+file SHA-256 values, and verifies every crop capture/base64 payload/aggregate
+digest. This protects fixture-record consistency only; it neither approves a
+model artifact nor upgrades the component fixtures to end-to-end evidence.
+
 The source-level geometry tests are intentionally not presented as end-to-end
 goldens. They validate deterministic contract arithmetic only and do not
 replace a provenance-approved image/model/oracle fixture.

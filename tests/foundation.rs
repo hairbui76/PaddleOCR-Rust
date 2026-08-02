@@ -6,7 +6,7 @@ use paddleocr_rust::{
     EncodedImage, Error, ImageDimensions, ImageTransform, InputViolation, ModelIdentity, ModelTask,
     Point, RecognizedText, Score, VERSION,
 };
-use support::{FixtureMetadata, assert_absolute_difference};
+use support::assert_absolute_difference;
 
 fn must_ok<T>(result: paddleocr_rust::Result<T>) -> T {
     match result {
@@ -62,15 +62,6 @@ fn public_foundations_return_structured_errors() {
 }
 
 #[test]
-fn fixture_metadata_declares_provenance_and_tolerance() {
-    let metadata = FixtureMetadata {
-        id: "foundation-synthetic-v1",
-        upstream_baseline: "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
-        license: "Project-authored synthetic values",
-        tolerance: 0.001,
-    };
-    assert_eq!(metadata.id, "foundation-synthetic-v1");
-    assert!(!metadata.upstream_baseline.is_empty());
-    assert!(!metadata.license.is_empty());
-    assert_absolute_difference(0.75, 0.7505, metadata.tolerance);
+fn fixture_tolerance_helper_accepts_values_inside_its_declared_threshold() {
+    assert_absolute_difference(0.75, 0.7505, 0.001);
 }
