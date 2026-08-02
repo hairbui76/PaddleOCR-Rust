@@ -801,12 +801,94 @@ future role. It confirms that the direct configuration is not a currently
 better JPEG-fidelity route for the committed oracle and does not select any
 decoder.
 
+### Pure-Rust `libjpeg-turbo-rs` JPEG control (2026-08-02)
+
+A further disposable Rust `1.94` package evaluated the published
+`libjpeg-turbo-rs` `0.8.0` package as a JPEG-only comparison control. The
+candidate itself declares Rust `1.87`, `MIT OR Apache-2.0`, `build = false`,
+and a default feature set of `std` plus `simd`. The scalar experiment instead
+used the following non-default shape; no manifest from this experiment was
+added to this repository:
+
+```toml
+libjpeg-turbo-rs = { version = "=0.8.0", default-features = false, features = ["std"] }
+```
+
+The registry lock checksum for that package was
+`a0d8a1c652b51dbb85c3c3164b1da63b88dafcc3fc12ecceb52f7577738c21f1`.
+The external harness lockfile and source had SHA-256 values
+`64caebc53dc266dd6b9a68b8bd6a898691e0f450abc691be6114c32b8b394883` and
+`db0ad127f8b1cd828640677c5c9e9fd237fef93e187f2aa8eccd680d0ddd89f9`.
+Those hashes identify disposable research inputs only; the harness, its build
+outputs, and no model or upstream asset are repository content. The candidate
+normal dependency edge was only `libjpeg-turbo-rs -> thiserror`; neither the
+26-package temporary lockfile nor its resolved dependency tree named `cc`,
+`cmake`, `bindgen`, or `pkg-config`. This is a packaging observation for the
+recorded version, not a perpetual native-boundary guarantee.
+
+The harness read only the committed `classic-v1-image-inputs` capture. It set
+`PixelFormat::Bgr`, enabled `set_stop_on_warning(true)`, called
+`Image::apply_orientation()` on the decoder-returned Exif data rather than
+using the fixture's known orientation, and checked the resulting dimensions
+and BGR bytes against the frozen OpenCV oracle. The baseline JPEG, progressive
+JPEG, and all eight Exif-orientation JPEG streams were byte-exact: all ten
+matched their recorded BGR payloads and shapes, including the 3-by-2 to 2-by-3
+orientation changes. The empty and unknown-byte negative controls were
+rejected. This contrasts with the previously recorded finite delta of up to
+36 for the other pure-Rust JPEG paths; it is not evidence for PNG, color
+management, arbitrary JPEG conformance, or a project compatibility claim.
+
+The same harness used `DecodeLimits` of a 16,384-pixel maximum side,
+40,000,000 maximum pixels, 100 scans, and 128 MiB estimated decode memory.
+It rewrote only the baseline control's SOF dimensions, without creating a
+large image buffer. A 1-by-16,385 header returned the typed `image width`
+limit error with actual `16,385` and limit `16,384`. A 7,000-by-5,000 header
+is below both declared side and pixel limits but returned the typed `estimated
+decode memory` error with actual `210,000,000` and limit `134,217,728`. Source
+inspection locates these checks before the decoder's output-scale allocation.
+The controls establish the selected API's observed header-error behavior, not
+a proof of total allocation, CPU-work, or parser-resource safety.
+
+For malformed-input signal, the ten JPEG streams each underwent 144 bounded
+deterministic mutations (truncation, bit flip, overwrite, insertion,
+duplication, and appended bytes), for 1,440 decode attempts. The scalar and
+SIMD host runs both reported 733 successful decodes, 707 typed errors, and
+zero caught Rust panics. The successful mutations are intentionally not
+treated as accepted project inputs. Debug scalar, debug SIMD, and a release
+scalar host build with `-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma`
+all produced the exact control outputs and the same mutation totals. No QEMU
+guest or broader hostile corpus was run for this candidate.
+
+An external `cargo-audit` scan of the exact 26-package harness lockfile loaded
+1,186 advisories from RustSec revision
+`d91a8fc9492378f23cba86b81770c6d16de6ebba` and reported no vulnerability
+records. It completed with two host CA-certificate permission warnings. This
+is date-, lockfile-, and advisory-database-specific screening only; it is not
+a security approval, a substitute for continued monitoring, or a complete
+license/notice review.
+
+Despite the absence of a C build dependency in this snapshot, this is not an
+unsafe-free candidate. Source review found raw-pointer/`unsafe impl`
+initialization in `common/huffman_table.rs`, `get_unchecked` paths in baseline
+and progressive decode, and scaled-IDCT unsafe operations even when the
+optional `simd` feature is disabled. The default `simd` feature adds
+architecture-intrinsic and runtime CPU-dispatch paths. The candidate's
+published manifest license is compatible first-pass data, but its source
+provenance, notices, update process, full `unsafe` boundary, concurrency,
+resource limits, and supported JPEG subset require a separate review.
+
+Accordingly, `libjpeg-turbo-rs` is an exact finite JPEG comparison control,
+not a selected decoder. It supplies no PNG route, no project dependency, no
+public input policy, no decoder implementation, and no closure of `D-008` or
+`IMG-DEC-001`.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
 |---|---|---|---|
 | Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Complete unsafe/native/notice review; strict allocation/CPU-resource proof; broader malicious/fuzz corpus; model-preprocessing comparison; and a supported/unsupported policy for divergent JPEG/16-bit/alpha/ICC cases. | Full committed input-oracle replay and first-pass advisory/license graph review are recorded, but no candidate is selected. |
 | Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, a runnable Rust binding, and proof that the selected build improves M2 oracle fidelity enough to justify the boundary. | A command-level libjpeg-turbo control is byte-exact for the ten committed JPEGs, but no Rust binding or deployment configuration is qualified or authorized. |
+| Evaluate `libjpeg-turbo-rs` 0.8.0 as a JPEG-only route | Its recorded scalar and SIMD controls are byte-exact for the ten committed JPEGs without a C build dependency. | Full source/provenance/notice/unsafe review; broader bounded hostile corpus; independent allocation/work measurements; concurrency and CPU-portability qualification; and a complete PNG/input-policy route. | Exact finite JPEG and header-limit controls are recorded, but its unchecked/raw-pointer/SIMD surface and all non-JPEG work remain open; it is not selected. |
 | Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it remains a comparison route, not an accepted candidate. |
 
 Subject to the unresolved gates, the evidence supports retaining both
@@ -870,6 +952,7 @@ and preprocessing semantics.
 - [`image` JPEG decoder source, 0.25.10](https://docs.rs/image/0.25.10/src/image/codecs/jpeg/decoder.rs.html)
 - [`image` 0.25.10 change log](https://docs.rs/crate/image/0.25.10/source/CHANGES.md)
 - [`zune-jpeg` 0.5.15](https://docs.rs/zune-jpeg/0.5.15/zune_jpeg/)
+- [`libjpeg-turbo-rs` 0.8.0](https://docs.rs/libjpeg-turbo-rs/0.8.0/libjpeg_turbo_rs/)
 - [`zune-core::DecoderOptions` 0.5.1](https://docs.rs/zune-core/0.5.1/zune_core/options/struct.DecoderOptions.html)
 - [`moxcms` 0.8.1](https://docs.rs/moxcms/0.8.1/moxcms/)
 - [`png` 0.18.1](https://docs.rs/png/0.18.1/png/)
