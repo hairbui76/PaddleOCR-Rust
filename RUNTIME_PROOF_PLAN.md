@@ -95,21 +95,25 @@ shapes, repeat signatures, and incomplete gates, is in
 This is a partial exact-artifact graph/shape and tensor-ABI pass only. The
 temporary Python-wheel native library is not an approved baseline-compatible
 system or source-built route. A follow-on source build from ONNX Runtime
-v1.28.0 ran all six host probes and the detector minimum shape under two
-non-AVX QEMU CPU models; see
-[`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md). That
-source-build evidence also includes five bounded C API failure cases under a
-process watchdog and address-space limit. It is still partial: it does not
-establish raw-output equivalence, a physical baseline host, deployment, native
-supply-chain review, a Rust adapter/resource policy, or a backend decision. No
-spike may implicitly download, copy, or commit a native binary.
+v1.28.0 ran all six host probes and every declared detector/recognizer shape
+through no-AVX QEMU TCG routes; see
+[`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md). Its
+calibrated compact fingerprints show host/QEMU bit-pattern differences for
+detector minimum and every recognizer profile, while detector typical/maximum
+aggregates also differ. The source-build evidence also includes five bounded C
+API failure cases under a process watchdog and address-space limit. It is
+still partial: it does not establish raw-output equivalence, a physical
+baseline host, deployment, native supply-chain review, a Rust adapter/resource
+policy, or a backend decision. No spike may implicitly download, copy, or
+commit a native binary.
 
 ## Required evidence after any candidate smoke result
 
 Smoke results are insufficient for RT-002 completion. Every viable candidate
 still needs:
 
-1. all M2 shape/operator probes and explicit CPU/thread behavior;
+1. all M2 shape/operator probes plus explicit physical-baseline CPU/thread
+   behavior; the QEMU shape probes are only partial portability evidence;
 2. a legal static-oracle capture and raw tensor comparison under m2-tensor-v1;
 3. deterministic repeat, latency, memory, binary, malformed-model, and
    resource-limit evidence;

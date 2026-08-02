@@ -124,10 +124,12 @@ unchanged through a future public API or CLI.
 
 ## No-AVX execution evidence
 
-The source-built artifact was copied into a temporary QEMU initramfs together
-with the exact detector file. Streaming extraction from that initramfs verified
-the same library SHA-256 above and the detector SHA-256 above. No raw tensor
-output was retained in this repository.
+The first source-built artifact arrangement was copied into a temporary QEMU
+system-mode initramfs together with the exact detector file. Streaming
+extraction from that initramfs verified the same library SHA-256 above and the
+detector SHA-256 above. Later recognizer and detector shape expansions used
+separate temporary QEMU arrangements described below. No raw tensor output was
+retained in this repository.
 
 | Field | Evidence |
 |---|---|
@@ -150,12 +152,100 @@ sum 0.00458839536, minimum 0, maximum 0.000356405973, and its harness-local
 FNV-1a value 4c81e0806665413e. That value uses a different diagnostic harness
 than the Rust spike and is not a cross-harness numerical comparison.
 
-This is meaningful evidence that the current source-built binary can load,
-create an exact-model session, and execute the detector minimum shape without
-AVX, AVX2, AVX-512, GPU, Python, or the upstream checkout at run time. It
-does not establish network isolation, all M2 shapes, recognizer execution, a
-physical no-AVX machine result, broad platform compatibility, or a
-distributable baseline binary.
+This first system-mode result is meaningful evidence that the current
+source-built binary can load, create an exact-model session, and execute the
+detector minimum shape without AVX, AVX2, AVX-512, GPU, Python, or the upstream
+checkout at run time. The later expansions below broaden shape coverage, but
+do not establish network isolation, a physical no-AVX machine result, broad
+platform compatibility, or a distributable baseline binary.
+
+### System-mode recognizer expansion
+
+A separate temporary system-mode QEMU harness covered every declared
+recognizer shape under both CPU models. It dynamically loaded the same native
+library, verified the exact recognizer SHA-256 before loading, set CPU
+intra/inter-op threads to one, used a zero-filled float32 NCHW input named x,
+and fetched fetch_name_0. Each probe had a 900-second host watchdog. The
+recognizer initramfs initially had SHA-256
+e70a75792248eddea4e74eea99fbfb9563a1f4aaa0744b07ef5764136efa0b4c; a
+harness-only clean-shutdown revision had SHA-256
+ab710d72fc207804b60f5e2c93438c25a2f0a7adc97a94b4cd4282e26ed0d862. Both
+archives self-verified the recorded library and recognizer model bytes. The C
+harness SHA-256 was aef52a141443b018976404b1ff14e868a61b224270d0419b1246beef41ba3e4d,
+and its AVX guard SHA-256 was
+13097bf56a39cec755edd362a749b66ae644dc399c0fa37dac2ec5d5cdb82770.
+
+For every recognizer probe, CPUID reported AVX=0, AVX2=0, and AVX-512F=0, and
+the separate vzeroupper guard trapped with SIGILL status 132. Every output had
+the expected shape/count and only finite values. The timing columns are guest
+monotonic-clock milliseconds from the diagnostic C harness, not benchmarks.
+
+| CPU | Input shape | Output shape / elements | Finite aggregate | Host / QEMU word-wise fingerprint | Load / run ms |
+|---|---|---|---|---|---:|
+| Nehalem | [1, 3, 48, 160] | [1, 20, 18,710] / 374,200 | sum 20.000002; min 4.01885833e-17; max 1 | 33f2adb028b73e76 / c7101dea8545eb1a | 7,369.681 / 48,917.411 |
+| Nehalem | [1, 3, 48, 320] | [1, 40, 18,710] / 748,400 | sum 40.0000019; min 2.18770081e-17; max 1 | 7e55f5a0e013a6d1 / a7e3c55c7d17a73f | 6,821.506 / 95,462.881 |
+| Nehalem | [6, 3, 48, 320] | [6, 40, 18,710] / 4,490,400 | sum 240.000011; min 2.18770081e-17; max 1 | bd51d02fed358475 / d47d392f1bf4e449 | 6,875.742 / 573,954.363 |
+| qemu64 | [1, 3, 48, 160] | [1, 20, 18,710] / 374,200 | sum 20.000002; min 4.01885833e-17; max 1 | 33f2adb028b73e76 / c7101dea8545eb1a | 3,662.302 / 44,204.165 |
+| qemu64 | [1, 3, 48, 320] | [1, 40, 18,710] / 748,400 | sum 40.0000019; min 2.18770081e-17; max 1 | 7e55f5a0e013a6d1 / a7e3c55c7d17a73f | 3,464.053 / 88,455.540 |
+| qemu64 | [6, 3, 48, 320] | [6, 40, 18,710] / 4,490,400 | sum 240.000011; min 2.18770081e-17; max 1 | bd51d02fed358475 / d47d392f1bf4e449 | 3,637.511 / 524,624.022 |
+
+No recognizer C probe timed out or reported a hash, CPU-feature, C API, output
+shape/type, or non-finite-output error. The clean-shutdown initramfs was used
+for the Nehalem minimum replay, which recorded probe exit status zero and a
+clean poweroff. The initial wrapper used exec for the probe, so the other
+successful runs emitted a PID 1 panic after their success records; they were
+stopped only after the C probe had recorded exit status zero. That lifecycle
+defect makes the other guest exits unsuitable as clean-shutdown evidence.
+
+A controlled host calibration used the same source-built library, recognizer,
+zero inputs, provider, and one-thread controls. The C harness and the Rust
+spike matched the listed host signatures for minimum twice, typical once, and
+maximum once. Both use the word-wise fold
+h = (h XOR f32_bits) * 0x100000001b3 with seed 0xcbf29ce484222325; C copies an
+IEEE-754 f32 to uint32_t and Rust uses f32::to_bits, so neither serializes bytes.
+All outputs were finite, so NaN handling was not separately calibrated.
+
+Each QEMU signature differs from its calibrated host signature. A differing
+word-wise fingerprint proves at least one returned f32 bit pattern differs, but does not
+identify the elements, error magnitude, cause, or tolerance impact. It is not
+a static-Paddle comparison and must not be described as numerical equivalence.
+
+### User-mode detector expansion
+
+A separate QEMU user-mode TCG harness covered the detector typical and maximum
+shapes under Nehalem and qemu64. It used qemu-user-static 9.0.2 extracted only
+under /tmp; the package SHA-256 was
+807f801829277a9d010a49ad84856198263dfe572eef5d57a0896edd811044be. Each
+probe verified the exact detector and library hashes, dynamically loaded C API
+version 28, selected the CPU provider with intra/inter-op threads set to one,
+used an in-memory zero input, and had a 900-second watchdog. All four
+supervisor child exit codes were zero; none timed out or received a guest
+signal. QEMU user mode has no guest OS boot/shutdown result.
+
+| CPU | Input / output shape | Finite aggregate | Session / run seconds |
+|---|---|---|---:|
+| Nehalem | [1, 3, 960, 544] / [1, 1, 960, 544] | 522,240 finite; min 0; max 0.0468307137; sum 2527.7130876481533 | 1.921530 / 472.603767 |
+| qemu64 | [1, 3, 960, 544] / [1, 1, 960, 544] | 522,240 finite; min 0; max 0.0468307137; sum 2527.7130876481533 | 2.009043 / 508.342897 |
+| Nehalem | [1, 3, 960, 960] / [1, 1, 960, 960] | 921,600 finite; min 0; max 0.0505188107; sum 9692.1489780545235 | 2.100542 / 824.577587 |
+| qemu64 | [1, 3, 960, 960] / [1, 1, 960, 960] | 921,600 finite; min 0; max 0.0505188107; sum 9692.1489780545235 | 2.002515 / 795.108762 |
+
+The user-mode detector C harness was cross-calibrated with the Rust host spike
+at detector minimum: both produced 7ac3a00073a27b25 for the same source-built
+library and zero input. The corresponding no-AVX QEMU minimum was
+fa452214e1e92725, proving a host/QEMU bit-pattern difference at that shape.
+The typical and maximum probes began before FNV instrumentation, so their raw
+bit patterns were not retained; their aggregate maximum and sum nevertheless
+differed from the host results (typical host maximum 0.0468301773 and sum
+2527.6838610470295; maximum host maximum 0.0505194068 and sum
+9692.1889959275723). Those aggregates are not an elementwise/tolerance
+diagnosis.
+
+Taken together, the system-mode detector minimum, system-mode recognizer
+coverage, and user-mode detector coverage show that every declared M2 detector
+and recognizer shape can create an exact-model CPU session and produce a
+finite, correctly shaped output on at least one no-AVX/AVX2/AVX-512 QEMU TCG
+route. They do not establish bitwise determinism, numerical equivalence,
+physical baseline-host support, platform support, or a distribution baseline.
 
 ## External commands actually run
 
@@ -211,13 +301,13 @@ This source build is not hermetic or approved for distribution:
 
 | Gate | Current source-build result |
 |---|---|
-| Exact local artifact | Partial pass: the verified detector and recognizer ONNX bytes ran through the host spike; the QEMU probe verified the exact detector byte. |
-| Graph/operator/shape | Partial pass: all six declared shapes ran on the host source-built library. The no-AVX probe covered detector minimum only. |
-| Tensor ABI | Partial pass: the external Rust spike checked the observed named float32 NCHW input/output and batch-six recognizer shape. No project adapter exists. |
-| Numerical equivalence | Not run: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. |
+| Exact local artifact | Partial pass: the verified detector and recognizer ONNX bytes ran through the host spike. The QEMU arrangements independently verified their respective exact model/library hashes before session creation. |
+| Graph/operator/shape | Partial pass: all six declared shapes ran on the host source-built library and on at least one no-AVX QEMU TCG route. This is not arbitrary-shape or physical-host coverage. |
+| Tensor ABI | Partial pass: the external Rust spike and QEMU C probes checked observed x/fetch_name_0 float32 NCHW shapes, including batch-six recognition. No project adapter exists. |
+| Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes also observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates differ. No elementwise diagnosis or tolerance result exists. |
 | End-to-end semantics | Not run. |
-| CPU support | Partial pass: QEMU TCG successfully ran the exact detector minimum without AVX/AVX2/AVX-512. All shapes/recognizer and physical baseline-host coverage remain absent. |
-| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, one missing-library error, and five bounded C API failures were observed under a process watchdog and address-space limit. No Rust adapter, request-level bound, cancellation, lifecycle, malicious-input, concurrency, or public-error review exists. |
+| CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
+| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed under a process watchdog and address-space limit. No Rust adapter, request-level bound, cancellation, lifecycle, malicious-input, concurrency, or public-error review exists. |
 | Supply chain/license | Incomplete and blocked for acceptance; see the preceding limits. |
 | Unsafe/FFI boundary | Incomplete: the external ort/ort-sys native boundary has no project adapter review. |
 
@@ -225,11 +315,12 @@ This source build is not hermetic or approved for distribution:
 
 1. Close LIC-001 before retaining model-derived oracle outputs or using an
    isolated model-backed oracle capture.
-2. Compare raw detector/recognizer outputs against the approved static reference
-   under m2-tensor-v1 and diagnose every element error above 1e-4.
-3. Run the no-AVX route across every required detector and recognizer shape,
-   then confirm it on an approved physical baseline host or formally define an
-   acceptable emulation policy.
+2. After LIC-001 permits an isolated model-backed capture, compare raw
+   detector/recognizer outputs against the approved static reference under
+   m2-tensor-v1, characterize the observed host/QEMU numerical differences,
+   and diagnose every element error above 1e-4.
+3. Confirm the now-complete emulated no-AVX shape coverage on an approved
+   physical baseline host or formally define an acceptable emulation policy.
 4. Produce a reproducible, verified source/binary provenance route with a
    build-specific SBOM, complete notices, enforced strong hashes, and a
    reviewed distribution policy.
