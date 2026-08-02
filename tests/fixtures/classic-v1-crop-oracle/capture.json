@@ -796,6 +796,72 @@
         "width": 4
       },
       "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A high-variation BGR crop distinguishes the OpenCV-style source-to-warp matrix inversion and f32 sampler evaluation from a direct f64 inverse-coordinate path.",
+      "fixture_id": "classic-v1-crop-oracle-sampling-matrix-bgr-12x11",
+      "input": {
+        "base64": "R+lzKCwfw4uKT5keLuwaV8+Gh4lnhgJ3d5b9LyBUvvQ8IMUmxRofXEug3BxD5Dj1aXUz4365ozItx/tYzSJWfUswfpWLgwRX6D6Rcbs9FrsGvolUtKsv3/vd0Fvk4Tw7+hj7yKFJHuSp9nvFBwXaN9CZ1HrrJ2PUCh5xaNu56OaSyvokLZK8whoGQ1Qg/M3MszPIBA4sobbHQ7tFrIb0CiIsnyVZt9QAByJ17oCaWq9dq3e3COzwguN5aUzV1x8GfBhwWlVF+wSGcoH2KQgU6kQYXW3L0PiFUmIgalbxTBA1XlpkU/1viO2RvGOcJK5cnoBXEklxB2RPEmYitcyCLqnAq/uJ0w+Y1o5ewuKAArZq4KWmfZ4QFVUVo4j8Eus/9PMX6jLwXpUi7YMyhmELgGUq7D9jW6jkJmYoR7kl1vD5o7UOjLKFNfKlLGeXwuwTFUA3BPreCXDIeCac/Bi2yF1uAFvaqVCBryI8qKpR6Z3B/PMySZIQrIIvs1hctCEdjObY2GOaLdYCQnzR",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9a24fd03fde429daf86cff09566bfd49cea101d348123db54fca63e7966ad165",
+        "shape": [
+          11,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "rCtS9SnRjmNi05SfyDuDwqZJ9Ftw2yxjcLViW6K13Seb1T6iG8AFjZM/tZQqyvqu16X/31dY1zW/2lqUZpw1ZLWg/7Th/7fVqa28ZWvlARp8Qamoy+Kj6P8oOMKNiDlagy8BiI9r87/c37HJeX+fUslxlZvdIDlbeRJTyL4NGURNtVWTmap5fpqTtoa0sY+tbYzCvDs4nxNkSEVG6ANsl3f3IBxAyS4AeVKimMegyf1yvO91WB6KXytETtBncfKG0GOgK6RqlIZVLU1wBF1aDWcrDWYdCmcgauOfvzyYz3Vt0+iEBr5uz6eikKQcE1QKmHftJ9xfDe05Eus/iGx/zocwpWcUg2cf6UFVZ6zlImwlPbYe2PH6or4bnrkKn7kNGZWtrdUxNUwfA/LSCHTKeSig/BewumJuBVzhr1J5rFJ6rFJ616Wj/+hiXKcPrIAkuVZYsyoikOnhy2eCItQPRXXeRHvPRXrPy6Si/+dfWKEQqYMts1RbrzMtmOHiv25yIM8dRHPmQnzRQnzR",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "936fe7849da5986a6eb0a1fd021c6d92a6e33cc1b9baf24c021185003744d9c4",
+        "shape": [
+          11,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9674481348168614,
+          0.009978101201834939,
+          -1.6285832463761085
+        ],
+        [
+          -0.06708370403478173,
+          1.1000955308117473,
+          -1.0039257922256228
+        ],
+        [
+          -0.008853692987923071,
+          0.012445523527893227,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          1.672916054725647,
+          1.0145947933197021
+        ],
+        [
+          12.913864135742188,
+          1.7000665664672852
+        ],
+        [
+          14.252660751342773,
+          12.014155387878418
+        ],
+        [
+          1.5553478002548218,
+          12.413676261901855
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 11,
+        "width": 12
+      },
+      "rotates_counter_clockwise": false
     }
   ],
   "environment": {

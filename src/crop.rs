@@ -73,14 +73,14 @@ impl InterleavedImage {
 
 /// Applies the selected classic perspective crop plan to interleaved pixels.
 ///
-/// The operation maps each pre-rotation destination pixel through the plan's
-/// inverse homography, samples with a fixed cubic kernel and replicated source
-/// borders, then applies the exact discrete counter-clockwise byte rotation
-/// used by `numpy.rot90` when the plan requires it. The `a = -0.75` cubic
-/// kernel preserves `f64` geometry until sampling, then uses checked `f32`
-/// interpolation arithmetic. That precision boundary is required by one
-/// reviewed OpenCV 5.0.0 rounding case, but remains a bounded implementation
-/// candidate rather than a general `cv2.INTER_CUBIC` equivalence claim.
+/// The operation maps each pre-rotation destination pixel through a private
+/// OpenCV-style inverse sampling transform, samples with a fixed cubic kernel
+/// and replicated source borders, then applies the exact discrete
+/// counter-clockwise byte rotation used by `numpy.rot90` when the plan requires
+/// it. The transform's `f32` coefficient/row-evaluation boundary and the
+/// `a = -0.75` cubic interpolation arithmetic are required by reviewed OpenCV
+/// 5.0.0 rounding cases, but remain a bounded implementation candidate rather
+/// than a general `cv2.INTER_CUBIC` equivalence claim.
 pub(crate) fn classic_perspective_crop(
     source: &InterleavedImage,
     plan: ClassicPerspectiveCropPlan,
@@ -99,7 +99,7 @@ pub(crate) fn classic_perspective_crop(
         for output_x in 0..output_dimensions.width() {
             let (warp_x, warp_y) = pre_rotation_coordinate(plan, output_x, output_y);
             let (source_x, source_y) =
-                plan.map_warp_coordinates_to_source(f64::from(warp_x), f64::from(warp_y))?;
+                plan.map_warp_pixel_to_source_for_sampling(warp_x, warp_y)?;
             copy_cubic_sample(
                 source,
                 source_x,
@@ -167,12 +167,17 @@ fn copy_cubic_sample(
     for channel in 0..channels {
         let mut value = 0.0_f32;
         for &(source_y, vertical_weight) in &vertical {
+            // OpenCV 5.0.0's reference cubic path first accumulates the four
+            // horizontal taps, then applies the vertical weight. Preserve that
+            // f32 operation grouping: flattening all sixteen products can
+            // cross a uint8 rounding boundary for the same source map.
+            let mut horizontal_value = 0.0_f32;
             for &(source_x, horizontal_weight) in &horizontal {
                 let source_offset = pixel_offset(source.dimensions(), channels, source_x, source_y);
-                value += f32::from(source.pixels()[source_offset + channel])
-                    * horizontal_weight
-                    * vertical_weight;
+                horizontal_value +=
+                    f32::from(source.pixels()[source_offset + channel]) * horizontal_weight;
             }
+            value += horizontal_value * vertical_weight;
         }
         output[output_offset + channel] = saturating_round_to_u8(value);
     }
@@ -719,6 +724,59 @@ mod tests {
                 146, 124, 213, 187, 127, 181, 121, 242, 140, 41, 80, 128, 74, 54, 50, 238, 175, 50,
                 143, 228, 67, 189, 190, 61, 138, 176, 26, 76, 146, 63, 92, 45, 176, 175, 184, 127,
                 231, 128, 118, 186, 155, 95, 183, 27, 131, 129, 182, 46, 85,
+            ],
+        );
+    }
+
+    #[test]
+    fn classic_crop_matches_sampling_matrix_opencv_oracle_case() {
+        // This high-variation case preserves the OpenCV 5.0.0 behavior where
+        // warpPerspective creates a source-to-warp matrix, inverts it for
+        // sampling, and evaluates the sampler's matrix in f32. A direct f64
+        // inverse-coordinate path differs by one output byte for this case.
+        const FIXTURE_ID: &str = "classic-v1-crop-oracle-sampling-matrix-bgr-12x11";
+        assert!(
+            CAPTURED_OPENCV_CROP_ORACLE.contains(FIXTURE_ID),
+            "fixture record is missing {FIXTURE_ID}"
+        );
+
+        assert_captured_bgr_crop(
+            FIXTURE_ID,
+            dimensions(12, 11),
+            &lcg_bgr_pixels(12, 11, 3_130_585_584),
+            // The capture stores `float32` points. Keep the exact bits here
+            // instead of rounding decimal source text to a different input.
+            [
+                (f32::from_bits(0x3fd6_221d), f32::from_bits(0x3f81_de3e)),
+                (f32::from_bits(0x414e_9f30), f32::from_bits(0x3fd9_9bc8)),
+                (f32::from_bits(0x4164_0ae6), f32::from_bits(0x4140_39fb)),
+                (f32::from_bits(0x3fc7_15a3), f32::from_bits(0x4146_9e6b)),
+            ],
+            dimensions(12, 11),
+            &[
+                172, 43, 82, 245, 41, 209, 142, 99, 98, 211, 148, 159, 200, 59, 131, 194, 166, 73,
+                244, 91, 112, 219, 44, 99, 112, 181, 98, 91, 162, 181, 221, 39, 155, 213, 62, 162,
+                27, 192, 5, 141, 147, 63, 181, 148, 42, 202, 250, 174, 215, 165, 255, 223, 87, 88,
+                215, 53, 191, 218, 90, 148, 102, 156, 53, 100, 181, 160, 255, 180, 225, 255, 183,
+                213, 169, 173, 188, 101, 107, 229, 1, 26, 124, 65, 169, 168, 203, 226, 163, 232,
+                255, 40, 56, 194, 141, 136, 57, 90, 131, 47, 1, 136, 143, 107, 243, 191, 220, 223,
+                177, 201, 121, 127, 159, 82, 201, 113, 149, 155, 221, 32, 57, 91, 121, 18, 83, 200,
+                190, 13, 25, 68, 77, 181, 85, 147, 153, 170, 121, 126, 154, 147, 182, 134, 180,
+                177, 143, 173, 109, 140, 194, 188, 59, 56, 159, 19, 100, 72, 69, 70, 232, 3, 108,
+                151, 119, 247, 32, 28, 64, 201, 46, 0, 121, 82, 162, 152, 199, 160, 201, 253, 114,
+                188, 239, 117, 88, 30, 138, 95, 43, 68, 78, 208, 103, 113, 242, 134, 208, 99, 160,
+                43, 164, 106, 148, 134, 85, 45, 77, 112, 4, 93, 90, 13, 103, 43, 13, 102, 29, 10,
+                103, 32, 106, 227, 159, 191, 60, 152, 207, 117, 109, 211, 232, 132, 6, 190, 110,
+                207, 167, 162, 144, 164, 28, 19, 84, 10, 152, 119, 237, 39, 220, 95, 13, 237, 57,
+                18, 235, 63, 136, 108, 127, 206, 135, 48, 165, 103, 20, 131, 103, 31, 233, 65, 85,
+                103, 172, 229, 34, 108, 37, 61, 182, 30, 216, 241, 250, 162, 190, 27, 158, 185, 10,
+                159, 185, 13, 25, 149, 173, 173, 213, 49, 53, 76, 31, 3, 242, 210, 8, 116, 202,
+                121, 40, 160, 252, 23, 176, 186, 98, 110, 5, 92, 225, 175, 82, 121, 172, 82, 122,
+                172, 82, 122, 215, 165, 163, 255, 232, 98, 92, 167, 15, 172, 128, 36, 185, 86, 88,
+                179, 42, 34, 144, 233, 225, 203, 103, 130, 34, 212, 15, 69, 117, 222, 68, 123, 207,
+                69, 122, 207, 203, 164, 162, 255, 231, 95, 88, 161, 16, 169, 131, 45, 179, 84, 91,
+                175, 51, 45, 152, 225, 226, 191, 110, 114, 32, 207, 29, 68, 115, 230, 66, 124, 209,
+                66, 124, 209,
             ],
         );
     }

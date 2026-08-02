@@ -24,6 +24,7 @@ pub(crate) struct ClassicPerspectiveCropPlan {
     source: Quadrilateral,
     source_to_warp: ProjectiveTransform,
     warp_to_source: ProjectiveTransform,
+    sampling_warp_to_source: SamplingProjectiveTransform,
     warp_width: u32,
     warp_height: u32,
     rotates_counter_clockwise: bool,
@@ -86,12 +87,29 @@ impl ClassicPerspectiveCropPlan {
 
     /// Maps finite pre-rotation warp coordinates back into source coordinates.
     ///
-    /// This private pixel-path helper preserves the projective calculation in
-    /// `f64` until the crop sampler chooses source pixels. It must not be
-    /// exposed as a public crop-coordinate API before `CROP-001` has complete
+    /// This geometry helper preserves the projective calculation in `f64` for
+    /// mapping evidence. The crop sampler instead uses the distinct private
+    /// OpenCV-style `f32` sampling transform below. Neither helper may become
+    /// a public crop-coordinate API before `CROP-001` has complete
     /// inverse-mapping evidence.
     pub(crate) fn map_warp_coordinates_to_source(self, x: f64, y: f64) -> Result<(f64, f64)> {
         self.warp_to_source.map_coordinates(x, y)
+    }
+
+    /// Maps one integral pre-rotation output pixel through the private classic
+    /// OpenCV-style sampling transform.
+    ///
+    /// The classic pixel path creates a source-to-warp matrix, inverts it, then
+    /// evaluates the inverted coefficients as `f32` row terms before the
+    /// final projective division. Keep this distinct from the geometry-only
+    /// `f64` mapping above: it is an interpolation implementation detail, not
+    /// a public coordinate contract.
+    pub(crate) fn map_warp_pixel_to_source_for_sampling(
+        self,
+        x: u32,
+        y: u32,
+    ) -> Result<(f64, f64)> {
+        self.sampling_warp_to_source.map_pixel(x, y)
     }
 }
 
@@ -102,6 +120,61 @@ struct ProjectiveTransform {
 }
 
 impl ProjectiveTransform {
+    fn inverse(self) -> Result<Self> {
+        let mut matrix = [[0.0; 6]; 3];
+        for (row, values) in matrix.iter_mut().enumerate() {
+            values[..3].copy_from_slice(&self.coefficients[row * 3..row * 3 + 3]);
+            values[row + 3] = 1.0;
+        }
+
+        for pivot_column in 0..3 {
+            let mut pivot_row = pivot_column;
+            for candidate_row in (pivot_column + 1)..3 {
+                if matrix[candidate_row][pivot_column].abs() > matrix[pivot_row][pivot_column].abs()
+                {
+                    pivot_row = candidate_row;
+                }
+            }
+            if matrix[pivot_row][pivot_column] == 0.0 {
+                return Err(Error::InvalidInput {
+                    field: "perspective.matrix",
+                    violation: InputViolation::DegenerateGeometry,
+                });
+            }
+            matrix.swap(pivot_column, pivot_row);
+
+            let pivot = matrix[pivot_column][pivot_column];
+            for entry in &mut matrix[pivot_column][pivot_column..] {
+                *entry /= pivot;
+            }
+            let pivot_values = matrix[pivot_column];
+            for (row_index, row_values) in matrix.iter_mut().enumerate() {
+                if row_index == pivot_column {
+                    continue;
+                }
+                let factor = row_values[pivot_column];
+                if factor == 0.0 {
+                    continue;
+                }
+                for (entry, pivot_entry) in row_values[pivot_column..]
+                    .iter_mut()
+                    .zip(pivot_values[pivot_column..].iter())
+                {
+                    *entry -= factor * *pivot_entry;
+                }
+            }
+        }
+
+        let coefficients = core::array::from_fn(|index| matrix[index / 3][index % 3 + 3]);
+        if coefficients.iter().any(|value| !value.is_finite()) {
+            return Err(Error::InvalidInput {
+                field: "perspective.matrix",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        Ok(Self { coefficients })
+    }
+
     fn map(self, point: Point) -> Result<Point> {
         let x = f64::from(point.x());
         let y = f64::from(point.y());
@@ -142,6 +215,68 @@ impl ProjectiveTransform {
             });
         }
         Ok((mapped_x, mapped_y))
+    }
+}
+
+/// A private `f32` transform matching the selected classic warp sampler's
+/// coefficient and row-evaluation precision boundary.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct SamplingProjectiveTransform {
+    coefficients: [f32; 9],
+}
+
+impl SamplingProjectiveTransform {
+    fn from_projective(transform: ProjectiveTransform) -> Result<Self> {
+        let mut coefficients = [0.0_f32; 9];
+        for (destination, source) in coefficients.iter_mut().zip(transform.coefficients) {
+            if source < -f64::from(f32::MAX) || source > f64::from(f32::MAX) {
+                return Err(Error::InvalidInput {
+                    field: "perspective.matrix",
+                    violation: InputViolation::OutOfRange,
+                });
+            }
+            *destination = source as f32;
+        }
+        if coefficients.iter().any(|value| !value.is_finite()) {
+            return Err(Error::InvalidInput {
+                field: "perspective.matrix",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        Ok(Self { coefficients })
+    }
+
+    fn map_pixel(self, x: u32, y: u32) -> Result<(f64, f64)> {
+        let y = y as f32;
+        let row_x = y * self.coefficients[1] + self.coefficients[2];
+        let row_y = y * self.coefficients[4] + self.coefficients[5];
+        let row_z = y * self.coefficients[7] + self.coefficients[8];
+        let x = f64::from(x);
+        let denominator = f64::from(row_z) + f64::from(self.coefficients[6]) * x;
+        if !denominator.is_finite() {
+            return Err(Error::InvalidInput {
+                field: "perspective.denominator",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        if denominator == 0.0 {
+            return Err(Error::InvalidInput {
+                field: "perspective.denominator",
+                violation: InputViolation::DegenerateGeometry,
+            });
+        }
+
+        let mapped_x =
+            ((f64::from(row_x) + f64::from(self.coefficients[0]) * x) / denominator) as f32;
+        let mapped_y =
+            ((f64::from(row_y) + f64::from(self.coefficients[3]) * x) / denominator) as f32;
+        if !mapped_x.is_finite() || !mapped_y.is_finite() {
+            return Err(Error::InvalidInput {
+                field: "perspective.output",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        Ok((f64::from(mapped_x), f64::from(mapped_y)))
     }
 }
 
@@ -271,13 +406,15 @@ pub(crate) fn classic_perspective_crop_plan(
         (0.0, f64::from(warp_height)),
     ];
     let source_to_warp = homography_for_corners(source_points, destination)?;
-    let warp_to_source = homography_for_corners(destination, source_points)?;
+    let warp_to_source = source_to_warp.inverse()?;
+    let sampling_warp_to_source = SamplingProjectiveTransform::from_projective(warp_to_source)?;
     let rotates_counter_clockwise = f64::from(warp_height) / f64::from(warp_width) >= 1.5;
 
     Ok(ClassicPerspectiveCropPlan {
         source,
         source_to_warp,
         warp_to_source,
+        sampling_warp_to_source,
         warp_width,
         warp_height,
         rotates_counter_clockwise,
@@ -710,11 +847,9 @@ fn homography_for_corners(
     source: [(f64, f64); 4],
     destination: [(f64, f64); 4],
 ) -> Result<ProjectiveTransform> {
-    let source_origin = source[0];
-    let normalized_source = source.map(|(x, y)| (x - source_origin.0, y - source_origin.1));
     let mut matrix = [[0.0; 9]; 8];
     for (index, ((source_x, source_y), (destination_x, destination_y))) in
-        normalized_source.into_iter().zip(destination).enumerate()
+        source.into_iter().zip(destination).enumerate()
     {
         let horizontal_row = index * 2;
         matrix[horizontal_row] = [
@@ -745,13 +880,13 @@ fn homography_for_corners(
     let coefficients = [
         solution[0],
         solution[1],
-        solution[2] - solution[0] * source_origin.0 - solution[1] * source_origin.1,
+        solution[2],
         solution[3],
         solution[4],
-        solution[5] - solution[3] * source_origin.0 - solution[4] * source_origin.1,
+        solution[5],
         solution[6],
         solution[7],
-        1.0 - solution[6] * source_origin.0 - solution[7] * source_origin.1,
+        1.0,
     ];
     if coefficients.iter().any(|value| !value.is_finite()) {
         return Err(Error::InvalidInput {
@@ -1476,7 +1611,7 @@ mod tests {
         // The sidecar was captured from cv2.getPerspectiveTransform with the
         // destination/source order reversed, followed by
         // cv2.perspectiveTransform. It checks the pre-rotation warp-to-source
-        // direction used by the private crop sampler against all twelve reviewed
+        // direction used by the private crop sampler against all thirteen reviewed
         // BGR cases, including each destination boundary and one interior
         // coordinate per case. It is a self-authored, environment-specific
         // component oracle rather than a general OpenCV-equivalence claim.
@@ -1484,7 +1619,7 @@ mod tests {
             include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
         const CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE: &str =
             include_str!("../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv");
-        const EXPECTED_FIXTURE_IDS: [&str; 12] = [
+        const EXPECTED_FIXTURE_IDS: [&str; 13] = [
             "classic-v1-crop-oracle-identity-bgr-3x2",
             "classic-v1-crop-oracle-border-replicate-bgr-3x2",
             "classic-v1-crop-oracle-projective-bgr-4x3",
@@ -1497,6 +1632,7 @@ mod tests {
             "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
             "classic-v1-crop-oracle-cubic-rounding-bgr-8x10",
             "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10",
+            "classic-v1-crop-oracle-sampling-matrix-bgr-12x11",
         ];
 
         assert!(
@@ -1574,7 +1710,7 @@ mod tests {
             mapping_count += 1;
         }
 
-        assert_eq!(mapping_count, 60, "unexpected inverse-mapping sample count");
+        assert_eq!(mapping_count, 65, "unexpected inverse-mapping sample count");
         for fixture_id in EXPECTED_FIXTURE_IDS {
             let sample_count = CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE
                 .lines()

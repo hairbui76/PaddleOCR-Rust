@@ -64,18 +64,30 @@ crossing every image side, a non-linear tall projective crop before rotation,
 eighth-pixel interior phases, a one-by-one fractional result, and a one-pixel
 wide tall projective result, a high-variation case that crosses a cubic
 half-byte rounding boundary before tall-result rotation, and a high-variation
-tall crop that detects the `f32` cubic-weight construction order. The corpus is
-BGR only because the frozen M2 classic input contract starts from a decoded
-OpenCV-style BGR image.
+tall crop that detects the `f32` cubic-weight construction order; and a
+high-variation crop that detects the source-to-warp matrix inversion and
+`f32` sampler-coordinate boundary. The corpus is BGR only because the frozen M2
+classic input contract starts from a decoded OpenCV-style BGR image.
 Decoder/color/alpha semantics remain separate `D-008` and `IMG-*` work.
 
-The latter regression follows the operation structure of OpenCV 5.0.0's
+The cubic-weight regression follows the operation structure of OpenCV 5.0.0's
 `bicubicWeights` source implementation rather than treating an algebraically
 equivalent cubic polynomial as numerically interchangeable. It is a narrow
 source-level explanation for the recorded fixture, not copied OpenCV code or a
 general cross-version pixel-equivalence claim.
 
+The sampling-matrix regression additionally follows OpenCV 5.0.0's
+`warpPerspective` sequence: it inverts the supplied source-to-warp matrix and
+the selected generic warp path converts the inverse to `Matx33f`, computes row
+terms in `f32`, then calculates individual perspective coordinates through a
+`double` division and casts them to `float`. The Rust implementation keeps this
+as a private sampler detail; it is not a public geometry contract or a claim
+about every OpenCV code path or platform.
+
 - OpenCV 5.0.0 `bicubicWeights` source: https://github.com/opencv/opencv/blob/5.0.0/modules/imgproc/src/warp_kernels.simd.hpp#L7000-L7010
+- OpenCV 5.0.0 cubic horizontal/vertical accumulation: https://github.com/opencv/opencv/blob/5.0.0/modules/imgproc/src/warp_kernels.simd.hpp#L7160-L7319
+- OpenCV 5.0.0 `warpPerspective` inversion: https://github.com/opencv/opencv/blob/5.0.0/modules/imgproc/src/imgwarp.cpp#L3013-L3059
+- OpenCV 5.0.0 generic-warp `Matx33f` conversion and coordinate evaluation: https://github.com/opencv/opencv/blob/5.0.0/modules/imgproc/src/imgwarp.cpp#L88-L174
 
 ## Reviewed capture
 
@@ -83,15 +95,15 @@ The reviewed capture is
 [tests/fixtures/classic-v1-crop-oracle/capture.json](../tests/fixtures/classic-v1-crop-oracle/capture.json).
 It was captured on 2026-08-02 with Python 3.12.3, NumPy 2.5.1, OpenCV 5.0.0,
 and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
-`002e012b0a0b0b7ccd295625e9b9e4bbca75341bfa01b1bf9924a1e734c6295a`;
+`2172254d8dd9d7fee979d61abf0fc3fe32a84572ffd0f44bc7bfe30626f1e07f`;
 [metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
 The sidecar
 [tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv](../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv)
-has SHA-256 `2d1dbc630d4b4cb23c1e6796c3a4a595c16acb4a23a17f7abd22f4887a5c5196`.
-It records sixty `warp → source` points: the four pre-rotation destination
-boundaries and one interior coordinate for each of the twelve reviewed cases.
+has SHA-256 `b5daf2b1195ca9d63e2d5ab4e59c2f994d0c373122c2bb2857bb3c064e35aca5`.
+It records sixty-five `warp → source` points: the four pre-rotation destination
+boundaries and one interior coordinate for each of the thirteen reviewed cases.
 The expected coordinates are independent OpenCV
 `cv2.getPerspectiveTransform(destination, source)` plus
 `cv2.perspectiveTransform` evaluations, not values calculated by Rust.
@@ -101,8 +113,9 @@ The offline Rust regressions
 `crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases`,
 `crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases`, and
 `crop::tests::classic_crop_matches_cubic_rounding_opencv_oracle_case`, and
-`crop::tests::classic_crop_matches_cubic_weight_construction_opencv_oracle_case`
-check all twelve recorded outputs without importing Python or OpenCV. Exact
+`crop::tests::classic_crop_matches_cubic_weight_construction_opencv_oracle_case`,
+and `crop::tests::classic_crop_matches_sampling_matrix_opencv_oracle_case`
+check all thirteen recorded outputs without importing Python or OpenCV. Exact
 agreement is evidence only for these self-authored BGR cases and this recorded
 environment. It is not a claim of universal OpenCV interpolation parity,
 upstream-environment parity, decoded-image behavior, or OCR compatibility.
@@ -114,7 +127,7 @@ one-pixel, and tall-thin cases. This is narrow mapping evidence for those
 recorded matrices, not general OpenCV homography equivalence.
 
 `geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle`
-parses the sidecar offline and checks all sixty captured pre-rotation
+parses the sidecar offline and checks all sixty-five captured pre-rotation
 warp-to-source coordinates against the private plan. It therefore covers the
 mapping direction used by the crop sampler, while remaining limited to this
 recorded OpenCV environment and the self-authored cases.

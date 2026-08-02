@@ -199,6 +199,21 @@ CASES: tuple[CropCase, ...] = (
             (1.29, 9.676315),
         ),
     ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-sampling-matrix-bgr-12x11",
+        description=(
+            "A high-variation BGR crop distinguishes the OpenCV-style "
+            "source-to-warp matrix inversion and f32 sampler evaluation "
+            "from a direct f64 inverse-coordinate path."
+        ),
+        rows=lcg_bgr_rows(12, 11, 3_130_585_584),
+        points=(
+            (1.672916054725647, 1.0145947933197021),
+            (12.913864135742188, 1.7000665664672852),
+            (14.252660751342773, 12.014155387878418),
+            (1.5553478002548218, 12.413676261901855),
+        ),
+    ),
 )
 
 
