@@ -1,0 +1,11 @@
+PaddleOCR-Rust
+Copyright 2026 PaddleOCR-Rust Contributors
+
+PaddleOCR-Rust is an independent native-Rust port project. It is not an
+official PaddlePaddle or PaddleOCR release and is not affiliated with or
+endorsed by PaddlePaddle.
+
+References to PaddleOCR and PaddlePaddle identify the read-only upstream
+behavioral reference used for compatibility research. No PaddleOCR source,
+model weights, datasets, fonts, dictionaries, or third-party runtime artifacts
+are included in this repository at the time of this notice.

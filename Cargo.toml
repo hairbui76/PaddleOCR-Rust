@@ -1,0 +1,28 @@
+[workspace]
+members = ["."]
+resolver = "3"
+
+[package]
+name = "paddleocr-rust"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+description = "An independent native-Rust PaddleOCR port"
+license = "Apache-2.0"
+readme = "README.md"
+publish = false
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+
+[lints.clippy]
+dbg_macro = "deny"
+todo = "deny"
+unimplemented = "deny"
+unwrap_used = "deny"
+expect_used = "deny"
+
+[profile.release]
+strip = "symbols"

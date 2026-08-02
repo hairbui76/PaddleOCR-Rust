@@ -1,0 +1,15 @@
+/target/
+/PaddleOCR
+/.codex/
+/models/
+*.onnx
+*.pdmodel
+*.pdiparams
+*.pdparams
+*.tar
+*.tar.gz
+*.zip
+.env
+.DS_Store
+__pycache__/
+*.py[cod]

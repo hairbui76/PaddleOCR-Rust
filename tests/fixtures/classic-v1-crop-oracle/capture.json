@@ -1,0 +1,488 @@
+{
+  "algorithm": {
+    "border_mode": "BORDER_REPLICATE",
+    "interpolation": "INTER_CUBIC",
+    "post_warp_rotation": "numpy.rot90 when height / width >= 1.5"
+  },
+  "cases": [
+    {
+      "description": "Identity BGR crop preserves interleaved row-major bytes.",
+      "fixture_id": "classic-v1-crop-oracle-identity-bgr-3x2",
+      "input": {
+        "base64": "AQIDBAUGBwgJCgsMDQ4PEBES",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f26e2267ceff42c09cd56180cc0353a28a9ec5affbd29b1bbff0d6f4547c5ad0",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "AQIDBAUGBwgJCgsMDQ4PEBES",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f26e2267ceff42c09cd56180cc0353a28a9ec5affbd29b1bbff0d6f4547c5ad0",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          3.0,
+          0.0
+        ],
+        [
+          3.0,
+          2.0
+        ],
+        [
+          0.0,
+          2.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 3
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A left-shifted crop exercises BORDER_REPLICATE.",
+      "fixture_id": "classic-v1-crop-oracle-border-replicate-bgr-3x2",
+      "input": {
+        "base64": "FCg8UGR4jKC0FSk9UWV5jaG1",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e2b67164c4bb55af959c043cb69c040efc034737920868270fcb79407b5a4607",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "FCg8FCg8UGR4FSk9FSk9UWV5",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e3c0974e13b0c82d1b7f5b3269a3b202ae8f18d09f5b699efc69322cf0c2463d",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          0.0,
+          1.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.0,
+          0.0
+        ],
+        [
+          2.0,
+          0.0
+        ],
+        [
+          2.0,
+          2.0
+        ],
+        [
+          -1.0,
+          2.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 3
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "Fractional projective coordinates exercise INTER_CUBIC and replicated borders.",
+      "fixture_id": "classic-v1-crop-oracle-projective-bgr-4x3",
+      "input": {
+        "base64": "AAcTHys7R1NhZW1/DR0vPUlZa4OVl62/ESU1Q09ncYmds8ff",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c8444b58fc604871240155c3cda2066e47d437de332634fc1c87f64f8e51bf44",
+        "shape": [
+          3,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "AAgVGCMzR1RiChwvLDlKaICS",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9dd2613ded62a57ae1f171a457ca71e315f49ef808cf4ca87b0f93f553336c04",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0384084074776185,
+          0.12663517458919038,
+          0.22794330822210704
+        ],
+        [
+          0.095796414365669,
+          0.9990197716625553,
+          -0.2258058393242216
+        ],
+        [
+          0.07374961695161392,
+          0.021258912969319223,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.25,
+          0.25
+        ],
+        [
+          3.4000000953674316,
+          -0.10000000149011612
+        ],
+        [
+          3.200000047683716,
+          2.5
+        ],
+        [
+          -0.5,
+          2.299999952316284
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 3
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A height-to-width ratio of 1.5 exercises the np.rot90 boundary.",
+      "fixture_id": "classic-v1-crop-oracle-tall-rotation-bgr-2x3",
+      "input": {
+        "base64": "AAECCgsMFBUWHh8gKCkqMjM0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a233717529a22762b4ba6b5a45b4ae57685c31f680c24feb9f994359adace0ff",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "CgsMHh8gMjM0AAECFBUWKCkq",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "ad8e9e012c775b1aca97fcd0822ed28f53772e9c1dca81aaefd368cded4e035e",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          2.0,
+          0.0
+        ],
+        [
+          2.0,
+          3.0
+        ],
+        [
+          0.0,
+          3.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 3,
+        "width": 2
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A non-linear BGR pattern and fractional interior quadrilateral exercise INTER_CUBIC coordinate quantization without relying on a border.",
+      "fixture_id": "classic-v1-crop-oracle-interior-projective-bgr-7x6",
+      "input": {
+        "base64": "F0x8Nle3VWLydG0tk3hosoOj0Y7eKHuPTpPPdKsPmsNPwNuP5vPPDAsPOaqiZs/nk/QswBlx7T62GmP7R4hAStm1fgv/sj1J5m+TGqHdTtMnggVxWwjIlkcX0YZmDMW1RwQEgkNTvYKibDfbroMv8M+DMhvXdGcrtrN/+P/T",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2dd66b0fa64095251d6be1db6b13059c05390f94f8d3d93e89592a75931f86ea",
+        "shape": [
+          6,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "IleSTmzHdZFJmbNj6OC2PqfEc/RYnoE5+VmPjH//WJDykE6O801biHbhKciYcSh0yU5Da76hI2FlSTUm",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e70640ba9f59bb90b87c65069bb7883ccf8b2eaae2db7f39c9dc1a7a016e25f1",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.7783449895478656,
+          -0.04184651068794867,
+          -0.2640514394401533
+        ],
+        [
+          -0.06124751314909365,
+          0.728164896803518,
+          -0.12419635229368499
+        ],
+        [
+          -0.026665794300864857,
+          -0.029141612569127208,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.3499999940395355,
+          0.20000000298023224
+        ],
+        [
+          5.699999809265137,
+          0.6499999761581421
+        ],
+        [
+          5.25,
+          4.599999904632568
+        ],
+        [
+          0.6000000238418579,
+          4.849999904632568
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A non-linear BGR pattern and fractional quadrilateral crossing all four image sides exercise replicated-border cubic sampling.",
+      "fixture_id": "classic-v1-crop-oracle-edge-projective-bgr-5x4",
+      "input": {
+        "base64": "R3ysZofnhZIipJ1dw6iYWKu/fsP/pNs/yvN/8Au/adrSlv8XwyRc8EmhHW7megnlrjsv4m15Fp/DStEN",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "48b1b27047af95011418582a26c058f3d9815b0032a76527b4888c71b2752c75",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "RnmrRneta4PJjpMZuKN9TImxUpLDgbvbrv8533iqXsvGaee8nr9G+Tl2X2bTcJjegYeQ1WEyZ32+Psor",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8d0e099adce9248a45ff6108b5c768a0166b3e2efd04602747fa414b5c50980e",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.872660019383595,
+          -0.07635775462188517,
+          0.9141113875341489
+        ],
+        [
+          -0.17487842937426024,
+          1.0784169058599593,
+          0.45468389274632515
+        ],
+        [
+          -0.01121762653359221,
+          0.016088780280042132,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.100000023841858,
+          -0.6000000238418579
+        ],
+        [
+          4.449999809265137,
+          0.30000001192092896
+        ],
+        [
+          5.099999904632568,
+          4.150000095367432
+        ],
+        [
+          -0.75,
+          3.4000000953674316
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A fractional tall projective BGR crop exercises cubic sampling before the post-warp counter-clockwise rotation.",
+      "fixture_id": "classic-v1-crop-oracle-tall-projective-bgr-4x7",
+      "input": {
+        "base64": "lcr6tNU10+Bw8uurpvkNzBFN8imNGEHNtygg5E1lEXKqPpfvyFcz/Il9MLvHZO0R2YZGFMWVTwTkikMz6rVZLAGtbk0BsJlV++RsRD3FjZYe1u93",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7e96a3f1acdd392961eacba14975ce6deeab56688f559396057adb6bca627350",
+        "shape": [
+          7,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "3KJS2gh6c32Xg6DFCGG9LwFxnMy9sbcJxyMuzms/z5VR6b1i",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "06a47739584fb1b5a701865b4da20e920927fd986cc5a02bf0861999234f195d",
+        "shape": [
+          2,
+          6,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.6740385991455314,
+          0.0276245336223784,
+          -0.17127210318978442
+        ],
+        [
+          -0.12318695584271246,
+          0.9151031020443365,
+          -0.06071357260736543
+        ],
+        [
+          -0.04008182828685482,
+          -0.010405229737332933,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          0.10000000149011612
+        ],
+        [
+          2.8499999046325684,
+          0.44999998807907104
+        ],
+        [
+          2.5,
+          5.900000095367432
+        ],
+        [
+          0.0,
+          6.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 2
+      },
+      "rotates_counter_clockwise": true
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "purpose": "developer-only OpenCV crop oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/crop-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_path": "tools/infer/utility.py:get_rotate_crop_image"
+  }
+}

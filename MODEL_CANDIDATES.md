@@ -1,0 +1,165 @@
+# M2 Model Artifact Candidate Record
+
+Roadmap item: `MOD-001`
+Status: In progress; remote and user-authorized local provenance/ABI discovery
+plus bounded external runtime diagnostic evidence only, no artifact or runtime
+accepted
+Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
+Evidence captured: 2026-08-02
+
+## Scope and non-decision
+
+This record identifies reproducible official candidate artifacts for the
+selected M2 family, `PP-OCRv6_medium_det` plus `PP-OCRv6_medium_rec`. It does
+not select a backend, permit a model download, approve redistribution, add a
+runtime dependency, or establish a compatibility claim.
+
+The candidates were located through the pinned upstream module documentation
+and then inspected as remote metadata/text configuration only. No model weight,
+dictionary, cache, conversion output, or remote content was stored in this
+repository. Normal builds and tests remain entirely offline.
+
+The local artifact rule remains unchanged: a user must explicitly provision an
+approved artifact outside version control, and future code must verify its
+identity and hash before use. It must never silently download a candidate from
+any URL below.
+
+## Official source candidates
+
+The upstream documentation links the PaddleX BOS inference archives. The
+official PaddlePaddle Hugging Face repositories below expose static-package
+candidates and separately published ONNX exports. Their byte-for-byte
+relationship to the BOS archives is unverified. The Hugging Face model cards
+displayed `apache-2.0` at the recorded revisions, but that label is preliminary
+license evidence only. [LICENSE_REVIEW.md](LICENSE_REVIEW.md) records the
+candidate-specific listing evidence and remaining gaps; P3/P13 still require a
+revision-specific license/provenance review before accepting any artifact or
+bundling any file.
+
+| Role | Static Paddle candidate (pinned revision) | `inference.pdiparams` SHA-256 / bytes | Official ONNX candidate (pinned revision) | `inference.onnx` SHA-256 / bytes |
+|---|---|---|---|---|
+| Detector | [`PaddlePaddle/PP-OCRv6_medium_det`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det) @ `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | `85218d2e3d98f5a21c58b4220627be923a97aee5db3cc71f39536ab31ac53960` / `61,960,476` | [`PaddlePaddle/PP-OCRv6_medium_det_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx) @ `61323801669c338b7891481ec7bac61ce31b576a` | `eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` / `62,032,837` |
+| Recognizer | [`PaddlePaddle/PP-OCRv6_medium_rec`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec) @ `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | `1b01c79a914587933f615569e75de54f2e638ebb5d3f3b3c1b38c24ede8c7319` / `76,465,087` | [`PaddlePaddle/PP-OCRv6_medium_rec_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx) @ `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | `9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` / `76,554,979` |
+
+The pinned upstream sources also point at these BOS archive locations, which
+are source locators rather than automatic-download endpoints:
+
+- `https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_det_infer.tar`
+- `https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv6_medium_rec_infer.tar`
+
+The BOS objects are not yet acceptable as reproducible M2 artifacts because no
+immutable revision/content hash has been reviewed for them. A later evidence
+record may choose one verified source representation; static and ONNX files
+must not be treated as interchangeable merely because their model names match.
+
+## Captured package metadata
+
+The static candidates have the following small metadata files. Their SHA-256
+values were calculated from the remote text files at the pinned candidate
+revisions; no binary model content was downloaded.
+
+| Role | `inference.json` bytes / SHA-256 | `inference.yml` bytes / SHA-256 |
+|---|---|---|
+| Detector | `312,150` / `0f1a7ec35da36173529c7a60238b7f7919e3831929c3f700ad90ad4896adecd5` | `886` / `7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871` |
+| Recognizer | `221,814` / `0b2e25e990bd072f1bf77d59d67d508bce6c4bd44af6624e0fb27d6da2cd00e8` | `150,580` / `991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129` |
+
+The separately published ONNX candidates also list an `inference.yml` file.
+Streaming those text files from their pinned revisions with a 1 MiB transfer
+limit, without storing them, produced the following fingerprints:
+
+| Role | ONNX `inference.yml` bytes / SHA-256 | Relationship to static configuration |
+|---|---|---|
+| Detector | `886` / `7298d5ead546584af2504d03355f881ac7a7bc0eb1e282d3e159277c1d0af871` | Same configuration fingerprint as the static detector candidate. |
+| Recognizer | `150,580` / `991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129` | Same configuration fingerprint as the static recognizer candidate. |
+
+A matching configuration fingerprint is only file-identity evidence for that
+small text file. It does not establish graph, tensor, numerical, dictionary,
+license, conversion, or package equivalence between the static and ONNX
+candidates.
+
+Both `inference.json` files are Paddle program JSON, not ONNX. Each exposes one
+input named `x` and one fetched output named `fetch_name_0`:
+
+| Role | Input ABI observed in static graph | Output ABI observed in static graph | Status |
+|---|---|---|---|
+| Detector | `x`: `float32`, NCHW, `[-1, 3, -1, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, 1, -1, -1]` | Candidate evidence; needs local artifact verification. |
+| Recognizer | `x`: `float32`, NCHW, `[-1, 3, 48, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, -1, 18710]` | Candidate evidence; needs dictionary/index verification. |
+
+The recognizer metadata declares BGR decode semantics and `RecResizeImg` base
+shape `[3, 48, 320]`. Its HPI metadata records static-engine dynamic shapes
+from `[1, 3, 48, 160]` through `[8, 3, 48, 3200]`. The output graph contains a
+CTC softmax fetch with 18,710 classes.
+
+The inline recognizer `character_dict` has 18,708 serialized entries. The
+pinned training configuration separately sets `use_space_char: true`, and the
+classic CTC decoder prepends the blank token. This plausibly explains the
+18,710 output classes, but it is not yet a verified dictionary ABI: P3 must
+prove the exact index mapping, blank/space treatment, duplicate characters,
+and decoding of all classes using the selected local artifact.
+
+## Artifact metadata versus M2 behavior
+
+The detector candidate's `inference.yml` declares BGR/HWC normalization with
+the same ImageNet mean/std values used by the classic contract, but it also
+declares `thresh: 0.2`, `box_thresh: 0.45`, `unclip_ratio: 1.4`, and
+`max_candidates: 3000`. Those values conflict with the deliberately selected
+M2 classic profile (`0.3`, `0.6`, `1.5`, and `1000`).
+
+`CLASSIC_OCR_CONTRACT.md` remains the public M2 behavior authority. A runtime
+must not silently consume the candidate manifest's thresholds. Before the
+candidate can be accepted, P3/P5 must demonstrate that it produces the
+documented detector map and that applying the M2 profile is valid; otherwise
+the contract must be amended with reviewed fixture evidence or the candidate
+must be rejected.
+
+Similarly, the recognizer candidate is exported from a CTC+NRTR multi-head
+architecture but exposes a CTC-shaped fetch. M2 supports only the validated
+CTC fetch/decoder path. No NRTR head, word boxes, Arabic reversal, or generic
+multilingual claim is accepted merely from this metadata.
+
+## User-authorized local ONNX candidate inventory
+
+On 2026-08-02, the project user authorized the two exact ONNX packages to be
+downloaded into an external user-owned directory. Each expected file was a
+regular file, the local Hugging Face metadata recorded the requested immutable
+revision, and the runtime-relevant file hashes matched this record. A
+parse-only `onnx.checker.check_model` inspection recorded actual ONNX opsets,
+input/output signatures, operator sets, node counts, and the absence of
+external tensor data. The detailed evidence is in
+[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
+
+This inventory is not a local model resolver, accepted artifact manifest,
+runtime decision, or support claim. The bounded external diagnostics allowed by
+`RT-002` are recorded in
+[`RUNTIME_TRACT_EVIDENCE.md`](RUNTIME_TRACT_EVIDENCE.md),
+[`RUNTIME_ORT_EVIDENCE.md`](RUNTIME_ORT_EVIDENCE.md), and
+[`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md); they do
+not approve the artifacts for project adoption, conversion, distribution,
+bundling, or model-derived fixture retention. The candidate
+configuration/README license observation remains preliminary, and the local
+presence of `inference.json` files with the same hashes as static candidate
+metadata does not make static and ONNX representations equivalent.
+
+## Required acceptance work
+
+`MOD-001` cannot become `Done` until all of the following exist:
+
+1. A revision-specific provenance/license record for the exact chosen static
+   or ONNX artifacts and every accompanying dictionary/configuration file.
+2. A local provisioning manifest that names every required file, byte length,
+   SHA-256, format, and location policy, with no automatic acquisition.
+3. A safe, bounded local inspection that confirms the actual file hashes,
+   tensor names/dtypes/layouts/shapes, required operators, and output order.
+   The format/hash/signature/operator portion is recorded in
+   [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md);
+   backend-visible graph semantics still require runtime candidate validation.
+4. A verified recognizer dictionary ABI, including CTC blank/space behavior
+   and the 18,710-class output correspondence.
+5. A recorded disposition of the static-vs-ONNX choice. Any conversion or
+   exported-format comparison must meet `m2-tensor-v1` in
+   [`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md).
+6. Offline golden capture and runtime qualification before any compatibility
+   ledger row is marked `Verified`.
+
+Until then, the data in this file is discovery evidence and a rejection/acceptance
+checklist—not a supported model list.
