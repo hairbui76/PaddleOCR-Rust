@@ -205,7 +205,16 @@ fn cubic_axis_samples(coordinate: f32, length: u32) -> [(u32, f32); 4] {
     debug_assert!(length > 0);
 
     let base = coordinate.floor();
-    let weights = cubic_weights(coordinate - base);
+    let alpha = coordinate - base;
+    // A finite `f32` coordinate immediately below a negative integer can lose
+    // its sub-unit difference during this subtraction, yielding the exact
+    // upper phase endpoint. At `alpha == 1.0`, this cubic kernel selects the
+    // next integer sample, which is the correct representable endpoint.
+    debug_assert!(
+        (0.0..=1.0).contains(&alpha),
+        "cubic phase {alpha:?} for coordinate {coordinate:?} and floor {base:?}"
+    );
+    let weights = cubic_weights(alpha);
     core::array::from_fn(|index| {
         let offset = index as f32 - 1.0;
         let sample_coordinate = base + offset;
@@ -224,7 +233,7 @@ fn replicated_index(coordinate: f32, length: u32) -> u32 {
 }
 
 fn cubic_weights(alpha: f32) -> [f32; 4] {
-    debug_assert!((0.0..1.0).contains(&alpha));
+    debug_assert!((0.0..=1.0).contains(&alpha));
 
     // Preserve the OpenCV 5.0.0 bicubic weight construction order rather than
     // using an algebraically equivalent distance polynomial. The two forms can
@@ -388,6 +397,17 @@ mod tests {
     }
 
     #[test]
+    fn cubic_sampling_accepts_the_representable_upper_phase_endpoint() {
+        // `-f32::MIN_POSITIVE` is negative but too close to zero for
+        // `coordinate - floor(coordinate)` to retain a value below one. The
+        // resulting exact endpoint must select the next integral sample rather
+        // than panicking in debug builds.
+        let samples = cubic_axis_samples(-f32::MIN_POSITIVE, 4);
+        assert_eq!(samples.map(|(index, _)| index), [0, 0, 0, 1]);
+        assert_eq!(samples.map(|(_, weight)| weight), [0.0, 0.0, 1.0, 0.0]);
+    }
+
+    #[test]
     fn classic_crop_preserves_identity_pixels_and_channels() {
         let source = must_ok(InterleavedImage::new(
             dimensions(3, 2),
@@ -473,6 +493,83 @@ mod tests {
 
         assert_eq!(crop.dimensions(), dimensions(3, 3));
         assert_eq!(crop.pixels(), [17, 111, 244].repeat(9));
+    }
+
+    #[test]
+    fn classic_crop_preserves_all_interleaved_channels_across_projective_cases() {
+        // These self-authored source-level cases deliberately do not make an
+        // OpenCV or decoded-image claim. They exercise the crop's stated
+        // private 1–4-channel invariant across replicated borders, fractional
+        // projective sampling, and the tall-crop counter-clockwise rotation.
+        let cases = [
+            (
+                "bordered-square",
+                dimensions(3, 3),
+                [(-0.75, -0.5), (2.75, 0.25), (3.25, 2.75), (-0.5, 3.25)],
+                dimensions(3, 3),
+                false,
+            ),
+            (
+                "fractional-wide",
+                dimensions(9, 6),
+                [(0.25, 0.0), (8.8, 0.6), (8.2, 5.7), (0.1, 5.2)],
+                dimensions(8, 5),
+                false,
+            ),
+            (
+                "fractional-tall",
+                dimensions(5, 11),
+                [(0.1, -0.3), (4.6, 0.2), (4.3, 10.9), (-0.25, 10.4)],
+                dimensions(10, 4),
+                true,
+            ),
+        ];
+        let channel_values = [23_u8, 97, 171, 245];
+
+        for (case_id, source_dimensions, source_points, expected_dimensions, expected_rotation) in
+            cases
+        {
+            let plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
+                source_points.map(|(x, y)| point(x, y)),
+            ))));
+            assert_eq!(
+                plan.output_width(),
+                expected_dimensions.width(),
+                "{case_id} output width"
+            );
+            assert_eq!(
+                plan.output_height(),
+                expected_dimensions.height(),
+                "{case_id} output height"
+            );
+            assert_eq!(
+                plan.rotates_counter_clockwise(),
+                expected_rotation,
+                "{case_id} rotation"
+            );
+
+            for channels in 1..=MAX_INTERLEAVED_CHANNELS {
+                let channel_values = &channel_values[..usize::from(channels)];
+                let source = must_ok(InterleavedImage::new(
+                    source_dimensions,
+                    channels,
+                    channel_values.repeat(source_dimensions.pixels() as usize),
+                ));
+
+                let crop = must_ok(classic_perspective_crop(&source, plan));
+                assert_eq!(
+                    crop.dimensions(),
+                    expected_dimensions,
+                    "{case_id}, {channels} channels"
+                );
+                assert_eq!(crop.channels(), channels, "{case_id}, {channels} channels");
+                assert_eq!(
+                    crop.pixels(),
+                    channel_values.repeat(expected_dimensions.pixels() as usize),
+                    "{case_id}, {channels} channels"
+                );
+            }
+        }
     }
 
     #[test]
