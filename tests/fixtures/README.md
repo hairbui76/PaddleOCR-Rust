@@ -27,8 +27,9 @@ Each fixture set must add a reviewable metadata record containing at least:
 checks the current self-authored corpus without network access, Python, a GPU,
 or the upstream checkout. It requires the pinned baseline, a non-empty source
 reference/test/limitation record, explicit Apache-2.0 input provenance, null
-model artifacts, normal non-symlink paths, and a valid `m2-unit-v1` expected
-comparison profile. It verifies SHA-256 values for direct fixture files.
+model artifacts, normal non-symlink paths, and a valid `m2-unit-v1` or
+`m2-image-input-oracle-v1` expected comparison profile. It verifies SHA-256
+values for direct fixture files.
 
 For `classic-v1-crop-oracle`, the gate also verifies the full capture document,
 its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
@@ -41,6 +42,14 @@ the hash check itself does not select a CPU-dispatched test path.
 `classic-v1-db-components` is a self-authored component-unit fixture. It
 records only private 8-connected bitmap components; it is not a model tensor,
 OpenCV contour, or detector result fixture.
+
+`classic-v1-image-inputs` records self-authored encoded PNG/JPEG byte streams,
+five bounded negative inputs, and a version-recorded OpenCV `IMREAD_COLOR` BGR
+capture. Its generator writes only stdout and runs outside normal Rust tests.
+The integrity gate validates every base64 payload, HWC BGR output shape, case
+identifier, and aggregate digest. This establishes fixture consistency and
+decision evidence only; it does not select a Rust decoder or claim image/OCR
+compatibility.
 
 ## Golden format
 

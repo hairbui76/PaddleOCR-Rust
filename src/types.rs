@@ -559,8 +559,11 @@ fn validate_encoded_image_length(length: usize) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+    use serde_json::Value;
+    use std::collections::BTreeSet;
 
-    fn must_ok<T>(result: Result<T>) -> T {
+    fn must_ok<T, E: std::fmt::Display>(result: std::result::Result<T, E>) -> T {
         match result {
             Ok(value) => value,
             Err(error) => panic!("expected success, got {error}"),
@@ -614,6 +617,54 @@ mod tests {
             }) if limit == MAX_ENCODED_IMAGE_BYTES as u64
                 && actual == MAX_ENCODED_IMAGE_BYTES as u64 + 1
         ));
+    }
+
+    #[test]
+    fn self_authored_image_input_fixture_stays_within_encoded_byte_contract() {
+        let document: Value = must_ok(serde_json::from_str(include_str!(
+            "../tests/fixtures/classic-v1-image-inputs/capture.json"
+        )));
+        let cases = array_value(&document, "cases");
+        let negative_cases = array_value(&document, "negative_cases");
+        assert_eq!(cases.len(), 15, "image-input fixture case count changed");
+        assert_eq!(
+            negative_cases.len(),
+            5,
+            "image-input fixture negative-case count changed"
+        );
+
+        let mut identifiers = BTreeSet::new();
+        for case in cases {
+            let identifier = string_value(case, "fixture_id");
+            assert!(
+                identifiers.insert(identifier.to_owned()),
+                "duplicate valid image fixture identifier {identifier:?}"
+            );
+            let bytes = fixture_payload(case, "encoded_image");
+            let encoded = must_ok(EncodedImage::new(&bytes));
+            assert_eq!(encoded.len(), bytes.len());
+        }
+
+        for case in negative_cases {
+            let identifier = string_value(case, "fixture_id");
+            assert!(
+                identifiers.insert(identifier.to_owned()),
+                "duplicate negative image fixture identifier {identifier:?}"
+            );
+            let bytes = fixture_payload(case, "encoded_input");
+            if identifier == "classic-v1-image-input-empty" {
+                assert!(matches!(
+                    EncodedImage::new(&bytes),
+                    Err(Error::InvalidInput {
+                        field: "image.bytes",
+                        violation: InputViolation::Empty,
+                    })
+                ));
+            } else {
+                let encoded = must_ok(EncodedImage::new(&bytes));
+                assert_eq!(encoded.len(), bytes.len());
+            }
+        }
     }
 
     #[test]
@@ -710,5 +761,41 @@ mod tests {
                 violation: InputViolation::InvalidIdentifier,
             })
         ));
+    }
+
+    fn array_value<'a>(value: &'a Value, field: &str) -> &'a [Value] {
+        match value.get(field).and_then(Value::as_array) {
+            Some(values) => values,
+            None => panic!("fixture field {field:?} must be an array"),
+        }
+    }
+
+    fn object_value<'a>(value: &'a Value, field: &str) -> &'a Value {
+        match value.get(field).filter(|candidate| candidate.is_object()) {
+            Some(object) => object,
+            None => panic!("fixture field {field:?} must be an object"),
+        }
+    }
+
+    fn string_value<'a>(value: &'a Value, field: &str) -> &'a str {
+        match value.get(field).and_then(Value::as_str) {
+            Some(text) => text,
+            None => panic!("fixture field {field:?} must be a string"),
+        }
+    }
+
+    fn fixture_payload(case: &Value, field: &str) -> Vec<u8> {
+        let payload = object_value(case, field);
+        let bytes = must_ok(STANDARD.decode(string_value(payload, "base64")));
+        let recorded_length = match payload.get("byte_length").and_then(Value::as_u64) {
+            Some(length) => length,
+            None => panic!("fixture payload byte_length must be an unsigned integer"),
+        };
+        assert_eq!(
+            usize::try_from(recorded_length).ok(),
+            Some(bytes.len()),
+            "fixture payload byte length does not match base64 bytes"
+        );
+        bytes
     }
 }

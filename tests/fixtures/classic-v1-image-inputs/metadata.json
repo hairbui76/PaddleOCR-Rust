@@ -1,0 +1,58 @@
+{
+  "fixture_id": "classic-v1-image-inputs",
+  "kind": "decoder_input_oracle",
+  "reviewed_on": "2026-08-02",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/encoded_image",
+    "sha256": "810ea173657aa6d0f354b3b8d91c02e96841d5816109600a5bbfdcbb80bd9b58",
+    "sha256_scope": "Concatenation of the fifteen self-authored valid encoded image byte streams in capture document order.",
+    "provenance": "Self-authored PNG byte construction plus deterministic OpenCV JPEG encoding in tools/capture_image_decoder_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/predict_system.py",
+      "tools/infer/utility.py"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_image_decoder_oracle.py",
+    "capture_sha256": "ea0541264e3789bae023fdf6bcb1f5bd7831b0f44835975e06d4db71dd24b6e6",
+    "operation": "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a"
+    }
+  },
+  "negative_input": {
+    "path": "capture.json#/negative_cases/*/encoded_input",
+    "sha256": "d683896d5aed8ed17308e01422c42c1130dfc9440594107c152393eab84568e3",
+    "sha256_scope": "Concatenation of the five bounded negative encoded byte streams in capture document order.",
+    "provenance": "Self-authored malformed, unknown, boundary-header, and filename-confusion byte streams from tools/capture_image_decoder_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/opencv_imread_color",
+    "schema_version": "paddleocr-rust/image-input-oracle/v1",
+    "comparison_profile": "m2-image-input-oracle-v1",
+    "sha256": "40ae05c5c8036a02da01a058d1c94a8acaa53ab0b6ee520f97bb09998d8ba9cd",
+    "sha256_scope": "Concatenation of the fifteen raw C-order OpenCV IMREAD_COLOR BGR uint8 output arrays in capture document order."
+  },
+  "tests": [
+    "types::tests::self_authored_image_input_fixture_stays_within_encoded_byte_contract"
+  ],
+  "limitations": [
+    "This is exact evidence only for the fifteen self-authored image byte streams and the recorded OpenCV environment.",
+    "It does not select a Rust decoder, establish universal OpenCV equivalence, or approve every JPEG/PNG variant.",
+    "The 16-bit PNG and all negative cases are policy boundaries; D-008 must declare explicit supported or rejected behavior before decoder implementation.",
+    "It contains no model, dictionary, font, upstream image asset, OCR output, or end-to-end model golden."
+  ]
+}

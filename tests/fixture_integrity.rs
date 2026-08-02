@@ -44,9 +44,23 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
             false,
             &context,
         );
+        if fixture_id != "classic-v1-image-inputs" {
+            assert_eq!(
+                string_field(
+                    object_field(&metadata, "expected", &context),
+                    "comparison_profile",
+                    &context
+                ),
+                "m2-unit-v1",
+                "{context} non-image fixture must use the frozen unit comparison profile"
+            );
+        }
 
         if fixture_id == "classic-v1-crop-oracle" {
             verify_crop_oracle(&metadata, &directory, &context);
+        }
+        if fixture_id == "classic-v1-image-inputs" {
+            verify_image_input_oracle(&metadata, &directory, &context);
         }
     }
 
@@ -56,6 +70,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
+        "classic-v1-image-inputs".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,
@@ -192,10 +207,13 @@ fn verify_asset_descriptor(
             &format!("{label}.schema_version"),
             context,
         );
-        assert_eq!(
-            string_field(descriptor, "comparison_profile", context),
-            "m2-unit-v1",
-            "{context} expected fixture must use the frozen unit comparison profile"
+        let comparison_profile = string_field(descriptor, "comparison_profile", context);
+        assert!(
+            matches!(
+                comparison_profile,
+                "m2-unit-v1" | "m2-image-input-oracle-v1"
+            ),
+            "{context} expected fixture has unsupported comparison profile {comparison_profile:?}"
         );
     }
 
@@ -297,6 +315,279 @@ fn verify_crop_oracle(metadata: &Value, fixture_directory: &Path, context: &str)
         string_field(geometry_oracle, "sha256", context),
         &format!("{context} geometry oracle"),
     );
+}
+
+fn verify_image_input_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    let negative_input = object_field(metadata, "negative_input", context);
+    let expected = object_field(metadata, "expected", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "capture.json#/cases/*/encoded_image",
+        "{context} image input path changed without an integrity-gate update"
+    );
+    assert_eq!(
+        string_field(negative_input, "path", context),
+        "capture.json#/negative_cases/*/encoded_input",
+        "{context} negative image input path changed without an integrity-gate update"
+    );
+    assert_eq!(
+        string_field(expected, "path", context),
+        "capture.json#/cases/*/opencv_imread_color",
+        "{context} image oracle output path changed without an integrity-gate update"
+    );
+    assert_eq!(
+        string_field(expected, "comparison_profile", context),
+        "m2-image-input-oracle-v1",
+        "{context} image oracle must use its dedicated comparison profile"
+    );
+    verify_asset_descriptor(
+        negative_input,
+        fixture_directory,
+        "negative input",
+        true,
+        context,
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "generator", context),
+        "tools/capture_image_decoder_oracle.py",
+        "{context} image generator changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "operation", context),
+        "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+        "{context} image oracle operation changed without review"
+    );
+    let capture_bytes = read_fixture_file(fixture_directory, "capture.json", context);
+    assert_digest(
+        &capture_bytes,
+        string_field(oracle, "capture_sha256", context),
+        &format!("{context} image capture document"),
+    );
+
+    let capture = parse_json_bytes(&capture_bytes, &format!("{context} image capture document"));
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        "paddleocr-rust/image-input-oracle/v1",
+        "{context} image capture schema changed without review"
+    );
+    let captured_oracle = object_field(&capture, "oracle", context);
+    assert_eq!(
+        string_field(captured_oracle, "operation", context),
+        string_field(oracle, "operation", context),
+        "{context} image capture and metadata disagree on the oracle operation"
+    );
+    verify_image_capture_environment(
+        object_field(oracle, "environment", context),
+        object_field(&capture, "environment", context),
+        context,
+    );
+
+    let cases = array_field(&capture, "cases", context);
+    assert_eq!(
+        cases.len(),
+        15,
+        "{context} expected fifteen valid image cases"
+    );
+    let mut case_ids = BTreeSet::new();
+    let mut valid_inputs = Vec::new();
+    let mut outputs = Vec::new();
+    for case in cases {
+        let fixture_id = string_field(case, "fixture_id", context);
+        assert!(
+            case_ids.insert(fixture_id.to_owned()),
+            "{context} duplicate valid image case identifier {fixture_id:?}"
+        );
+        assert!(
+            matches!(string_field(case, "format", context), "png" | "jpeg"),
+            "{context} valid image case {fixture_id:?} has an unsupported format label"
+        );
+        valid_inputs.extend(decode_image_payload(case, "encoded_image", false, context));
+        outputs.extend(decode_image_payload(
+            case,
+            "opencv_imread_color",
+            true,
+            context,
+        ));
+    }
+    let expected_case_ids = BTreeSet::from([
+        "classic-v1-image-input-jpeg-baseline-3x2".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-1".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-2".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-3".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-4".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-5".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-6".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-7".to_owned(),
+        "classic-v1-image-input-jpeg-exif-orientation-8".to_owned(),
+        "classic-v1-image-input-jpeg-progressive-3x2".to_owned(),
+        "classic-v1-image-input-png-grayscale-3x2".to_owned(),
+        "classic-v1-image-input-png-grayscale16-3x2".to_owned(),
+        "classic-v1-image-input-png-indexed-trns-3x2".to_owned(),
+        "classic-v1-image-input-png-rgb-3x2".to_owned(),
+        "classic-v1-image-input-png-rgba-3x2".to_owned(),
+    ]);
+    assert_eq!(
+        case_ids, expected_case_ids,
+        "{context} valid image case set changed without an integrity-gate update"
+    );
+    assert_digest(
+        &valid_inputs,
+        string_field(input, "sha256", context),
+        &format!("{context} concatenated valid image inputs"),
+    );
+    assert_digest(
+        &outputs,
+        string_field(expected, "sha256", context),
+        &format!("{context} concatenated image oracle outputs"),
+    );
+
+    let negative_cases = array_field(&capture, "negative_cases", context);
+    assert_eq!(
+        negative_cases.len(),
+        5,
+        "{context} expected five negative image cases"
+    );
+    let mut negative_ids = BTreeSet::new();
+    let mut negative_inputs = Vec::new();
+    for case in negative_cases {
+        let fixture_id = string_field(case, "fixture_id", context);
+        assert!(
+            negative_ids.insert(fixture_id.to_owned()),
+            "{context} duplicate negative image case identifier {fixture_id:?}"
+        );
+        assert!(
+            matches!(
+                string_field(case, "required_outcome", context),
+                "invalid_input_empty"
+                    | "unsupported_format"
+                    | "malformed_input"
+                    | "resource_limit_before_project_pixel_allocation"
+                    | "content_detection_ignores_filename_hint"
+            ),
+            "{context} negative image case {fixture_id:?} has an unknown required outcome"
+        );
+        negative_inputs.extend(decode_image_payload(case, "encoded_input", false, context));
+    }
+    let expected_negative_ids = BTreeSet::from([
+        "classic-v1-image-input-content-name-confusion".to_owned(),
+        "classic-v1-image-input-empty".to_owned(),
+        "classic-v1-image-input-oversized-png-header".to_owned(),
+        "classic-v1-image-input-truncated-png".to_owned(),
+        "classic-v1-image-input-unknown-bytes".to_owned(),
+    ]);
+    assert_eq!(
+        negative_ids, expected_negative_ids,
+        "{context} negative image case set changed without an integrity-gate update"
+    );
+    assert_digest(
+        &negative_inputs,
+        string_field(negative_input, "sha256", context),
+        &format!("{context} concatenated negative image inputs"),
+    );
+}
+
+fn verify_image_capture_environment(oracle: &Value, captured: &Value, context: &str) {
+    for field in ["numpy", "opencv", "opencv_build_information_sha256"] {
+        assert_eq!(
+            string_field(captured, field, context),
+            string_field(oracle, field, context),
+            "{context} image oracle environment disagrees on {field}"
+        );
+    }
+    let captured_distribution = object_field(captured, "opencv_distribution", context);
+    let captured_distribution = format!(
+        "{} {}",
+        string_field(captured_distribution, "name", context),
+        string_field(captured_distribution, "version", context)
+    );
+    assert_eq!(
+        captured_distribution,
+        string_field(oracle, "opencv_distribution", context),
+        "{context} image oracle environment disagrees on OpenCV distribution"
+    );
+    let captured_python = string_field(captured, "python", context);
+    assert!(
+        captured_python.starts_with(string_field(oracle, "python", context)),
+        "{context} image oracle environment disagrees on Python version"
+    );
+}
+
+fn decode_image_payload(case: &Value, role: &str, is_bgr_output: bool, context: &str) -> Vec<u8> {
+    let payload = object_field(case, role, context);
+    let encoded = string_field(payload, "base64", context);
+    let bytes = must_ok(
+        STANDARD.decode(encoded),
+        &format!("decode {context} {role} base64 payload"),
+    );
+    assert_digest(
+        &bytes,
+        string_field(payload, "sha256", context),
+        &format!("{context} {role} payload"),
+    );
+    let byte_length = match value_field(payload, "byte_length", context).as_u64() {
+        Some(value) => value,
+        None => panic!("{context} {role} byte_length must be an unsigned integer"),
+    };
+    assert_eq!(
+        usize::try_from(byte_length).ok(),
+        Some(bytes.len()),
+        "{context} {role} byte_length must match its base64 bytes"
+    );
+
+    if is_bgr_output {
+        assert_eq!(
+            string_field(payload, "channel_order", context),
+            "BGR",
+            "{context} {role} output must remain BGR"
+        );
+        assert_eq!(
+            string_field(payload, "dtype", context),
+            "uint8",
+            "{context} {role} output must remain uint8"
+        );
+        let shape = array_field(payload, "shape", context);
+        assert_eq!(
+            shape.len(),
+            3,
+            "{context} {role} output must have an HWC shape"
+        );
+        let mut expected_length = 1_usize;
+        for (axis_index, axis) in shape.iter().enumerate() {
+            let axis = match axis.as_u64() {
+                Some(value) => value,
+                None => {
+                    panic!("{context} {role} shape axis {axis_index} must be an unsigned integer")
+                }
+            };
+            let axis = match usize::try_from(axis) {
+                Ok(value) => value,
+                Err(_) => panic!("{context} {role} shape axis {axis_index} does not fit usize"),
+            };
+            assert!(
+                axis > 0,
+                "{context} {role} shape axis {axis_index} must be non-zero"
+            );
+            expected_length = match expected_length.checked_mul(axis) {
+                Some(value) => value,
+                None => panic!("{context} {role} shape byte count overflows usize"),
+            };
+        }
+        assert_eq!(
+            shape[2].as_u64(),
+            Some(3),
+            "{context} {role} output must have three BGR channels"
+        );
+        assert_eq!(
+            bytes.len(),
+            expected_length,
+            "{context} {role} byte count must match its HWC uint8 shape"
+        );
+    }
+
+    bytes
 }
 
 fn decode_crop_payload(case: &Value, role: &str, context: &str) -> Vec<u8> {

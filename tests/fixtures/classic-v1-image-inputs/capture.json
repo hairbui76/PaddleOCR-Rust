@@ -1,0 +1,419 @@
+{
+  "cases": [
+    {
+      "description": "Truecolor 8-bit PNG with distinct RGB pixels.",
+      "encoded_image": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAGElEQVR4nGP4z8DAAMECCgYOCQ0fHlwAADqHBx6SNsiqAAAAAElFTkSuQmCC",
+        "byte_length": 81,
+        "sha256": "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd"
+      },
+      "fixture_id": "classic-v1-image-input-png-rgb-3x2",
+      "format": "png",
+      "opencv_imread_color": {
+        "base64": "AAD/AP8A/wAAMCAQgGBA0ODw",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0c2a426327d6cf918e1547312404a9151f9f486bf006c3f77665ae997b33cf3d",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "RGBA 8-bit PNG with transparent and opaque self-authored pixels.",
+      "encoded_image": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAYAAACddGYaAAAAIElEQVR4nGP4zwAE/xkcgEQDg4CCwQGHhIb/Hx5cYAQAZroJnvh7iRgAAAAASUVORK5CYII=",
+        "byte_length": 89,
+        "sha256": "7883cd8969aefc48795316e9f1216fdc0bec9bfdec9674f738c64f1addfba561"
+      },
+      "fixture_id": "classic-v1-image-input-png-rgba-3x2",
+      "format": "png",
+      "opencv_imread_color": {
+        "base64": "AAD/AP8A/wAAMCAQgGBA0ODw",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0c2a426327d6cf918e1547312404a9151f9f486bf006c3f77665ae997b33cf3d",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "8-bit grayscale PNG with varied luminance values.",
+      "encoded_image": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAAAAAC4HznGAAAAEElEQVR4nGNgqP/PIODwAQAJnQK/tUZS4AAAAABJRU5ErkJggg==",
+        "byte_length": 73,
+        "sha256": "382a472f02b6952cf84c8e8db39e5278b779d20bf39a6944126fe89977259c79"
+      },
+      "fixture_id": "classic-v1-image-input-png-grayscale-3x2",
+      "format": "png",
+      "opencv_imread_color": {
+        "base64": "AAAAf39/////EBAQQEBA8PDw",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3098318d4bd65d431647a91de3a1fb23146e723b4246c5d071ae3471d00605b7",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Indexed PNG with PLTE and tRNS records.",
+      "encoded_image": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAMAAACqqpYoAAAADFBMVEX/AAAA/wAAAP8QIDBUxfGaAAAABHRSTlMAQID/1YicnAAAABBJREFUeJxjYGBkYmBmYgQAACYAChscCXkAAAAASUVORK5CYII=",
+        "byte_length": 113,
+        "sha256": "84f7da8bdaaf70fa618e287a00dad75c1788f64bd5baff5a105ef354d06613d3"
+      },
+      "fixture_id": "classic-v1-image-input-png-indexed-trns-3x2",
+      "format": "png",
+      "opencv_imread_color": {
+        "base64": "AAD/AP8A/wAAMCAQ/wAAAP8A",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e8a507dfa55fde248f6f13960337194e85fe42eb62600031bdf99a83f3bb5c63",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "16-bit grayscale PNG retained as a supported-or-rejected policy boundary.",
+      "encoded_image": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACEAAAAADoj+WFAAAAFklEQVR4nGNgYGhg+P+fQYAhgeEDAwAaPQPf1un9hwAAAABJRU5ErkJggg==",
+        "byte_length": 79,
+        "sha256": "b3d0ddf6df0aea392af29294d34b4be202a603723ea0d97957d88ce3c0fa70ef"
+      },
+      "fixture_id": "classic-v1-image-input-png-grayscale16-3x2",
+      "format": "png",
+      "opencv_imread_color": {
+        "base64": "AAAAgICA////EBAQYGBg8PDw",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c210d5133f34af8fd31e64c3d1fb59a5da91f06a1013ae98d2e2f42da01bfdff",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG encoded from a fixed self-authored BGR pattern at quality 95.",
+      "encoded_image": {
+        "base64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 711,
+        "sha256": "1cc59bf1496b864d0e8e442bd7738613ab6742bafc11efb974c1fb92ccf3cd5c"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-baseline-3x2",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "I1ZIcaSWewgSACUXMmVX/9bg",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "342bd29f5a8d9f47a79ec364c90384c286d6d3500de7c65723c9a24950207c7f",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Progressive JPEG encoded from the same fixed self-authored BGR pattern.",
+      "encoded_image": {
+        "base64": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wgARCAACAAMDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAVAQEBAAAAAAAAAAAAAAAAAAAEB//aAAwDAQACEAMQAAABqAr5P//EABYQAQEBAAAAAAAAAAAAAAAAAAYHBf/aAAgBAQABBQKTkSe5O//EABYRAAMAAAAAAAAAAAAAAAAAAAABMf/aAAgBAwEBPwF0/8QAGxEAAAcBAAAAAAAAAAAAAAAAAAECBAU1c7L/2gAIAQIBAT8Bg6Rtmjkh/8QAHRAAAQQCAwAAAAAAAAAAAAAAAQIDBAUAEQYhI//aAAgBAQAGPwKqtLrjFdLkuMekiVCQ4tWlEDaiNnoAZ//EABgQAQEAAwAAAAAAAAAAAAAAAAERACEx/9oACAEBAAE/IXIv7lmKAFdAGf/aAAwDAQACAAMAAAAQ+//EABURAQEAAAAAAAAAAAAAAAAAAAAx/9oACAEDAQE/ELv/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oACAECAQE/EFD/xAAXEAEBAQEAAAAAAAAAAAAAAAABEQAx/9oACAEBAAE/EDprgz3NjAjIAb//2Q==",
+        "byte_length": 598,
+        "sha256": "79ac6dd33a3411a8a068879b1aadc65d2522e343c7cdc84b1ef4050bea3152d9"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-progressive-3x2",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "I1ZIcaSWewgSACUXMmVX/9bg",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "342bd29f5a8d9f47a79ec364c90384c286d6d3500de7c65723c9a24950207c7f",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 1.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAAAQAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "4e092b15ce83fe0cca58cda414988bba7d34fc82220bdb14cd3e504cb205a988"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-1",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "I1ZIcaSWewgSACUXMmVX/9bg",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "342bd29f5a8d9f47a79ec364c90384c286d6d3500de7c65723c9a24950207c7f",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 2.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAAAgAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "a85aa8da03a7aa925bf028aa7b359b3b07fa5dabce80a534702952c0294e9905"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-2",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "ewgScaSWI1ZI/9bgMmVXACUX",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "93ca8656588b87aaea496d0a84b3031b775dd14a42c9b5a29244780c249aa7d2",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 3.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAAAwAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "392bbe282a306d83f6c7fd04db5142a49b0dee47b9e28845b7196c62d914903f"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-3",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "/9bgMmVXACUXewgScaSWI1ZI",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8f2763a9e8dd2fa218ae61cc5aee6bdf35f4f1259205cbefc991e2c762c19f4b",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 4.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAABAAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "a58b8881023858846f6ec59015e327dfd03c1e2d844af6de799061429a30f4f8"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-4",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "ACUXMmVX/9bgI1ZIcaSWewgS",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c4d9411deeb744a10124b4953b6ff804786d1c782d7bc94af8a78feb3f4dec17",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 5.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAABQAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "38d40269078c9bd19f222e15e174cf37ce9ad03a48c815f141ba786aa0f9db75"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-5",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "I1ZIACUXcaSWMmVXewgS/9bg",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f9ad2930390c59262bfe2274370ef9ed34970e34980a3c771b8d8406caf2375d",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 6.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAABgAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "c767036a9ad2b347e4c29c6f5abe784e39dd99a56eb4c5381242c4f18836b2ab"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-6",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "ACUXI1ZIMmVXcaSW/9bgewgS",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b1c4a988f18dfd8c4e740120820cecb1bdfbab39956b559eb750e6bcae38ee79",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 7.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAABwAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "db9eee2bb9b84741e078571117de57ea488b280cfd3e3017aea9799df26779e8"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-7",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "/9bgewgSMmVXcaSWACUXI1ZI",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4be16fb00912a538b3442f35131467bd9bfff5bd2cc6cba4c82c8f524cecebd3",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      }
+    },
+    {
+      "description": "Baseline JPEG with self-authored Exif orientation 8.",
+      "encoded_image": {
+        "base64": "/9j/4QAiRXhpZgAASUkqAAgAAAABABIBAwABAAAACAAAAAAAAAD/4AAQSkZJRgABAQAAAQABAAD/2wBDAAIBAQEBAQIBAQECAgICAgQDAgICAgUEBAMEBgUGBgYFBgYGBwkIBgcJBwYGCAsICQoKCgoKBggLDAsKDAkKCgr/2wBDAQICAgICAgUDAwUKBwYHCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgr/wAARCAACAAMDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD6h/4JOfsifsnfHD/gnZ8K/ih8af2YPh34v8TanoDjUvEXijwVYahfXYiuZoYvNuJ4mkk2RRxxruY7URVGAAKKKK/r/gb/AJInLP8AsHo/+m4nkz+Nn//Z",
+        "byte_length": 747,
+        "sha256": "287f855421283ef549bc2b3a317d0ea1f270114717b5718454733b5209625b5b"
+      },
+      "fixture_id": "classic-v1-image-input-jpeg-exif-orientation-8",
+      "format": "jpeg",
+      "opencv_imread_color": {
+        "base64": "ewgS/9bgcaSWMmVXI1ZIACUX",
+        "byte_length": 18,
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7e79f06ddda25e90b1297f3eeae24d6822871c2bb976d5a8abf26c36dfd2d347",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      }
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "negative_cases": [
+    {
+      "description": "Empty byte input, rejected by EncodedImage before decoder selection.",
+      "encoded_input": {
+        "base64": "",
+        "byte_length": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "fixture_id": "classic-v1-image-input-empty",
+      "format_hint": "none",
+      "required_outcome": "invalid_input_empty"
+    },
+    {
+      "description": "Non-image bytes with no recognized content signature.",
+      "encoded_input": {
+        "base64": "bm90LWEtcG5nLW9yLWpwZWcA/w==",
+        "byte_length": 19,
+        "sha256": "4c172e943bbe1dda89935b55326832e9a4939c654c2cf8e7866210b4e3ea2031"
+      },
+      "fixture_id": "classic-v1-image-input-unknown-bytes",
+      "format_hint": "none",
+      "required_outcome": "unsupported_format"
+    },
+    {
+      "description": "Prefix of the self-authored truecolor PNG, cut before its IDAT payload.",
+      "encoded_input": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAAC",
+        "byte_length": 24,
+        "sha256": "fbff3d23b3423d3610c7a70ddfcac1c470be71d8f456d75975afe0e1862b6998"
+      },
+      "fixture_id": "classic-v1-image-input-truncated-png",
+      "format_hint": "png",
+      "required_outcome": "malformed_input"
+    },
+    {
+      "description": "CRC-valid PNG header whose width is one pixel above the project limit.",
+      "encoded_input": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAQAEAAAABCAIAAABGP0ox",
+        "byte_length": 33,
+        "sha256": "1a21b71f8e5fbce583a80e7f27e9c71c5284b527eed53f0d5ca564d42fc83ef2"
+      },
+      "fixture_id": "classic-v1-image-input-oversized-png-header",
+      "format_hint": "png",
+      "required_outcome": "resource_limit_before_project_pixel_allocation"
+    },
+    {
+      "description": "A valid PNG intentionally paired with a .jpg filename hint; future input policy uses content, not a filename.",
+      "encoded_input": {
+        "base64": "iVBORw0KGgoAAAANSUhEUgAAAAMAAAACCAIAAAASFvFNAAAAGElEQVR4nGP4z8DAAMECCgYOCQ0fHlwAADqHBx6SNsiqAAAAAElFTkSuQmCC",
+        "byte_length": 81,
+        "sha256": "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd"
+      },
+      "filename_hint": "self-authored-input.jpg",
+      "fixture_id": "classic-v1-image-input-content-name-confusion",
+      "format_hint": "png",
+      "required_outcome": "content_detection_ignores_filename_hint"
+    }
+  ],
+  "oracle": {
+    "expected_output": "HWC BGR uint8 for each valid case",
+    "filename_policy": "The oracle receives bytes only; filename hints are not passed to cv2.imdecode.",
+    "operation": "cv2.imdecode(encoded, cv2.IMREAD_COLOR)"
+  },
+  "purpose": "developer-only self-authored image-input oracle; not a normal Rust test dependency and not a universal OpenCV-equivalence claim",
+  "schema_version": "paddleocr-rust/image-input-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/predict_system.py",
+      "tools/infer/utility.py"
+    ]
+  }
+}

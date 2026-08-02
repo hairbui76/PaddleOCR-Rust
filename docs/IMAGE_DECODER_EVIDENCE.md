@@ -2,7 +2,7 @@
 
 Decision: `D-008` (image-decoder and image-limit portion only)  
 Related roadmap item: `IMG-DEC-001`  
-Status: Pre-gate research only; no decoder, dependency, or input policy is selected  
+Status: In progress; a self-authored input oracle is committed, but no decoder, dependency, or input policy is selected
 Prepared: 2026-08-02  
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
@@ -13,10 +13,10 @@ without treating a library survey as an implementation or an approval. It is
 not a Cargo dependency proposal, an artifact manifest, a decoder API, an
 acceptance of a native dependency, or evidence that OCR works.
 
-`IMG-DEC-001` remains planned until its declared P2 and model-contract gates
-are satisfied. In particular, this record does not resolve `D-008`, add an
-image crate to `Cargo.toml`, establish a BGR/RGB/alpha rule, or permit
-`IMG-001` implementation.
+`IMG-DEC-001` is in progress on its evidence/fixture work but cannot close
+until its declared P2 and model-contract gates are satisfied. In particular,
+this record does not resolve `D-008`, add an image crate to `Cargo.toml`,
+establish a BGR/RGB/alpha rule, or permit `IMG-001` implementation.
 
 The M2 scope is intentionally narrow: one explicitly supplied local PNG or
 JPEG image. PDF, animated/multipage formats, office documents, image URLs,
@@ -37,8 +37,9 @@ three-channel BGR conversion and documents that ordinary image reads take EXIF
 orientation into account unless an ignore-orientation or unchanged flag is
 used. This is useful behavioural evidence, but it is not yet an M2
 compatibility result: the pinned upstream `requirements.txt` names
-`opencv-python` and `opencv-contrib-python` without pinning a version, and no
-approved image fixture/oracle capture exists.
+`opencv-python` and `opencv-contrib-python` without pinning a version. The
+committed self-authored capture below records one explicit OpenCV environment,
+but it is not yet a complete upstream compatibility result.
 
 Consequently, the following are still hypotheses to validate against an
 isolated, version-recorded upstream oracle rather than implementation rules:
@@ -49,6 +50,43 @@ isolated, version-recorded upstream oracle rather than implementation rules:
   progressive JPEGs, and non-8-bit PNGs map to the classic BGR image; and
 - the exact pixel values after color conversion and any decoder-specific
   rounding.
+
+## Committed self-authored image-input oracle (2026-08-02)
+
+[`tests/fixtures/classic-v1-image-inputs/`](../tests/fixtures/classic-v1-image-inputs/)
+now contains a reviewable, Apache-2.0 corpus produced by
+[`tools/capture_image_decoder_oracle.py`](../tools/capture_image_decoder_oracle.py).
+The developer-only generator uses only Python's standard library plus an
+explicit external OpenCV/NumPy environment; it creates all bytes in memory and
+writes one capture document to stdout. It does not import, execute, or write
+to `PaddleOCR/`, download an asset, or load a model. The committed document
+replays byte-for-byte with Python 3.12.3, NumPy 2.5.1, and
+`opencv-python-headless` 5.0.0.93 (`cv2` 5.0.0); its SHA-256 is
+`ea0541264e3789bae023fdf6bcb1f5bd7831b0f44835975e06d4db71dd24b6e6`.
+
+It contains fifteen valid self-authored inputs:
+
+- truecolor, RGBA, grayscale, indexed-`tRNS`, and 16-bit grayscale PNGs;
+- one baseline and one progressive JPEG; and
+- one baseline JPEG for each Exif orientation value 1 through 8.
+
+It also contains five bounded negative inputs: empty, unknown bytes, a
+truncated PNG, a CRC-valid header one pixel over the current width limit, and
+a PNG deliberately paired with a `.jpg` filename hint. Valid byte streams and
+the OpenCV `cv2.imdecode(encoded, cv2.IMREAD_COLOR)` HWC/BGR/`uint8` arrays
+are separately SHA-256 pinned; the negative inputs have their own aggregate
+digest. The offline Rust fixture-integrity gate verifies every base64 payload,
+recorded byte length, BGR shape, per-payload digest, case ID, and aggregate.
+
+In this exact OpenCV capture, Exif values 1–4 produce 2-by-3 output and values
+5–8 produce 3-by-2 output; the recorded BGR bytes make every orientation
+transform auditable. This is stronger than a format survey, but it remains
+finite evidence only. `m2-image-input-oracle-v1` deliberately does **not**
+make a Rust decoder's outputs exact requirements yet: `D-008` must classify
+each case as exact, tolerated with a predeclared bound, or explicitly
+unsupported, then record that policy at the public boundary. In particular,
+the 16-bit PNG, JPEG component deltas, and malformed-input categories cannot
+be silently normalized away.
 
 ## First pure-Rust candidate: `image`
 
