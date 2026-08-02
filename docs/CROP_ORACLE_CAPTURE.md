@@ -197,6 +197,41 @@ reviewed fixture expectations. A future optimization proposal must update this
 policy first, retain a portable baseline regression, and provide separately
 reviewed numerical evidence before it changes the sampler.
 
+### Runtime no-AVX baseline evidence
+
+On 2026-08-02, the current workspace commit
+`8a5ccc79e6f2530748586ce5316402ec8b60bb85` built all present test binaries
+outside the repository from its locked `Cargo.lock` SHA-256
+`99492b0fe9d6c9ea6408ed53928708045e9386b15034d1cc876fea3a955b64dd`.
+The Rust `1.94.0` release build used:
+
+```text
+-C target-cpu=x86-64 -C target-feature=+crt-static,-avx,-avx2,-fma
+```
+
+It produced static PIE library, binary, contract, and foundation test binaries
+with SHA-256 values
+`b3dff1b697d9f1d35fe5a05ba2116ccd00dea4c9670c0f3f8b3d65571c2786c5`,
+`03623ec3927ae110d36264661b000e1f13bbf5c7de691e7af59a82140ab498d9`,
+`531eaa37cf9e19ebaf6c73ac87a5f1233455c8400398f2ab54a4cda52e54ac07`,
+and `360630797b8018e34ecb9236b755e62f415600497fa4c629a8e0f9bc1369cef6`.
+
+Those binaries ran with one test thread inside a disposable QEMU `9.0.2` TCG
+guest using one `qemu64` vCPU and 256 MiB memory. The guest's recorded
+`/proc/cpuinfo` flags contain no `avx`, `avx2`, or `fma`. It passed all 65
+library tests, the zero-test binary harness, three contract tests, and three
+foundation tests; each process exited zero. The guest kernel came from the
+external Ubuntu package
+`linux-image-unsigned-7.0.0-28-generic` version `7.0.0-28.28~24.04.1`, package
+SHA-256 `be2d970c035b7227362faa5972a3090cabb3cf6ad5284614ce98b2bd5f828f0a`.
+The initramfs, kernel package, binary artifacts, and QEMU log were temporary
+and were not added to this repository.
+
+This is a single no-AVX/no-FMA runtime validation of the current offline test
+suite, including the crop regressions. It does not prove all x86-64 hardware,
+toolchains, optimized binaries, decoder paths, OpenCV equivalence, model
+runtime behavior, or OCR support.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.
