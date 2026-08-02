@@ -654,6 +654,78 @@ mod tests {
     }
 
     #[test]
+    fn classic_crop_stays_bounded_on_a_deterministic_projective_trapezoid_grid() {
+        // This source-level stress regression is deliberately independent of
+        // OpenCV. Every generated quadrilateral is a strictly convex trapezoid
+        // with unequal parallel edges, so its rectangle mapping is genuinely
+        // projective rather than affine. Bounded inputs must still produce the
+        // plan's exact dimensions and byte count without panicking.
+        const CASE_COUNT: usize = 2_048;
+        let mut state = 0x51A7_C0DE;
+
+        for case_index in 0..CASE_COUNT {
+            let source_dimensions =
+                dimensions(3 + next_lcg(&mut state) % 14, 3 + next_lcg(&mut state) % 14);
+            let channels = 1 + (next_lcg(&mut state) % u32::from(MAX_INTERLEAVED_CHANNELS)) as u8;
+            let origin = (
+                signed_unit_interval(&mut state) * 2.0,
+                signed_unit_interval(&mut state) * 2.0,
+            );
+            let top_width =
+                source_dimensions.width() as f32 + signed_unit_interval(&mut state) * 0.5;
+            let height = source_dimensions.height() as f32 + signed_unit_interval(&mut state) * 0.5;
+            let left_expansion = 0.25 + (signed_unit_interval(&mut state) + 1.0) * 0.375;
+            let right_expansion = 0.25 + (signed_unit_interval(&mut state) + 1.0) * 0.375;
+            let bottom_width = top_width + left_expansion + right_expansion;
+            assert!(
+                bottom_width > top_width,
+                "case {case_index} must remain a non-affine trapezoid"
+            );
+
+            let quadrilateral = match Quadrilateral::new([
+                point(origin.0, origin.1),
+                point(origin.0 + top_width, origin.1),
+                point(origin.0 + top_width + right_expansion, origin.1 + height),
+                point(origin.0 - left_expansion, origin.1 + height),
+            ]) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} unexpectedly rejected a convex trapezoid: {error}")
+                }
+            };
+            let plan = match classic_perspective_crop_plan(quadrilateral) {
+                Ok(value) => value,
+                Err(error) => panic!("case {case_index} could not create a crop plan: {error}"),
+            };
+            let byte_count = source_dimensions.pixels() as usize * usize::from(channels);
+            let mut pixels = Vec::with_capacity(byte_count);
+            for _ in 0..byte_count {
+                pixels.push((next_lcg(&mut state) >> 24) as u8);
+            }
+            let source = match InterleavedImage::new(source_dimensions, channels, pixels) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} could not construct source pixels: {error}")
+                }
+            };
+            let crop = match classic_perspective_crop(&source, plan) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} could not crop a valid projective plan: {error}")
+                }
+            };
+            let expected_dimensions = dimensions(plan.output_width(), plan.output_height());
+            assert_eq!(crop.dimensions(), expected_dimensions, "case {case_index}");
+            assert_eq!(crop.channels(), channels, "case {case_index}");
+            assert_eq!(
+                crop.pixels().len(),
+                expected_dimensions.pixels() as usize * usize::from(channels),
+                "case {case_index}"
+            );
+        }
+    }
+
+    #[test]
     fn classic_crop_matches_the_captured_opencv_bgr_oracle_cases() {
         // The expected bytes below are the reviewed OpenCV outputs in the
         // repository fixture included above. They stay independent of Python,
