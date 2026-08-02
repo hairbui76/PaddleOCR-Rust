@@ -23,6 +23,7 @@ from typing import Any, Sequence
 
 
 SCHEMA_VERSION = "paddleocr-rust/crop-oracle/v1"
+INVERSE_MAPPING_SCHEMA_VERSION = "paddleocr-rust/crop-inverse-mappings/v1"
 UPSTREAM_COMMIT = "2661c7c0ef5c613e8f93c6e93b2e052399f0f854"
 
 
@@ -172,6 +173,14 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
         help="list available case identifiers without importing OpenCV or NumPy",
     )
     parser.add_argument(
+        "--inverse-mapping-oracle",
+        action="store_true",
+        help=(
+            "emit the line-oriented pre-rotation warp-to-source mapping oracle "
+            "instead of the crop JSON document"
+        ),
+    )
+    parser.add_argument(
         "--indent",
         type=int,
         default=2,
@@ -308,6 +317,57 @@ def capture_document(cases: Sequence[CropCase], cv2: Any, numpy: Any) -> dict[st
     }
 
 
+def inverse_mapping_oracle(cases: Sequence[CropCase], cv2: Any, numpy: Any) -> str:
+    """Capture deterministic OpenCV inverse mappings in a Rust-testable format."""
+
+    lines = [
+        "# PaddleOCR-Rust crop inverse-mapping oracle",
+        f"# schema_version: {INVERSE_MAPPING_SCHEMA_VERSION}",
+        "# producer: tools/capture_crop_oracle.py --inverse-mapping-oracle",
+        "# sample_coordinates: destination corners (0, 0), (width, 0), (width, height), (0, height), and (0.375 * width, 0.625 * height)",
+        "# fields: fixture_id,source_x0,source_y0,source_x1,source_y1,source_x2,source_y2,source_x3,source_y3,pre_rotation_width,pre_rotation_height,warp_x,warp_y,expected_source_x,expected_source_y",
+    ]
+    for case in cases:
+        points = numpy.array(case.points, dtype=numpy.float32)
+        crop_width, crop_height = crop_dimensions(points, numpy)
+        destination = numpy.float32(
+            (
+                (0.0, 0.0),
+                (float(crop_width), 0.0),
+                (float(crop_width), float(crop_height)),
+                (0.0, float(crop_height)),
+            )
+        )
+        inverse_transform = cv2.getPerspectiveTransform(destination, points)
+        warp_samples = numpy.float32(
+            (
+                (0.0, 0.0),
+                (float(crop_width), 0.0),
+                (float(crop_width), float(crop_height)),
+                (0.0, float(crop_height)),
+                (float(crop_width) * 0.375, float(crop_height) * 0.625),
+            )
+        )
+        expected_sources = cv2.perspectiveTransform(
+            warp_samples.reshape(1, -1, 2), inverse_transform
+        )[0]
+        source_coordinates = [repr(float(value)) for value in points.reshape(-1)]
+        for warp, expected_source in zip(warp_samples, expected_sources, strict=True):
+            fields = [
+                case.identifier,
+                *source_coordinates,
+                str(crop_width),
+                str(crop_height),
+                repr(float(warp[0])),
+                repr(float(warp[1])),
+                repr(float(expected_source[0])),
+                repr(float(expected_source[1])),
+            ]
+            lines.append(",".join(fields))
+
+    return "\n".join(lines) + "\n"
+
+
 def installed_opencv_distribution() -> dict[str, str] | None:
     """Identify the installed OpenCV Python distribution when metadata exists."""
 
@@ -352,19 +412,25 @@ def main(arguments: Sequence[str] | None = None) -> int:
         return 2
 
     try:
-        document = capture_document(cases, cv2, numpy)
+        if parsed.inverse_mapping_oracle:
+            inverse_mappings = inverse_mapping_oracle(cases, cv2, numpy)
+        else:
+            document = capture_document(cases, cv2, numpy)
     except (ValueError, cv2.error) as error:
         print(f"crop oracle capture failed: {error}", file=sys.stderr)
         return 1
 
-    json.dump(
-        document,
-        sys.stdout,
-        ensure_ascii=True,
-        indent=None if parsed.indent == 0 else parsed.indent,
-        sort_keys=True,
-    )
-    sys.stdout.write("\n")
+    if parsed.inverse_mapping_oracle:
+        sys.stdout.write(inverse_mappings)
+    else:
+        json.dump(
+            document,
+            sys.stdout,
+            ensure_ascii=True,
+            indent=None if parsed.indent == 0 else parsed.indent,
+            sort_keys=True,
+        )
+        sys.stdout.write("\n")
     return 0
 
 

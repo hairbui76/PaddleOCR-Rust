@@ -939,9 +939,13 @@ mod tests {
     }
 
     fn assert_f64_close(actual: f64, expected: f64) {
+        assert_f64_close_with_tolerance(actual, expected, 1.0e-4);
+    }
+
+    fn assert_f64_close_with_tolerance(actual: f64, expected: f64, tolerance: f64) {
         assert!(
-            (actual - expected).abs() <= 1.0e-4,
-            "actual {actual} did not equal expected {expected} within 0.0001"
+            (actual - expected).abs() <= tolerance,
+            "actual {actual} did not equal expected {expected} within {tolerance}"
         );
     }
 
@@ -975,6 +979,18 @@ mod tests {
         match value {
             Some(result) => result,
             None => panic!("expected retained quadrilateral"),
+        }
+    }
+
+    fn parse_or_panic<T: core::str::FromStr>(value: &str, field: &str, line_number: usize) -> T
+    where
+        T::Err: core::fmt::Display,
+    {
+        match value.parse() {
+            Ok(parsed) => parsed,
+            Err(error) => panic!(
+                "inverse-mapping fixture line {line_number} has invalid {field} value {value:?}: {error}"
+            ),
         }
     }
 
@@ -1418,6 +1434,117 @@ mod tests {
             point(0.368_594_86, 5.517_241),
             2.0e-4,
         );
+    }
+
+    #[test]
+    fn classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle() {
+        // The sidecar was captured from cv2.getPerspectiveTransform with the
+        // destination/source order reversed, followed by
+        // cv2.perspectiveTransform. It checks the pre-rotation warp-to-source
+        // direction used by the private crop sampler against all ten reviewed
+        // BGR cases, including each destination boundary and one interior
+        // coordinate per case. It is a self-authored, environment-specific
+        // component oracle rather than a general OpenCV-equivalence claim.
+        const CAPTURED_OPENCV_CROP_ORACLE: &str =
+            include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
+        const CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE: &str =
+            include_str!("../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv");
+        const EXPECTED_FIXTURE_IDS: [&str; 10] = [
+            "classic-v1-crop-oracle-identity-bgr-3x2",
+            "classic-v1-crop-oracle-border-replicate-bgr-3x2",
+            "classic-v1-crop-oracle-projective-bgr-4x3",
+            "classic-v1-crop-oracle-tall-rotation-bgr-2x3",
+            "classic-v1-crop-oracle-interior-projective-bgr-7x6",
+            "classic-v1-crop-oracle-edge-projective-bgr-5x4",
+            "classic-v1-crop-oracle-tall-projective-bgr-4x7",
+            "classic-v1-crop-oracle-phase-projective-bgr-8x8",
+            "classic-v1-crop-oracle-single-pixel-bgr-3x3",
+            "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
+        ];
+
+        assert!(
+            CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE
+                .contains("# schema_version: paddleocr-rust/crop-inverse-mappings/v1")
+        );
+
+        let mut mapping_count = 0;
+        for (index, line) in CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE.lines().enumerate() {
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+
+            let line_number = index + 1;
+            let fields: Vec<_> = line.split(',').collect();
+            assert_eq!(
+                fields.len(),
+                15,
+                "inverse-mapping fixture line {line_number} has an unexpected field count"
+            );
+            let fixture_id = fields[0];
+            assert!(
+                EXPECTED_FIXTURE_IDS.contains(&fixture_id),
+                "inverse-mapping fixture line {line_number} has an unknown fixture {fixture_id}"
+            );
+            assert!(
+                CAPTURED_OPENCV_CROP_ORACLE.contains(fixture_id),
+                "crop capture document is missing {fixture_id}"
+            );
+
+            let source = must_ok(Quadrilateral::new([
+                point(
+                    parse_or_panic::<f32>(fields[1], "source_x0", line_number),
+                    parse_or_panic::<f32>(fields[2], "source_y0", line_number),
+                ),
+                point(
+                    parse_or_panic::<f32>(fields[3], "source_x1", line_number),
+                    parse_or_panic::<f32>(fields[4], "source_y1", line_number),
+                ),
+                point(
+                    parse_or_panic::<f32>(fields[5], "source_x2", line_number),
+                    parse_or_panic::<f32>(fields[6], "source_y2", line_number),
+                ),
+                point(
+                    parse_or_panic::<f32>(fields[7], "source_x3", line_number),
+                    parse_or_panic::<f32>(fields[8], "source_y3", line_number),
+                ),
+            ]));
+            let plan = must_ok(classic_perspective_crop_plan(source));
+            assert_eq!(
+                plan.warp_width(),
+                parse_or_panic::<u32>(fields[9], "pre_rotation_width", line_number),
+                "inverse-mapping fixture line {line_number} has an unexpected crop width"
+            );
+            assert_eq!(
+                plan.warp_height(),
+                parse_or_panic::<u32>(fields[10], "pre_rotation_height", line_number),
+                "inverse-mapping fixture line {line_number} has an unexpected crop height"
+            );
+
+            let (actual_x, actual_y) = must_ok(plan.map_warp_coordinates_to_source(
+                parse_or_panic::<f64>(fields[11], "warp_x", line_number),
+                parse_or_panic::<f64>(fields[12], "warp_y", line_number),
+            ));
+            assert_f64_close_with_tolerance(
+                actual_x,
+                parse_or_panic::<f64>(fields[13], "expected_source_x", line_number),
+                2.0e-4,
+            );
+            assert_f64_close_with_tolerance(
+                actual_y,
+                parse_or_panic::<f64>(fields[14], "expected_source_y", line_number),
+                2.0e-4,
+            );
+            mapping_count += 1;
+        }
+
+        assert_eq!(mapping_count, 50, "unexpected inverse-mapping sample count");
+        for fixture_id in EXPECTED_FIXTURE_IDS {
+            let sample_count = CAPTURED_OPENCV_INVERSE_MAPPING_ORACLE
+                .lines()
+                .filter(|line| line.starts_with(fixture_id))
+                .count();
+            assert_eq!(sample_count, 5, "unexpected sample count for {fixture_id}");
+        }
     }
 
     #[test]

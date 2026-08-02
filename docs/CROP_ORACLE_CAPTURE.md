@@ -1,7 +1,7 @@
 # OpenCV Crop Oracle Capture
 
-Roadmap items: `CROP-001`, `FIX-001`, `TOL-001`  
-Status: One reviewed component capture is committed; no model-backed capture exists  
+Roadmap items: `CROP-001`, `GEO-002`, `FIX-001`, `TOL-001`
+Status: One reviewed component capture and its inverse-mapping sidecar are committed; no model-backed capture exists
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and boundary
@@ -47,6 +47,16 @@ cd /path/outside/both-repositories
 python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py > crop-oracle.json
 ```
 
+The separately consumable pre-rotation inverse-mapping oracle uses the same
+fixed self-authored cases and environment, but writes a line-oriented CSV
+record rather than crop bytes:
+
+```sh
+cd /path/outside/both-repositories
+python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py \
+  --inverse-mapping-oracle > crop-inverse-mappings.csv
+```
+
 The input corpus currently covers identity bytes, left-border replication, a
 small fractional projective transform, the exact `height / width == 1.5`
 rotation boundary, a non-linear interior projective crop, a non-linear crop
@@ -66,6 +76,15 @@ and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
 [metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
+The sidecar
+[tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv](../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv)
+has SHA-256 `1b0fbde354120c6ce889e709e3fc324635fe8dbfcbb84caeb027cca7dfa4ae9b`.
+It records fifty `warp → source` points: the four pre-rotation destination
+boundaries and one interior coordinate for each of the ten reviewed cases.
+The expected coordinates are independent OpenCV
+`cv2.getPerspectiveTransform(destination, source)` plus
+`cv2.perspectiveTransform` evaluations, not values calculated by Rust.
+
 The offline Rust regressions
 `crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases` and
 `crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases`,
@@ -81,20 +100,27 @@ also checks selected non-corner source-to-warp coordinates against
 one-pixel, and tall-thin cases. This is narrow mapping evidence for those
 recorded matrices, not general OpenCV homography equivalence.
 
+`geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle`
+parses the sidecar offline and checks all fifty captured pre-rotation
+warp-to-source coordinates against the private plan. It therefore covers the
+mapping direction used by the crop sampler, while remaining limited to this
+recorded OpenCV environment and the self-authored cases.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.
    Do not treat a screen-visible output as evidence.
 2. Review every JSON field, especially `environment`, points, perspective
    matrix, pre-rotation dimensions, rotation flag, and input/output SHA-256
-   values.
-3. Preserve the reviewed JSON as a candidate evidence artifact outside the
-   repository first. Compare it against the Rust private crop output in a
-   deliberately written offline test.
-4. Only after source/license review, promote a minimal expected-byte fixture
-   and complete fixture metadata under `tests/fixtures/`. The metadata must
-   identify the exact OpenCV/NumPy capture versions and the selected tolerance.
-5. A mismatch opens a `CROP-001` investigation. Do not alter Rust interpolation,
+   values. For an inverse sidecar, also review every source quadrilateral,
+   destination coordinate, expected source coordinate, and sidecar SHA-256.
+3. Preserve the reviewed JSON and any sidecar as candidate evidence artifacts
+   outside the repository first. Compare them against the Rust private crop
+   output and inverse mapping in deliberately written offline tests.
+4. Only after source/license review, promote minimal expected-byte and mapping
+   fixtures and complete fixture metadata under `tests/fixtures/`. The metadata
+   must identify the exact OpenCV/NumPy capture versions and selected tolerance.
+5. A mismatch opens a `CROP-001` or `GEO-002` investigation. Do not alter Rust interpolation,
    geometry, or expected bytes merely to make the test pass.
 
 The full isolated model/oracle procedure remains

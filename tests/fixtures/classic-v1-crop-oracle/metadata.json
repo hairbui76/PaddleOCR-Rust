@@ -35,11 +35,20 @@
     "sha256": "a32e4878454d699dc4eb958dcb79ff5868c9e6c71ac6b06a6c3cfda6c629fc73",
     "sha256_scope": "Concatenation of the ten raw C-order output byte arrays in capture document order."
   },
+  "geometry_oracle": {
+    "path": "inverse-mappings.csv",
+    "schema_version": "paddleocr-rust/crop-inverse-mappings/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "1b0fbde354120c6ce889e709e3fc324635fe8dbfcbb84caeb027cca7dfa4ae9b",
+    "sha256_scope": "All fifty non-comment CSV rows, generated in document order from the ten self-authored BGR crop cases.",
+    "provenance": "OpenCV 5.0.0 cv2.getPerspectiveTransform with destination/source order reversed, then cv2.perspectiveTransform at four destination boundaries and one interior coordinate per case."
+  },
   "tests": [
     "crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases",
     "crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases",
     "crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases",
-    "geometry::tests::classic_crop_plan_matches_recorded_opencv_interior_mappings"
+    "geometry::tests::classic_crop_plan_matches_recorded_opencv_interior_mappings",
+    "geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle"
   ],
   "limitations": [
     "This is an exact regression fixture only for its ten self-authored BGR cases and recorded capture environment.",
