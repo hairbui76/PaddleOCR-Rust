@@ -713,19 +713,72 @@ corpus, neither the minimal `image` route nor the direct codec pair can claim
 better JPEG BGR fidelity. No decoder is selected, no input policy is resolved,
 and `D-008` and `IMG-DEC-001` remain open.
 
+### Native libjpeg-turbo fidelity and Rust-binding feasibility (2026-08-02)
+
+The recorded OpenCV oracle environment reports `build-libjpeg-turbo (ver
+3.1.2-70)` for JPEG. As a command-level numerical control, the host's
+`/usr/bin/djpeg` reports `libjpeg-turbo version 2.1.5 (build 20240408)` and
+links to `/usr/lib/x86_64-linux-gnu/libjpeg.so.8.2.2`, owned by the
+`libjpeg-turbo8` 2.1.5-2ubuntu2 package. A disposable Python verifier fed each
+of the ten committed JPEG streams to `djpeg -rgb` through standard input,
+reversed RGB to BGR, then applied the fixture's known orientation mapping.
+All ten BGR outputs and oriented dimensions were exact against the recorded
+OpenCV bytes. The temporary verifier source SHA-256 was
+`164c1ee813e859e2733342b63d44b3e82d89a094b42ac69dfd44b891345f87c1`.
+
+This is useful finite fidelity evidence across two libjpeg-turbo releases, but
+it is deliberately narrower than a decoder qualification. `djpeg` is a
+process-level tool, not a Rust API; the verifier used the fixture's known
+orientation value rather than parsing Exif; it did not exercise PNG, Rust FFI,
+allocation/work bounds, malformed JPEG behavior, color management, parallel
+use, or a distributable binary. It does not show that an arbitrary
+libjpeg-turbo configuration will match OpenCV.
+
+An additional untracked Rust `1.94` wrapper feasibility spike declared:
+
+```toml
+turbojpeg = { version = "=1.5.1", default-features = false, features = ["cmake"] }
+```
+
+Its manifest, lockfile, and intended JPEG-only harness source had SHA-256
+values `c2de8719b63d680593de4e1c65df332eabe7b8f4f9cd8f82df649afc859a935a`,
+`be0a23550d38043f8dde94ae632fe1c84ee113e4684009ce83b7e4cbef9a8ef6`,
+and `23a1f587078697bfc8bc1db9b4dc41a19359f4795f2f86eaa8ebecc9577f454b`
+respectively. It attempted a header-before-allocation BGR decode and a
+fixture-specific orientation control, but did not compile: the selected
+`turbojpeg-sys` 1.2.0 CMake build could not find a `cmake` executable. The
+crate's bundled libjpeg-turbo source identifies itself as 3.1.0. Its normal
+default features also enable `cmake`, `pkg-config`, and `require-simd`, so the
+spike's no-default-features shape was only a configuration experiment, not a
+recommended build policy.
+
+The system `libturbojpeg.so.0` is not a substitute for that wrapper: it exports
+the v2 API symbols such as `tjInitDecompress` and `tjDecompress2`, but not the
+v3 `tj3Init` symbol used by `turbojpeg` 1.5.1. The wrapper source also contains
+an explicit `unsafe` FFI boundary and `unsafe impl Send` for its decompressor.
+Its Rust crates declare `Unlicense OR MIT`, while the bundled native library's
+Debian copyright record includes IJG attribution/notice conditions and several
+component licenses. None of this is a complete source, security, distribution,
+or notice review.
+
+Consequently, the native route has a promising command-level JPEG fidelity
+signal but no runnable Rust binding proof on this machine, no approved native
+dependency boundary, and no selected deployment policy. It does not select
+libjpeg-turbo, authorize `unsafe`, add a Cargo dependency, or close `D-008`.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
 |---|---|---|---|
 | Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Complete unsafe/native/notice review; strict allocation/CPU-resource proof; broader malicious/fuzz corpus; model-preprocessing comparison; and a supported/unsupported policy for divergent JPEG/16-bit/alpha/ICC cases. | Full committed input-oracle replay and first-pass advisory/license graph review are recorded, but no candidate is selected. |
-| Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, and proof that it improves M2 oracle fidelity enough to justify the boundary. | Not evaluated; no dependency or implementation is authorized. |
+| Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, a runnable Rust binding, and proof that the selected build improves M2 oracle fidelity enough to justify the boundary. | A command-level libjpeg-turbo control is byte-exact for the ten committed JPEGs, but no Rust binding or deployment configuration is qualified or authorized. |
 | Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it remains a comparison route, not an accepted candidate. |
 
 Subject to the unresolved gates, the evidence supports retaining both
-pure-Rust paths as distinct comparison routes while investigating whether a
-decoder can satisfy the actual image and model-preprocessing contract. That is
-not `D-008` resolution: exact behaviour and resource safety are more important
-than the library name.
+pure-Rust paths and the native numerical control as distinct comparison routes
+while investigating whether one decoder can satisfy the actual image and
+model-preprocessing contract. That is not `D-008` resolution: exact behaviour
+and resource safety are more important than the library name.
 
 ## Required decision and implementation proof
 
