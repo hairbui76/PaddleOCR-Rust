@@ -202,15 +202,39 @@ context evidence only, not a revision-specific asset-terms source.
 
 - Official PP-OCRv6 introduction: https://www.paddleocr.ai/latest/en/version3.x/algorithm/PP-OCRv6/PP-OCRv6.html
 
+### Official issue-record check
+
+The PaddleOCR project's official GitHub issue tracker contains a historical
+license response that is relevant as a scope boundary, but not as a terms
+source for M2. In issue
+[`#8780`](https://github.com/PaddlePaddle/PaddleOCR/issues/8780), a project
+collaborator answered on 2023-01-05 that the four PP-OCRv3 detector,
+recognizer, slim recognizer, and classifier artifacts named in the question
+were under Apache-2.0. The response is useful evidence that the project has
+previously characterized specifically named pretrained OCR artifacts this way.
+It predates PP-OCRv6, names no v6 artifact, revision, export, configuration,
+or dictionary, and is not an artifact-specific grant for either M2 candidate.
+
+An independent, unanswered 2026 request in the official PaddleX tracker also
+shows why a repository-level license cannot be assumed to cover a model asset.
+Issue [`PaddleX#5102`](https://github.com/PaddlePaddle/PaddleX/issues/5102)
+asks PaddlePaddle to identify the license, commercial-use, redistribution, and
+dataset terms for three other named pretrained model files. As checked on
+2026-08-02, it has no maintainer answer. That issue concerns different models
+and is not negative evidence about PP-OCRv6; it is recorded only because it
+does not supply a general PaddlePaddle weight-license policy that could close
+this review.
+
 ## Current blocker and resumption condition
 
 `LIC-001` is blocked on a durable, publisher/rightsholder-issued terms source
 that applies to each exact M2 artifact file. The review has checked the
 revision-pinned Hugging Face metadata and trees, the corresponding ModelScope
 mirror metadata, the immutable PaddleX publisher path, the pinned PaddleOCR
-source license/dictionary trace, and the official PP-OCRv6 publication page.
-Those sources establish useful identity, availability, and source-code context,
-but none supplies the missing artifact-specific grant or notice set.
+source license/dictionary trace, the official PP-OCRv6 publication page, and
+the official issue-records above. Those sources establish useful identity,
+availability, historical context, and source-code context, but none supplies
+the missing artifact-specific grant or notice set.
 
 Resume this item only when one of the following can be preserved in the
 evidence record for the selected immutable representation:
