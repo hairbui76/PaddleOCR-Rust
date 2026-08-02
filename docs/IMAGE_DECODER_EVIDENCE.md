@@ -766,6 +766,41 @@ signal but no runnable Rust binding proof on this machine, no approved native
 dependency boundary, and no selected deployment policy. It does not select
 libjpeg-turbo, authorize `unsafe`, add a Cargo dependency, or close `D-008`.
 
+### Direct `zune-jpeg` configuration control (2026-08-02)
+
+Because `image` 0.25.10 uses `zune-jpeg` on its JPEG path, a further
+disposable Rust `1.94` control called `zune-jpeg` 0.5.15 directly rather than
+going through `DynamicImage`. Its candidate shape enabled only `std` and `x86`
+features (not the crate's `neon` default feature) and used `zune-core` 0.5.1.
+For each of the ten committed JPEG fixtures it requested direct BGR output,
+strict mode, 16,384-side limits, a 100-scan limit, the same experimental
+64 MiB/40,000,000-pixel/128 MiB envelopes, and the fixture's known orientation
+mapping. The direct call therefore still does not test Exif parsing, project
+input dispatch, PNG, library-internal allocation, or public error mapping.
+
+The temporary manifest, lockfile, harness source, and portable release binary
+had SHA-256 values
+`bf779e6695d267def8557e3cdf068ac3b2fe54bef5b2fdb8be7c1763328892d7`,
+`802c52b07f2716b55a4e3607d76777adca2c9f89fb41fb24e46fc5e6f2149776`,
+`06a61b8325aa221515d6dc0390c90a2d936d242d250958763efe5af88163d65a`,
+and `8e94084db06187f5af8857d4f53e541fba2f90e5107fc0769273fb5dc96fef19`
+respectively. They identify unretained research artifacts only. Debug runs
+with `set_use_unsafe(false)` and `set_use_unsafe(true)` both produced the
+same results: all ten JPEGs had the expected oriented dimensions but differed
+in seven of eighteen BGR components with maximum delta `36`, and had the same
+per-case BGR digests as the prior `image` replay and the same baseline BGR
+digest as the direct-codec replay. A release
+`x86-64` build with AVX, AVX2, and FMA disabled and
+`set_use_unsafe(false)` had the same finite result.
+
+Thus neither direct BGR selection, strict-mode selection, nor this runtime
+unsafe toggle remedies the recorded JPEG difference. This is finite evidence
+only: it does not diagnose the algorithmic cause, prove every feature/CPU path
+is identical, establish a full unsafe audit, or reject `zune-jpeg` for every
+future role. It confirms that the direct configuration is not a currently
+better JPEG-fidelity route for the committed oracle and does not select any
+decoder.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
