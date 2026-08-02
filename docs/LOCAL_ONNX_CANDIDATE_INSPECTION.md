@@ -61,6 +61,39 @@ Sigmoid, Slice, Softmax, Sqrt, Squeeze, Sub, Transpose, and Unsqueeze.
 These are graph facts for runtime qualification. They do not select a runtime
 or demonstrate that any particular backend supports the graphs correctly.
 
+## Direct terminal-output ABI inspection
+
+The reusable developer-only `tools/inspect_onnx_candidate.py` rechecked the
+two exact local ONNX files with `onnx` 1.22.0.
+It first refuses a symlink, a non-regular/empty file, a file larger than its
+explicit 128 MiB default limit. It streams SHA-256, parses with external data
+disabled, rejects graph-declared external initializer data before checker
+validation or shape inference, and emits JSON structural metadata. It creates
+no ONNX Runtime session, executes no model, retains no tensor output, and does
+not write a file.
+
+The exact recorded hashes remained unchanged. With `--expect-m2-onnx`, the
+tool requires the following graph-level terminal ABI:
+
+| Role | Direct producer of `fetch_name_0` | Structural consequence |
+|---|---|---|
+| Detector | Node 275, `Sigmoid`, no attributes | The candidate's one-channel dynamic NCHW output is structurally a terminal sigmoid map. A conforming runtime should produce values in the sigmoid range, but actual numerical output and DB semantics still require runtime validation. |
+| Recognizer | Node 507, `Softmax` with `axis=2` | The candidate's dynamic `[batch, time, 18,710]` output is structurally a terminal class-axis softmax. Under ONNX opset 11's flattening rule, `axis=2` becomes `[batch * time, 18,710]`, so each time-step row is normalized across classes. Actual runtime values, finite/range behavior, decoder safety, and score semantics remain unverified. |
+
+For a locally provisioned candidate, replay the tool with a local `onnx`
+parser:
+
+~~~sh
+.oracle-venv/bin/python tools/inspect_onnx_candidate.py --role detector --expect-m2-onnx <detector-inference.onnx>
+.oracle-venv/bin/python tools/inspect_onnx_candidate.py --role recognizer --expect-m2-onnx <recognizer-inference.onnx>
+~~~
+
+The tool output contains only names, dtypes, dimensions, graph/operator
+counts, terminal operators, input byte count, and file digest. It emits no
+initializer, dictionary entry, raw model output, or user-machine path. It is
+a reproducible parse-only ABI check, not an accepted artifact manifest,
+runtime qualification, or artifact-terms decision.
+
 ## Serialized preprocessing declaration audit
 
 This is a read-only comparison of the two exact local `inference.yml` files

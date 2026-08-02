@@ -116,8 +116,13 @@ input named `x` and one fetched output named `fetch_name_0`:
 
 The recognizer metadata declares BGR decode semantics and `RecResizeImg` base
 shape `[3, 48, 320]`. Its HPI metadata records static-engine dynamic shapes
-from `[1, 3, 48, 160]` through `[8, 3, 48, 3200]`. The output graph contains a
-CTC softmax fetch with 18,710 classes.
+from `[1, 3, 48, 160]` through `[8, 3, 48, 3200]`. The exact local parse finds
+`fetch_name_0` directly produced by `Softmax(axis=2)`; with ONNX opset 11
+semantics and the `[batch, time, 18,710]` output shape, that is a per-time-step
+class-axis softmax declaration. The detector's corresponding one-channel
+output is directly produced by terminal `Sigmoid`. These are parse-only graph
+facts, not runtime numerical, detector/recognizer, or compatibility evidence;
+see [ONNX_ABI_INSPECTION.md](ONNX_ABI_INSPECTION.md).
 
 The inline recognizer `character_dict` has 18,708 serialized entries. The
 exact local inspection confirms that it has no duplicates or literal space
