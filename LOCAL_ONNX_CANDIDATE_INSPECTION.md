@@ -62,11 +62,26 @@ or demonstrate that any particular backend supports the graphs correctly.
 
 ## Local package license observation
 
-Both README.md files start with the model-card field license: apache-2.0 and
-display a badge pointing to ./LICENSE. Neither downloaded package contains a
-top-level LICENSE file. This confirms the previously recorded evidence gap; it
-does not resolve the applicable terms for weights, embedded dictionary data, or
-redistribution.
+Both README.md files start with the model-card field `license: apache-2.0` and
+display a badge pointing to `./LICENSE`. A later read-only immutable-revision
+audit confirmed that the detector README SHA-256
+`3046e3aab0194a2291bb3941c93b980c2b3a938a24a5be88354968f6d6187ac8` and the
+recognizer README SHA-256
+`ebce8d28436623ecab4952e24935aed86b3f8ecaf8f8736b92d5544f60fae1e9` match the
+remote `resolve/<revision>/README.md` bytes. The same audit matched each
+canonical non-weight text asset and found exactly five files in each recursive
+remote tree: `.gitattributes`, `README.md`, `inference.json`,
+`inference.onnx`, and `inference.yml`.
+
+Neither downloaded package contains `LICENSE`, `NOTICE`, or a third-party
+notice; each immutable `resolve/<revision>/LICENSE` URL returns HTTP `404`.
+The README badge is therefore dangling. Neither README has another copyright,
+notice, terms, dataset/training-data, third-party, or attribution statement.
+The recognizer `inference.yml` embeds a `character_dict` with 18,708 entries
+but no legal/provenance text. This strengthens the revision-specific evidence
+gap; it does not resolve applicable terms for weights, embedded dictionary
+data, or redistribution. See [LICENSE_REVIEW.md](LICENSE_REVIEW.md) for the
+immutable API/tree URLs and remaining closure conditions.
 
 ## Remaining gates
 

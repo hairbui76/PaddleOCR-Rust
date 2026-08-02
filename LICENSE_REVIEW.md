@@ -78,18 +78,42 @@ previously recorded terms evidence gap. The complete local file inventory and
 parse-only graph inspection are in
 [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
 
-On 2026-08-02, direct read-only Hugging Face revision-API queries confirmed
-the same immutable detector and recognizer revisions, each public and
-ungated, with `cardData.license: apache-2.0`. Each API sibling list contains
-only `.gitattributes`, `README.md`, `inference.json`, `inference.onnx`, and
-`inference.yml`; it contains no `LICENSE`. The corresponding immutable
-`resolve/<revision>/LICENSE` URLs each returned HTTP `404`. This makes the
-model-card declaration and absent-file observation revision-specific remote
-evidence, but it still does not provide the Apache-2.0 text or establish its
-coverage of every model-package file.
+On 2026-08-02, a second direct read-only immutable-revision audit confirmed
+that both ONNX repositories are public and ungated, display `author:
+PaddlePaddle`, and have `cardData.license: apache-2.0`. The platform's
+`author` field is useful repository metadata, not proof of the rightsholder or
+of a grant covering every package file. Each card data object contains only
+`language`, `library_name`, `license`, `pipeline_tag`, and `tags`; there is no
+`license_name`, `license_link`, `datasets`, or `base_model` field.
 
-- Detector API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_det_onnx/revision/61323801669c338b7891481ec7bac61ce31b576a
-- Recognizer API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_onnx/revision/50c7eacafc52fa7bcf4194e8cd08e46f8558504b
+The recursive immutable tree for each revision contains exactly five package
+files: `.gitattributes`, `README.md`, `inference.json`, `inference.onnx`, and
+`inference.yml`. It contains no `LICENSE`, `NOTICE`, or third-party notice.
+The corresponding immutable `resolve/<revision>/LICENSE` URLs each returned
+HTTP `404`. The local canonical text assets (`.gitattributes`, `README.md`,
+`inference.json`, and `inference.yml`) matched their exact remote revision
+bytes; every canonical local package file is a regular file rather than a
+symlink. The detector and recognizer README SHA-256 values are respectively
+`3046e3aab0194a2291bb3941c93b980c2b3a938a24a5be88354968f6d6187ac8` and
+`ebce8d28436623ecab4952e24935aed86b3f8ecaf8f8736b92d5544f60fae1e9`.
+
+Both README files declare `license: apache-2.0` in front matter and link a
+badge to `./LICENSE`, but that link is dangling at the immutable revision.
+They contain no other copyright, notice, terms, dataset/training-data,
+third-party, or attribution text. The recognizer `inference.yml` embeds a
+`character_dict` with 18,708 entries and no legal/provenance text, so it is an
+additional asset-specific terms gap. Hugging Face documents the model-card
+fields as display/filtering metadata and expects authors to describe details
+such as datasets and training information; it does not supply the absent
+package-level terms here.
+
+- Detector revision API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_det_onnx/revision/61323801669c338b7891481ec7bac61ce31b576a
+- Recognizer revision API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_onnx/revision/50c7eacafc52fa7bcf4194e8cd08e46f8558504b
+- Detector recursive tree: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_det_onnx/tree/61323801669c338b7891481ec7bac61ce31b576a?recursive=true&expand=true
+- Recognizer recursive tree: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_onnx/tree/50c7eacafc52fa7bcf4194e8cd08e46f8558504b?recursive=true&expand=true
+- Detector missing license: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx/resolve/61323801669c338b7891481ec7bac61ce31b576a/LICENSE
+- Recognizer missing license: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx/resolve/50c7eacafc52fa7bcf4194e8cd08e46f8558504b/LICENSE
+- Hugging Face model-card documentation: https://huggingface.co/docs/hub/model-cards
 
 ## Material-specific status
 
@@ -98,7 +122,7 @@ coverage of every model-package file.
 | PaddleOCR repository source | The read-only upstream repository identifies Apache License 2.0; the P0 record documents source-attribution and trademark boundaries. | If any non-trivial source is adapted, record file-level provenance, retained notices, modifications, and a source review. | No upstream source is currently included. |
 | Static model parameters and graph/config files | Candidate revisions, checksums, sizes, and preliminary card metadata are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
 | Official ONNX exports | Separate pinned repository revisions and checksums are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
-| Recognizer character dictionary and tokenizer behavior | The static recognizer configuration contains an inline dictionary; its ABI is not yet verified. | Verify exact provenance, terms, index mapping, blank/space behavior, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
+| Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a `character_dict` with 18,708 entries; it has no legal/provenance text, and its ABI is not yet verified. | Verify exact provenance, terms, index mapping, blank/space behavior, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
 | Oracle and test fixtures | No model-backed input or expected-output fixture has been added. | Record original-author/source provenance, terms, privacy review, hashes, goldens, and applicable model evidence per [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | Unapproved. |
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |
@@ -109,6 +133,8 @@ This review does **not** establish any of the following:
 
 - that the model-card license field covers every binary, embedded dictionary,
   configuration, or archive associated with a candidate;
+- that a hosting-platform `author` field proves the publisher/rightsholder or
+  grants model-weight rights;
 - that the static and ONNX candidates are equivalent, mutually convertible, or
   covered by identical terms;
 - that a user-provisioned copy may be redistributed by this project;
@@ -125,7 +151,8 @@ an evidence gap, not proof that no terms apply.
 the following, reviewed at its immutable revision:
 
 1. A durable source for the exact applicable license/terms and a recorded
-   publisher/rightsholder relationship for the selected model files.
+   publisher/rightsholder relationship for every selected model, graph,
+   configuration, and embedded dictionary file.
 2. A file inventory covering parameters, graph, configuration, dictionary,
    tokenizer, archive wrapper, and every retained notice, with byte sizes and
    SHA-256 values tied to the local provisioning manifest.
