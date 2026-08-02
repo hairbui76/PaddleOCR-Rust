@@ -106,7 +106,7 @@ impl CtcGreedyPath {
         &self.class_indices
     }
 
-    /// Returns the arithmetic mean of selected timestep maxima, or `0.0` when empty.
+    /// Returns the finite arithmetic mean of selected timestep maxima, or `0.0` when empty.
     #[must_use]
     pub(crate) const fn mean_score(&self) -> f32 {
         self.mean_score
@@ -119,6 +119,10 @@ impl CtcGreedyPath {
 /// equal raw indexes are removed before index `0` is treated as blank, matching
 /// the classic CTC decoder's selection order. This function intentionally does
 /// not map indexes to text or validate artifact-specific output semantics.
+///
+/// Ordinary finite score inputs retain the reviewed `f32` accumulation path.
+/// If that aggregate overflows, a parallel `f64` aggregate supplies the finite
+/// mean instead; a finite input matrix must not produce a non-finite path score.
 pub(crate) fn classic_ctc_greedy_indices(matrix: CtcScoreMatrix<'_>) -> Result<CtcGreedyPath> {
     let output_capacity =
         usize::try_from(matrix.time_steps()).map_err(|_| Error::ResourceLimit {
@@ -141,6 +145,7 @@ pub(crate) fn classic_ctc_greedy_indices(matrix: CtcScoreMatrix<'_>) -> Result<C
     let mut previous_index = None;
     let mut selected_count = 0_u32;
     let mut selected_sum = 0.0_f32;
+    let mut selected_sum_f64 = 0.0_f64;
     for row in matrix.values().chunks_exact(row_length) {
         let mut best_index = 0_u32;
         let mut best_score = row[0];
@@ -155,19 +160,43 @@ pub(crate) fn classic_ctc_greedy_indices(matrix: CtcScoreMatrix<'_>) -> Result<C
             class_indices.push(best_index);
             selected_count += 1;
             selected_sum += best_score;
+            selected_sum_f64 += f64::from(best_score);
         }
         previous_index = Some(best_index);
     }
 
-    let mean_score = if selected_count == 0 {
-        0.0
-    } else {
-        selected_sum / selected_count as f32
-    };
+    let mean_score = finite_selected_mean(selected_sum, selected_sum_f64, selected_count)?;
     Ok(CtcGreedyPath {
         class_indices,
         mean_score,
     })
+}
+
+fn finite_selected_mean(
+    selected_sum: f32,
+    selected_sum_f64: f64,
+    selected_count: u32,
+) -> Result<f32> {
+    if selected_count == 0 {
+        return Ok(0.0);
+    }
+
+    let mean_score = selected_sum / selected_count as f32;
+    if mean_score.is_finite() {
+        return Ok(mean_score);
+    }
+
+    // Every selected term originated as a finite `f32`, and the bounded count
+    // makes its `f64` sum representable. The fallback preserves a finite mean
+    // only on the exceptional f32-overflow path, leaving reviewed normal-range
+    // `f32` results unchanged.
+    let fallback = selected_sum_f64 / f64::from(selected_count);
+    if !fallback.is_finite() || fallback < f64::from(f32::MIN) || fallback > f64::from(f32::MAX) {
+        return Err(Error::Backend {
+            message: "CTC selected-score mean is not representable",
+        });
+    }
+    Ok(fallback as f32)
 }
 
 #[cfg(test)]
@@ -257,6 +286,54 @@ mod tests {
 
         assert_eq!(path.class_indices(), &[1]);
         assert_close(path.mean_score(), 0.8);
+    }
+
+    #[test]
+    fn classic_ctc_keeps_the_mean_finite_when_f32_sum_overflows() {
+        let matrix = must_ok(CtcScoreMatrix::new(
+            2,
+            3,
+            &[
+                0.0,
+                f32::MAX,
+                0.0, // Index 1 is retained.
+                0.0,
+                0.0,
+                f32::MAX, // A distinct index retains another maximum.
+            ],
+        ));
+
+        let path = must_ok(classic_ctc_greedy_indices(matrix));
+
+        assert_eq!(path.class_indices(), &[1, 2]);
+        assert_eq!(path.mean_score(), f32::MAX);
+        assert!(path.mean_score().is_finite());
+    }
+
+    #[test]
+    fn classic_ctc_keeps_a_negative_extreme_mean_finite_when_f32_sum_overflows() {
+        let retained_score = f32::MIN / 2.0;
+        let values = [
+            f32::MIN,
+            retained_score,
+            f32::MIN,
+            f32::MIN, // Index 1 is retained.
+            f32::MIN,
+            f32::MIN,
+            retained_score,
+            f32::MIN, // Index 2 is retained.
+            f32::MIN,
+            f32::MIN,
+            f32::MIN,
+            retained_score, // Index 3 is retained.
+        ];
+        let matrix = must_ok(CtcScoreMatrix::new(3, 4, &values));
+
+        let path = must_ok(classic_ctc_greedy_indices(matrix));
+
+        assert_eq!(path.class_indices(), &[1, 2, 3]);
+        assert_eq!(path.mean_score(), retained_score);
+        assert!(path.mean_score().is_finite());
     }
 
     #[test]
