@@ -151,10 +151,10 @@ fn exercise_geometry_and_crop_kernels(reader: &mut ByteReader<'_>) {
             plan.map_warp_coordinates_to_source(f64::from(points[0].x()), f64::from(points[0].y()));
     }
 
-    exercise_crop_kernel(reader);
+    exercise_crop_kernel(reader, quadrilateral);
 }
 
-fn exercise_crop_kernel(reader: &mut ByteReader<'_>) {
+fn exercise_crop_kernel(reader: &mut ByteReader<'_>, quadrilateral: Quadrilateral) {
     let Some(dimensions) = bounded_dimensions(reader, MAX_CROP_SIDE) else {
         return;
     };
@@ -165,20 +165,6 @@ fn exercise_crop_kernel(reader: &mut ByteReader<'_>) {
         .collect::<Vec<_>>();
 
     let Some(source) = InterleavedImage::new(dimensions, channels, pixels).ok() else {
-        return;
-    };
-    let width = dimensions.width() as f32;
-    let height = dimensions.height() as f32;
-    let points = [
-        Point::new(0.0, 0.0),
-        Point::new(width, 0.0),
-        Point::new(width, height),
-        Point::new(0.0, height),
-    ];
-    let [Ok(first), Ok(second), Ok(third), Ok(fourth)] = points else {
-        return;
-    };
-    let Ok(quadrilateral) = Quadrilateral::new([first, second, third, fourth]) else {
         return;
     };
     if let Ok(plan) = classic_perspective_crop_plan(quadrilateral) {
@@ -197,12 +183,23 @@ fn bounded_quadrilateral(reader: &mut ByteReader<'_>) -> Option<Quadrilateral> {
     let top = f32::from(reader.next_byte()) / 8.0 - 16.0;
     let width = f32::from(reader.next_byte() % 64) / 8.0 + 1.0;
     let height = f32::from(reader.next_byte() % 64) / 8.0 + 1.0;
-    let points = [
-        Point::new(left, top),
-        Point::new(left + width, top),
-        Point::new(left + width, top + height),
-        Point::new(left, top + height),
-    ];
+    let points = if reader.next_byte() & 1 == 0 {
+        [
+            Point::new(left, top),
+            Point::new(left + width, top),
+            Point::new(left + width, top + height),
+            Point::new(left, top + height),
+        ]
+    } else {
+        let top_inset = width * (f32::from(reader.next_byte() % 48) / 128.0);
+        let top_shift = width * (f32::from(reader.next_byte()) / 256.0 - 0.5);
+        [
+            Point::new(left + top_shift + top_inset, top),
+            Point::new(left + top_shift + width - top_inset, top),
+            Point::new(left + width, top + height),
+            Point::new(left, top + height),
+        ]
+    };
     let [Ok(first), Ok(second), Ok(third), Ok(fourth)] = points else {
         return None;
     };
@@ -251,6 +248,27 @@ mod tests {
     use super::{MAX_INPUT_BYTES, exercise};
 
     const GENERATED_STRESS_CASES: usize = 4_096;
+    const MUTATION_CAMPAIGN_CASES: usize = 2_048;
+    const MUTATION_OPERATIONS_PER_CASE: usize = 8;
+    const MUTATION_SEEDS: &[&[u8]] = &[
+        b"",
+        b"\x00",
+        b"\xff",
+        b"\x00\x01\x7f\x80\xfe\xff",
+        b"\x00\x00\x00\x00\x01\x00\x00\x00\xff\xff\x7f\x7f\x00\x00\x80\x7f",
+        b"PaddleOCR-Rust bounded primitive mutation seed",
+    ];
+    const BYTE_BOUNDARIES: [u8; 8] = [0, 1, 2, 0x7f, 0x80, 0xfe, 0xff, 0x55];
+    const FLOAT_BOUNDARIES: [u32; 8] = [
+        0x0000_0000,
+        0x0000_0001,
+        0x3f80_0000,
+        0x7f7f_ffff,
+        0x7f80_0000,
+        0x7fc0_0000,
+        0xff80_0000,
+        0xffff_ffff,
+    ];
 
     #[test]
     fn byte_driven_fuzz_driver_handles_bounded_seed_corpus() {
@@ -284,5 +302,119 @@ mod tests {
             }
             exercise(&input);
         }
+    }
+
+    #[test]
+    fn byte_driven_fuzz_driver_handles_deterministic_mutation_campaign() {
+        for case_index in 0..MUTATION_CAMPAIGN_CASES {
+            let seed = MUTATION_SEEDS[case_index % MUTATION_SEEDS.len()];
+            let mut input = seed.to_vec();
+            let mut state = 0xD1B5_4A35_u32 ^ case_index as u32;
+
+            for operation_index in 0..MUTATION_OPERATIONS_PER_CASE {
+                mutate_input(&mut input, &mut state, (case_index + operation_index) % 7);
+                assert!(
+                    input.len() <= MAX_INPUT_BYTES,
+                    "mutation case {case_index} exceeded its input bound"
+                );
+            }
+
+            exercise(&input);
+        }
+    }
+
+    fn mutate_input(input: &mut Vec<u8>, state: &mut u32, mutation_kind: usize) {
+        match mutation_kind {
+            0 => flip_one_bit(input, state),
+            1 => overwrite_one_byte(input, state),
+            2 => insert_one_byte(input, state),
+            3 => remove_one_byte(input, state),
+            4 => duplicate_one_byte(input, state),
+            5 => inject_float_boundary(input, state),
+            6 => truncate_input(input, state),
+            _ => unreachable!("mutation kind is reduced modulo seven"),
+        }
+    }
+
+    fn flip_one_bit(input: &mut Vec<u8>, state: &mut u32) {
+        if input.is_empty() {
+            input.push(1_u8 << (next_word(state) % 8));
+            return;
+        }
+        let index = next_index(state, input.len());
+        input[index] ^= 1_u8 << (next_word(state) % 8);
+    }
+
+    fn overwrite_one_byte(input: &mut Vec<u8>, state: &mut u32) {
+        let value = BYTE_BOUNDARIES[next_index(state, BYTE_BOUNDARIES.len())];
+        if input.is_empty() {
+            input.push(value);
+            return;
+        }
+        let index = next_index(state, input.len());
+        input[index] = value;
+    }
+
+    fn insert_one_byte(input: &mut Vec<u8>, state: &mut u32) {
+        if input.len() == MAX_INPUT_BYTES {
+            return;
+        }
+        let index = next_index(state, input.len() + 1);
+        let value = BYTE_BOUNDARIES[next_index(state, BYTE_BOUNDARIES.len())];
+        input.insert(index, value);
+    }
+
+    fn remove_one_byte(input: &mut Vec<u8>, state: &mut u32) {
+        if input.is_empty() {
+            return;
+        }
+        let index = next_index(state, input.len());
+        input.remove(index);
+    }
+
+    fn duplicate_one_byte(input: &mut Vec<u8>, state: &mut u32) {
+        if input.is_empty() || input.len() == MAX_INPUT_BYTES {
+            return;
+        }
+        let source = next_index(state, input.len());
+        let destination = next_index(state, input.len() + 1);
+        input.insert(destination, input[source]);
+    }
+
+    fn inject_float_boundary(input: &mut Vec<u8>, state: &mut u32) {
+        let bits = FLOAT_BOUNDARIES[next_index(state, FLOAT_BOUNDARIES.len())];
+        write_bounded_bytes(input, state, &bits.to_le_bytes());
+    }
+
+    fn truncate_input(input: &mut Vec<u8>, state: &mut u32) {
+        if input.is_empty() {
+            return;
+        }
+        input.truncate(next_index(state, input.len() + 1));
+    }
+
+    fn write_bounded_bytes(input: &mut Vec<u8>, state: &mut u32, bytes: &[u8]) {
+        let start = next_index(state, input.len() + 1);
+        for (offset, byte) in bytes.iter().copied().enumerate() {
+            let index = start + offset;
+            if index < input.len() {
+                input[index] = byte;
+            } else if input.len() < MAX_INPUT_BYTES {
+                input.push(byte);
+            } else {
+                let replacement = next_index(state, input.len());
+                input[replacement] = byte;
+            }
+        }
+    }
+
+    fn next_index(state: &mut u32, length: usize) -> usize {
+        debug_assert!(length > 0);
+        next_word(state) as usize % length
+    }
+
+    fn next_word(state: &mut u32) -> u32 {
+        *state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        *state
     }
 }
