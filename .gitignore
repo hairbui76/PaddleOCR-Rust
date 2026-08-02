@@ -10,6 +10,7 @@
 *.tar.gz
 *.zip
 .env
+.oracle-venv/
 .DS_Store
 __pycache__/
 *.py[cod]

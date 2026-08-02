@@ -255,7 +255,12 @@ fn saturating_round_to_u8(value: f32) -> u8 {
     } else if value >= f32::from(u8::MAX) {
         u8::MAX
     } else {
-        value.round() as u8
+        // The recorded OpenCV 5.0.0 scalar uint8 result uses nearest-even
+        // rounding for this fractional half-byte boundary. Rust's `round()`
+        // instead rounds halfway cases away from zero, which changes an
+        // isolated cubic component by one byte. Keep this scalar rule explicit
+        // rather than relying on a target-specific cast or intrinsic.
+        value.round_ties_even() as u8
     }
 }
 
@@ -273,6 +278,7 @@ mod tests {
         geometry::classic_perspective_crop_plan,
         types::{Point, Quadrilateral},
     };
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
 
     const CAPTURED_OPENCV_CROP_ORACLE: &str =
         include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
@@ -415,6 +421,17 @@ mod tests {
         let samples = cubic_axis_samples(-f32::MIN_POSITIVE, 4);
         assert_eq!(samples.map(|(index, _)| index), [0, 0, 0, 1]);
         assert_eq!(samples.map(|(_, weight)| weight), [0.0, 0.0, 1.0, 0.0]);
+    }
+
+    #[test]
+    fn cubic_components_round_half_bytes_to_even_before_saturation() {
+        assert_eq!(saturating_round_to_u8(-0.25), 0);
+        assert_eq!(saturating_round_to_u8(0.5), 0);
+        assert_eq!(saturating_round_to_u8(1.5), 2);
+        assert_eq!(saturating_round_to_u8(109.5), 110);
+        assert_eq!(saturating_round_to_u8(132.5), 132);
+        assert_eq!(saturating_round_to_u8(255.0), 255);
+        assert_eq!(saturating_round_to_u8(255.5), 255);
     }
 
     #[test]
@@ -1089,6 +1106,37 @@ mod tests {
                 245, 92, 138, 38, 98, 72, 222, 95, 48, 104, 234, 58, 175, 85, 120, 235, 0, 174, 97,
                 152, 99, 54, 184, 20, 116, 68, 36, 143, 79, 87, 208,
             ],
+        );
+    }
+
+    #[test]
+    fn classic_crop_matches_ties_even_opencv_oracle_case() {
+        // This generated high-variation case has one cubic component at a
+        // half-byte boundary. OpenCV's uint8 conversion rounds it to the
+        // nearest even integer; away-from-zero rounding yields one wrong byte.
+        const FIXTURE_ID: &str = "classic-v1-crop-oracle-ties-even-bgr-4x7";
+        const EXPECTED_B64: &str = "i+qylPHEm/fRYJpsmQ30oH1wUIprTZRaT6dYg/LJ9nbpVmN1boXqbnjsZH3XIqtkOzuFO1HSWW3SXITTZKbCu7w62Vs9cYf/EVi6IEK/GUvTO43emIhpVmk1hHzHYYTDOY2sRHCHawRBWgAPv3LTynjduyeVd0orLrQ3HZc6u3LSv3rcpiiNb101K6w5GKk+";
+        assert!(
+            CAPTURED_OPENCV_CROP_ORACLE.contains(FIXTURE_ID),
+            "fixture record is missing {FIXTURE_ID}"
+        );
+        let expected_pixels = match STANDARD.decode(EXPECTED_B64) {
+            Ok(bytes) => bytes,
+            Err(error) => panic!("{FIXTURE_ID} expected payload is invalid base64: {error}"),
+        };
+
+        assert_captured_bgr_crop(
+            FIXTURE_ID,
+            dimensions(4, 7),
+            &lcg_bgr_pixels(4, 7, 4_072_061_695),
+            [
+                (f32::from_bits(0xc008_b6e8), f32::from_bits(0x3e8f_7f90)),
+                (f32::from_bits(0x4080_c931), f32::from_bits(0xbe95_f796)),
+                (f32::from_bits(0x4099_bc4a), f32::from_bits(0x40f9_f96a)),
+                (f32::from_bits(0xbfd2_de13), f32::from_bits(0x4111_b70a)),
+            ],
+            dimensions(6, 8),
+            &expected_pixels,
         );
     }
 

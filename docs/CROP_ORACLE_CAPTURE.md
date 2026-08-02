@@ -32,6 +32,11 @@ checkout and `PaddleOCR/`. Provision a Python environment outside both
 repositories with a reviewed OpenCV and NumPy installation. The tool does not
 install those packages and does not make a version choice for the Rust project.
 
+The project user also permits a repository-local, ignored `.oracle-venv/` for
+developer-only capture work. It is not a Rust dependency, is never read by
+normal Cargo commands or CI, and must not be committed, packaged, or used as an
+asset-distribution mechanism.
+
 The `--list` mode has no optional-package dependency and is useful for
 discovering the fixed corpus:
 
@@ -68,7 +73,8 @@ tall crop that detects the `f32` cubic-weight construction order, a
 high-variation crop that detects the source-to-warp matrix inversion and
 `f32` sampler-coordinate boundary, and a high-variation crop that detects
 `getPerspectiveTransform` float32 coefficient construction and default LU
-solving. The corpus is BGR only because the frozen M2
+solving, plus a high-variation projective case whose scalar cubic conversion
+requires nearest-even handling at a half-byte boundary. The corpus is BGR only because the frozen M2
 classic input contract starts from a decoded OpenCV-style BGR image.
 Decoder/color/alpha semantics remain separate `D-008` and `IMG-*` work.
 
@@ -109,15 +115,15 @@ The reviewed capture is
 [tests/fixtures/classic-v1-crop-oracle/capture.json](../tests/fixtures/classic-v1-crop-oracle/capture.json).
 It was captured on 2026-08-02 with Python 3.12.3, NumPy 2.5.1, OpenCV 5.0.0,
 and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
-`7dcb1acbf1cb7a1e70c1a211f4583f11c11e23af0c2bad12b21a7641d92e7751`;
+`1ce072dd7633390302c674cac0cadfc574c7e8182d938625d9b0e3163a09cf3a`;
 [metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
 The sidecar
 [tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv](../tests/fixtures/classic-v1-crop-oracle/inverse-mappings.csv)
-has SHA-256 `6fec6e7dd72f392d0b0ec100294649f0d8f1ade51c416cdbbcd75bc893d7b5a9`.
-It records seventy `warp → source` points: the four pre-rotation destination
-boundaries and one interior coordinate for each of the fourteen reviewed cases.
+has SHA-256 `91a55b75910f3013d0c9405aefb6c3fd5a6b134f66a76f0027dd17c17475e3fa`.
+It records seventy-five `warp → source` points: the four pre-rotation destination
+boundaries and one interior coordinate for each of the fifteen reviewed cases.
 The expected coordinates are independent OpenCV
 `cv2.getPerspectiveTransform(destination, source)` plus
 `cv2.perspectiveTransform` evaluations, not values calculated by Rust.
@@ -129,8 +135,9 @@ The offline Rust regressions
 `crop::tests::classic_crop_matches_cubic_rounding_opencv_oracle_case`, and
 `crop::tests::classic_crop_matches_cubic_weight_construction_opencv_oracle_case`,
 `crop::tests::classic_crop_matches_sampling_matrix_opencv_oracle_case`, and
-`crop::tests::classic_crop_matches_perspective_lu_opencv_oracle_case`
-check all fourteen recorded outputs without importing Python or OpenCV. Exact
+`crop::tests::classic_crop_matches_perspective_lu_opencv_oracle_case`, and
+`crop::tests::classic_crop_matches_ties_even_opencv_oracle_case`
+check all fifteen recorded outputs without importing Python or OpenCV. Exact
 agreement is evidence only for these self-authored BGR cases and this recorded
 environment. It is not a claim of universal OpenCV interpolation parity,
 upstream-environment parity, decoded-image behavior, or OCR compatibility.
@@ -142,14 +149,33 @@ one-pixel, and tall-thin cases. This is narrow mapping evidence for those
 recorded matrices, not general OpenCV homography equivalence.
 
 `geometry::tests::classic_crop_plan_matches_captured_opencv_inverse_mapping_oracle`
-parses the sidecar offline and checks all seventy captured pre-rotation
+parses the sidecar offline and checks all seventy-five captured pre-rotation
 warp-to-source coordinates against the private plan. It therefore covers the
 mapping direction used by the crop sampler, while remaining limited to this
 recorded OpenCV environment and the self-authored cases.
 
+## Scalar nearest-even rounding regression
+
+A separate deterministic 1,024-case self-authored BGR probe (3–20 pixel
+source sides, fixed LCG, and strictly convex projective quadrilaterals) found
+seven one-byte differences from default OpenCV before the scalar conversion
+change. The promoted `ties-even-bgr-4x7` case is one of those differences: its
+expected byte is 132, while away-from-zero rounding produces 133. The private
+sampler now calls `f32::round_ties_even()` after its explicit `[0, 255]`
+saturation check; this matches the recorded OpenCV scalar behavior and the
+selected fixture without introducing an intrinsic or CPU-feature dependency.
+
+With that change, the complete 1,024-case probe matched
+`cv2.setUseOptimized(False)` byte-for-byte. Default OpenCV still differed on
+five isolated bytes, which is consistent with the already documented SIMD/FMA
+variation. This observation is diagnostic only: no SIMD/FMA behavior, broader
+tolerance, OpenCV universality, decoder behavior, or OCR compatibility is
+claimed.
+
 ## Non-promoted optimization diagnostic
 
-On 2026-08-02, an isolated, developer-only deterministic corpus of 4,096
+On 2026-08-02, before the scalar nearest-even correction, an isolated,
+developer-only deterministic corpus of 4,096
 self-authored BGR crops (3–16 pixel source sides, fixed seed, and strictly
 convex quadrilaterals) was compared against the recorded OpenCV environment.
 The current private Rust sampler differed from default `cv2.warpPerspective`
@@ -165,7 +191,7 @@ experiment reduced the corpus count to thirteen mismatching cases but
 introduced five new mismatches; a weight-only variant produced sixteen. No
 FMA/SIMD implementation, fixture, tolerance change, or compatibility claim
 was promoted. The selected scalar operation order remains the checked Rust
-behavior, and the fourteen reviewed fixtures remain the only exact pixel
+behavior, and the reviewed fixture corpus remains the only exact pixel
 evidence.
 
 Any future CPU-specific optimization work must first define the supported CPU
@@ -195,7 +221,7 @@ and CTC regressions are checked against the profile used for distribution.
 
 This profile preserves the existing scalar operation order rather than trying
 to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel
-equivalence, select an optimization implementation, or relax the fourteen
+equivalence, select an optimization implementation, or relax the fifteen
 reviewed fixture expectations. A future optimization proposal must update this
 policy first, retain a portable baseline regression, and provide separately
 reviewed numerical evidence before it changes the sampler.

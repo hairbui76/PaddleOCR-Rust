@@ -229,6 +229,20 @@ CASES: tuple[CropCase, ...] = (
             (-0.5748963952064514, 14.746376991271973),
         ),
     ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-ties-even-bgr-4x7",
+        description=(
+            "A high-variation projective BGR crop catches nearest-even uint8 "
+            "rounding at an isolated cubic half-byte component."
+        ),
+        rows=lcg_bgr_rows(4, 7, 4_072_061_695),
+        points=(
+            (-2.1361637115478516, 0.2802700996398926),
+            (4.024559497833252, -0.2929045557975769),
+            (4.804234504699707, 7.8116960525512695),
+            (-1.6474021673202515, 9.107187271118164),
+        ),
+    ),
 )
 
 

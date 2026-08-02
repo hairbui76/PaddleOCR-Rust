@@ -235,8 +235,8 @@ fn verify_crop_oracle(metadata: &Value, fixture_directory: &Path, context: &str)
     let cases = array_field(&capture, "cases", context);
     assert_eq!(
         cases.len(),
-        14,
-        "{context} expected fourteen reviewed crop cases"
+        15,
+        "{context} expected fifteen reviewed crop cases"
     );
 
     let mut case_ids = BTreeSet::new();
@@ -251,6 +251,27 @@ fn verify_crop_oracle(metadata: &Value, fixture_directory: &Path, context: &str)
         input_bytes.extend(decode_crop_payload(case, "input", context));
         output_bytes.extend(decode_crop_payload(case, "output", context));
     }
+    let expected_case_ids = BTreeSet::from([
+        "classic-v1-crop-oracle-border-replicate-bgr-3x2".to_owned(),
+        "classic-v1-crop-oracle-cubic-rounding-bgr-8x10".to_owned(),
+        "classic-v1-crop-oracle-cubic-weight-order-bgr-5x10".to_owned(),
+        "classic-v1-crop-oracle-edge-projective-bgr-5x4".to_owned(),
+        "classic-v1-crop-oracle-identity-bgr-3x2".to_owned(),
+        "classic-v1-crop-oracle-interior-projective-bgr-7x6".to_owned(),
+        "classic-v1-crop-oracle-perspective-lu-bgr-12x13".to_owned(),
+        "classic-v1-crop-oracle-phase-projective-bgr-8x8".to_owned(),
+        "classic-v1-crop-oracle-projective-bgr-4x3".to_owned(),
+        "classic-v1-crop-oracle-sampling-matrix-bgr-12x11".to_owned(),
+        "classic-v1-crop-oracle-single-pixel-bgr-3x3".to_owned(),
+        "classic-v1-crop-oracle-tall-projective-bgr-4x7".to_owned(),
+        "classic-v1-crop-oracle-tall-rotation-bgr-2x3".to_owned(),
+        "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9".to_owned(),
+        "classic-v1-crop-oracle-ties-even-bgr-4x7".to_owned(),
+    ]);
+    assert_eq!(
+        case_ids, expected_case_ids,
+        "{context} crop case set changed without an integrity-gate update"
+    );
     assert_digest(
         &input_bytes,
         string_field(input, "sha256", context),

@@ -32,7 +32,7 @@ comparison profile. It verifies SHA-256 values for direct fixture files.
 
 For `classic-v1-crop-oracle`, the gate also verifies the full capture document,
 its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
-metadata's concatenated input/output digests across all reviewed cases. The
+metadata's concatenated input/output digests across all fifteen reviewed cases. The
 gate proves repository fixture integrity and metadata consistency only; it does
 not replace source review, artifact-term review, or oracle/model equivalence.
 Its dev-only SHA-256 implementation uses the `sha2` `force-soft` feature, so

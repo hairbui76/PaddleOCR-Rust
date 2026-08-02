@@ -928,6 +928,72 @@
         "width": 11
       },
       "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A high-variation projective BGR crop catches nearest-even uint8 rounding at an isolated cubic half-byte component.",
+      "fixture_id": "classic-v1-crop-oracle-ties-even-bgr-4x7",
+      "input": {
+        "base64": "of3dYKZrnBX0mXZ3UKpNbfm6/IroU1+La2zeJ7x4Mj9fQlXZZKjUk9pl/GIIhIjQRC7NEHfjopmmVlweD4SzFLavbCFwWAMeu3LSjAdQWZs0G6g9",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0fb874809f0fa71b7a7593a54485a4466a3b7f87b264f347bab399d33010bc93",
+        "shape": [
+          7,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "i+qylPHEm/fRYJpsmQ30oH1wUIprTZRaT6dYg/LJ9nbpVmN1boXqbnjsZH3XIqtkOzuFO1HSWW3SXITTZKbCu7w62Vs9cYf/EVi6IEK/GUvTO43emIhpVmk1hHzHYYTDOY2sRHCHawRBWgAPv3LTynjduyeVd0orLrQ3HZc6u3LSv3rcpiiNb101K6w5GKk+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "635865d4aa2782cdc6e5d7addcc6172d71183bb6ca13294b171b4e2ee1d6abd2",
+        "shape": [
+          8,
+          6,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9211453274363081,
+          -0.05100539678230698,
+          1.9820125091696543
+        ],
+        [
+          0.09115758474263314,
+          0.9798002104723771,
+          -0.07988117805672011
+        ],
+        [
+          -0.011713374918354565,
+          0.007395210157464848,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -2.1361637115478516,
+          0.2802700996398926
+        ],
+        [
+          4.024559497833252,
+          -0.2929045557975769
+        ],
+        [
+          4.804234504699707,
+          7.8116960525512695
+        ],
+        [
+          -1.6474021673202515,
+          9.107187271118164
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 8,
+        "width": 6
+      },
+      "rotates_counter_clockwise": false
     }
   ],
   "environment": {
