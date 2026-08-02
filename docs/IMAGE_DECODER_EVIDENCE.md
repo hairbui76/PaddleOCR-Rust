@@ -106,11 +106,13 @@ a prescribed or accepted `Cargo.toml` edit:
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png"] }
 ```
 
-The exact version, resolved lockfile, MSRV compatibility with Rust `1.94.0`,
-transitive dependencies, native code, unsafe boundaries, advisories, license
-notices, feature graph, binary-size effect, and maintenance posture remain
-unreviewed. No claim is made that this candidate has no unsafe code or no
-native dependency transitively.
+At this initial evidence stage, the exact version, resolved lockfile, MSRV
+compatibility with Rust `1.94.0`, transitive dependencies, native code, unsafe
+boundaries, advisories, license notices, feature graph, binary-size effect, and
+maintenance posture remained unreviewed. The later committed-corpus replay
+below adds a date-specific lockfile and first-pass advisory/license evidence,
+but not a completed review. No claim is made that this candidate has no unsafe
+code or no native dependency transitively.
 
 ### Resource-limit evidence and its limitation
 
@@ -261,14 +263,17 @@ decision-relevant facts:
 
 The initial Cargo spike did not include no-AVX execution. The separately scoped
 QEMU run below now covers one selected PNG/JPEG success and strict-dimension
-error path, but not a complete unsafe-code or dispatch audit. `cargo-audit`,
-`cargo-deny`, and `cargo-license` were unavailable. The spikes did not perform
-an advisory/license audit, native-boundary review, fuzzing, a malicious corpus
-run, EXIF/BGR/alpha/oracle comparison, or any model integration.
+error path, but not a complete unsafe-code or dispatch audit. At the time of
+this spike, `cargo-audit`, `cargo-deny`, and `cargo-license` were unavailable;
+the later full-corpus follow-up records a temporary `cargo-audit` result only.
+The initial spike did not perform an advisory/license audit, native-boundary
+review, fuzzing, a malicious corpus run, EXIF/BGR/alpha/oracle comparison, or
+any model integration.
 
 Accordingly, this spike does not select `image`, add a project dependency, or
-change any image input behavior. `IMG-DEC-001` remains Planned and `D-008`
-remains open. The temporary package must be discarded after recording this
+change any image input behavior. At this stage `IMG-DEC-001` was still
+`Planned` and `D-008` was open; later factual evidence moved only the item to
+`In progress`. The temporary package must be discarded after recording this
 evidence; a future decision needs a maintained, reviewable, and reproducible
 qualification procedure.
 
@@ -577,7 +582,7 @@ did not change this finite corpus result.
 |---|---|---|
 | Four 8-bit PNG cases: truecolor, RGBA, grayscale, indexed+tRNS | All dimensions and all BGR bytes were exact after `EXPAND`, alpha discard, and RGB-to-BGR conversion. | Positive finite evidence only; alpha semantics are still unselected. |
 | One 16-bit grayscale PNG | The normal probe rejected it explicitly. The separate diagnostic `STRIP_16` conversion happened to match this one OpenCV BGR output exactly. | Neither result selects a 16-bit policy. |
-| Baseline JPEG, progressive JPEG, and eight Exif JPEGs | All ten outputs had the expected dimensions; every JPEG differed in seven of eighteen BGR components with maximum absolute component delta `36`. Baseline direct BGR SHA-256 was `f060df3d12b0c4477b5ce2bfcfc64d2bdecf5aaec4a8d929f70c21a6950ab24d`. | This is materially less faithful to this corpus than the earlier `image` candidate's maximum delta `2`; no tolerance is accepted. |
+| Baseline JPEG, progressive JPEG, and eight Exif JPEGs | All ten outputs had the expected dimensions; every JPEG differed in seven of eighteen BGR components with maximum absolute component delta `36`. Baseline direct BGR SHA-256 was `f060df3d12b0c4477b5ce2bfcfc64d2bdecf5aaec4a8d929f70c21a6950ab24d`. | The later full `image` replay on this same committed corpus has the same baseline BGR digest and maximum delta `36`; the earlier separate maximum-`2` probe used a non-identical corpus and cannot rank candidates. No tolerance is accepted. |
 | Exif orientations 1–8 | The parsed values were 1 through 8. Applying the probe's eight explicit geometry mappings yielded byte-exact transforms of the direct baseline result, including the 2-by-3 to 3-by-2 swaps. | Geometry handling is internally consistent, but does not erase the JPEG color difference. |
 | Five negatives | Empty input, unknown bytes, truncated PNG, oversized PNG header, and PNG-with-`.jpg`-hint each produced the fixture's required control outcome. The oversized header was rejected before project pixel allocation. | A finite no-panic/error-mapping observation, not a hostile-input proof. |
 
@@ -613,24 +618,114 @@ date- and lockfile-specific advisory result, not a permanent supply-chain
 approval, a license/notice conclusion, or a waiver of future audit/fuzzing
 requirements.
 
-The new replay makes the direct pair a useful comparison/control path but a
-weaker current JPEG candidate than the minimal `image` configuration for this
-specific corpus. It does not select `image`, reject the direct pair forever,
-resolve `D-008`, close `IMG-DEC-001`, or authorize decoder implementation.
+The new replay makes the direct pair a useful comparison/control path. The
+later full `image` replay does not establish that `image` is more JPEG-faithful
+on this corpus, so neither pure-Rust route is selected or preferred here. This
+does not reject either candidate forever, resolve `D-008`, close
+`IMG-DEC-001`, or authorize decoder implementation.
+
+### `image` input-oracle replay and supply-chain check (2026-08-02)
+
+A separate disposable Rust `1.94` package replayed the same committed,
+self-authored [`classic-v1-image-inputs`](../tests/fixtures/classic-v1-image-inputs/)
+capture against the minimal `image` candidate:
+
+```toml
+image = { version = "=0.25.10", default-features = false, features = ["jpeg", "png"] }
+```
+
+It was kept as an untracked temporary research directory and read only that
+JSON fixture. It did not access `PaddleOCR/`, download a model, execute
+inference, add a project dependency, or prescribe project input behavior. The
+temporary harness also pinned `base64` 0.22.1, `serde` 1.0.228, `serde_json`
+1.0.145, and `sha2` 0.10.9 only to read and verify the capture. Its final
+manifest, lockfile, harness source, and portable release executable had
+SHA-256 values
+`63a3ebdec2cc491786b6d8dcb2db5e518f6f7de36e4315b81ab458fcbc86467a`,
+`916c4b3cf36d66577df6ad48a00d2e92dd5e39c49da1c86d66c4148b5fa32296`,
+`4a2849e009b87f82abc9627939b48f30fc61cfe411db526a7012653619ae424f`,
+and `2c6e6c4ccf7f14b951debd0394a63d1744d2b14f791fc0dc8e156047a7541930`
+respectively. They identify unretained research artifacts, not a project
+lockfile, dependency, fixture, binary, or accepted implementation recipe.
+
+The harness chose PNG/JPEG solely from their content signatures, rejecting an
+empty byte slice before selection and ignoring the fixture's deliberately
+misleading filename hint. It applied experimental controls of 64 MiB encoded
+input, a 16,384-pixel maximum side, 40,000,000 maximum pixels, and a 128 MiB
+decoder/output envelope. It constructed `ImageReader` with an explicit format
+and `Limits`, queried the decoder orientation, checked dimensions and
+`total_bytes` before creating a project-style image buffer, decoded to a
+`DynamicImage`, explicitly applied the reported orientation, converted to
+RGB8, and reversed components to BGR. These are research controls only:
+they do not make `image::Limits::max_alloc` strict, select an alpha/16-bit/ICC
+policy, or define the future public contract. As a path check, the baseline
+JPEG's manual decoder sequence produced the same BGR bytes as
+`ImageReader::decode` with the same limits.
+
+Both debug and release runs with the following compiler profile completed with
+no unexpected error or caught panic:
+
+```text
+-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma
+```
+
+This portable compilation is not a scalar-only proof: the selected feature
+graph retains runtime-dispatched architecture-specific code, and the replay
+ran on the host rather than a new QEMU guest. Earlier limited `image` QEMU
+evidence remains limited to its stated probe/corpus.
+
+| Corpus group | `image` result against the recorded OpenCV BGR bytes | Disposition of the observation |
+|---|---|---|
+| Four 8-bit PNG cases: truecolor, RGBA, grayscale, indexed+tRNS | All dimensions and BGR bytes were exact after RGB8 conversion and RGB-to-BGR reversal. | Positive finite evidence only; transparent-pixel and alpha policy remain unselected. |
+| One 16-bit grayscale PNG | Dimensions matched, but three BGR components differed with maximum absolute delta `1`. | No 16-bit conversion tolerance or support/rejection policy is accepted. |
+| Baseline JPEG, progressive JPEG, and eight Exif JPEGs | All ten outputs had expected dimensions, but each differed in seven of eighteen BGR components with maximum absolute delta `36`. The baseline BGR SHA-256 was `f060df3d12b0c4477b5ce2bfcfc64d2bdecf5aaec4a8d929f70c21a6950ab24d`. | The previous separate `image` probe's maximum delta `2` was not reproduced on this committed corpus. No JPEG tolerance is accepted. |
+| Exif orientations 1–8 | The decoder reported the expected `image::metadata::Orientation` values; explicit application produced the recorded 3-by-2 or 2-by-3 geometry, while retaining the JPEG component differences above. | Explicit orientation application is required by this investigated path; its final policy remains unselected. |
+| Five negatives | Empty, unknown, truncated PNG, oversized PNG header, and content/name-confusion inputs produced each fixture's required control outcome. The oversized header was rejected before a project-style pixel buffer was created. | Finite no-panic/error-mapping evidence only; it does not prove library-internal allocation, hostile-input, or CPU-work bounds. |
+
+The candidate's resolved `cargo tree` closure had eighteen registry packages
+when its `autocfg` build dependency was included: `adler2`, `autocfg`,
+`bitflags`, `bytemuck`, `byteorder-lite`, `cfg-if`, `crc32fast`, `fdeflate`,
+`flate2`, `image`, `miniz_oxide`, `moxcms`, `num-traits`, `png`, `pxfm`,
+`simd-adler32`, `zune-core`, and `zune-jpeg`. The resolved graph did not name
+`cc`, `bindgen`, or an FFI binding crate, but that is a packaging
+observation rather than a completed native-boundary audit. Manifest license
+expressions are compatible first-pass data: the graph offers an Apache-2.0,
+MIT, BSD-3-Clause, Zlib, 0BSD, or Unlicense alternative as applicable, with
+`moxcms` and `pxfm` specifically declaring `BSD-3-Clause OR Apache-2.0` and
+the Zune crates declaring `MIT OR Apache-2.0 OR Zlib`. This is not a notice,
+source-license, or distribution conclusion.
+
+The feature tree confirms that `moxcms` default AVX/SSE/NEON paths and
+`zune-jpeg` default `x86`/`neon` paths remain enabled, while the PNG path pulls
+`simd-adler32` and `miniz_oxide` SIMD support. Source inspection therefore
+does not establish an unsafe-free closure; the existing runtime-dispatch and
+unsafe review requirements remain open. A temporary `cargo-audit` 0.22.2 scan
+of the 40-package harness lockfile used RustSec advisory database commit
+`308808d74a1462ec8b09c1e76938471c53b55dcc`, last updated
+`2026-08-02T15:17:32+02:00`, loaded 1,178 advisories, and reported zero
+vulnerabilities. It emitted two host CA-certificate permission warnings but
+completed successfully. The result is date- and lockfile-specific; it is not
+a permanent security approval or a replacement for fuzzing, ongoing audits,
+or a license/notice review.
+
+This replay corrects the earlier non-comparable ranking: on the committed
+corpus, neither the minimal `image` route nor the direct codec pair can claim
+better JPEG BGR fidelity. No decoder is selected, no input policy is resolved,
+and `D-008` and `IMG-DEC-001` remain open.
 
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
 |---|---|---|---|
-| Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Exact dependency/supply-chain review; resource-limit spike; BGR/alpha/EXIF oracle comparison; malformed-input tests; MSRV and binary measurements. | First candidate in pre-gate isolated research; not selected. |
+| Evaluate `image` with only `jpeg` and `png` features | Small explicit format surface, documented orientation API, and no intentional OpenCV/FFI commitment. | Complete unsafe/native/notice review; strict allocation/CPU-resource proof; broader malicious/fuzz corpus; model-preprocessing comparison; and a supported/unsupported policy for divergent JPEG/16-bit/alpha/ICC cases. | Full committed input-oracle replay and first-pass advisory/license graph review are recorded, but no candidate is selected. |
 | Bind to an OpenCV-compatible native decoder | Could reduce a source-runtime difference for the classic path. | Exact library/version/distribution terms, FFI/unsafe audit, resource controls, CPU portability, and proof that it improves M2 oracle fidelity enough to justify the boundary. | Not evaluated; no dependency or implementation is authorized. |
-| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it is a non-leading comparison route, not an accepted candidate. |
+| Evaluate another pure-Rust decoder | May offer different performance or allocation properties. | Equivalent public API, format, metadata, limits, safety, license, MSRV, and upstream-oracle evidence. | The direct `jpeg-decoder` 0.3.2 + `png` 0.18.1 replay gives exact finite PNG controls but JPEG deltas up to 36; it remains a comparison route, not an accepted candidate. |
 
-Subject to the unresolved gates, the evidence supports continuing qualification
-of the minimal `image` feature configuration while retaining the direct-codec
-pair as a distinct non-leading comparison route. That is not `D-008`
-resolution: exact behaviour and resource safety are more important than the
-library name.
+Subject to the unresolved gates, the evidence supports retaining both
+pure-Rust paths as distinct comparison routes while investigating whether a
+decoder can satisfy the actual image and model-preprocessing contract. That is
+not `D-008` resolution: exact behaviour and resource safety are more important
+than the library name.
 
 ## Required decision and implementation proof
 
