@@ -359,6 +359,16 @@ mod tests {
         pixels
     }
 
+    fn next_lcg(state: &mut u32) -> u32 {
+        *state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+        *state
+    }
+
+    fn signed_unit_interval(state: &mut u32) -> f32 {
+        let mantissa = next_lcg(state) >> 8;
+        (mantissa as f32 / 16_777_215.0) * 2.0 - 1.0
+    }
+
     #[test]
     fn interleaved_image_rejects_invalid_channel_and_byte_counts() {
         let dimensions = dimensions(2, 1);
@@ -569,6 +579,77 @@ mod tests {
                     "{case_id}, {channels} channels"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn classic_crop_stays_bounded_on_a_deterministic_affine_grid() {
+        // This source-level stress regression is deliberately independent of
+        // OpenCV. Every generated quadrilateral is an affine, strictly convex
+        // region with bounded source dimensions, so every crop must succeed
+        // with the plan's exact dimensions and byte count without panicking.
+        const CASE_COUNT: usize = 2_048;
+        let mut state = 0x71D5_4EED;
+
+        for case_index in 0..CASE_COUNT {
+            let source_dimensions =
+                dimensions(3 + next_lcg(&mut state) % 14, 3 + next_lcg(&mut state) % 14);
+            let channels = 1 + (next_lcg(&mut state) % u32::from(MAX_INTERLEAVED_CHANNELS)) as u8;
+            let origin = (
+                signed_unit_interval(&mut state) * 2.0,
+                signed_unit_interval(&mut state) * 2.0,
+            );
+            let horizontal = (
+                source_dimensions.width() as f32 + signed_unit_interval(&mut state) * 0.875,
+                signed_unit_interval(&mut state) * 0.875,
+            );
+            let vertical = (
+                signed_unit_interval(&mut state) * 0.875,
+                source_dimensions.height() as f32 + signed_unit_interval(&mut state) * 0.875,
+            );
+            let quadrilateral = match Quadrilateral::new([
+                point(origin.0, origin.1),
+                point(origin.0 + horizontal.0, origin.1 + horizontal.1),
+                point(
+                    origin.0 + horizontal.0 + vertical.0,
+                    origin.1 + horizontal.1 + vertical.1,
+                ),
+                point(origin.0 + vertical.0, origin.1 + vertical.1),
+            ]) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} unexpectedly rejected a convex quad: {error}")
+                }
+            };
+            let plan = match classic_perspective_crop_plan(quadrilateral) {
+                Ok(value) => value,
+                Err(error) => panic!("case {case_index} could not create a crop plan: {error}"),
+            };
+            let byte_count = source_dimensions.pixels() as usize * usize::from(channels);
+            let mut pixels = Vec::with_capacity(byte_count);
+            for _ in 0..byte_count {
+                pixels.push((next_lcg(&mut state) >> 24) as u8);
+            }
+            let source = match InterleavedImage::new(source_dimensions, channels, pixels) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} could not construct source pixels: {error}")
+                }
+            };
+            let crop = match classic_perspective_crop(&source, plan) {
+                Ok(value) => value,
+                Err(error) => {
+                    panic!("case {case_index} could not crop a valid affine plan: {error}")
+                }
+            };
+            let expected_dimensions = dimensions(plan.output_width(), plan.output_height());
+            assert_eq!(crop.dimensions(), expected_dimensions, "case {case_index}");
+            assert_eq!(crop.channels(), channels, "case {case_index}");
+            assert_eq!(
+                crop.pixels().len(),
+                expected_dimensions.pixels() as usize * usize::from(channels),
+                "case {case_index}"
+            );
         }
     }
 
