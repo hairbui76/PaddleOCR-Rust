@@ -55,6 +55,27 @@ def patterned_bgr_rows(
     )
 
 
+def lcg_bgr_rows(
+    width: int, height: int, seed: int
+) -> tuple[tuple[tuple[int, int, int], ...], ...]:
+    """Build high-variation self-authored BGR bytes from a fixed 32-bit LCG."""
+
+    state = seed & 0xFFFFFFFF
+    values: list[int] = []
+    for _ in range(width * height * 3):
+        state = (state * 1_664_525 + 1_013_904_223) & 0xFFFFFFFF
+        values.append((state >> 24) & 0xFF)
+
+    iterator = iter(values)
+    return tuple(
+        tuple(
+            (next(iterator), next(iterator), next(iterator))
+            for _ in range(width)
+        )
+        for _ in range(height)
+    )
+
+
 CASES: tuple[CropCase, ...] = (
     CropCase(
         identifier="classic-v1-crop-oracle-identity-bgr-3x2",
@@ -149,6 +170,20 @@ CASES: tuple[CropCase, ...] = (
         ),
         rows=patterned_bgr_rows(3, 9, 101),
         points=((0.4, 0.1), (1.8, 0.2), (1.6, 7.9), (0.2, 7.6)),
+    ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-cubic-rounding-bgr-8x10",
+        description=(
+            "A high-variation self-authored BGR crop crosses fractional cubic "
+            "rounding near a half-byte boundary before tall-result rotation."
+        ),
+        rows=lcg_bgr_rows(8, 10, 162),
+        points=(
+            (1.8328327, -0.8944577),
+            (8.7014475, -0.5864337),
+            (8.67722, 11.502462),
+            (2.2030663, 11.573961),
+        ),
     ),
 )
 

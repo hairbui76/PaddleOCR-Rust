@@ -193,12 +193,14 @@ required by these steps. The early `CROP-001` implementation in `src/crop.rs`
 applies those maps to a private checked interleaved byte buffer, uses replicated
 borders, enforces the final dimensions before allocation, and performs the
 discrete counter-clockwise byte rotation. Its fixed `a = -0.75` cubic sampler
-has a reviewed self-authored BGR component fixture in
+keeps projective geometry in `f64` and performs checked interpolation in `f32`.
+It has a reviewed self-authored BGR component fixture in
 `tests/fixtures/classic-v1-crop-oracle/`. The fixture records exact output
 bytes from OpenCV 5.0.0 / opencv-python-headless 5.0.0.93 for identity,
 replicated-border, fractional-projective, tall-rotation, non-linear interior,
-all-side-border, and tall-projective cases. It proves an exact regression only
-for those inputs and recorded environment; additional approved captures must
+all-side-border, tall-projective, eighth-pixel, one-pixel, tall-thin, and a
+high-variation cubic-rounding case. It proves an exact regression only for
+those inputs and recorded environment; additional approved captures must
 establish any broader OpenCV `INTER_CUBIC` rounding, fixed-point, or
 upstream-environment equivalence before M2 claims upstream pixel output
 compatibility.

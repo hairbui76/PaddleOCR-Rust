@@ -664,6 +664,72 @@
         "width": 1
       },
       "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A high-variation self-authored BGR crop crosses fractional cubic rounding near a half-byte boundary before tall-result rotation.",
+      "fixture_id": "classic-v1-crop-oracle-cubic-rounding-bgr-8x10",
+      "input": {
+        "base64": "TPi+qlrAKw7r40yt3RT+BYTGwU17uPrdB9YT4KYjiCZtnF0cX1aGTOM0P/rrBWigjOFLcxITdjjG74gA+lsTng7pAvOGzRVRZRVroFHVLQ1VS8tQLBli8HQZQAg0gJZmiTHOIHuPIOY1LEStNhR3hCuiJa+GHudLB4awIcxJWnCg2+nJjFkyTfq3weHgIzEywpZDj4PJcQJZ+tEmXENtonNhfEWtOxk3QYRftL44CzYt6xAiJxSyQinRIqmkzqPWjFO3Inec6s169xxPYF55p+Z6fdAdUKCsGfek7IUekNzVU8sgJTT6qvsIfJB6crSL",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "28ac68e4105cc1476ca3c37a1a43aaf8458c53c827a8f2a55597da5d4201ed8d",
+        "shape": [
+          10,
+          8,
+          3
+        ]
+      },
+      "output": {
+        "base64": "w//pWcbLYhRrykpZQ+1bD3kvGQAWsG+giKbTWqyadLiJcbaM2ZSdjKa/J7isXGBMJpVWUr2AaTl6bHepbMCDaqR2dJmQc5uNJXKmM6yJSNKlj0mDnUBGatLZoLyrTUivarp8q+4mpNogotkkvB//kznejGpXvi1CQwxtYEddb2ZNLhaxR2GhX4SgUG25VXWw5Uyv006OtmoAwLEOG3yFgX7K9vdp5lsm6gBMemtLMqhJOplQLhHrQBbSlDJ5WRatHmw2OM1reCiIJgUunYZKxOCweebRf+TG",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "133e689b98ea9fd4910ff4f91bd90e81fda6b90fb5fbc2d4414fd77e5b81970c",
+        "shape": [
+          6,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8445468693878081,
+          -0.02507773241822061,
+          -1.5703440846811922
+        ],
+        [
+          -0.04057596691944983,
+          0.9048018868250087,
+          0.8836759714792412
+        ],
+        [
+          -0.004263399298813468,
+          -0.004470256734978334,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          1.83283269405365,
+          -0.8944576978683472
+        ],
+        [
+          8.701447486877441,
+          -0.5864337086677551
+        ],
+        [
+          8.677220344543457,
+          11.502462387084961
+        ],
+        [
+          2.203066349029541,
+          11.57396125793457
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 12,
+        "width": 6
+      },
+      "rotates_counter_clockwise": true
     }
   ],
   "environment": {

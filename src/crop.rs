@@ -14,7 +14,7 @@ use crate::{
 };
 
 const MAX_INTERLEAVED_CHANNELS: u8 = 4;
-const CUBIC_COEFFICIENT: f64 = -0.75;
+const CUBIC_COEFFICIENT: f32 = -0.75;
 
 /// A private, checked interleaved byte image for crop operations.
 ///
@@ -77,9 +77,10 @@ impl InterleavedImage {
 /// inverse homography, samples with a fixed cubic kernel and replicated source
 /// borders, then applies the exact discrete counter-clockwise byte rotation
 /// used by `numpy.rot90` when the plan requires it. The `a = -0.75` cubic
-/// kernel is a bounded implementation candidate for the upstream
-/// `cv2.INTER_CUBIC` request. Bit-level OpenCV interpolation/rounding parity
-/// remains subject to the legal fixture and oracle gates.
+/// kernel preserves `f64` geometry until sampling, then uses checked `f32`
+/// interpolation arithmetic. That precision boundary is required by one
+/// reviewed OpenCV 5.0.0 rounding case, but remains a bounded implementation
+/// candidate rather than a general `cv2.INTER_CUBIC` equivalence claim.
 pub(crate) fn classic_perspective_crop(
     source: &InterleavedImage,
     plan: ClassicPerspectiveCropPlan,
@@ -107,7 +108,7 @@ pub(crate) fn classic_perspective_crop(
                 output_dimensions,
                 output_x,
                 output_y,
-            );
+            )?;
         }
     }
 
@@ -151,32 +152,55 @@ fn copy_cubic_sample(
     output_dimensions: ImageDimensions,
     output_x: u32,
     output_y: u32,
-) {
+) -> Result<()> {
+    // The recorded OpenCV 5.0.0 uint8 component case requires single-precision
+    // interpolation arithmetic after projective coordinates are established.
+    // Keep geometry in f64, then perform sampling in f32 so the oracle can
+    // expose its distinct rounding boundary.
+    let source_x = sampling_coordinate(source_x, "crop.source_x")?;
+    let source_y = sampling_coordinate(source_y, "crop.source_y")?;
     let horizontal = cubic_axis_samples(source_x, source.dimensions().width());
     let vertical = cubic_axis_samples(source_y, source.dimensions().height());
     let channels = usize::from(source.channels());
     let output_offset = pixel_offset(output_dimensions, channels, output_x, output_y);
 
     for channel in 0..channels {
-        let mut value = 0.0;
+        let mut value = 0.0_f32;
         for &(source_y, vertical_weight) in &vertical {
             for &(source_x, horizontal_weight) in &horizontal {
                 let source_offset = pixel_offset(source.dimensions(), channels, source_x, source_y);
-                value += f64::from(source.pixels()[source_offset + channel])
+                value += f32::from(source.pixels()[source_offset + channel])
                     * horizontal_weight
                     * vertical_weight;
             }
         }
         output[output_offset + channel] = saturating_round_to_u8(value);
     }
+    Ok(())
 }
 
-fn cubic_axis_samples(coordinate: f64, length: u32) -> [(u32, f64); 4] {
+fn sampling_coordinate(coordinate: f64, field: &'static str) -> Result<f32> {
+    if !coordinate.is_finite() {
+        return Err(Error::InvalidInput {
+            field,
+            violation: InputViolation::NonFinite,
+        });
+    }
+    if coordinate < f64::from(f32::MIN) || coordinate > f64::from(f32::MAX) {
+        return Err(Error::InvalidInput {
+            field,
+            violation: InputViolation::OutOfRange,
+        });
+    }
+    Ok(coordinate as f32)
+}
+
+fn cubic_axis_samples(coordinate: f32, length: u32) -> [(u32, f32); 4] {
     debug_assert!(coordinate.is_finite());
     debug_assert!(length > 0);
 
     let base = coordinate.floor();
-    [-1.0, 0.0, 1.0, 2.0].map(|offset| {
+    [-1.0_f32, 0.0, 1.0, 2.0].map(|offset| {
         let sample_coordinate = base + offset;
         (
             replicated_index(sample_coordinate, length),
@@ -185,23 +209,24 @@ fn cubic_axis_samples(coordinate: f64, length: u32) -> [(u32, f64); 4] {
     })
 }
 
-fn replicated_index(coordinate: f64, length: u32) -> u32 {
+fn replicated_index(coordinate: f32, length: u32) -> u32 {
     if coordinate <= 0.0 {
         0
-    } else if coordinate >= f64::from(length - 1) {
+    } else if coordinate >= (length - 1) as f32 {
         length - 1
     } else {
         coordinate as u32
     }
 }
 
-fn cubic_weight(distance: f64) -> f64 {
+fn cubic_weight(distance: f32) -> f32 {
     let distance = distance.abs();
+    let squared = distance * distance;
+    let cubed = squared * distance;
     if distance <= 1.0 {
-        (CUBIC_COEFFICIENT + 2.0) * distance.powi(3) - (CUBIC_COEFFICIENT + 3.0) * distance.powi(2)
-            + 1.0
+        (CUBIC_COEFFICIENT + 2.0) * cubed - (CUBIC_COEFFICIENT + 3.0) * squared + 1.0
     } else if distance < 2.0 {
-        CUBIC_COEFFICIENT * distance.powi(3) - 5.0 * CUBIC_COEFFICIENT * distance.powi(2)
+        CUBIC_COEFFICIENT * cubed - 5.0 * CUBIC_COEFFICIENT * squared
             + 8.0 * CUBIC_COEFFICIENT * distance
             - 4.0 * CUBIC_COEFFICIENT
     } else {
@@ -209,10 +234,10 @@ fn cubic_weight(distance: f64) -> f64 {
     }
 }
 
-fn saturating_round_to_u8(value: f64) -> u8 {
+fn saturating_round_to_u8(value: f32) -> u8 {
     if value <= 0.0 {
         0
-    } else if value >= f64::from(u8::MAX) {
+    } else if value >= f32::from(u8::MAX) {
         u8::MAX
     } else {
         value.round() as u8
@@ -308,6 +333,17 @@ mod tests {
         pixels
     }
 
+    fn lcg_bgr_pixels(width: u32, height: u32, seed: u32) -> Vec<u8> {
+        let byte_count = width as usize * height as usize * 3;
+        let mut pixels = Vec::with_capacity(byte_count);
+        let mut state = seed;
+        for _ in 0..byte_count {
+            state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+            pixels.push((state >> 24) as u8);
+        }
+        pixels
+    }
+
     #[test]
     fn interleaved_image_rejects_invalid_channel_and_byte_counts() {
         let dimensions = dimensions(2, 1);
@@ -322,6 +358,24 @@ mod tests {
             InterleavedImage::new(dimensions, 3, vec![0; 5]),
             Err(Error::InvalidInput {
                 field: "image.interleaved_bytes",
+                violation: InputViolation::OutOfRange,
+            })
+        ));
+    }
+
+    #[test]
+    fn cubic_sampling_coordinates_reject_nonfinite_or_unrepresentable_values() {
+        assert!(matches!(
+            sampling_coordinate(f64::INFINITY, "crop.source_x"),
+            Err(Error::InvalidInput {
+                field: "crop.source_x",
+                violation: InputViolation::NonFinite,
+            })
+        ));
+        assert!(matches!(
+            sampling_coordinate(f64::from(f32::MAX) * 2.0, "crop.source_y"),
+            Err(Error::InvalidInput {
+                field: "crop.source_y",
                 violation: InputViolation::OutOfRange,
             })
         ));
@@ -593,6 +647,46 @@ mod tests {
             &[
                 112, 162, 123, 133, 209, 156, 156, 143, 144, 186, 48, 8, 206, 130, 48, 186, 150,
                 66, 167, 183, 90,
+            ],
+        );
+    }
+
+    #[test]
+    fn classic_crop_matches_cubic_rounding_opencv_oracle_case() {
+        // This high-variation self-authored case was added after an independent
+        // diagnostic found a one-byte disagreement near a cubic half-byte
+        // rounding boundary. It stays a narrow OpenCV 5.0.0 component oracle.
+        const FIXTURE_ID: &str = "classic-v1-crop-oracle-cubic-rounding-bgr-8x10";
+        assert!(
+            CAPTURED_OPENCV_CROP_ORACLE.contains(FIXTURE_ID),
+            "fixture record is missing {FIXTURE_ID}"
+        );
+
+        assert_captured_bgr_crop(
+            FIXTURE_ID,
+            dimensions(8, 10),
+            &lcg_bgr_pixels(8, 10, 162),
+            [
+                (1.8328327, -0.8944577),
+                (8.7014475, -0.5864337),
+                (8.67722, 11.502462),
+                (2.2030663, 11.573961),
+            ],
+            dimensions(12, 6),
+            &[
+                195, 255, 233, 89, 198, 203, 98, 20, 107, 202, 74, 89, 67, 237, 91, 15, 121, 47,
+                25, 0, 22, 176, 111, 160, 136, 166, 211, 90, 172, 154, 116, 184, 137, 113, 182,
+                140, 217, 148, 157, 140, 166, 191, 39, 184, 172, 92, 96, 76, 38, 149, 86, 82, 189,
+                128, 105, 57, 122, 108, 119, 169, 108, 192, 131, 106, 164, 118, 116, 153, 144, 115,
+                155, 141, 37, 114, 166, 51, 172, 137, 72, 210, 165, 143, 73, 131, 157, 64, 70, 106,
+                210, 217, 160, 188, 171, 77, 72, 175, 106, 186, 124, 171, 238, 38, 164, 218, 32,
+                162, 217, 36, 188, 31, 255, 147, 57, 222, 140, 106, 87, 190, 45, 66, 67, 12, 109,
+                96, 71, 93, 111, 102, 77, 46, 22, 177, 71, 97, 161, 95, 132, 160, 80, 109, 185, 85,
+                117, 176, 229, 76, 175, 211, 78, 142, 182, 106, 0, 192, 177, 14, 27, 124, 133, 129,
+                126, 202, 246, 247, 105, 230, 91, 38, 234, 0, 76, 122, 107, 75, 50, 168, 73, 58,
+                153, 80, 46, 17, 235, 64, 22, 210, 148, 50, 121, 89, 22, 173, 30, 108, 54, 56, 205,
+                107, 120, 40, 136, 38, 5, 46, 157, 134, 74, 196, 224, 176, 121, 230, 209, 127, 228,
+                198,
             ],
         );
     }
