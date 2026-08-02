@@ -1,8 +1,9 @@
 # Local ONNX Candidate Inspection
 
 Roadmap items: MOD-001, LIC-001  
-Status: User-authorized external ONNX candidates were inventoried and parsed;
-neither candidate is accepted, supported, converted, redistributed, or bundled  
+Status: User-authorized external ONNX candidates were inventoried, parsed, and
+given a source-level recognizer CTC index-construction inspection; neither
+candidate is accepted, supported, converted, redistributed, or bundled
 Inspection date: 2026-08-02  
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
@@ -60,6 +61,65 @@ Sigmoid, Slice, Softmax, Sqrt, Squeeze, Sub, Transpose, and Unsqueeze.
 These are graph facts for runtime qualification. They do not select a runtime
 or demonstrate that any particular backend supports the graphs correctly.
 
+## Recognizer CTC dictionary index inspection
+
+This is a read-only, source-level ABI inspection of the exact local recognizer
+configuration and ONNX graph. It does not create a Rust dictionary, invoke a
+model session, or retain any dictionary content in this repository.
+
+A deliberately narrow parser accepted only the observed
+`PostProcess.character_dict` list syntax in the local `inference.yml`: plain
+scalars and YAML single-quoted scalars (including doubled single-quote
+escapes). It rejected a missing list, an empty item, double-quoted scalars, or
+any unexpected line in that list. It found 18,708 entries, no duplicate entries,
+and no literal U+0020 space entry. After unescaping, their ordered UTF-8 stream
+with one LF per entry was byte-identical to the pinned PaddleOCR dictionary:
+
+| Input / derived value | Result |
+|---|---|
+| Exact local `inference.yml` | 150,580 bytes; SHA-256 `991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129` |
+| Ordered dictionary-entry stream | 18,708 entries; SHA-256 `b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d` |
+| Duplicate entries / literal space entries | `0` / `0` |
+| Exact local ONNX output | `fetch_name_0`, `FLOAT`, dynamic × dynamic × `18,710` |
+| Derived candidate class count | `1` blank + `18,708` entries + `1` space = `18,710` |
+| Canonical index-map SHA-256 | `852ce132b49df2487fbf6985c2269dc77e77ef202683be1bfbbafed0ba7a6f08` |
+
+The canonical index-map digest is over a domain-separated, non-asset byte
+stream. The notation below describes the calculation; it does not embed or
+redistribute the dictionary:
+
+```text
+"paddleocr-rust/ctc-index-map/v1\0blank\0"
+  + entry_1_utf8 + "\0" + ... + entry_18708_utf8
+  + "\0space"
+```
+
+The pinned training configuration names the same dictionary and enables
+`use_space_char: true`. The corresponding immutable PaddleX source path builds
+`CTCLabelDecode` by passing the configured `character_dict` without an explicit
+space override; its default is therefore `use_space_char=True`. The base
+decoder appends one literal space, and `CTCLabelDecode.add_special_char`
+prepends `blank`. Its decoder treats index `0` as the ignored CTC blank.
+
+- [PaddleOCR v6-medium configuration](https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/configs/rec/PP-OCRv6/PP-OCRv6_medium_rec.yml#L17-L20)
+- [PaddleX post-process construction](https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/models/text_recognition/predictor.py#L217-L221)
+- [PaddleX default-space handling](https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/models/text_recognition/processors.py#L112-L123)
+- [PaddleX CTC special token construction](https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/models/text_recognition/processors.py#L287-L319)
+- [PaddleX blank-token filtering](https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/models/text_recognition/processors.py#L213-L232)
+
+For that source-level construction, the structural index sequence is therefore
+`0 = blank`, `1..=18,708 = character_dict entries in YAML order`, and
+`18,709 = literal U+0020 space`. The ONNX output's final dimension agrees with
+that count.
+
+This does **not** prove that a selected runtime emits semantically correct
+scores for every class, that the ONNX export is behaviorally identical to the
+PaddleX source path, that out-of-range/malformed runtime outputs are handled
+safely, or that every language-specific decode behavior is compatible. It also
+does not establish terms for the configuration, dictionary, weights, export, or
+distribution. Those remain `RT-003`, `REC-001`/`REC-002`, `LIC-001`, and later
+model-decision work.
+
 ## Local package license observation
 
 Both README.md files start with the model-card field `license: apache-2.0` and
@@ -87,8 +147,10 @@ immutable API/tree URLs and remaining closure conditions.
 
 1. Review durable revision-specific terms and publisher/rightsholder evidence
    for the selected representation under LIC-001.
-2. Verify the recognizer dictionary's exact 18,710-class CTC ABI, including
-   blank and space handling.
+2. Validate the source-level recognizer index construction against selected
+   runtime outputs, safe Rust decoder bounds/errors, and any required
+   language-specific behavior. The structural blank/space/count evidence above
+   is necessary but not sufficient.
 3. Run bounded runtime candidate proofs and raw tensor comparisons before
    selecting a backend under RT-002 through RT-004.
 4. Resolve the artifact lifecycle and local-path policy under MODEL-DEC-001

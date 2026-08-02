@@ -73,9 +73,13 @@ The recognizer's canonical YAML `PostProcess.character_dict` entry stream is
 also content-identical to the pinned upstream `ppocrv6_dict.txt` after YAML
 unescaping and one-entry-per-LF normalization; the shared SHA-256 is
 `b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d`.
-This is dictionary-content provenance evidence only. The package/weight terms,
-CTC index ABI, and permission to retain or distribute a dictionary remain
-unapproved; see [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
+This is dictionary-content provenance evidence only. A separate, exact-local
+source-level CTC index-construction inspection now records how the 18,708
+ordered entries, one blank, and one appended space structurally correspond to
+the 18,710-class ONNX output. It does not establish runtime output semantics,
+package/weight terms, or permission to retain or distribute a dictionary; see
+[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md) and
+[LICENSE_REVIEW.md](LICENSE_REVIEW.md).
 
 ## Captured package metadata
 
@@ -116,11 +120,18 @@ from `[1, 3, 48, 160]` through `[8, 3, 48, 3200]`. The output graph contains a
 CTC softmax fetch with 18,710 classes.
 
 The inline recognizer `character_dict` has 18,708 serialized entries. The
-pinned training configuration separately sets `use_space_char: true`, and the
-classic CTC decoder prepends the blank token. This plausibly explains the
-18,710 output classes, but it is not yet a verified dictionary ABI: P3 must
-prove the exact index mapping, blank/space treatment, duplicate characters,
-and decoding of all classes using the selected local artifact.
+exact local inspection confirms that it has no duplicates or literal space
+entry, matches the pinned dictionary stream, and structurally maps with a
+PaddleX CTC decoder's source-level construction to `0 = blank`, the 18,708
+entries in order, and `18,709 = space`. That makes 18,710 classes and matches
+the observed ONNX output dimension. The evidence, method, and canonical
+non-asset index-map digest are recorded in
+[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
+
+It is not yet a verified runtime dictionary ABI. P3/P5 must still validate
+actual output semantics, all relevant language behavior, malformed/out-of-range
+runtime results, and the Rust decoder against an accepted artifact under
+approved terms.
 
 ## Artifact metadata versus M2 behavior
 
@@ -179,7 +190,10 @@ metadata does not make static and ONNX representations equivalent.
    [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md);
    backend-visible graph semantics still require runtime candidate validation.
 4. A verified recognizer dictionary ABI, including CTC blank/space behavior
-   and the 18,710-class output correspondence.
+   and the 18,710-class output correspondence. The source-level index
+   construction and structural count are recorded in
+   [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md),
+   but runtime semantics and safe Rust decoder validation remain required.
 5. A recorded disposition of the static-vs-ONNX choice. Any conversion or
    exported-format comparison must meet `m2-tensor-v1` in
    [`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md).

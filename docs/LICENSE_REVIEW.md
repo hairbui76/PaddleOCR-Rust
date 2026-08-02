@@ -170,9 +170,13 @@ the v6-medium recognizer configuration.
 For the exact local ONNX recognizer package, a read-only canonical comparison
 extracted the YAML `PostProcess.character_dict` as one unescaped entry per LF.
 That normalized entry stream has the same SHA-256 and an empty `diff` against
-the pinned upstream dictionary. This establishes matching dictionary content,
-not byte identity of `inference.yml`, a verified CTC ABI, or permission to
-copy/ship it.
+the pinned upstream dictionary. A later source-level inspection records the
+PaddleX construction of blank, configured entries, and appended space for the
+exact 18,710-class count in
+[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md). This
+establishes matching dictionary content and a structural index-map hypothesis,
+not byte identity of `inference.yml`, runtime-output semantics, or permission
+to copy/ship it.
 
 The source-tree Apache-2.0 license is a concrete terms lead for the dictionary
 source file, but `ppocr/utils/dict/README.md` gives only a general corpus
@@ -194,7 +198,7 @@ export, configuration, or distribution.
 | PaddleOCR repository source | The read-only upstream repository identifies Apache License 2.0; the P0 record documents source-attribution and trademark boundaries. | If any non-trivial source is adapted, record file-level provenance, retained notices, modifications, and a source review. | No upstream source is currently included. |
 | Static model parameters and graph/config files | Candidate revisions, checksums, sizes, preliminary card metadata, and an immutable PaddleX publisher path are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
 | Official ONNX exports | Separate pinned repository revisions/checksums, immutable LFS storage commits, and the PaddleX ONNX naming/hoster path are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
-| Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a 18,708-entry `character_dict`; its canonical entry stream matches the pinned upstream `ppocrv6_dict.txt` SHA-256. The source-tree Apache-2.0 license is a terms lead, while the dictionary README gives no file-specific provenance/terms and the ABI is unverified. | Verify applicable terms, index mapping, blank/space behavior, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
+| Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a 18,708-entry `character_dict`; its canonical entry stream matches the pinned upstream `ppocrv6_dict.txt` SHA-256. The exact-local source-level record maps it to blank at index `0`, ordered entries at `1..=18,708`, and appended space at `18,709`; this is not runtime-output validation. The source-tree Apache-2.0 license is a terms lead, while the dictionary README gives no file-specific provenance/terms. | Verify applicable terms, runtime index/blank/space behavior, decoder error handling, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
 | Oracle and test fixtures | No model-backed input or expected-output fixture has been added. | Record original-author/source provenance, terms, privacy review, hashes, goldens, and applicable model evidence per [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | Unapproved. |
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |

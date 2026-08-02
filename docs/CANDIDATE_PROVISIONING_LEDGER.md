@@ -124,7 +124,7 @@ evidence remains required in its owning roadmap items:
 |---|---|
 | Revision-specific model/config/dictionary/notice provenance and terms, plus a disposition for static versus ONNX | `LIC-001`, `MODEL-DEC-001` |
 | Bounded local graph inspection: format, operators, tensor names, dtype, layout, dynamic shapes, output order, and errors | `MOD-001`, `RT-002` |
-| Exact recognizer dictionary index mapping, CTC blank/space behavior, duplicates, and all 18,710 output classes | `MOD-001`, `REC-001` |
+| Source-level recognizer index construction is recorded for the exact local ONNX configuration: no duplicate/literal-space entries, blank at `0`, ordered dictionary entries at `1..=18,708`, appended space at `18,709`, and a matching 18,710-class output. Runtime output semantics, safe Rust decoder bounds/errors, and language behavior remain required. | `MOD-001`, `REC-001`, `REC-002` |
 | Raw tensor and end-to-end differential evidence against approved legal fixtures | `TOL-001`, `RT-003`, P4–P5 |
 | Measured backend selection and migration strategy | `RT-004` / `D-006` |
 | Final versioned manifest and safe explicit local resolution | `MOD-002`, `MOD-003` |
