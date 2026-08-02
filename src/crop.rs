@@ -276,7 +276,7 @@ mod tests {
     use crate::{
         error::{Error, InputViolation},
         geometry::classic_perspective_crop_plan,
-        types::{Point, Quadrilateral},
+        types::{MAX_IMAGE_PIXELS, Point, Quadrilateral},
     };
     use base64::{Engine as _, engine::general_purpose::STANDARD};
 
@@ -1153,6 +1153,23 @@ mod tests {
                 resource: "image.width_pixels",
                 limit: 16_384,
                 actual: 20_000,
+            })
+        ));
+    }
+
+    #[test]
+    fn classic_crop_rejects_total_output_pixels_before_allocation() {
+        let source = must_ok(InterleavedImage::new(dimensions(1, 1), 1, vec![0]));
+        let plan = must_ok(classic_perspective_crop_plan(quadrilateral(
+            0.0, 0.0, 16_384.0, 16_384.0,
+        )));
+
+        assert!(matches!(
+            classic_perspective_crop(&source, plan),
+            Err(Error::ResourceLimit {
+                resource: "image.total_pixels",
+                limit: MAX_IMAGE_PIXELS,
+                actual: 268_435_456,
             })
         ));
     }

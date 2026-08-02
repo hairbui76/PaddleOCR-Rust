@@ -203,10 +203,11 @@ dimensions. The Rust contract intentionally returns an `InvalidInput` or
 `GEO-001` calculates the checked, no-allocation dimensions and projective maps
 required by these steps. The early `CROP-001` implementation in `src/crop.rs`
 applies those maps to a private checked interleaved byte buffer, uses replicated
-borders, enforces the final dimensions before allocation, and performs the
-discrete counter-clockwise byte rotation. Its fixed `a = -0.75` cubic sampler
-uses a private OpenCV-style `f32` sampling transform and checked interpolation
-in `f32`. It has a reviewed self-authored BGR component fixture in
+borders, enforces both the `16,384`-pixel per-side and `40,000,000`-pixel total
+output limits before allocation, and performs the discrete counter-clockwise
+byte rotation. Its fixed `a = -0.75` cubic sampler uses a private OpenCV-style
+`f32` sampling transform and checked interpolation in `f32`. It has a reviewed
+self-authored BGR component fixture in
 `tests/fixtures/classic-v1-crop-oracle/`. The fixture records exact output
 bytes from OpenCV 5.0.0 / opencv-python-headless 5.0.0.93 for identity,
 replicated-border, fractional-projective, tall-rotation, non-linear interior,
