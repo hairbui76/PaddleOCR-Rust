@@ -23,7 +23,7 @@ model artifact.
 Before parsing, the tool requires a direct regular file and rejects a symlink,
 a non-regular or empty file, or a file over the explicit --max-model-bytes
 limit (128 MiB by default). It streams the file SHA-256 before parsing it with
-external data disabled, then rejects a graph that declares external initializer
+external data disabled, then rejects a graph that declares external tensor
 data before checker validation or shape inference.
 
 The emitted JSON is structural metadata only:
@@ -32,7 +32,8 @@ The emitted JSON is structural metadata only:
 - parser version and parse-only method flags;
 - graph IR/opset versions;
 - tensor names, dtypes, and declared dimensions;
-- operator names/counts and direct terminal graph-output operators.
+- graph-wide operator names/counts, graph/subgraph counts, and direct
+  root-graph terminal-output operators.
 
 It never emits an initializer, a model input/output tensor, a dictionary
 entry, a user-machine path, or raw model data.
@@ -42,8 +43,9 @@ entry, a user-machine path, or raw model data.
 The recorded result used onnx 1.22.0 with the following operations:
 
 1. onnx.load_model(..., load_external_data=False);
-2. onnx.checker.check_model(..., full_check=False);
-3. external-initializer rejection; and
+2. external-tensor rejection across the root graph and any graph-valued
+   node attributes;
+3. onnx.checker.check_model(..., full_check=False); and
 4. protobuf shape inference.
 
 No ONNX Runtime session or another inference backend was loaded. No model
@@ -88,6 +90,53 @@ dimensions before and from its axis, so it normalizes [batch * time, 18,710]:
 each time-step row is class-normalized. This is a graph-declared score-shape
 property, not evidence that an unselected runtime will produce numerically
 correct, finite, or safe values.
+
+## Exact operator inventory
+
+The tool now emits a sorted operator_counts map. It walks the root graph and
+every graph-valued node attribute when collecting that map and when rejecting
+external tensor data. Both inspected candidates reported zero embedded
+subgraphs, so the graph-wide node/initializer totals below equal their
+root-graph totals.
+
+| Operator | Detector, opset 14 | Recognizer, opset 11 |
+|---|---:|---:|
+| Add | 59 | 109 |
+| AveragePool | 0 | 1 |
+| BatchNormalization | 0 | 3 |
+| Concat | 2 | 3 |
+| Conv | 122 | 62 |
+| ConvTranspose | 2 | 0 |
+| Div | 13 | 19 |
+| Erf | 13 | 14 |
+| HardSigmoid | 5 | 6 |
+| Identity | 0 | 143 |
+| MatMul | 0 | 13 |
+| MaxPool | 1 | 1 |
+| Mul | 31 | 46 |
+| Pow | 0 | 5 |
+| ReduceMean | 5 | 16 |
+| Relu | 16 | 11 |
+| Reshape | 0 | 8 |
+| Resize | 6 | 0 |
+| Shape | 0 | 4 |
+| Sigmoid | 1 | 5 |
+| Slice | 0 | 8 |
+| Softmax | 0 | 3 |
+| Sqrt | 0 | 5 |
+| Squeeze | 0 | 8 |
+| Sub | 0 | 5 |
+| Transpose | 0 | 9 |
+| Unsqueeze | 0 | 1 |
+| Total nodes | 276 | 508 |
+| Initializers | 226 | 254 |
+| Embedded subgraphs | 0 | 0 |
+
+This is a candidate requirement inventory, not a backend capability claim.
+A runtime candidate must execute every required operator, its attributes, and
+every declared qualification shape without a hidden fallback or graph rewrite.
+The counts do not prove numerical correctness, support for all operator
+attribute combinations, tensor-memory behavior, or any model/runtime approval.
 
 ## Negative check
 

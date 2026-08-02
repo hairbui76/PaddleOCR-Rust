@@ -58,6 +58,13 @@ AveragePool, BatchNormalization, Concat, Conv, Div, Erf, HardSigmoid,
 Identity, MatMul, MaxPool, Mul, Pow, ReduceMean, Relu, Reshape, Shape,
 Sigmoid, Slice, Softmax, Sqrt, Squeeze, Sub, Transpose, and Unsqueeze.
 
+The replayable inspection also records a sorted graph-wide count for every
+operator, totals nodes and initializers across graph-valued node attributes,
+and reports the embedded-subgraph count. Both exact local candidates have zero
+embedded subgraphs. The exact per-operator counts and their runtime
+qualification boundary are recorded in
+[ONNX_ABI_INSPECTION.md](ONNX_ABI_INSPECTION.md).
+
 These are graph facts for runtime qualification. They do not select a runtime
 or demonstrate that any particular backend supports the graphs correctly.
 
@@ -67,7 +74,7 @@ The reusable developer-only `tools/inspect_onnx_candidate.py` rechecked the
 two exact local ONNX files with `onnx` 1.22.0.
 It first refuses a symlink, a non-regular/empty file, a file larger than its
 explicit 128 MiB default limit. It streams SHA-256, parses with external data
-disabled, rejects graph-declared external initializer data before checker
+disabled, rejects graph-declared external tensor data before checker
 validation or shape inference, and emits JSON structural metadata. It creates
 no ONNX Runtime session, executes no model, retains no tensor output, and does
 not write a file.
@@ -88,11 +95,11 @@ parser:
 .oracle-venv/bin/python tools/inspect_onnx_candidate.py --role recognizer --expect-m2-onnx <recognizer-inference.onnx>
 ~~~
 
-The tool output contains only names, dtypes, dimensions, graph/operator
-counts, terminal operators, input byte count, and file digest. It emits no
-initializer, dictionary entry, raw model output, or user-machine path. It is
-a reproducible parse-only ABI check, not an accepted artifact manifest,
-runtime qualification, or artifact-terms decision.
+The tool output contains only names, dtypes, dimensions, graph/subgraph and
+operator counts, terminal operators, input byte count, and file digest. It
+emits no initializer, dictionary entry, raw model output, or user-machine
+path. It is a reproducible parse-only ABI check, not an accepted artifact
+manifest, runtime qualification, or artifact-terms decision.
 
 ## Serialized preprocessing declaration audit
 

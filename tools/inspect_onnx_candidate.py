@@ -176,13 +176,94 @@ def direct_terminal_outputs(graph: Any) -> list[dict[str, Any]]:
     return terminals
 
 
-def has_external_initializer_data(graph: Any, tensor_proto: Any) -> bool:
-    """Return whether a graph declares an external initializer payload."""
+def graph_tree(graph: Any, attribute_proto: Any):
+    """Yield one graph and every graph embedded in a node attribute."""
 
-    return any(
-        initializer.data_location == tensor_proto.EXTERNAL
-        for initializer in graph.initializer
+    yield graph
+    for node in graph.node:
+        for attribute in node.attribute:
+            if attribute.type == attribute_proto.GRAPH:
+                yield from graph_tree(attribute.g, attribute_proto)
+            elif attribute.type == attribute_proto.GRAPHS:
+                for nested_graph in attribute.graphs:
+                    yield from graph_tree(nested_graph, attribute_proto)
+
+
+def tensor_uses_external_data(tensor: Any, tensor_proto: Any) -> bool:
+    """Return whether one TensorProto refers to an external payload."""
+
+    return tensor.data_location == tensor_proto.EXTERNAL
+
+
+def sparse_tensor_uses_external_data(sparse_tensor: Any, tensor_proto: Any) -> bool:
+    """Return whether either storage tensor of a SparseTensorProto is external."""
+
+    return (
+        tensor_uses_external_data(sparse_tensor.values, tensor_proto)
+        or tensor_uses_external_data(sparse_tensor.indices, tensor_proto)
     )
+
+
+def has_external_tensor_data(
+    graphs: Sequence[Any], attribute_proto: Any, tensor_proto: Any
+) -> bool:
+    """Return whether an inspected graph declares any external tensor payload."""
+
+    sparse_tensor_kind = getattr(attribute_proto, "SPARSE_TENSOR", None)
+    sparse_tensors_kind = getattr(attribute_proto, "SPARSE_TENSORS", None)
+    for graph in graphs:
+        if any(
+            tensor_uses_external_data(initializer, tensor_proto)
+            for initializer in graph.initializer
+        ):
+            return True
+        if any(
+            sparse_tensor_uses_external_data(initializer, tensor_proto)
+            for initializer in graph.sparse_initializer
+        ):
+            return True
+        for node in graph.node:
+            for attribute in node.attribute:
+                if (
+                    attribute.type == attribute_proto.TENSOR
+                    and tensor_uses_external_data(attribute.t, tensor_proto)
+                ):
+                    return True
+                if attribute.type == attribute_proto.TENSORS and any(
+                    tensor_uses_external_data(tensor, tensor_proto)
+                    for tensor in attribute.tensors
+                ):
+                    return True
+                if (
+                    sparse_tensor_kind is not None
+                    and attribute.type == sparse_tensor_kind
+                    and sparse_tensor_uses_external_data(
+                        attribute.sparse_tensor, tensor_proto
+                    )
+                ):
+                    return True
+                if (
+                    sparse_tensors_kind is not None
+                    and attribute.type == sparse_tensors_kind
+                    and any(
+                        sparse_tensor_uses_external_data(
+                            tensor, tensor_proto
+                        )
+                        for tensor in attribute.sparse_tensors
+                    )
+                ):
+                    return True
+    return False
+
+
+def operator_counts(graphs: Sequence[Any]) -> dict[str, int]:
+    """Return a deterministic operator histogram across inspected graphs."""
+
+    counts: dict[str, int] = {}
+    for graph in graphs:
+        for node in graph.node:
+            counts[node.op_type] = counts.get(node.op_type, 0) + 1
+    return dict(sorted(counts.items()))
 
 
 def require_tensor(
@@ -314,22 +395,25 @@ def inspect_model(
     digest = sha256_file(path)
     try:
         import onnx
-        from onnx import TensorProto, shape_inference
+        from onnx import AttributeProto, TensorProto, shape_inference
     except ImportError as error:
         raise ValueError(
             "onnx is required; install a reviewed parser in a local developer environment"
         ) from error
 
     model = onnx.load_model(path, load_external_data=False)
-    if has_external_initializer_data(model.graph, TensorProto):
+    source_graphs = tuple(graph_tree(model.graph, AttributeProto))
+    if has_external_tensor_data(source_graphs, AttributeProto, TensorProto):
         raise ValueError(
-            "refusing a graph with external initializer data"
+            "refusing a graph with external tensor data"
         )
     onnx.checker.check_model(model, full_check=False)
     inferred = shape_inference.infer_shapes(model)
     graph = inferred.graph
+    graphs = tuple(graph_tree(graph, AttributeProto))
     if expect_m2_onnx:
         require_m2_terminal_abi(role, graph, TensorProto)
+    operators = operator_counts(graphs)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -355,10 +439,15 @@ def inspect_model(
             tensor_record(value_info, TensorProto) for value_info in graph.output
         ],
         "direct_terminal_outputs": direct_terminal_outputs(graph),
-        "operator_types": sorted({node.op_type for node in graph.node}),
-        "node_count": len(graph.node),
-        "initializer_count": len(graph.initializer),
+        "operator_types": list(operators),
+        "operator_counts": operators,
+        "node_count": sum(len(candidate.node) for candidate in graphs),
+        "initializer_count": sum(
+            len(candidate.initializer) for candidate in graphs
+        ),
+        "subgraph_count": len(graphs) - 1,
         "external_initializer_data": False,
+        "external_tensor_data": False,
         "m2_terminal_abi_validated": expect_m2_onnx,
     }
 
