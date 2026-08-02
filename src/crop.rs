@@ -540,6 +540,64 @@ mod tests {
     }
 
     #[test]
+    fn classic_crop_matches_fractional_extent_opencv_oracle_cases() {
+        // These self-authored BGR cases extend the recorded OpenCV corpus with
+        // eighth-pixel interior phases, a one-pixel result, and a tall thin
+        // result. Their expected bytes remain offline and independent of the
+        // Python/OpenCV capture environment at Rust test time.
+        for fixture_id in [
+            "classic-v1-crop-oracle-phase-projective-bgr-8x8",
+            "classic-v1-crop-oracle-single-pixel-bgr-3x3",
+            "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
+        ] {
+            assert!(
+                CAPTURED_OPENCV_CROP_ORACLE.contains(fixture_id),
+                "fixture record is missing {fixture_id}"
+            );
+        }
+
+        assert_captured_bgr_crop(
+            "classic-v1-crop-oracle-phase-projective-bgr-8x8",
+            dimensions(8, 8),
+            &patterned_bgr_pixels(8, 8, 211),
+            [
+                (0.125, 0.375),
+                (6.875, 0.625),
+                (6.625, 6.875),
+                (0.375, 6.625),
+            ],
+            dimensions(6, 6),
+            &[
+                211, 23, 67, 111, 43, 144, 26, 63, 177, 80, 82, 74, 116, 122, 82, 180, 158, 176,
+                220, 82, 92, 0, 119, 192, 85, 166, 162, 126, 241, 26, 216, 136, 136, 98, 78, 255,
+                95, 140, 120, 54, 229, 161, 117, 191, 58, 207, 97, 93, 133, 104, 222, 26, 150, 132,
+                14, 150, 149, 96, 70, 144, 169, 102, 22, 126, 129, 160, 22, 248, 109, 83, 125, 50,
+                48, 187, 183, 121, 22, 192, 225, 171, 59, 144, 143, 218, 47, 77, 129, 141, 183, 79,
+                69, 95, 136, 163, 154, 57, 147, 168, 132, 52, 62, 119, 115, 185, 53, 237, 122, 168,
+            ],
+        );
+        assert_captured_bgr_crop(
+            "classic-v1-crop-oracle-single-pixel-bgr-3x3",
+            dimensions(3, 3),
+            &patterned_bgr_pixels(3, 3, 37),
+            [(0.49, 0.49), (1.49, 0.49), (1.49, 1.49), (0.49, 1.49)],
+            dimensions(1, 1),
+            &[57, 113, 193],
+        );
+        assert_captured_bgr_crop(
+            "classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
+            dimensions(3, 9),
+            &patterned_bgr_pixels(3, 9, 101),
+            [(0.4, 0.1), (1.8, 0.2), (1.6, 7.9), (0.2, 7.6)],
+            dimensions(7, 1),
+            &[
+                112, 162, 123, 133, 209, 156, 156, 143, 144, 186, 48, 8, 206, 130, 48, 186, 150,
+                66, 167, 183, 90,
+            ],
+        );
+    }
+
+    #[test]
     fn classic_crop_rejects_an_output_that_exceeds_image_limits_before_allocation() {
         let source = must_ok(InterleavedImage::new(dimensions(1, 1), 1, vec![0]));
         let plan = must_ok(classic_perspective_crop_plan(quadrilateral(

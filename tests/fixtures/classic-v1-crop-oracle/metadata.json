@@ -5,8 +5,8 @@
   "contains_personal_data": false,
   "input": {
     "path": "capture.json#/cases/*/input",
-    "sha256": "1c6549385b111dbe2cb406e4e27fad5c9c0871892c7a4c9ce218152a544272b0",
-    "sha256_scope": "Concatenation of the seven raw C-order input byte arrays in capture document order.",
+    "sha256": "d9a7a52744eb7104d0fd7da54cd31bee5395b857b88adfde2d3d5068e56e4a27",
+    "sha256_scope": "Concatenation of the ten raw C-order input byte arrays in capture document order.",
     "provenance": "Self-authored in-memory BGR uint8 values emitted by tools/capture_crop_oracle.py.",
     "license": "Apache-2.0"
   },
@@ -19,7 +19,7 @@
   "artifacts": null,
   "oracle": {
     "generator": "tools/capture_crop_oracle.py",
-    "capture_sha256": "ae225eeb7d05169fdea080fdc2b47a9d05bce1b33f0bb72a087327aa63ebe01a",
+    "capture_sha256": "dce8b7bae354c66a73fb8ec11045665eaee8c23cc3f7d960e710a9b3c9739a38",
     "environment": {
       "python": "3.12.3",
       "numpy": "2.5.1",
@@ -32,15 +32,16 @@
     "path": "capture.json#/cases/*/output",
     "schema_version": "paddleocr-rust/crop-oracle/v1",
     "comparison_profile": "m2-unit-v1",
-    "sha256": "eded36754967870a01c82c8d18ccc0bca1cb8b2b16c321d6cc0f05e3e18c3caf",
-    "sha256_scope": "Concatenation of the seven raw C-order output byte arrays in capture document order."
+    "sha256": "a32e4878454d699dc4eb958dcb79ff5868c9e6c71ac6b06a6c3cfda6c629fc73",
+    "sha256_scope": "Concatenation of the ten raw C-order output byte arrays in capture document order."
   },
   "tests": [
     "crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases",
-    "crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases"
+    "crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases",
+    "crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases"
   ],
   "limitations": [
-    "This is an exact regression fixture only for its seven self-authored BGR cases and recorded capture environment.",
+    "This is an exact regression fixture only for its ten self-authored BGR cases and recorded capture environment.",
     "It does not establish image-decoder, RGB/BGR conversion, alpha, orientation, detector, recognizer, model, or end-to-end OCR compatibility.",
     "It does not establish universal or upstream-environment OpenCV INTER_CUBIC bit equivalence."
   ]

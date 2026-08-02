@@ -50,10 +50,11 @@ python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py > crop-oracle.json
 The input corpus currently covers identity bytes, left-border replication, a
 small fractional projective transform, the exact `height / width == 1.5`
 rotation boundary, a non-linear interior projective crop, a non-linear crop
-crossing every image side, and a non-linear tall projective crop before
-rotation. The corpus is BGR only because the frozen M2 classic input contract
-starts from a decoded OpenCV-style BGR image. Decoder/color/alpha semantics
-remain separate `D-008` and `IMG-*` work.
+crossing every image side, a non-linear tall projective crop before rotation,
+eighth-pixel interior phases, a one-by-one fractional result, and a one-pixel
+wide tall projective result. The corpus is BGR only because the frozen M2
+classic input contract starts from a decoded OpenCV-style BGR image.
+Decoder/color/alpha semantics remain separate `D-008` and `IMG-*` work.
 
 ## Reviewed capture
 
@@ -61,14 +62,15 @@ The reviewed capture is
 [tests/fixtures/classic-v1-crop-oracle/capture.json](../tests/fixtures/classic-v1-crop-oracle/capture.json).
 It was captured on 2026-08-02 with Python 3.12.3, NumPy 2.5.1, OpenCV 5.0.0,
 and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
-`ae225eeb7d05169fdea080fdc2b47a9d05bce1b33f0bb72a087327aa63ebe01a`;
+`dce8b7bae354c66a73fb8ec11045665eaee8c23cc3f7d960e710a9b3c9739a38`;
 [metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
 The offline Rust regressions
 `crop::tests::classic_crop_matches_the_captured_opencv_bgr_oracle_cases` and
-`crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases`
-check all seven recorded outputs without importing Python or OpenCV. Exact
+`crop::tests::classic_crop_matches_extended_opencv_projective_bgr_oracle_cases`,
+and `crop::tests::classic_crop_matches_fractional_extent_opencv_oracle_cases`
+check all ten recorded outputs without importing Python or OpenCV. Exact
 agreement is evidence only for these self-authored BGR cases and this recorded
 environment. It is not a claim of universal OpenCV interpolation parity,
 upstream-environment parity, decoded-image behavior, or OCR compatibility.

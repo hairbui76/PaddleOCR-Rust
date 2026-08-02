@@ -122,6 +122,33 @@ CASES: tuple[CropCase, ...] = (
         rows=patterned_bgr_rows(4, 7, 149),
         points=((0.25, 0.1), (2.85, 0.45), (2.5, 5.9), (0.0, 6.2)),
     ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-phase-projective-bgr-8x8",
+        description=(
+            "A fractional interior quadrilateral with eighth-pixel phases exercises "
+            "OpenCV cubic coordinate quantization away from replicated borders."
+        ),
+        rows=patterned_bgr_rows(8, 8, 211),
+        points=((0.125, 0.375), (6.875, 0.625), (6.625, 6.875), (0.375, 6.625)),
+    ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-single-pixel-bgr-3x3",
+        description=(
+            "A one-by-one fractional crop records cubic sampling and uint8 rounding "
+            "at the minimum non-zero output extent."
+        ),
+        rows=patterned_bgr_rows(3, 3, 37),
+        points=((0.49, 0.49), (1.49, 0.49), (1.49, 1.49), (0.49, 1.49)),
+    ),
+    CropCase(
+        identifier="classic-v1-crop-oracle-tall-thin-projective-bgr-3x9",
+        description=(
+            "A one-pixel-wide tall fractional crop exercises cubic sampling before "
+            "the exact counter-clockwise rotation of a thin result."
+        ),
+        rows=patterned_bgr_rows(3, 9, 101),
+        points=((0.4, 0.1), (1.8, 0.2), (1.6, 7.9), (0.2, 7.6)),
+    ),
 )
 
 
