@@ -14,7 +14,7 @@ that can be authored in this repository from end-to-end goldens that require a
 specific legal model artifact and an isolated upstream capture.
 
 The full provenance rules remain in
-[`tests/fixtures/README.md`](tests/fixtures/README.md), and upstream capture is
+[`tests/fixtures/README.md`](../tests/fixtures/README.md), and upstream capture is
 governed by [`ORACLE_CAPTURE.md`](ORACLE_CAPTURE.md). This plan never permits
 normal tests to read or execute the `PaddleOCR/` symlink.
 

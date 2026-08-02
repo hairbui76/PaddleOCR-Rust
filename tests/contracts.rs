@@ -12,8 +12,8 @@ const M2_MUST_ROWS: [&str; 7] = [
 
 #[test]
 fn m2_contract_coverage_maps_every_must_compatibility_row() {
-    let compatibility = include_str!("../COMPATIBILITY.md");
-    let coverage = include_str!("../M2_CONTRACT_COVERAGE.md");
+    let compatibility = include_str!("../docs/COMPATIBILITY.md");
+    let coverage = include_str!("../docs/M2_CONTRACT_COVERAGE.md");
 
     for identifier in M2_MUST_ROWS {
         let compatibility_row = format!("| `{identifier}` | Must |");
@@ -31,7 +31,7 @@ fn m2_contract_coverage_maps_every_must_compatibility_row() {
 
 #[test]
 fn m2_contract_coverage_records_the_open_decision_boundaries() {
-    let coverage = include_str!("../M2_CONTRACT_COVERAGE.md");
+    let coverage = include_str!("../docs/M2_CONTRACT_COVERAGE.md");
 
     for decision in ["`D-006`", "`D-007`", "`D-008`"] {
         assert!(

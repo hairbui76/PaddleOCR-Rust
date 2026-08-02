@@ -22,7 +22,7 @@ checkout. It may read only the externally provisioned regular files recorded
 in LOCAL_ONNX_CANDIDATE_INSPECTION.md after independently verifying their
 expected byte counts and SHA-256 values. It must never fetch a model, modify
 the candidate package, execute PaddleOCR, or write a model-derived fixture into
-this repository. Under the narrow user-authorized exception in ROADMAP.md, an
+this repository. Under the narrow user-authorized exception in the root `ROADMAP.md`, an
 external native-runtime build or ABI check may use Python as a build/inspection
 driver only; candidate model loading and inference in the runtime spike must
 not execute Python.
@@ -106,6 +106,19 @@ still partial: it does not establish raw-output equivalence, a physical
 baseline host, deployment, native supply-chain review, a Rust adapter/resource
 policy, or a backend decision. No spike may implicitly download, copy, or
 commit a native binary.
+
+A separate external C API lifecycle probe then verified the same library and
+both ONNX hashes before dynamically loading API version 28. With telemetry
+disabled, sequential CPU execution, one intra/inter-op thread, memory-pattern
+off, a 1,600,000 KiB virtual-memory limit, and a 600-second watchdog, it
+completed twelve create/run/release cycles for each minimum-shape model. Every
+cycle had the expected finite output; the short observed post-release RSS
+window remained bounded, `ReleaseEnv` completed, and `dlclose` returned zero.
+This is only short sequential Linux-host evidence: it does not show a
+leak-free long soak, network isolation, Rust ownership, cancellation,
+concurrency, malicious-input behavior, portability, or numerical equivalence.
+The full commands, hashes, and cycle trace are in
+[`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md).
 
 ## Required evidence after any candidate smoke result
 

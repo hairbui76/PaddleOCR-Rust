@@ -78,7 +78,7 @@ and has no model or upstream-checkout dependency. It does not replace this
 procedure for end-to-end capture or prove decoder/model compatibility.
 
 The reviewed component capture at
-[`tests/fixtures/classic-v1-crop-oracle/`](tests/fixtures/classic-v1-crop-oracle/)
+[`tests/fixtures/classic-v1-crop-oracle/`](../tests/fixtures/classic-v1-crop-oracle/)
 is intentionally limited to four self-authored BGR crop cases. It does not
 meet the model, input-image, or end-to-end metadata requirements above.
 

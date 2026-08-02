@@ -57,12 +57,13 @@ on that symlink—the repository must stand alone after the port is built.
 
 ## Validation
 
-There is not yet a Cargo workspace, so do not assume a crate layout or command
-exists. After one is introduced, use its declared tooling as the source of
-truth. The normal Rust quality baseline is formatting, warning-free Clippy, and
-targeted plus workspace tests. Tests must run without the upstream checkout,
-network access, a GPU, or large model downloads unless explicitly marked as
-optional integration tests.
+The Cargo workspace now exists. Use its `Cargo.toml`, locked toolchain, and
+the root [ROADMAP.md](ROADMAP.md) as the source of truth for the current crate
+layout and validation commands. Supporting contracts and evidence are indexed
+in [docs/README.md](docs/README.md). The normal Rust quality baseline is
+formatting, warning-free Clippy, and targeted plus workspace tests. Tests must
+run without the upstream checkout, network access, a GPU, or large model
+downloads unless explicitly marked as optional integration tests.
 
 For every compatibility claim, preserve a small legal fixture or expected result
 in this repo and identify the upstream revision/release used as the reference.

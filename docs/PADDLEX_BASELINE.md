@@ -96,7 +96,7 @@ resolves `BASE-002` only for the classic M2 slice; it does not establish a
 PaddleX baseline or permit modern compatibility claims.
 
 Before any modern-wrapper or modern-pipeline parity work starts, one of the
-following must be recorded in ROADMAP.md:
+following must be recorded in the root `ROADMAP.md`:
 
 1. the exact PaddleX version/commit resolved by the intended reference
    environment; or

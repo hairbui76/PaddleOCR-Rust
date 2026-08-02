@@ -17,8 +17,9 @@ api-28. It explicitly loaded the library recorded below and has no direct
 libonnxruntime dynamic-link dependency. The public project workspace remains
 dependency-free. Python was used only as an external build-driver environment;
 under the user-authorized evidence-tooling exception it did not execute
-PaddleOCR or model inference. The host spike, QEMU guest probe, and separate C
-API error probe did not execute Python, PaddleOCR, or the upstream checkout.
+PaddleOCR or model inference. The host spike, QEMU guest probe, separate C API
+error probe, and separate C API lifecycle probe did not execute Python,
+PaddleOCR, or the upstream checkout.
 Network isolation was not measured for the host spike or QEMU guest.
 
 ## Source, build, and artifact identity
@@ -121,6 +122,114 @@ containment, cancellation, request-level memory limits, malicious or oversized
 models, concurrency, or valid-inference output semantics. In particular, the
 raw native messages can disclose source/build paths and must not be exposed
 unchanged through a future public API or CLI.
+
+## Bounded C API lifecycle probe
+
+A second external C harness tested a narrowly bounded sequential lifecycle
+path. It dynamically loaded API version 28 only after verifying the SHA-256 of
+the source-built library and both exact ONNX files. It disabled telemetry,
+selected `CPUExecutionProvider`, set intra-op and inter-op threads to one,
+selected sequential execution, disabled memory-pattern optimization, and used
+zero-filled minimum-shape inputs. It scanned output only for expected
+float32 shape/count and finite values; it did not retain, emit, or fingerprint
+any output values.
+
+| Input | SHA-256 |
+|---|---|
+| Temporary C harness source | `75ceb7504d51ce7bf2e875f8823093caa2f64508bb0902a5024e8a71c972d200` |
+| Temporary C harness binary | `5d8cb761ef6541a49586c473cd831a9022fa01217746d85a07968534f1f27273` |
+| Source-built library | `1c04ac4162d45e9cdf3a7f979770f1e1d96fcbc1ea4a09379fa63e75672742fa` |
+| Detector ONNX | `eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` |
+| Recognizer ONNX | `9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` |
+
+The harness was compiled and run outside both repositories. Its explicit
+commands were:
+
+```sh
+PATH="/usr/bin:/bin:$PATH" cc -std=c11 -D_POSIX_C_SOURCE=200809L -O2 -Wall -Wextra -Werror \
+  -I"/tmp/paddleocr-rust-ort-source.89EQ5V/onnxruntime/include/onnxruntime/core/session" \
+  "/tmp/paddleocr-rust-ort-lifecycle.qHQUjg/lifecycle_probe.c" \
+  -o "/tmp/paddleocr-rust-ort-lifecycle.qHQUjg/lifecycle_probe" -ldl -lcrypto -lm
+
+ulimit -Sv 1600000
+ulimit -St 600
+ulimit -c 0
+env -u ORT_DYLIB_PATH \
+  LD_LIBRARY_PATH="/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release" \
+  OMP_NUM_THREADS=1 MALLOC_ARENA_MAX=1 \
+  timeout --signal=TERM --kill-after=30s 600s \
+  "/tmp/paddleocr-rust-ort-lifecycle.qHQUjg/lifecycle_probe" \
+  "/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release/libonnxruntime.so.1.28.0" \
+  "/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium/inference.onnx" \
+  "/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium/inference.onnx"
+```
+
+The process completed in 6.314 seconds with exit status zero under a 1,600,000
+KiB virtual-memory limit and a 600-second CPU-time / wall-time watchdog. It
+completed twelve sequential create-session, run, release-session cycles for
+each model. Every cycle reported the expected output and finite values; no
+`ORT_ERROR`, timeout, abort, or process panic was recorded.
+
+| Task | Checked output | 12-cycle total session / run / release | Peak RSS | Post-release RSS first / last / maximum | Threads after all releases |
+|---|---|---:|---:|---:|---:|
+| Detector minimum | `[1, 1, 32, 32]`, 1,024 finite | 2078.612 / 105.102 / 98.718 ms | 194,760 KiB | 106,228 / 112,364 / 114,092 KiB | 1 |
+| Recognizer minimum | `[1, 20, 18,710]`, 374,200 finite | 2332.733 / 1091.471 / 102.169 ms | 214,760 KiB | 122,308 / 119,084 / 122,308 KiB | 1 |
+
+The compact per-cycle trace below records `session_ms/run_ms/release_ms;
+RSS-after-release KiB`; every listed cycle also passed its output shape/count
+and finite-value checks.
+
+```text
+detector:
+01 236.011/8.554/7.118; 106228
+02 169.572/8.632/8.359; 106220
+03 160.858/8.996/7.531; 113304
+04 156.427/8.700/7.387; 114092
+05 174.028/9.335/8.645; 106220
+06 164.448/9.660/9.604; 106220
+07 166.088/8.797/8.450; 106220
+08 171.074/8.846/9.045; 106220
+09 171.906/8.495/8.359; 106220
+10 164.382/8.283/8.067; 106220
+11 177.689/8.664/8.434; 106220
+12 166.127/8.141/7.717; 112364
+
+recognizer:
+01 198.941/87.950/7.372; 122308
+02 207.773/91.672/8.648; 119660
+03 207.847/91.766/8.622; 119660
+04 183.088/88.409/8.344; 119084
+05 184.159/88.904/11.292; 110316
+06 197.181/91.744/7.786; 119084
+07 185.307/100.497/8.181; 119660
+08 202.075/92.149/8.599; 119660
+09 195.319/91.709/9.151; 119532
+10 196.486/89.702/8.185; 119084
+11 187.506/90.053/8.674; 119532
+12 187.052/86.916/7.314; 119084
+```
+
+After both task groups, `ReleaseEnv` completed and `dlclose` returned zero:
+
+```text
+ENVIRONMENT_RELEASE_OK
+DLCLOSE_RESULT status=0
+LIFECYCLE_PROBE_OK detector_cycles=12 recognizer_cycles=12 clean_release=true
+```
+
+A negative harness invocation supplied the detector file in the recognizer
+position. It returned exit status two at its hash check before
+`DLOPEN_API_OK`, confirming this probe did not quietly substitute the model
+path.
+
+This is bounded Linux-host lifecycle evidence only. A non-monotonic,
+short-window post-release RSS observation does not prove absence of leaks; no
+ASan, LSan, Valgrind, long soak, concurrency, cancellation, malicious-model,
+or request-level resource test ran. `dlclose` status zero does not prove that
+every native global/static state was unloaded. The probe did not use `strace`
+or network isolation, so it makes no network-off claim. It is not a Rust
+adapter/FFI review, a numerical-equivalence result, a portability proof, a
+distribution result, or a backend decision.
 
 ## No-AVX execution evidence
 
@@ -307,7 +416,7 @@ This source build is not hermetic or approved for distribution:
 | Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes also observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates differ. No elementwise diagnosis or tolerance result exists. |
 | End-to-end semantics | Not run. |
 | CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
-| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed under a process watchdog and address-space limit. No Rust adapter, request-level bound, cancellation, lifecycle, malicious-input, concurrency, or public-error review exists. |
+| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. No Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, concurrency, or public-error review exists. |
 | Supply chain/license | Incomplete and blocked for acceptance; see the preceding limits. |
 | Unsafe/FFI boundary | Incomplete: the external ort/ort-sys native boundary has no project adapter review. |
 
@@ -325,7 +434,7 @@ This source build is not hermetic or approved for distribution:
    build-specific SBOM, complete notices, enforced strong hashes, and a
    reviewed distribution policy.
 5. Expand the bounded C API evidence to malicious/external-data and oversized
-   inputs, lifecycle, cancellation, concurrency, and request-level limits;
-   then review the Rust adapter's ownership and sanitized public errors.
+   inputs, long-soak/leak analysis, cancellation, concurrency, and request-level
+   limits; then review the Rust adapter's ownership and sanitized public errors.
 6. Run end-to-end offline golden and RT-003 scorecard experiments before
    RT-004 considers a backend decision.

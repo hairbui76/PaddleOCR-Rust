@@ -13,7 +13,7 @@ slice for explicitly provisioned `PP-OCRv6_medium` artifacts on
 The Rust workspace has been bootstrapped. No inference runtime, model artifact,
 model download, Python wrapper, PaddleX dependency, or FFI integration exists.
 Do not rely on this repository for OCR results until an implementation is
-explicitly documented as verified in `COMPATIBILITY.md`.
+explicitly documented as verified in `docs/COMPATIBILITY.md`.
 
 ## Development
 
@@ -37,13 +37,16 @@ resolution. Add or update it only through an intentional dependency change.
 
 `PaddleOCR/` is a read-only symlink to an upstream reference checkout. It is
 never a build, test, runtime, package, or CI dependency. Read
-`AGENTS.md`, `ROADMAP.md`, `P0_DECISIONS.md`, `API_CONTRACT.md`,
-`COMPATIBILITY.md`, and (for model work) `MODEL_CANDIDATES.md` plus
-`CANDIDATE_PROVISIONING_LEDGER.md`; use `M2_CONTRACT_COVERAGE.md` to check the
+`AGENTS.md`, `ROADMAP.md`, `docs/P0_DECISIONS.md`, `docs/API_CONTRACT.md`,
+`docs/COMPATIBILITY.md`, and (for model work) `docs/MODEL_CANDIDATES.md` plus
+`docs/CANDIDATE_PROVISIONING_LEDGER.md`; use `docs/M2_CONTRACT_COVERAGE.md` to check the
 contract/start gate for an M2 Must surface before changing capability scope or
 making compatibility claims. Decoder selection and input-limit research is
-recorded separately in `IMAGE_DECODER_EVIDENCE.md`; it does not indicate that
+recorded separately in `docs/IMAGE_DECODER_EVIDENCE.md`; it does not indicate that
 image decoding is implemented or selected.
+
+Supporting specifications and evidence packets are indexed in
+[`docs/README.md`](docs/README.md).
 
 ## License
 

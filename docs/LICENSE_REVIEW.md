@@ -115,14 +115,86 @@ package-level terms here.
 - Recognizer missing license: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx/resolve/50c7eacafc52fa7bcf4194e8cd08e46f8558504b/LICENSE
 - Hugging Face model-card documentation: https://huggingface.co/docs/hub/model-cards
 
+## Additional publisher and dictionary trace
+
+This follow-up is provenance evidence only. It does not turn metadata into a
+weight license, approve a model, or establish a release/distribution right.
+
+### Publisher and storage path
+
+At immutable PaddleX v3.7.0 source commit
+`e0068ce0bfe75b2992e5b38d06a0393c70f887f7`, the official-model mapping lists
+both `PP-OCRv6_medium_det` and `PP-OCRv6_medium_rec` as ONNX-supported models.
+The same source derives `<model>_onnx` for the ONNX request and its Hugging
+Face hoster constructs `PaddlePaddle/<model_name>`. This is stronger
+publisher-path evidence than a model-card `author` field, but the hoster does
+not pin an immutable revision and it does not state terms for model weights or
+exports.
+
+- PaddleX model mapping: https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/utils/official_models.py#L515-L571
+- PaddleX Hugging Face hoster: https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/utils/official_models.py#L773-L784
+
+The public Hugging Face LFS commit pages also record the exact ONNX object
+identities already observed locally: detector object
+`eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1`
+(62,032,837 bytes) and recognizer object
+`9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba`
+(76,554,979 bytes). The UI marks those storage commits verified, which is
+useful chain-of-custody evidence for the bytes; it is not a grant of rights or
+proof of a legal rightsholder.
+
+- Detector LFS commit: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx/commit/dbee314685dad0b116a3d2faa7627776f936f085
+- Recognizer LFS commit: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx/commit/a7c2cc35beb94846af153645f5a619b6be905786
+
+A separate `PaddlePaddle` ModelScope mirror also presents `apache-2.0`
+metadata, but its mutable `master` inventories contain no `LICENSE`/`NOTICE`
+and its `LicenseName`/`LicenseLink` metadata are empty. It is corroborating
+absence evidence, not an immutable terms source.
+
+- Detector mirror file list: https://www.modelscope.cn/api/v1/models/PaddlePaddle/PP-OCRv6_medium_det_onnx/repo/files?Revision=master
+- Recognizer mirror file list: https://www.modelscope.cn/api/v1/models/PaddlePaddle/PP-OCRv6_medium_rec_onnx/repo/files?Revision=master
+
+### Recognizer dictionary content trace
+
+The pinned PaddleOCR baseline configuration
+`configs/rec/PP-OCRv6/PP-OCRv6_medium_rec.yml` names
+`ppocr/utils/dict/ppocrv6_dict.txt` as its `character_dict_path`. The immutable
+baseline dictionary has SHA-256
+`b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d` and
+the baseline repository `LICENSE` has SHA-256
+`3840c5c0c61c294264d2dd77b8777be6ddd90121ef4e0e64abcd22edea581d6e`.
+The historical immutable commit
+`b03f46425e8ff4442b268ce449e3eef758146cd4` introduced the v6 dictionary and
+the v6-medium recognizer configuration.
+
+For the exact local ONNX recognizer package, a read-only canonical comparison
+extracted the YAML `PostProcess.character_dict` as one unescaped entry per LF.
+That normalized entry stream has the same SHA-256 and an empty `diff` against
+the pinned upstream dictionary. This establishes matching dictionary content,
+not byte identity of `inference.yml`, a verified CTC ABI, or permission to
+copy/ship it.
+
+The source-tree Apache-2.0 license is a concrete terms lead for the dictionary
+source file, but `ppocr/utils/dict/README.md` gives only a general corpus
+copyright caution and no dictionary-specific provenance or terms. The exact
+ONNX package still lacks a revision-specific `LICENSE`/`NOTICE`, so neither the
+dictionary trace nor the publisher path closes the terms gap for weights,
+export, configuration, or distribution.
+
+- v6 introduction commit: https://github.com/PaddlePaddle/PaddleOCR/commit/b03f46425e8ff4442b268ce449e3eef758146cd4
+- Pinned recognizer configuration: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/configs/rec/PP-OCRv6/PP-OCRv6_medium_rec.yml#L14-L21
+- Pinned dictionary: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/ppocr/utils/dict/ppocrv6_dict.txt
+- Pinned source license: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/LICENSE
+- Pinned dictionary README: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/ppocr/utils/dict/README.md
+
 ## Material-specific status
 
 | Material | Evidence currently held | What remains required | Release status |
 |---|---|---|---|
 | PaddleOCR repository source | The read-only upstream repository identifies Apache License 2.0; the P0 record documents source-attribution and trademark boundaries. | If any non-trivial source is adapted, record file-level provenance, retained notices, modifications, and a source review. | No upstream source is currently included. |
-| Static model parameters and graph/config files | Candidate revisions, checksums, sizes, and preliminary card metadata are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
-| Official ONNX exports | Separate pinned repository revisions and checksums are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
-| Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a `character_dict` with 18,708 entries; it has no legal/provenance text, and its ABI is not yet verified. | Verify exact provenance, terms, index mapping, blank/space behavior, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
+| Static model parameters and graph/config files | Candidate revisions, checksums, sizes, preliminary card metadata, and an immutable PaddleX publisher path are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
+| Official ONNX exports | Separate pinned repository revisions/checksums, immutable LFS storage commits, and the PaddleX ONNX naming/hoster path are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
+| Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a 18,708-entry `character_dict`; its canonical entry stream matches the pinned upstream `ppocrv6_dict.txt` SHA-256. The source-tree Apache-2.0 license is a terms lead, while the dictionary README gives no file-specific provenance/terms and the ABI is unverified. | Verify applicable terms, index mapping, blank/space behavior, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
 | Oracle and test fixtures | No model-backed input or expected-output fixture has been added. | Record original-author/source provenance, terms, privacy review, hashes, goldens, and applicable model evidence per [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | Unapproved. |
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |
@@ -135,6 +207,9 @@ This review does **not** establish any of the following:
   configuration, or archive associated with a candidate;
 - that a hosting-platform `author` field proves the publisher/rightsholder or
   grants model-weight rights;
+- that the PaddleX publisher path, verified LFS storage commit, or
+  dictionary-content match grants rights for ONNX weights, export,
+  configuration, or redistribution;
 - that the static and ONNX candidates are equivalent, mutually convertible, or
   covered by identical terms;
 - that a user-provisioned copy may be redistributed by this project;

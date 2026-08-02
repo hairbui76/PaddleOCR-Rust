@@ -12,7 +12,7 @@ pinned commit. It is the detailed input to SCOPE-001 and SCOPE-002. It is not a
 Rust support matrix, a runtime choice, a model-distribution decision, or a claim
 that every listed surface will be ported in the same form.
 
-ROADMAP.md governs sequencing and completion. COMPATIBILITY.md, created after
+The root `ROADMAP.md` governs sequencing and completion. `COMPATIBILITY.md`, created after
 scope approval, will classify every in-scope capability by priority and record
 the exact Rust surface, model artifact, fixture, tolerance, and evidence.
 

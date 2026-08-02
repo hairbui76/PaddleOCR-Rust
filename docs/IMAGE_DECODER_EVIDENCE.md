@@ -100,6 +100,44 @@ The `image` documentation does not by itself prove that all intermediate
 allocations obey the project budget. The candidate must be tested with
 adversarial PNG/JPEG inputs and its exact selected codec configuration.
 
+### Follow-up candidate-risk review
+
+The following source-level facts were reviewed on 2026-08-02 to refine the
+future spike plan. They are not a selected implementation, a resolved input
+policy, or permission to add a dependency.
+
+- The published `image` 0.25.10 manifest declares Rust 1.88 support. Its
+  minimal `jpeg` feature reaches `zune-core` and `zune-jpeg`; the inspected
+  manifest does not disable `zune-jpeg` default features. A real spike must
+  therefore capture the resolved lockfile and `cargo tree -e features` output
+  rather than infer the compiled codec/CPU surface from the top-level feature
+  line.
+- The inspected JPEG wrapper reads its source into an owned `Vec` and selects
+  non-strict Zune decoding. This is a concrete reason to include the encoded
+  input copy in a future request-memory envelope and to test malformed JPEG
+  behavior. It is not proof of a flaw in a particular decode path.
+- The 0.25.10 change log cautions that many decoders can panic on malicious
+  input. That project-wide note is not a JPEG/PNG-specific finding, but it
+  prevents a safety conclusion without the required adversarial corpus,
+  no-panic checks, and fuzz/property evidence.
+- `zune-jpeg` exposes direct width, height, scan, output-colorspace, strictness,
+  and unsafe-use controls through its decoder options. It may provide a more
+  explicit control surface, but would make the project responsible for format
+  dispatch, orientation, BGR conversion, and compatibility behavior. Its
+  default feature and baseline-CPU behavior require the same evidence as any
+  other candidate.
+- `png` exposes a limits-aware decoder but documents those limits as
+  best-effort and does not bound project-owned allocations; it also exposes
+  APNG frames. A single-image/APNG disposition must be fixed before adopting
+  such a route. `jpeg-decoder` is a separate candidate with header and EXIF/ICC
+  access, not an accepted fallback.
+
+These observations strengthen, rather than relax, the existing decision
+requirements: a selected path must have a version-locked dependency graph,
+license/notice/advisory review, Rust 1.94 build evidence, CPU/unsafe/native
+boundary analysis, bounded decode measurement, and oracle comparison before
+`D-008` can close.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
@@ -162,6 +200,13 @@ and preprocessing semantics.
 - [`image::ImageDecoder` 0.25.10](https://docs.rs/image/0.25.10/image/trait.ImageDecoder.html)
 - [`image::Orientation` 0.25.10](https://docs.rs/image/0.25.10/image/metadata/enum.Orientation.html)
 - [`image::Limits` 0.25.10](https://docs.rs/image/0.25.10/image/struct.Limits.html)
+- [`image` 0.25.10 manifest](https://docs.rs/crate/image/0.25.10/source/Cargo.toml)
+- [`image` JPEG decoder source, 0.25.10](https://docs.rs/image/0.25.10/src/image/codecs/jpeg/decoder.rs.html)
+- [`image` 0.25.10 change log](https://docs.rs/crate/image/0.25.10/source/CHANGES.md)
+- [`zune-jpeg` 0.5.15](https://docs.rs/zune-jpeg/0.5.15/zune_jpeg/)
+- [`zune-core::DecoderOptions` 0.5.1](https://docs.rs/zune-core/0.5.1/zune_core/options/struct.DecoderOptions.html)
+- [`png` 0.18.1](https://docs.rs/png/0.18.1/png/)
+- [`jpeg-decoder` 0.3.2](https://docs.rs/jpeg-decoder/0.3.2/jpeg_decoder/)
 - [OpenCV image-codec documentation, version 4.5.5](https://docs.opencv.org/4.5.5/d4/da8/group__imgcodecs.html)
 
 The external documentation informs a candidate evaluation only. It does not

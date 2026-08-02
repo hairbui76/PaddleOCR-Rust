@@ -52,6 +52,31 @@ immutable revision/content hash has been reviewed for them. A later evidence
 record may choose one verified source representation; static and ONNX files
 must not be treated as interchangeable merely because their model names match.
 
+### Publisher linkage and immutable storage trace
+
+At PaddleX v3.7.0 source commit
+`e0068ce0bfe75b2992e5b38d06a0393c70f887f7`, the official-model mapping names
+both M2 family identifiers as ONNX-supported, derives `<model>_onnx`, and its
+Hugging Face hoster forms `PaddlePaddle/<model_name>`. This strengthens the
+publisher path for the candidate locators, but the code does not pin a
+revision or provide model/export terms. The two public Hugging Face LFS commit
+records identify the exact ONNX objects in the table above; their UI verified
+marker is chain-of-custody evidence for the bytes, not legal or numerical
+equivalence evidence.
+
+- PaddleX model mapping: https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/utils/official_models.py#L515-L571
+- PaddleX Hugging Face hoster: https://github.com/PaddlePaddle/PaddleX/blob/e0068ce0bfe75b2992e5b38d06a0393c70f887f7/paddlex/inference/utils/official_models.py#L773-L784
+- Detector LFS object commit: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx/commit/dbee314685dad0b116a3d2faa7627776f936f085
+- Recognizer LFS object commit: https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx/commit/a7c2cc35beb94846af153645f5a619b6be905786
+
+The recognizer's canonical YAML `PostProcess.character_dict` entry stream is
+also content-identical to the pinned upstream `ppocrv6_dict.txt` after YAML
+unescaping and one-entry-per-LF normalization; the shared SHA-256 is
+`b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d`.
+This is dictionary-content provenance evidence only. The package/weight terms,
+CTC index ABI, and permission to retain or distribute a dictionary remain
+unapproved; see [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
+
 ## Captured package metadata
 
 The static candidates have the following small metadata files. Their SHA-256

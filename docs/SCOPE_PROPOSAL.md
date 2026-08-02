@@ -125,7 +125,7 @@ The following choices are material and cannot be inferred safely:
 
 The user directed the project to continue after reviewing the proposal and its
 evidence. The conservative bootstrap decisions are recorded in
-`P0_DECISIONS.md` and ROADMAP.md. They may be changed only through an explicit
+`P0_DECISIONS.md` and the root `ROADMAP.md`. They may be changed only through an explicit
 roadmap amendment.
 
 | Field | Current value |

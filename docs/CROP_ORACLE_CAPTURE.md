@@ -6,7 +6,7 @@ Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and boundary
 
-[`tools/capture_crop_oracle.py`](tools/capture_crop_oracle.py) is a small,
+[`tools/capture_crop_oracle.py`](../tools/capture_crop_oracle.py) is a small,
 developer-only OpenCV oracle for the private perspective-crop sequence in
 `tools/infer/utility.py:get_rotate_crop_image` of the pinned upstream source.
 It uses only self-authored in-memory BGR `uint8` arrays and source
@@ -58,11 +58,11 @@ remain separate `D-008` and `IMG-*` work.
 ## Reviewed capture
 
 The reviewed capture is
-[tests/fixtures/classic-v1-crop-oracle/capture.json](tests/fixtures/classic-v1-crop-oracle/capture.json).
+[tests/fixtures/classic-v1-crop-oracle/capture.json](../tests/fixtures/classic-v1-crop-oracle/capture.json).
 It was captured on 2026-08-02 with Python 3.12.3, NumPy 2.5.1, OpenCV 5.0.0,
 and opencv-python-headless 5.0.0.93. Its exact JSON SHA-256 is
 `ae225eeb7d05169fdea080fdc2b47a9d05bce1b33f0bb72a087327aa63ebe01a`;
-[metadata.json](tests/fixtures/classic-v1-crop-oracle/metadata.json) records
+[metadata.json](../tests/fixtures/classic-v1-crop-oracle/metadata.json) records
 the raw-byte aggregate hashes, upstream reference, review date, and limits.
 
 The offline Rust regressions

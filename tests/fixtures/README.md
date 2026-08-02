@@ -5,7 +5,7 @@ Roadmap item: TEST-001
 This directory intentionally contains no upstream asset at bootstrap time.
 Every future fixture must be small, legal to redistribute, and offline.
 The required M2 fixture classes, metadata shape, and tolerance profiles are
-defined in [`FIXTURE_AND_TOLERANCE_PLAN.md`](../../FIXTURE_AND_TOLERANCE_PLAN.md).
+defined in [`FIXTURE_AND_TOLERANCE_PLAN.md`](../../docs/FIXTURE_AND_TOLERANCE_PLAN.md).
 
 ## Required metadata
 
