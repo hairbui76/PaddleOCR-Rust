@@ -189,6 +189,9 @@ bit-identical floating-point results. The current source-level contract also
 keeps `src/crop.rs` free of architecture intrinsics, runtime CPU feature
 dispatch, `target_feature` attributes, and `f32::mul_add`; the integration test
 `crop_sampler_retains_the_portable_cpu_operation_profile` guards that boundary.
+The quality workflow runs the complete test suite in both the ordinary and
+optimized `--release` profiles under the same portable flags, so recorded crop
+and CTC regressions are checked against the profile used for distribution.
 
 This profile preserves the existing scalar operation order rather than trying
 to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel

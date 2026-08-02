@@ -24,5 +24,7 @@ jobs:
         run: cargo clippy --locked --workspace --all-targets --all-features -- -D warnings
       - name: Test
         run: cargo test --locked --workspace --all-features
+      - name: Test optimized profile
+        run: cargo test --locked --release --workspace --all-features
       - name: Build documentation
         run: cargo doc --locked --workspace --no-deps
