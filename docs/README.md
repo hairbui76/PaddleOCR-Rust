@@ -43,6 +43,7 @@ normal build dependency.
 ## Inputs, fixtures, and oracle work
 
 - [Image decoder evidence](IMAGE_DECODER_EVIDENCE.md)
+- [Bounded primitive fuzzing](FUZZING.md)
 - [Fixture and tolerance plan](FIXTURE_AND_TOLERANCE_PLAN.md)
 - [Oracle capture procedure](ORACLE_CAPTURE.md)
 - [Crop oracle capture](CROP_ORACLE_CAPTURE.md)

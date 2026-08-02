@@ -8,6 +8,10 @@
 
 /// Structured errors returned by public foundation types.
 pub mod error;
+/// Developer-only byte-driven fuzz driver for current private pure kernels.
+#[cfg(feature = "fuzzing")]
+#[doc(hidden)]
+pub mod fuzz;
 /// Checked domain types shared by later image, geometry, model, and pipeline code.
 pub mod types;
 
