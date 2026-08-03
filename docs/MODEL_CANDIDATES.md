@@ -208,9 +208,10 @@ metadata does not make static and ONNX representations equivalent.
    and the 18,710-class output correspondence. The source-level index
    construction, structural count, and aggregate Unicode audit are recorded in
    [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md),
-   including the requirement to preserve exact scalars without default
-   normalization, case folding, or whitespace cleanup. Runtime semantics and
-   safe Rust decoder validation remain required.
+   with a bounded developer-only replay tool that emits no dictionary content.
+   The evidence includes the requirement to preserve exact scalars without
+   default normalization, case folding, or whitespace cleanup. Runtime
+   semantics and safe Rust decoder validation remain required.
 5. A recorded disposition of the static-vs-ONNX choice. Any conversion or
    exported-format comparison must meet `m2-tensor-v1` in
    [`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md).

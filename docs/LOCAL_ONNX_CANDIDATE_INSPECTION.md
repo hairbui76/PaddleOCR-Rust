@@ -3,9 +3,11 @@
 Roadmap items: MOD-001, LIC-001  
 Status: User-authorized external ONNX candidates were inventoried, parsed, and
 given source-level recognizer CTC index-construction and Unicode-structure
-inspections; neither candidate is accepted, supported, converted,
-redistributed, or bundled
-Inspection date: 2026-08-02  
+inspections backed by an aggregate-only replay tool; neither candidate is
+accepted, supported, converted, redistributed, or bundled
+
+Initial inspection date: 2026-08-02
+
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
 ## Scope and boundary
@@ -189,9 +191,10 @@ local recognizer `inference.yml`. It first required a bounded regular,
 non-symlink file, the recorded YAML SHA-256, the recorded ordered-entry-stream
 SHA-256, 18,708 entries, and no exact duplicate. It emitted one sorted JSON
 object of counts only: no dictionary entry, decoded text, ONNX tensor, or model
-output was printed, retained, or added to the repository. The harness source
-SHA-256 was `cfe5fb23f85ad34d6cf53e05a9adca7e36219ae3e92587908028395497bb970b`;
-its aggregate result SHA-256 was
+output was printed, retained, or added to the repository. That historical v1
+harness source SHA-256 was
+`cfe5fb23f85ad34d6cf53e05a9adca7e36219ae3e92587908028395497bb970b`; its
+aggregate result SHA-256 was
 `6a6b76ee7b118b3453e4914da47162662a767f257c7bdaa0a3e9d3cb87f909e9`.
 
 | Aggregate check | Result |
@@ -209,6 +212,32 @@ The same bounded harness rejected the detector YAML before parsing because its
 digest did not equal the recognizer's pinned digest (controlled exit `1`). This
 checks the audit's input identity; it does not make the disposable harness a
 project model-inspection tool or artifact manifest.
+
+The source-controlled
+[`tools/audit_recognizer_dictionary.py`](../tools/audit_recognizer_dictionary.py)
+now makes the same input-specific structural audit replayable without a Python
+package dependency. It only accepts the exact recognizer YAML fingerprint; it
+uses `lstat`, no-follow opening, and descriptor metadata to reject a symlink
+and detect path replacement, bounds the read to `512 KiB`, validates the YAML
+digest before its narrow parser, and emits aggregate JSON to stdout only. It
+neither creates a dictionary file nor exposes an input path, entry, text,
+tensor, or model output.
+
+Replay it against an explicitly provisioned local recognizer configuration:
+
+```sh
+python3 -B tools/audit_recognizer_dictionary.py <recognizer-inference.yml>
+```
+
+The recorded v2 tool source SHA-256 is
+`fbdbf4db44bda21af63481e1c3a41df6284dc1bc088a51de050da6597a79095a`. On the
+same Python 3.12.3 / Unicode 15.0.0 environment, two positive runs were
+byte-identical; each emitted result SHA-256
+`1c002119e48e1d1a4e0f3296d02630281224a7209af825d6dc4d151ce4344802` under
+schema `paddleocr-rust/dictionary-unicode-audit/v2`. Controlled detector-digest,
+symlink, and 524,289-byte oversized-input probes each exited `2` before any
+dictionary output. The tool is developer-only evidence machinery, not a model
+resolver, runtime, asset approval, or normal Rust build dependency.
 
 For this candidate's future decoder, the rule is therefore exact-scalar
 preservation: map each class to its original scalar in index order, append
