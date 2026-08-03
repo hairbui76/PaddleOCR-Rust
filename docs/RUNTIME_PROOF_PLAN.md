@@ -5,11 +5,14 @@ Status: In progress — `tract-onnx` 0.23.4 was rejected for the exact-artifact
 configuration; external `ort` 2.0.0-rc.13 dynamic-load proofs passed the six
 fixed exact-artifact shape probes through both a temporary wheel and a
 source-built ONNX Runtime route. A later temporary Python-to-Rust same-runtime
-raw relay is bit-identical for all six LCG shapes, but remains unqualified; no
-runtime, format, or public implementation is selected
+raw relay is bit-identical for all six LCG shapes. One external static/Paddle
+versus ONNX capture completed all six shapes but is not a `m2-tensor-v1` pass;
+its required repeat and tolerance analysis remain pending. No runtime, format,
+or public implementation is selected
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854  
 Applies to: the user-provisioned, hash-verified v6-medium ONNX detector and
-recognizer candidates only
+recognizer candidates plus the confined external static/Paddle reference needed
+by `RT-003`
 
 ## Purpose and boundary
 
@@ -25,11 +28,79 @@ expected byte counts and SHA-256 values. It must never fetch a model, modify
 the candidate package, execute PaddleOCR, or write a model-derived fixture into
 this repository. Under the narrow user-authorized exception in the root `ROADMAP.md`, an
 external native-runtime build or ABI check may use Python as a build/inspection
-driver only; candidate model loading and inference in the runtime spike must
-not execute Python.
+driver only; candidate model loading and inference in an ONNX/Rust runtime
+spike must not execute Python. The separate static/Paddle oracle below is not
+a runtime candidate spike: it may execute the hash-verified static graph using
+Paddle Inference in an external Python environment solely to establish the
+independent reference. It must not import, execute, or write to PaddleOCR or
+PaddleX, fetch a model, or produce a retained raw-output fixture.
 
 The only outcome of a proof is evidence: pass, rejection, or an explicit
 unresolved result. A passing smoke test does not select a backend.
+
+## Independent static/Paddle reference for RT-003
+
+The static reference exists to test the distinct ONNX export under
+`m2-tensor-v1`; it is not a proposal to use Paddle Inference from Rust. Its
+execution is allowed only by the confined static-package terms supplement in
+[LICENSE_REVIEW.md](LICENSE_REVIEW.md). Before each run, an external harness
+must reject symlink/non-regular model files and verify every expected package
+file's byte count and SHA-256 from `MODEL_CANDIDATES.md`.
+
+The harness must run outside both repositories with CPU only, GPU disabled,
+one CPU math-library thread, no network/model fetch, no upstream imports, and
+one named `float32` NCHW input/output. It must generate the six self-authored
+LCG input tensors already used by the direct relay: detector `[1,3,32,32]`,
+`[1,3,960,544]`, and `[1,3,960,960]`; recognizer `[1,3,48,160]`,
+`[1,3,48,320]`, and `[6,3,48,320]`. Each probe must run the exact static
+`inference.json` plus `inference.pdiparams` pair and the exact ONNX export
+with identical tensor bytes. It must reject a name, dtype, rank, shape, or
+finite-value mismatch.
+
+Run the complete capture twice in fresh processes. For each probe, calculate
+the elementwise maximum absolute and relative errors, the number of values
+over each `m2-tensor-v1` limit, and compact SHA-256/FNV metadata. The complete
+raw input/output files may exist only in a protected temporary directory during
+the comparison; retain in the repository only the harness hash, package/runtime
+identity, aggregate comparison metadata, and declared limitations. A result
+above `1e-4` requires diagnosis rather than a tolerance change. A result within
+the limit is raw-tensor evidence only: it does not establish preprocessing,
+postprocessing, CPU portability, a model manifest, an adapter, or a backend
+decision.
+
+### First static/Paddle capture (partial, 2026-08-04)
+
+One disposable external Python process completed all six required probes with
+CPython 3.12.3, NumPy 1.26.4, Paddle 3.3.1 CPU, and ONNX Runtime 1.28.0 CPU.
+It verified all five files in each of the four user-provisioned packages before
+loading them; the static pair used `inference.json` plus `inference.pdiparams`,
+and the ONNX pair used `inference.onnx`. Paddle Inference had GPU and MKLDNN
+disabled, one CPU math-library thread, memory optimization, IR optimization,
+new IR/executor, and direct feed/fetch handles. ONNX Runtime used one
+intra/inter-op thread and disabled memory patterns. No PaddleOCR/PaddleX code
+was imported or executed.
+
+The temporary harness SHA-256 was
+`bf2f585b0956ded38a58462aa2e5c7992dc7a1b4e129fe886ea586cfd00e4846`; its
+one deterministic aggregate record SHA-256 was
+`bce3652b2d2b5d28c4fe19a0e6632cb36304cbaf345d1babfd4e491957f3e752`.
+All 7,057,864 matched-shape `float32` elements had absolute error below
+`1e-4`; the six maximum absolute errors were respectively `1.7695129e-7`,
+`8.4117055e-6`, `2.8230250e-5`, `1.7583370e-5`, `3.7580729e-5`, and
+`8.6367130e-5` in declared probe order. This is not an acceptance result:
+the first harness used an unapproved relative-error denominator floor of
+`1e-12`, making every maximum relative error exceed `1e-4` near zero-valued
+outputs. The written `m2-tensor-v1` profile does not yet define that denominator
+or an `atol + rtol * |reference|` rule, and the required second fresh process
+was deliberately not run. Do not relabel this as passing by changing the
+metric after seeing the data.
+
+The temporary raw input/output tree and harness are not repository assets and
+must be disposed of after handoff. A successor must first amend the tolerance
+contract with a reviewable, predeclared relative-error rule if one is needed,
+then run two fresh captures and record their compact determinism and comparison
+results. No raw tensor, model byte, dictionary entry, cache, or harness is
+committed here.
 
 ## First proof: tract-onnx 0.23.4
 

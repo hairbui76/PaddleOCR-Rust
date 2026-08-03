@@ -2,8 +2,9 @@
 
 Roadmap item: `MOD-001`
 Status: In progress; remote and user-authorized local provenance/ABI discovery
-plus bounded external runtime diagnostic evidence. `LIC-001` is complete for
-the exact ONNX pair, but no artifact or runtime is selected or supported
+plus bounded external runtime diagnostic evidence. `LIC-001` has confined
+terms evidence for the exact ONNX pair and static `RT-003` oracle pair, but no
+artifact or runtime is selected or supported
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 Evidence captured: 2026-08-02
 
@@ -31,10 +32,12 @@ official PaddlePaddle Hugging Face repositories below expose static-package
 candidates and separately published ONNX exports. Their byte-for-byte
 relationship to the BOS archives is unverified. For the exact ONNX detector and
 recognizer revisions, the publisher-hosted model-card `license: apache-2.0`
-declarations close `LIC-001`; see [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
-That decision does not cover the static candidates, select an artifact/runtime,
-or approve bundling any file. P3/P13 still require the remaining provenance,
-runtime, release-policy, and final audit work.
+declarations close the confined `LIC-001` terms-evidence scopes described in
+[LICENSE_REVIEW.md](LICENSE_REVIEW.md): runtime/evidence work for the ONNX
+pair and a non-retained independent static/Paddle raw-tensor oracle for the
+static pair. Neither scope selects an artifact/runtime or approves bundling any
+file. P3/P13 still require the remaining provenance, runtime, release-policy,
+and final audit work.
 
 | Role | Static Paddle candidate (pinned revision) | `inference.pdiparams` SHA-256 / bytes | Official ONNX candidate (pinned revision) | `inference.onnx` SHA-256 / bytes |
 |---|---|---|---|---|
@@ -168,7 +171,7 @@ architecture but exposes a CTC-shaped fetch. M2 supports only the validated
 CTC fetch/decoder path. No NRTR head, word boxes, Arabic reversal, or generic
 multilingual claim is accepted merely from this metadata.
 
-## User-authorized local ONNX candidate inventory
+## User-authorized local candidate inventory
 
 On 2026-08-02, the project user authorized the two exact ONNX packages to be
 downloaded into an external user-owned directory. Each expected file was a
@@ -186,10 +189,20 @@ runtime decision, or support claim. The bounded external diagnostics allowed by
 [`RUNTIME_ORT_EVIDENCE.md`](RUNTIME_ORT_EVIDENCE.md), and
 [`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md); they do
 not approve the artifacts for project adoption, conversion, distribution,
-bundling, or model-derived fixture retention. The candidate
-configuration/README license observation remains preliminary, and the local
+bundling, or model-derived fixture retention. The later `RT-003` static
+supplement permits only one external, hash-verified, non-retained raw-tensor
+oracle; it does not make the static candidate a supported artifact. The local
 presence of `inference.json` files with the same hashes as static candidate
 metadata does not make static and ONNX representations equivalent.
+
+On 2026-08-04, the confined static-oracle terms supplement permitted the exact
+static pair to be provisioned into the same external model root. Every expected
+`.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and
+`inference.yml` file was a regular non-symlink file and matched its recorded
+byte count/SHA-256. A first external Paddle Inference versus ONNX Runtime
+comparison is recorded in [RUNTIME_PROOF_PLAN.md](RUNTIME_PROOF_PLAN.md); it
+is not a final static graph/runtime inspection, artifact acceptance, numerical
+equivalence result, or support claim.
 
 ## Required acceptance work
 

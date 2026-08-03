@@ -2,10 +2,11 @@
 
 Roadmap item: `LIC-001`  
 Status: Done — the exact official PaddlePaddle ONNX detector and recognizer
-model cards carry an immutable, revision-pinned `apache-2.0` declaration;
-the conclusion is limited to those two named ONNX package revisions
+package revisions have terms evidence for their stated evidence work, and the
+separate static pair has the same evidence only for the confined `RT-003`
+external raw-tensor oracle; no representation is selected or supported
 Prepared: 2026-08-02  
-Last reviewed: 2026-08-03
+Last reviewed: 2026-08-04
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and decision boundary
@@ -13,8 +14,10 @@ PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 This record tracks the artifact-specific evidence needed before the planned M2
 model pair can be used, redistributed, converted, bundled, or advertised as
 supported. It is a provenance and release-control record, not legal advice.
-On 2026-08-03, the exact ONNX pair met this item's terms-evidence requirement;
-the current decision and its limits are recorded at the end of this file.
+On 2026-08-03, the exact ONNX pair met this item's terms-evidence requirement.
+On 2026-08-04, the independently pinned static pair met the same evidence
+standard for a confined external `RT-003` oracle only. The current decisions
+and their limits are recorded at the end of this file.
 
 `DEC-003` remains in force: normal builds and tests do not download, cache,
 convert, bundle, or require model artifacts. `MODEL-DEC-001` is the only later
@@ -91,8 +94,8 @@ distribution, provenance, and fixture controls.
 
 | Role and representation | Pinned revision | Preliminary license evidence | Package-listing observation | Current disposition |
 |---|---|---|---|---|
-| Static detector, `PP-OCRv6_medium_det` | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
-| Static recognizer, `PP-OCRv6_medium_rec` | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. The configuration embeds a character dictionary. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
+| Static detector, `PP-OCRv6_medium_det` | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | Its immutable `README.md` declares `license: apache-2.0`; the review is recorded below. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Terms evidence is accepted only for a confined external `RT-003` static/Paddle raw-tensor oracle. Adoption, conversion, distribution, bundling, retained fixtures, and model support remain unapproved. |
+| Static recognizer, `PP-OCRv6_medium_rec` | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | Its immutable `README.md` declares `license: apache-2.0`; the review is recorded below. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. The configuration embeds a character dictionary. | Terms evidence is accepted only for a confined external `RT-003` static/Paddle raw-tensor oracle. Adoption, conversion, distribution, bundling, retained fixtures, and model support remain unapproved. |
 | ONNX detector, `PP-OCRv6_medium_det_onnx` | `61323801669c338b7891481ec7bac61ce31b576a` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted. A reviewed minimal non-asset oracle result may be retained; runtime, adoption, conversion, distribution, bundling, and artifact retention remain open. |
 | ONNX recognizer, `PP-OCRv6_medium_rec_onnx` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted. A reviewed minimal non-asset oracle result may be retained; runtime, adoption, conversion, distribution, bundling, and artifact retention remain open. |
 
@@ -399,7 +402,9 @@ the following, reviewed at its immutable revision:
 Until those conditions close, unclear material was excluded rather than
 replaced with an undocumented substitute or a fabricated compatibility claim.
 
-## Current decision (2026-08-03)
+## Current decisions
+
+### ONNX package-pair decision (2026-08-03)
 
 `LIC-001` is **Done** for the following exact, official ONNX package pair:
 
@@ -432,8 +437,10 @@ not mean the material is public domain or free of Apache-2.0 obligations.
 
 This decision has deliberately narrow effects:
 
-- It covers only the two ONNX package revisions above. It does not approve the
-  static, safetensors, future, converted, or differently revised artifacts.
+- It covers only the two ONNX package revisions above. The separate confined
+  static-oracle supplement below does not alter this ONNX decision. Neither
+  decision approves safetensors, future, converted, or differently revised
+  artifacts.
 - It permits the roadmap's local, hash-verified runtime qualification and
   model-backed evidence work to proceed. It does not select a runtime, claim
   model support, or make static and ONNX packages interchangeable.
@@ -455,3 +462,45 @@ This decision has deliberately narrow effects:
   `NOTICE` was observed at the pinned revisions.
 - A changed license declaration, a newly discovered notice, or use of another
   artifact representation reopens the applicable evidence review.
+
+### Static external-oracle supplement (2026-08-04)
+
+`LIC-001` additionally accepts terms evidence for the following exact static
+package pair **only** to execute the independent external static/Paddle
+raw-tensor comparison required by `RT-003`:
+
+| Role | Repository | Pinned revision | Immutable README evidence |
+|---|---|---|---|
+| Detector | [`PaddlePaddle/PP-OCRv6_medium_det`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det) | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | `23,247` bytes; SHA-256 `59f37b08a9a49aa6c1275e7b0363991353582f4dc7676539a5d2b05aab57e744`; front matter declares `license: apache-2.0`. |
+| Recognizer | [`PaddlePaddle/PP-OCRv6_medium_rec`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec) | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | `23,474` bytes; SHA-256 `75ff9c4853ed171f36224127805062f9bcd1cfbbcacae3d577344866df74f6d3`; front matter declares `license: apache-2.0`. |
+
+The 2026-08-04 read-only revision audit used `hf models info` with each pinned
+revision. It reported `author: PaddlePaddle`, `private: false`, `gated: false`,
+the exact requested commit SHA, and exactly five sibling names:
+`.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and
+`inference.yml`. A bounded `hf download` of `README.md` only recorded the
+requested revisions in its local metadata; no model binary was downloaded in
+that review. The corresponding revision-pinned `LICENSE` lookup failed with
+`File not found in repository` for both packages. This is the same package
+layout fact already recorded for the ONNX pair, not proof that no terms apply.
+
+For this project's evidence policy, the publisher-hosted, immutable README
+declarations above are sufficient terms evidence for using the exact static
+graph, parameters, configuration, and embedded dictionary in one external,
+hash-verified, non-retained `RT-003` raw-tensor oracle. The conclusion uses the
+same model-card-license rationale as the ONNX decision; it is not legal advice.
+
+This supplement has deliberately limited effects:
+
+- It permits a user-authorized external download and read-only static/Paddle
+  execution only after every package file is verified against the pinned sizes
+  and SHA-256 values in `MODEL_CANDIDATES.md`.
+- It permits no model artifact, raw tensor, dictionary entry, output, cache, or
+  harness to be committed to this repository. Any temporary raw output must be
+  disposed of after the comparison record is made.
+- It does not select static Paddle as the project runtime or artifact format,
+  establish static/ONNX numerical or legal equivalence, approve conversion,
+  distribution, bundling, cache/download behavior, or a model-support claim.
+- `MODEL-DEC-001`, `MOD-002` through `MOD-004`, `RT-004`, and `LIC-002` retain
+  their existing ownership of representation, release, runtime, and final
+  notice decisions.

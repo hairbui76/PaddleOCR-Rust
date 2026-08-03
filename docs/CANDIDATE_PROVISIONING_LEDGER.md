@@ -2,8 +2,8 @@
 
 Roadmap item: `MOD-001`  
 Status: In progress — candidate-only local verification workflow; two
-user-authorized external ONNX directories were inventoried and their exact
-package terms review is complete, but no artifact, format, runtime, or
+user-authorized external ONNX directories and two confined static-oracle
+directories were inventoried, but no artifact, format, runtime, or
 distribution policy is accepted
 Prepared: 2026-08-02  
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
@@ -19,15 +19,19 @@ on an upstream checkout, network access, a cache, or an unpinned URL.
 It is not a model manifest, downloader specification, local-path API, runtime
 selection, or permission to convert, redistribute, or bundle an artifact.
 Those decisions remain with `MODEL-DEC-001`, `MOD-002` through `MOD-004`,
-`RT-002` through `RT-004`, and `LIC-002`. The exact ONNX pair's terms evidence
-is complete under `LIC-001`; no current Rust code reads these candidate
-artifacts.
+`RT-002` through `RT-004`, and `LIC-002`. `LIC-001` accepts terms evidence for
+the exact ONNX pair and, separately, for a confined static `RT-003` raw-tensor
+oracle; no current Rust code reads these candidate artifacts.
 
 The 2026-08-02 user-authorized external inventory of the ONNX detector and
 recognizer is summarized in
 [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
 Its full machine-readable record remains beside the external files rather than
-in this repository. The inventory does not alter the boundary above.
+in this repository. On 2026-08-04, the same external-only procedure verified
+all five expected files in the static detector and recognizer packages after
+their confined `RT-003` terms review. The record now lists all four candidate
+directories; neither inventory is an artifact-selection record or alters the
+boundary above.
 
 `MODEL_CANDIDATES.md` is the canonical record for the pinned URLs, byte
 lengths, SHA-256 values, and observed ABI. This ledger deliberately refers to
@@ -88,9 +92,11 @@ all of the following:
    retained terms/notices in an external evidence record. That record is not
    committed here until the asset and disclosure review permits it.
 5. An ONNX experiment matches the exact candidate/revision and package terms
-   decision recorded in `LIC-001`; any other representation needs its own
-   review before it is executed, converted, or used to create model-backed
-   goldens. No candidate is described as supported before its later gates.
+   decision recorded in `LIC-001`. The named static pair may be executed only
+   for the confined external `RT-003` raw-tensor oracle after its exact package
+   inventory is complete; any other representation needs its own review before
+   it is executed, converted, or used to create model-backed goldens. No
+   candidate is described as supported before its later gates.
 
 Illustrative read-only verification commands may calculate a byte count and
 SHA-256 for a previously approved local path, for example:
