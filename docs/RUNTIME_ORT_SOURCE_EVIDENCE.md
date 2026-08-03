@@ -356,6 +356,68 @@ finite, correctly shaped output on at least one no-AVX/AVX2/AVX-512 QEMU TCG
 route. They do not establish bitwise determinism, numerical equivalence,
 physical baseline-host support, platform support, or a distribution baseline.
 
+### Elementwise host/QEMU diagnosis for two minimum shapes (2026-08-03)
+
+A further disposable C harness compared each QEMU result directly with a raw
+host result from the same source-built library. This is a same-runtime
+host-versus-emulator diagnostic only, not a Paddle/static-reference oracle,
+model-conversion comparison, or a declared tensor tolerance. The harness and
+every raw output remained outside this repository; it did not execute Python,
+PaddleOCR, or the linked upstream checkout.
+
+The C source SHA-256 was
+`ac7404a142c0bf03daff558e7f0991df13f76ccfc562f43f67fc4fa709ba9a14` and
+the x86-64 executable SHA-256 was
+`5e61523f3ab434eba30997920a242457e6a1e5bd2773b79f4be464fc62bb9f7e`.
+GCC 13.3.0 built it with `-O2 -Wall -Wextra -Werror -march=x86-64
+-mno-avx -mno-avx2 -mno-fma`. It dynamically loaded the library and reused
+the observed `x` / `fetch_name_0` float32 contract, one intra-op thread, one
+inter-op thread, and telemetry disabled. The comparison route used the
+external QEMU user-mode executable SHA-256
+`f50bed962ccaa52c476e14e50b02006b7dffa414566a59b13b240bdac4e4f324`
+with `qemu-x86_64-static -cpu qemu64 -L /`; prior QEMU evidence records this
+CPU model's AVX, AVX2, and AVX-512F flags as zero. User-mode QEMU is not a
+full guest, a physical baseline host, or a network-isolation result.
+
+For each row, the host first wrote a temporary private binary dump, a second
+host process compared itself to that dump, and QEMU compared its output to the
+same dump. `zero` contains only zero float32 input values. `lcg-v1` is a
+self-authored bounded diagnostic input: it starts from `0x6d2b79f5`, updates
+with `state = state * 1664525 + 1013904223`, and maps the high sixteen bits to
+`[-1, 1)` as float32. It is neither a decoded image nor selected model
+preprocessing. All host repeats were bit-exact; two independent QEMU processes
+were also bit-exact for both zero-input rows.
+
+| Input | Component / shape | Elements | Different f32 bit patterns | Largest absolute difference | Difference counts | Bounded behavioral check |
+|---|---|---:|---:|---:|---|---|
+| `zero` | Detector `[1, 3, 32, 32]` → `[1, 1, 32, 32]` | 1,024 | 706 | `1.78813934e-7` | 57 `> 1e-7`; 0 `> 1e-6` | 0 changes across the DB-style `> 0.3` check |
+| `zero` | Recognizer `[1, 3, 48, 160]` → `[1, 20, 18,710]` | 374,200 | 366,726 | `3.57627869e-7` | 5 `> 1e-9`; 0 `> 1e-6` | 0 changes among the 20 strict-last-axis argmaxes |
+| `lcg-v1` | Detector `[1, 3, 32, 32]` → `[1, 1, 32, 32]` | 1,024 | 672 | `1.78813934e-7` | 46 `> 1e-7`; 0 `> 1e-6` | 0 changes across the DB-style `> 0.3` check |
+| `lcg-v1` | Recognizer `[1, 3, 48, 160]` → `[1, 20, 18,710]` | 374,200 | 374,099 | `1.85370445e-5` | 16,118 `> 1e-9`; 2,177 `> 1e-8`; 125 `> 1e-7`; 15 `> 1e-6`; 5 `> 1e-5`; 0 `> 1e-4` | 0 changes among the 20 strict-last-axis argmaxes |
+
+The comparison reports a detector threshold crossing only for the fixed
+private `> 0.3` precursor, and recognizer argmaxes only per final tensor axis;
+it does not perform DB contour extraction, CTC collapse, dictionary mapping,
+text decoding, score filtering, or any public postprocessing. In particular,
+the lack of an argmax difference on these two synthetic minimum-shape inputs
+does not establish recognition-text stability.
+
+The temporary zero-output dumps had SHA-256 values
+`0b26ddaa8f30fcbb89cf12f399858da50f75502adc771f0af63cc89bf4399d81`
+(detector host) and
+`afe2d545b34f2f82f9bf32d80b2b4cfdf799edde1b942a82fab90f0819b96194`
+(recognizer host); the corresponding LCG dumps had SHA-256 values
+`95a56911a685f5760dc0656dd2e449f586e6f3a773911350e36d270bb4fc16e7`
+and `c31c3c365663dbe70c29f07571d2c6519ac19b733dec3f53fd71942b0fa96df0`.
+These are external diagnostic artifacts, not committed model-derived fixtures.
+
+This narrows the earlier compact-fingerprint observation only for two minimum
+shapes and two self-authored inputs. It does not cover typical/maximum shapes,
+actual preprocessing, images, postprocessing, thread counts, physical CPUs,
+other QEMU modes, a static Paddle reference, another backend, model conversion,
+or a user-facing tolerance. It therefore neither completes RT-002 nor relaxes
+any P3/P4/P5 gate.
+
 ## External commands actually run
 
 All commands in this section ran outside the project repository. The initial
@@ -413,7 +475,7 @@ This source build is not hermetic or approved for distribution:
 | Exact local artifact | Partial pass: the verified detector and recognizer ONNX bytes ran through the host spike. The QEMU arrangements independently verified their respective exact model/library hashes before session creation. |
 | Graph/operator/shape | Partial pass: all six declared shapes ran on the host source-built library and on at least one no-AVX QEMU TCG route. This is not arbitrary-shape or physical-host coverage. |
 | Tensor ABI | Partial pass: the external Rust spike and QEMU C probes checked observed x/fetch_name_0 float32 NCHW shapes, including batch-six recognition. No project adapter exists. |
-| Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes also observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates differ. No elementwise diagnosis or tolerance result exists. |
+| Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates also differ. A later same-runtime elementwise diagnosis at only two minimum shapes found no difference above `1e-4`, no fixed detector `> 0.3` crossing, and no final-axis recognizer argmax change for zero and one synthetic input, but it establishes no general tolerance, preprocessing, postprocessing, or static-reference equivalence. |
 | End-to-end semantics | Not run. |
 | CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
 | Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. No Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, concurrency, or public-error review exists. |
@@ -426,8 +488,10 @@ This source build is not hermetic or approved for distribution:
    isolated model-backed oracle capture.
 2. After LIC-001 permits an isolated model-backed capture, compare raw
    detector/recognizer outputs against the approved static reference under
-   m2-tensor-v1, characterize the observed host/QEMU numerical differences,
-   and diagnose every element error above 1e-4.
+   m2-tensor-v1, characterize host/QEMU differences across the declared
+   representative tensors, and diagnose every element error above `1e-4`.
+   The two-minimum-shape zero/LCG diagnostic above does not satisfy this
+   static-reference or representative-input requirement.
 3. Confirm the now-complete emulated no-AVX shape coverage on an approved
    physical baseline host or formally define an acceptable emulation policy.
 4. Produce a reproducible, verified source/binary provenance route with a

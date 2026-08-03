@@ -100,7 +100,11 @@ through no-AVX QEMU TCG routes; see
 [`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md). Its
 calibrated compact fingerprints show host/QEMU bit-pattern differences for
 detector minimum and every recognizer profile, while detector typical/maximum
-aggregates also differ. The source-build evidence also includes five bounded C
+aggregates also differ. A later two-minimum-shape, same-runtime elementwise
+diagnostic characterized zero and synthetic-input deviations without finding a
+value above `1e-4`, a fixed detector `> 0.3` crossing, or a recognizer
+last-axis argmax change; it remains neither a static-reference comparison nor
+a selected tolerance. The source-build evidence also includes five bounded C
 API failure cases under a process watchdog and address-space limit. It is
 still partial: it does not establish raw-output equivalence, a physical
 baseline host, deployment, native supply-chain review, a Rust adapter/resource
