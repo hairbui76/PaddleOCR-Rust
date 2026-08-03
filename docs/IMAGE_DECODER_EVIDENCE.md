@@ -955,10 +955,52 @@ each run.
 
 This is a bounded deterministic mutation signal for this exact combined
 control, not a general PNG fuzz campaign, parser safety proof, allocation or
-CPU-work proof, supported-format policy, or decoder selection. No QEMU run of
-this exact combined package, general hostile corpus, allocation
-instrumentation, concurrency proof, or full work-bound proof has been
-performed.
+CPU-work proof, supported-format policy, or decoder selection. The following
+QEMU run covers this exact harness only; no general hostile corpus, allocation
+instrumentation, concurrency proof, physical-baseline CPU result, or full
+work-bound proof has been performed.
+
+### Hybrid no-AVX QEMU execution (2026-08-03)
+
+The exact follow-up harness ran again in a disposable clean QEMU system-mode
+guest. Rust 1.94.0 built its source
+(`5eae3f200c2411087fa6fc7c32200b020f1200258aa8a00e3aa06ec74d4392b8`)
+offline from the manifest/lock hashes recorded above with:
+
+```text
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc RUSTFLAGS='-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma' cargo build --release --locked --offline
+```
+
+The resulting dynamically linked PIE had SHA-256
+`e474679e0ad41ff9ee4417b7c46581897b135c43ac549378075785f8aef13795`.
+Its `ldd` closure was only the dynamic loader, `libc.so.6`, and
+`libgcc_s.so.1`; it is deliberately not a static-package or distribution
+claim. The clean initramfs contained only the harness, the fixed self-authored
+capture JSON (SHA-256
+`ea0541264e3789bae023fdf6bcb1f5bd7831b0f44835975e06d4db71dd24b6e6`),
+a static BusyBox, those three runtime loader/library files, the init script,
+and empty mount directories—no model, Python, PaddleOCR checkout, or unrelated
+runtime probe. Its hashes were:
+
+| Artifact | SHA-256 |
+|---|---|
+| Init script | `c840a9b9d5cd866b71ea3bf2cdb78804c78d2a8af420ab77b361054ef4a1ea42` |
+| BusyBox | `dbac288c29ba568459550a2da9e7ae0ded6b1fc728ee9fad3044c44e62d6ac14` |
+| `libc.so.6` | `8db37cf3f2169f59a0f07ef1fea308c35656668c64c8ff294e1860f4121eb161` |
+| `libgcc_s.so.1` | `d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb` |
+| Dynamic loader | `cd4df4f3c7b83673d61189bf2eaebd33ca4f2853ab9772b8a25e025ef99b1e81` |
+| Guest kernel | `12eb24189f3eb30bd0dcd919248caaa054ed4e87b799a53fdcc3999f157933e4` |
+| Compressed initramfs | `34fc6dd8c4da9e7b768b0e32f074d4405df5a602f4f2f26aa044d16fb43ae4b8` |
+
+QEMU 9.0.2 ran one 256 MiB TCG `qemu64` vCPU with `-nic none`; the guest
+itself printed its flags before running the probe, and the list contains
+neither `avx`, `avx2`, nor `fma`. It exited zero after the same fourteen exact
+8-bit controls, labelled 16-bit diagnostic, five negative controls, 1,440
+JPEG mutations, 720 PNG mutations, and JPEG header checks reported on the
+portable host build. This establishes one bounded emulated no-AVX route for
+the exact finite control. It does not prove physical CPU support, all x86-64
+systems, scalar-only dispatch, decoder safety, allocation/work bounds,
+concurrency, supported input policy, or decoder selection.
 
 `cargo-audit` scanned the exact 34-package lockfile against RustSec revision
 `d91a8fc9492378f23cba86b81770c6d16de6ebba`, loaded 1,186 advisories, and
