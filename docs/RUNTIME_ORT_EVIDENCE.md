@@ -1,8 +1,9 @@
 # ort 2.0.0-rc.13 External Runtime Evidence
 
-Roadmap item: RT-002
-Status: partial exact-artifact graph/shape pass; no backend or artifact accepted
+Roadmap item: RT-002, partial RT-003 evidence
+Status: partial exact-artifact graph/shape and same-runtime Rust adapter pass; no backend or artifact accepted
 Recorded: 2026-08-02
+Updated: 2026-08-04
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
 ## Decision boundary
@@ -85,6 +86,68 @@ there was no native-library fallback or automatic download. This does not test
 malformed models, missing model files, allocation limits, cancellation, or the
 future adapter error contract.
 
+## Direct Python-to-Rust raw-tensor relay (2026-08-04)
+
+This separate disposable experiment checked the `ort` wrapper's direct tensor
+ownership, names, shapes, output extraction, and little-endian `f32` handling
+without adding a project dependency or retaining a model-derived file. It is
+not an independent numerical oracle: both sides load the same exact ONNX files
+through the same temporary CPU ONNX Runtime 1.28.0 wheel library. It therefore
+cannot substitute for the rubric's isolated static/Paddle reference or close
+`m2-tensor-v1`.
+
+The experiment ran outside both repositories with `PYTHONDONTWRITEBYTECODE=1`,
+`PYTHONNOUSERSITE=1`, `PYTHONHASHSEED=0`, `OMP_NUM_THREADS=1`, CPU execution
+only, one intra/inter-op thread, and memory patterns disabled. The direct
+Python side used CPython 3.12.3, NumPy 1.26.4, and ONNX Runtime 1.28.0. It
+verified regular non-symlink local model files against the detector SHA-256
+`eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` and
+recognizer SHA-256
+`9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` before
+each session. The temporary native library SHA-256 was
+`aa4079d18f4ea7a5f3a94d80cd4bbe0f2740436626622d64d793803a20381083`, with
+the adjacent provider library SHA-256
+`086ec1d5388f64153d9c63470d126693db9a182c8ce236d3a1119068471b8a0d`.
+
+The Python producer generated one deterministic self-authored LCG `f32`
+input for each declared M2 shape, saved the inputs and direct output tensors
+only in a disposable directory, and recorded shape/name/SHA-256 metadata. Its
+source SHA-256 was
+`d706e1f05d87e0993531627449b65df4e6fc943144b16d461c2dd069dc3660b8`.
+Two fresh Python processes produced byte-identical complete temporary capture
+trees and the same canonical metadata SHA-256
+`76daf844712c632fffc08310bef3c335eb3dc71c01b42d05acd1ea74f33477e6`.
+
+The independent disposable Rust program used `ort` 2.0.0-rc.13 with only
+`std`, `load-dynamic`, and `api-28`; its manifest, locked dependency graph,
+source, and release binary SHA-256 values were respectively
+`abe0c09b28624fa691820c54a5d1044a48ef77fb356ba780d7a6a7ea21eadf59`,
+`efc777509076c479afc04e63583284b0b98c80eae49a4f29005c857df63e1fea`,
+`145c364917c1d95b4ca4e6c5a7d4df7f479971fa925f7334dfa923918e10d505`, and
+`af7f15f9b970dc5a05a13a8ced353782b868482953d14c0bba4625c5675b6720`.
+It was built from the existing local crate cache with `CARGO_NET_OFFLINE=true`
+and `/usr/bin/gcc`; the 843,920-byte release executable dynamically loaded the
+same verified native library and verified the model/input/expected-output file
+hashes before each run.
+
+| Probe | Input shape | Output shape | Compared elements | Result |
+|---|---|---|---:|---|
+| Detector minimum | `[1, 3, 32, 32]` | `[1, 1, 32, 32]` | 1,024 | Bit-identical |
+| Detector typical | `[1, 3, 960, 544]` | `[1, 1, 960, 544]` | 522,240 | Bit-identical |
+| Detector maximum | `[1, 3, 960, 960]` | `[1, 1, 960, 960]` | 921,600 | Bit-identical |
+| Recognizer minimum | `[1, 3, 48, 160]` | `[1, 20, 18,710]` | 374,200 | Bit-identical |
+| Recognizer typical | `[1, 3, 48, 320]` | `[1, 40, 18,710]` | 748,400 | Bit-identical |
+| Recognizer maximum | `[6, 3, 48, 320]` | `[6, 40, 18,710]` | 4,490,400 | Bit-identical |
+
+All 7,057,864 compared elements had zero absolute and relative error. Two
+fresh Rust processes produced the same aggregate-only result JSON SHA-256
+`f7f26c6cfcfa6a585e24e83242be9981e5f91afae7492a085af79c30488f6a93`.
+The temporary captures contained 18,720,768 self-authored input bytes and
+28,231,456 model-derived output bytes; they, the temporary crate, executable,
+and logs are not retained in this repository. No upstream checkout, Python
+source, model asset, raw tensor, dictionary entry, native library, Cargo
+dependency, API, CLI behavior, or supported-artifact policy was added.
+
 ## Gate status
 
 | RT-002 gate | Current result |
@@ -92,7 +155,7 @@ future adapter error contract.
 | Exact local artifact | Partial pass: both verified ONNX files were loaded directly by the external spike. |
 | Graph/operator/shape | Partial pass: every declared M2 zero-input shape executed through the exact ONNX files with the CPU provider. |
 | Tensor ABI | Partial pass: the observed x and fetch_name_0 names, float32, NCHW shapes, and batch-six recognizer output were checked. No public adapter exists. |
-| Numerical equivalence | Not run: no isolated static Paddle oracle or m2-tensor-v1 element comparison exists. |
+| Numerical equivalence | Partial adapter-wire pass: a direct Python ONNX Runtime reference and a Rust `ort` wrapper produced bit-identical outputs for all six declared LCG shapes under one common temporary native library. This is not an isolated static/Paddle oracle, an independent backend comparison, or `m2-tensor-v1` completion. |
 | End-to-end semantics | Not run. |
 | CPU portability | Not established. The host is an AVX-capable Xeon v3; no no-AVX/AVX2 baseline test or binary assurance exists. |
 | Resources and errors | Incomplete. One-thread controls, two runs, peak RSS, and a missing-library error were observed only. |
@@ -106,10 +169,9 @@ retroactively qualify this wheel or clear the remaining RT-002 blockers.
 
 ## Required next evidence
 
-- Close LIC-001 before retaining model-derived oracle outputs or using an
-  isolated model-backed oracle capture.
-- Compare raw outputs against the approved static reference under
-  m2-tensor-v1, then diagnose any element error above 1e-4.
+- Capture and compare raw outputs against an approved independent static/Paddle
+  reference under `m2-tensor-v1`, then diagnose any element error above `1e-4`.
+  The same-runtime relay above only validates wrapper wire behavior.
 - Extend the partial source-built no-AVX/AVX2 evidence in
   [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md) from the
   detector minimum shape to every required detector/recognizer shape, then

@@ -128,15 +128,18 @@ partially passed exact graph/shape and named-tensor ABI probes. A separate
 source-built ONNX Runtime 1.28.0 route repeated all six host probes and ran
 every declared detector/recognizer shape through no-AVX QEMU TCG routes.
 Calibrated compact fingerprints show host/QEMU bit-pattern differences for
-detector minimum and all recognizer profiles; no raw elementwise or static
-Paddle comparison exists. See [`RUNTIME_TRACT_EVIDENCE.md`](RUNTIME_TRACT_EVIDENCE.md),
+detector minimum and all recognizer profiles. A later temporary direct Python
+ONNX Runtime-to-Rust `ort` relay is bit-identical across all six LCG shapes,
+but both sides use one common temporary native library and it is neither an
+independent raw elementwise comparison nor a static Paddle comparison. See [`RUNTIME_TRACT_EVIDENCE.md`](RUNTIME_TRACT_EVIDENCE.md),
 [`RUNTIME_ORT_EVIDENCE.md`](RUNTIME_ORT_EVIDENCE.md), and
 [`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md). A separate
 source-built C API lifecycle probe also completed twelve sequential
 create/run/release cycles for each exact minimum-shape model under one-thread
 controls and bounded Linux-host resources; its short RSS observation is not a
 leak, cancellation, concurrency, or Rust-adapter proof. No result accepts a
-local artifact or clears every blocker gate: raw-tensor equivalence, end-to-end
-semantics, physical CPU/platform coverage, resource/error behavior, supply
-chain, and the native boundary remain incomplete. `RT-003` and `RT-004` remain
-planned, and `D-006` remains open.
+local artifact or clears every blocker gate: independent raw-tensor
+equivalence, end-to-end semantics, physical CPU/platform coverage,
+resource/error behavior, supply chain, and the native boundary remain
+incomplete. `RT-003` is in progress, `RT-004` remains planned, and `D-006`
+remains open.

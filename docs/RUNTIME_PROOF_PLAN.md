@@ -4,8 +4,9 @@ Roadmap item: RT-002
 Status: In progress — `tract-onnx` 0.23.4 was rejected for the exact-artifact
 configuration; external `ort` 2.0.0-rc.13 dynamic-load proofs passed the six
 fixed exact-artifact shape probes through both a temporary wheel and a
-source-built ONNX Runtime route, but remain unqualified; no runtime, format, or
-public implementation is selected  
+source-built ONNX Runtime route. A later temporary Python-to-Rust same-runtime
+raw relay is bit-identical for all six LCG shapes, but remains unqualified; no
+runtime, format, or public implementation is selected
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854  
 Applies to: the user-provisioned, hash-verified v6-medium ONNX detector and
 recognizer candidates only
@@ -180,6 +181,27 @@ and recorded a point-in-time empty OSV result for its 12-package normal
 closure. These are constraints for a future adapter, not an approval of its
 unsafe boundary, the native library, or a backend. The review and its limits
 are recorded in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
+
+### Direct Python-to-Rust raw relay
+
+On 2026-08-04, a separately disposable direct-ONNX relay used the exact local
+ONNX detector/recognizer and one temporary ONNX Runtime 1.28.0 CPU wheel
+library. A Python 3.12.3 / NumPy 1.26.4 producer created deterministic
+self-authored LCG `f32` inputs for all six declared M2 shapes, retained raw
+input/output bytes only in a temporary directory, and ran twice with identical
+capture metadata. A Rust 1.94.0 wrapper with `ort` 2.0.0-rc.13
+`std`/`load-dynamic`/`api-28` verified every supplied model/input/output hash
+before loading, then compared all 7,057,864 output elements. Two fresh Rust
+processes were bit-identical to the Python output on every element with zero
+absolute/relative error and identical aggregate result JSON.
+
+This validates one direct wrapper's model/path/name/shape/dtype/byte-order
+handling against the same native library, not an independent backend or static
+Paddle oracle. It does not exercise image preprocessing, no-AVX execution,
+resource policy, real adapter ownership, dictionary/CTC behavior, or
+end-to-end semantics. Exact temporary hashes, commands, and non-claims are in
+`RUNTIME_ORT_EVIDENCE.md`; no raw tensors, model bytes, library, harness, or
+Cargo dependency entered this repository.
 
 ## Required evidence after any candidate smoke result
 

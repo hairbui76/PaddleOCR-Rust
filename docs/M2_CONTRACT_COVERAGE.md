@@ -27,7 +27,7 @@ mean that M2 OCR is usable.
 | `M2-OCR-001` | The classic system sequence in [CLASSIC_OCR_CONTRACT.md](CLASSIC_OCR_CONTRACT.md) and result invariants in [API_CONTRACT.md](API_CONTRACT.md). | No public `Ocr` engine or pipeline orchestration exists. `tests/fixtures/classic-v1-ctc-score-boundary/` records the isolated source `score >= drop_score` branch around `0.5` with fake collaborators only. `tests/fixtures/classic-v1-e2e-no-text/` preserves one classic CPU/ONNX `lines: []` result; `tests/fixtures/classic-v1-e2e-reading-order/` preserves one self-authored four-line text/order/quad/confidence result; `tests/fixtures/classic-v1-e2e-tall-crop/` preserves one self-authored rotated-text result plus the source `get_rotate_crop_image` branch dimensions; and `tests/fixtures/classic-v1-e2e-unicode/` preserves one self-authored CJK phrase with an exact UTF-8 result. All end-to-end records pin candidate hashes and use a BGR-input boundary. | Gate P5 components, `CROP-001` oracle/decoder evidence, `OCR-001` through `OCR-003`, and offline end-to-end fixtures. | Absent; the score-boundary and four end-to-end fixtures are evidence data only and the binary intentionally rejects OCR use. |
 | `M2-API-001` | [API_CONTRACT.md](API_CONTRACT.md) freezes the native typed surface, JSON schema, privacy, errors, and intentional differences. | Public foundation types/errors exist, but no `Ocr`, request/options/result/line types, or serializer exists. | Approved detector/recognizer/model provenance and P6 `API-001`/`SCHEMA-001` implementation with negative and deterministic serialization tests. | Contract-only; no OCR API exists. |
 | `M2-CLI-001` | [API_CONTRACT.md](API_CONTRACT.md) fixes stdout/privacy/schema principles; detailed command syntax, exit codes, multi-input behavior, and model-path handling are deliberately owned by `CLI-001`. | `src/main.rs` reports that OCR is unsupported and exits with the documented bootstrap failure behavior. | A functioning P6 API/schema plus a `CLI-001` contract that fixes arguments, exit codes, stderr, local model provisioning, and JSONL behavior. | Bootstrap-only; not an OCR CLI. |
-| `M2-MODEL-001` | [MODEL_CANDIDATES.md](MODEL_CANDIDATES.md), [CANDIDATE_PROVISIONING_LEDGER.md](CANDIDATE_PROVISIONING_LEDGER.md), [LICENSE_REVIEW.md](LICENSE_REVIEW.md), and [RUNTIME_RUBRIC.md](RUNTIME_RUBRIC.md). | Candidate revisions, known hashes, and a local-only verification procedure are recorded; no artifact resolver or runtime exists. | User-provisioned candidate files outside the repository, revision-specific provenance/terms, dictionary/operator validation, `RT-002`/`RT-003` evidence, `RT-004`, and `MODEL-DEC-001`. | No supported artifact, download, cache, conversion, or backend. |
+| `M2-MODEL-001` | [MODEL_CANDIDATES.md](MODEL_CANDIDATES.md), [CANDIDATE_PROVISIONING_LEDGER.md](CANDIDATE_PROVISIONING_LEDGER.md), [LICENSE_REVIEW.md](LICENSE_REVIEW.md), and [RUNTIME_RUBRIC.md](RUNTIME_RUBRIC.md). | Candidate revisions, known hashes, and a local-only verification procedure are recorded. A disposable direct Python ONNX Runtime-to-Rust `ort` relay is bit-identical for the six declared LCG input shapes, but it shares one temporary native library and is only adapter-wire evidence. No artifact resolver or runtime exists. | User-provisioned candidate files outside the repository, revision-specific provenance/terms, dictionary/operator validation, independent `RT-003` evidence, `RT-004`, and `MODEL-DEC-001`. | No supported artifact, download, cache, conversion, or backend. |
 
 The crop-oracle consumer
 `crop::tests::classic_crop_executes_every_captured_opencv_oracle_case`
@@ -59,9 +59,10 @@ with broad API scaffolding:
    `classic-v1-ctc-score-boundary` separately captures one source-only
    `score >= 0.5` branch with fake collaborators; it is not a Rust pipeline,
    CTC decode, or model result. Detector thresholds, malformed-input,
-   resource-limit, decoder, raw-tensor, broader tall-crop, and actual Rust
-   differential qualifications remain absent; these fixtures do not close the
-   gap.
+   resource-limit, decoder, independent raw-tensor, broader tall-crop, and
+   actual Rust differential qualifications remain absent. The same-runtime
+   direct Python-to-Rust relay in `RUNTIME_ORT_EVIDENCE.md` is preliminary
+   adapter-wire evidence only; these fixtures do not close the gap.
 
 These are evidence and decision gaps, not invitations to create fallback
 behavior. Unsupported surfaces remain absent or return a structured unsupported
