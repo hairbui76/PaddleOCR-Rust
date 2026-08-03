@@ -38,8 +38,8 @@ adapted source file carries one, or if a third-party dependency requires one.
 
 | Material | Current project rule | Evidence required before use or distribution |
 |---|---|---|
-| Original Rust source | Apache-2.0. | Project user confirmed the license scope on 2026-08-02; see `P0_DECISIONS.md`, `LICENSE`, and `NOTICE`. |
-| Project-authored documentation and self-authored fixtures | Apache-2.0 unless a file carries an explicit third-party notice. | Project user confirmed the license scope on 2026-08-02; source/provenance review still applies to any adapted or external material. |
+| Original Rust source | Apache-2.0. | On 2026-08-03, the project user explicitly delegated the project-license choice after confirming the project-owned repository will be open source and publicly accessible; see `P0_DECISIONS.md`, `LICENSE`, and `NOTICE`. |
+| Project-authored documentation and self-authored fixtures | Apache-2.0 unless a file carries an explicit third-party notice. | The same 2026-08-03 user authorization applies; source/provenance review still applies to any adapted or external material. |
 | Adapted upstream source or non-trivial translations | Avoid unless necessary; preserve applicable copyright/license/notice text and identify modifications. | File-level provenance and license review. |
 | Public API names or behavioral descriptions | May describe compatibility factually. | Wording must not imply an official PaddlePaddle/PaddleOCR release or endorsement. |
 | Name, logo, or branding | Do not select or use an official-looking name, logo, or claim of affiliation by default. | Explicit branding review and, if necessary, permission. |
@@ -49,11 +49,12 @@ adapted source file carries one, or if a third-party dependency requires one.
 
 ## Confirmed project-license disposition
 
-On 2026-08-02, the project user confirmed that all project-authored repository
-content will be open source and publicly accessible. The project therefore
-selects Apache-2.0 for original Rust source, project-authored documentation,
-and self-authored fixtures. No dual license is currently approved. `LICENSE`
-contains the full terms and `NOTICE` records the independent-project boundary.
+On 2026-08-03, the project user explicitly confirmed that project-owned
+repository material will be open source and publicly accessible, and delegated
+the project-license choice. The project therefore selects Apache-2.0 for
+original Rust source, project-authored documentation, and self-authored
+fixtures. No dual license is currently approved. `LICENSE` contains the full
+terms and `NOTICE` records the independent-project boundary.
 
 This license choice covers only material for which PaddleOCR-Rust contributors
 can grant rights. It does not license any PaddleOCR source, model weights,

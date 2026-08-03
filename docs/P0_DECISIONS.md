@@ -9,9 +9,11 @@ PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 ## Decision authority and amendment rule
 
 After reviewing the scope, model, identity, and PaddleX evidence records, the
-user directed the project to continue. This record turns that direction into
-explicit, conservative bootstrap choices rather than silently inventing
-architecture or asset behavior.
+user directed the project to continue. On 2026-08-03, the user also explicitly
+confirmed that project-owned repository material is intended to be open source
+and publicly accessible, and delegated the project-license selection. This
+record turns those directions into explicit, conservative bootstrap choices
+rather than silently inventing architecture or asset behavior.
 
 These choices govern the repository until an explicit user-approved roadmap
 amendment changes them. The full M7 target is not narrowed by the M2 sequence.
@@ -22,7 +24,7 @@ rights to a model asset.
 
 | ID | Resolution | Rationale and boundary |
 |---|---|---|
-| `D-001` | Project display name: `PaddleOCR-Rust`; Cargo package: `paddleocr-rust`; Rust library crate: `paddleocr_rust`; Apache-2.0 for project-authored source, documentation, and self-authored fixtures; no dual license; initial package publication disabled. | On 2026-08-02, the project user confirmed that project-authored repository content will be open source and publicly accessible. Apache-2.0 is compatible with the upstream source license and preserves a clear notice path for any later adapted material. `NOTICE` states independent, non-affiliated status. This decision grants no rights to upstream or third-party assets. |
+| `D-001` | Project display name: `PaddleOCR-Rust`; Cargo package: `paddleocr-rust`; Rust library crate: `paddleocr_rust`; Apache-2.0 for project-authored source, documentation, and self-authored fixtures; no dual license; initial package publication disabled. | On 2026-08-03, the project user explicitly delegated the project-license choice after confirming that project-owned repository content will be open source and publicly accessible. Apache-2.0 is compatible with the upstream source license and preserves a clear notice path for any later adapted material. `NOTICE` states independent, non-affiliated status. This decision grants no rights to upstream or third-party assets. |
 | `D-002` | The full M7 target is every row in `INVENTORY.md` for the pinned PaddleOCR commit. The first stable release is M2 only. | M2 is a sequencing milestone, not a redefinition of the requested full Rust port. |
 | `D-003` | Initial supported target: `x86_64-unknown-linux-gnu`; baseline toolchain/MSRV: Rust `1.94.0`; portable x86-64 code generation only, with no AVX/AVX2 requirement. | This is the verified development/qualification host. Windows and other targets remain Later and require independent evidence. |
 | `D-004` | Start with one workspace package containing a library and a native CLI. The first public surface is idiomatic Rust plus versioned JSON/JSONL, not Python API emulation. Backend details remain private. | A single package is the minimum justified P1 boundary. Exact API/schema design remains P2 work. |
