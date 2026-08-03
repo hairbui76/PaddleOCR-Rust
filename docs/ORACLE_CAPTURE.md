@@ -1,7 +1,7 @@
 # Isolated Oracle Capture Procedure
 
 Roadmap item: ORACLE-001
-Status: Procedure complete; one narrow component crop capture and two narrow
+Status: Procedure complete; one narrow component crop capture and three narrow
 model-backed classic ONNX captures are committed
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
@@ -80,7 +80,7 @@ procedure for end-to-end capture or prove decoder/model compatibility.
 
 The reviewed component capture at
 [`tests/fixtures/classic-v1-crop-oracle/`](../tests/fixtures/classic-v1-crop-oracle/)
-is intentionally limited to four self-authored BGR crop cases. It does not
+is intentionally limited to fifteen self-authored BGR crop cases. It does not
 meet the model, input-image, or end-to-end metadata requirements above.
 
 ## Model-backed end-to-end oracles
@@ -127,6 +127,24 @@ Rust decoder, geometry implementation, runtime/backend, score tolerance,
 Unicode behavior, threshold behavior, error behavior, or a functional Rust OCR
 path.
 
+The separate
+[`classic-v1-e2e-tall-crop`](../tests/fixtures/classic-v1-e2e-tall-crop/)
+fixture uses the same exact candidate pair and isolated CPU settings. It renders
+the self-authored word `Rust` horizontally with external `cv2.putText`, rotates
+that temporary raster clockwise, and places it on a white `900×360` BGR canvas.
+The classic source detects one quadrilateral, derives a `307×145` pre-rotation
+crop, takes the `height / width >= 1.5` branch in `get_rotate_crop_image`, and
+returns a `145×307` rotated crop before recognizing `Rust`. The source result,
+quadrilateral, confidence, and crop dimensions were stable across two fresh
+processes.
+
+This is one source-branch observation, not a general crop or OpenCV
+equivalence claim. No crop pixels, model bytes, dictionary entries, raw tensors,
+font binary, OpenCV source/binary, external checkout, cache, virtual
+environment, or capture harness is committed. It does not validate a Rust
+decoder, backend, crop implementation, model support, API, CLI, Unicode,
+threshold, error, or resource-limit behavior.
+
 ## Prohibited shortcuts
 
 - Do not invoke the `PaddleOCR/` symlink as a test oracle.
@@ -140,6 +158,7 @@ path.
 ## Completion condition
 
 `ORACLE-001` is complete as a procedure. `FIX-001` and `TOL-001` remain
-incomplete: narrow no-text and synthetic reading-order fixtures exist, but
-tall-crop, Unicode, threshold, malformed-input, resource-limit, decoder,
-raw-tensor, and actual Rust differential coverage has not been completed.
+incomplete: narrow no-text, synthetic reading-order, and one tall-crop branch
+fixtures exist, but Unicode, threshold, malformed-input, resource-limit,
+decoder, raw-tensor, and actual Rust differential coverage has not been
+completed.

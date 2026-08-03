@@ -1,0 +1,163 @@
+{
+  "schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1",
+  "fixture_id": "classic-v1-e2e-tall-crop",
+  "capture_scope": "Classic TextSystem CPU/ONNX tall-crop result from a self-authored OpenCV-rendered and clockwise-rotated BGR image.",
+  "input": {
+    "png_sha256": "95e9d9c3e198de854feb4c1b6b42cb8c6aedb3768313664879ba55c847683c20",
+    "png_byte_length": 6913,
+    "bgr_sha256": "c16f7c6e47c92d92d897fee5e7ecdf32e5847bff18335bb3600da7965e65204d",
+    "bgr_shape": [900, 360, 3],
+    "bgr_channel_order": "BGR",
+    "bgr_dtype": "uint8",
+    "renderer": {
+      "kind": "cv2.putText+cv2.rotate",
+      "opencv_python": "4.11.0.86",
+      "opencv": "4.11.0",
+      "font_face": "FONT_HERSHEY_SIMPLEX",
+      "line_type": "LINE_AA",
+      "horizontal_canvas_shape": [220, 760, 3],
+      "horizontal_canvas_bgr": [255, 255, 255],
+      "text": "Rust",
+      "text_origin": [20, 170],
+      "text_scale": 4.0,
+      "text_thickness": 8,
+      "rotation": "cv2.ROTATE_90_CLOCKWISE",
+      "outer_canvas_shape": [900, 360, 3],
+      "outer_canvas_bgr": [255, 255, 255],
+      "placement_top_left": [80, 70],
+      "font_asset_bundled": false
+    },
+    "encoding": {
+      "operation": "cv2.imencode('.png', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])",
+      "round_trip_operation": "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+      "bgr_round_trip_equal": true
+    },
+    "decoder_boundary": "The oracle passed the rendered BGR byte array directly to classic TextSystem; it did not decode input.png."
+  },
+  "upstream": {
+    "repository": "https://github.com/PaddlePaddle/PaddleOCR.git",
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "checkout_location": "separate external clone outside this repository",
+    "status_before": "clean",
+    "status_after": "clean",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/utility.py:get_rotate_crop_image"
+    ]
+  },
+  "artifacts": {
+    "terms_review": "LIC-001",
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_det_onnx",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "file_name": "inference.onnx",
+      "byte_length": 62032837,
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_rec_onnx",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "file_name": "inference.onnx",
+      "byte_length": 76554979,
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "byte_length": 74947,
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "execution": {
+    "python": "3.12.3",
+    "paddlepaddle": "3.3.1",
+    "paddle_inference": "not invoked; use_onnx=true selected ONNX Runtime",
+    "onnxruntime": "1.28.0",
+    "selected_execution_provider": "CPUExecutionProvider",
+    "numpy": "1.26.4",
+    "opencv_python": "4.11.0.86",
+    "opencv": "4.11.0",
+    "os": "Linux 7.0.0-28-generic x86_64",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2696 v3 @ 2.30GHz",
+    "logical_cpu_count": 72,
+    "gpu": "disabled",
+    "process_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "XDG_CACHE_HOME": "$ORACLE_ROOT/cache",
+      "PADDLE_HOME": "$ORACLE_ROOT/paddle-home",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "onnx_session_options": {
+      "intra_op_num_threads": 1,
+      "inter_op_num_threads": 1,
+      "enable_mem_pattern": false
+    },
+    "classic_options": {
+      "use_gpu": false,
+      "use_onnx": true,
+      "use_angle_cls": false,
+      "benchmark": false,
+      "show_log": false,
+      "cls_argument": false
+    }
+  },
+  "reproducibility": {
+    "harness_sha256": "73070d28bfb511eb10a9dfc358c4ab04dd8bf4615b5e2bb0e5a854abfd54e729",
+    "harness_retained_in_repository": false,
+    "command_template": "env PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 XDG_CACHE_HOME=\"$ORACLE_ROOT/cache\" PADDLE_HOME=\"$ORACLE_ROOT/paddle-home\" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=\"$ORACLE_ROOT/upstream\" \"$ORACLE_ROOT/venv/bin/python\" \"$ORACLE_ROOT/capture_tall_crop.py\"",
+    "fresh_process_runs": [
+      {
+        "id": "run-1",
+        "stdout_sha256": "263ab6e86d0a863452dab7869249c2b898859e4e2fc9f983c868b07408462d07"
+      },
+      {
+        "id": "run-2",
+        "stdout_sha256": "263ab6e86d0a863452dab7869249c2b898859e4e2fc9f983c868b07408462d07"
+      }
+    ],
+    "fresh_process_stdout_identical": true
+  },
+  "source_result": {
+    "record": {
+      "crop_diagnostics": [
+        {
+          "post_rotation_shape": [145, 307, 3],
+          "pre_rotation_shape": [307, 145, 3],
+          "rotation_applied": true
+        }
+      ],
+      "detector_sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1",
+      "dictionary_sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d",
+      "fixture_id": "classic-v1-e2e-tall-crop",
+      "input_bgr_sha256": "c16f7c6e47c92d92d897fee5e7ecdf32e5847bff18335bb3600da7965e65204d",
+      "input_bgr_shape": [900, 360, 3],
+      "input_png_byte_length": 6913,
+      "input_png_sha256": "95e9d9c3e198de854feb4c1b6b42cb8c6aedb3768313664879ba55c847683c20",
+      "lines": [
+        {
+          "confidence": 0.9999947547912598,
+          "quad": [[96, 76], [241, 74], [245, 381], [100, 383]],
+          "text": "Rust"
+        }
+      ],
+      "recognizer_sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "canonical_json_sha256": "44f6b2d0257290784efc7023c7f95d2bd49b7b149b8f26630fd42ef0cb86acdc",
+    "raw_detector_tensors_retained": false,
+    "raw_recognizer_tensors_retained": false,
+    "timing_values_retained": false
+  },
+  "limitations": [
+    "The fixture covers one synthetic clockwise-rotated Latin word only; it has no multiple-region, Unicode, threshold-boundary, malformed-input, or resource-limit coverage.",
+    "The isolated source capture consumed rendered BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The crop diagnostic records one source TextSystem crop branch only. It does not prove a Rust crop implementation or establish general OpenCV pixel equivalence.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}

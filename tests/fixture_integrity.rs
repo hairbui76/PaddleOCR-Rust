@@ -46,6 +46,19 @@ const E2E_READING_ORDER_FRESH_OUTPUT_SHA256: &str =
     "cfeaaa7eda940a2710a9027af1490b6360b5e5530a20a9763fb380a11e7b631f";
 const E2E_READING_ORDER_SOURCE_RECORD_SHA256: &str =
     "ae3c765b262b6cd0e46a211cc6e27d8b00233ede490b89cbe216a326d9f09135";
+const E2E_TALL_CROP_FIXTURE_ID: &str = "classic-v1-e2e-tall-crop";
+const E2E_TALL_CROP_INPUT_SHA256: &str =
+    "95e9d9c3e198de854feb4c1b6b42cb8c6aedb3768313664879ba55c847683c20";
+const E2E_TALL_CROP_BGR_SHA256: &str =
+    "c16f7c6e47c92d92d897fee5e7ecdf32e5847bff18335bb3600da7965e65204d";
+const E2E_TALL_CROP_CAPTURE_SHA256: &str =
+    "8ac605bcad9ab4a2dd4e52edd61d1009e2cb223b97b47cd8ed9ccc1b5fcf248e";
+const E2E_TALL_CROP_EXPECTED_SHA256: &str =
+    "1db18357fa6d70c66b6d31ed9b9e22eb1b5e2665572d712b86685c100817b692";
+const E2E_TALL_CROP_FRESH_OUTPUT_SHA256: &str =
+    "263ab6e86d0a863452dab7869249c2b898859e4e2fc9f983c868b07408462d07";
+const E2E_TALL_CROP_SOURCE_RECORD_SHA256: &str =
+    "44f6b2d0257290784efc7023c7f95d2bd49b7b149b8f26630fd42ef0cb86acdc";
 
 #[test]
 fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
@@ -80,7 +93,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         );
         let expected_profile = match fixture_id {
             "classic-v1-image-inputs" => "m2-image-input-oracle-v1",
-            "classic-v1-e2e-no-text" | "classic-v1-e2e-reading-order" => "m2-e2e-v1",
+            "classic-v1-e2e-no-text"
+            | "classic-v1-e2e-reading-order"
+            | E2E_TALL_CROP_FIXTURE_ID => "m2-e2e-v1",
             _ => "m2-unit-v1",
         };
         assert_eq!(
@@ -108,6 +123,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == E2E_READING_ORDER_FIXTURE_ID {
             verify_e2e_reading_order_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == E2E_TALL_CROP_FIXTURE_ID {
+            verify_e2e_tall_crop_oracle(&metadata, &directory, &context);
+        }
     }
 
     let expected_ids = BTreeSet::from([
@@ -118,6 +136,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-db-map-boundaries".to_owned(),
         "classic-v1-e2e-no-text".to_owned(),
         E2E_READING_ORDER_FIXTURE_ID.to_owned(),
+        E2E_TALL_CROP_FIXTURE_ID.to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
     ]);
@@ -183,7 +202,7 @@ fn verify_common_metadata(metadata: &Value, directory: &Path, context: &str) {
     );
     if matches!(
         string_field(metadata, "fixture_id", context),
-        "classic-v1-e2e-no-text" | E2E_READING_ORDER_FIXTURE_ID
+        "classic-v1-e2e-no-text" | E2E_READING_ORDER_FIXTURE_ID | E2E_TALL_CROP_FIXTURE_ID
     ) {
         assert!(
             value_field(metadata, "artifacts", context).is_object(),
@@ -1633,6 +1652,559 @@ fn verify_e2e_reading_order_oracle(metadata: &Value, fixture_directory: &Path, c
     );
 }
 
+fn verify_e2e_tall_crop_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "input.png",
+        "{context} tall-crop fixture input path changed without review"
+    );
+    assert_eq!(
+        string_field(input, "sha256", context),
+        E2E_TALL_CROP_INPUT_SHA256,
+        "{context} tall-crop fixture input hash changed without review"
+    );
+
+    let artifacts = object_field(metadata, "artifacts", context);
+    assert_eq!(
+        string_field(artifacts, "representation", context),
+        "onnx",
+        "{context} tall-crop fixture must retain the reviewed ONNX representation"
+    );
+    assert_eq!(
+        string_field(artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} tall-crop fixture must identify its terms review"
+    );
+    assert_eq!(
+        value_field(artifacts, "local_only_candidate", context).as_bool(),
+        Some(true),
+        "{context} tall-crop fixture must remain a local-only candidate"
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    let dictionary = object_field(artifacts, "dictionary", context);
+    assert_eq!(
+        string_field(dictionary, "source_path", context),
+        "ppocr/utils/dict/ppocrv6_dict.txt",
+        "{context} tall-crop fixture dictionary source changed without review"
+    );
+    assert_eq!(
+        string_field(dictionary, "sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} tall-crop fixture dictionary hash changed without review"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "capture_path", context),
+        "capture.json",
+        "{context} tall-crop fixture capture path changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_schema_version", context),
+        "paddleocr-rust/classic-onnx-oracle-capture/v1",
+        "{context} tall-crop fixture capture schema changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        E2E_TALL_CROP_CAPTURE_SHA256,
+        "{context} tall-crop fixture capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(
+        fixture_directory,
+        string_field(oracle, "capture_path", context),
+        context,
+    );
+    assert_digest(
+        &capture_bytes,
+        E2E_TALL_CROP_CAPTURE_SHA256,
+        &format!("{context} tall-crop fixture capture document"),
+    );
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} tall-crop fixture capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        string_field(oracle, "capture_schema_version", context),
+        "{context} tall-crop fixture capture schema disagrees with metadata"
+    );
+    assert_eq!(
+        string_field(&capture, "fixture_id", context),
+        E2E_TALL_CROP_FIXTURE_ID,
+        "{context} tall-crop capture fixture identifier changed without review"
+    );
+
+    let capture_input = object_field(&capture, "input", context);
+    assert_eq!(
+        string_field(capture_input, "png_sha256", context),
+        E2E_TALL_CROP_INPUT_SHA256,
+        "{context} tall-crop capture PNG hash changed without review"
+    );
+    assert_eq!(
+        unsigned_field(capture_input, "png_byte_length", context),
+        6_913,
+        "{context} tall-crop capture PNG byte length changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_sha256", context),
+        E2E_TALL_CROP_BGR_SHA256,
+        "{context} tall-crop capture BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "bgr_shape", context),
+        &serde_json::json!([900, 360, 3]),
+        "{context} tall-crop capture BGR shape changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_channel_order", context),
+        "BGR",
+        "{context} tall-crop capture BGR channel order changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_dtype", context),
+        "uint8",
+        "{context} tall-crop capture BGR dtype changed without review"
+    );
+    let renderer = object_field(capture_input, "renderer", context);
+    for (field, expected) in [
+        ("kind", "cv2.putText+cv2.rotate"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("font_face", "FONT_HERSHEY_SIMPLEX"),
+        ("line_type", "LINE_AA"),
+        ("text", "Rust"),
+        ("rotation", "cv2.ROTATE_90_CLOCKWISE"),
+    ] {
+        assert_eq!(
+            string_field(renderer, field, context),
+            expected,
+            "{context} tall-crop renderer field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        value_field(renderer, "horizontal_canvas_shape", context),
+        &serde_json::json!([220, 760, 3]),
+        "{context} tall-crop horizontal canvas shape changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "horizontal_canvas_bgr", context),
+        &serde_json::json!([255, 255, 255]),
+        "{context} tall-crop horizontal canvas color changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "text_origin", context),
+        &serde_json::json!([20, 170]),
+        "{context} tall-crop text origin changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "text_scale", context).as_f64(),
+        Some(4.0),
+        "{context} tall-crop text scale changed without review"
+    );
+    assert_eq!(
+        unsigned_field(renderer, "text_thickness", context),
+        8,
+        "{context} tall-crop text thickness changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "outer_canvas_shape", context),
+        &serde_json::json!([900, 360, 3]),
+        "{context} tall-crop outer canvas shape changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "outer_canvas_bgr", context),
+        &serde_json::json!([255, 255, 255]),
+        "{context} tall-crop outer canvas color changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "placement_top_left", context),
+        &serde_json::json!([80, 70]),
+        "{context} tall-crop placement changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "font_asset_bundled", context).as_bool(),
+        Some(false),
+        "{context} tall-crop fixture must not bundle a font asset"
+    );
+    let encoding = object_field(capture_input, "encoding", context);
+    assert_eq!(
+        string_field(encoding, "operation", context),
+        "cv2.imencode('.png', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])",
+        "{context} tall-crop PNG encoder changed without review"
+    );
+    assert_eq!(
+        string_field(encoding, "round_trip_operation", context),
+        "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+        "{context} tall-crop PNG round-trip operation changed without review"
+    );
+    assert_eq!(
+        value_field(encoding, "bgr_round_trip_equal", context).as_bool(),
+        Some(true),
+        "{context} tall-crop PNG must round-trip to the rendered BGR input"
+    );
+
+    let capture_upstream = object_field(&capture, "upstream", context);
+    assert_eq!(
+        string_field(capture_upstream, "repository", context),
+        "https://github.com/PaddlePaddle/PaddleOCR.git",
+        "{context} tall-crop capture upstream repository changed without review"
+    );
+    assert_eq!(
+        string_field(capture_upstream, "commit", context),
+        UPSTREAM_BASELINE,
+        "{context} tall-crop capture upstream baseline changed without review"
+    );
+    for field in ["status_before", "status_after"] {
+        assert_eq!(
+            string_field(capture_upstream, field, context),
+            "clean",
+            "{context} tall-crop capture upstream {field} must be clean"
+        );
+    }
+    assert!(
+        array_field(capture_upstream, "reference_paths", context)
+            .iter()
+            .any(|value| {
+                value_as_str(value, "tall-crop upstream reference path", context)
+                    == "tools/infer/utility.py:get_rotate_crop_image"
+            }),
+        "{context} tall-crop capture must name the classic crop implementation"
+    );
+
+    let capture_artifacts = object_field(&capture, "artifacts", context);
+    assert_eq!(
+        string_field(capture_artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} tall-crop capture must identify its terms review"
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    assert_eq!(
+        string_field(
+            object_field(capture_artifacts, "dictionary", context),
+            "sha256",
+            context
+        ),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} tall-crop capture dictionary hash changed without review"
+    );
+
+    let execution = object_field(&capture, "execution", context);
+    for (field, expected) in [
+        ("python", "3.12.3"),
+        ("paddlepaddle", "3.3.1"),
+        (
+            "paddle_inference",
+            "not invoked; use_onnx=true selected ONNX Runtime",
+        ),
+        ("onnxruntime", "1.28.0"),
+        ("selected_execution_provider", "CPUExecutionProvider"),
+        ("numpy", "1.26.4"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("gpu", "disabled"),
+    ] {
+        assert_eq!(
+            string_field(execution, field, context),
+            expected,
+            "{context} tall-crop execution field {field} changed without review"
+        );
+    }
+    let session_options = object_field(execution, "onnx_session_options", context);
+    assert_eq!(
+        unsigned_field(session_options, "intra_op_num_threads", context),
+        1,
+        "{context} tall-crop capture must pin one intra-op thread"
+    );
+    assert_eq!(
+        unsigned_field(session_options, "inter_op_num_threads", context),
+        1,
+        "{context} tall-crop capture must pin one inter-op thread"
+    );
+    assert_eq!(
+        value_field(session_options, "enable_mem_pattern", context).as_bool(),
+        Some(false),
+        "{context} tall-crop capture must disable ONNX Runtime memory patterns"
+    );
+    let classic_options = object_field(execution, "classic_options", context);
+    for field in [
+        "use_gpu",
+        "use_onnx",
+        "use_angle_cls",
+        "benchmark",
+        "show_log",
+        "cls_argument",
+    ] {
+        assert_eq!(
+            value_field(classic_options, field, context).as_bool(),
+            Some(field == "use_onnx"),
+            "{context} tall-crop classic option {field} changed without review"
+        );
+    }
+
+    let reproducibility = object_field(&capture, "reproducibility", context);
+    assert_eq!(
+        value_field(reproducibility, "harness_retained_in_repository", context).as_bool(),
+        Some(false),
+        "{context} must not retain the external tall-crop capture harness"
+    );
+    assert_eq!(
+        value_field(reproducibility, "fresh_process_stdout_identical", context).as_bool(),
+        Some(true),
+        "{context} tall-crop capture fresh-process outputs must agree"
+    );
+    let fresh_runs = array_field(reproducibility, "fresh_process_runs", context);
+    assert_eq!(
+        fresh_runs.len(),
+        2,
+        "{context} tall-crop capture must retain exactly two fresh-process digests"
+    );
+    for (index, run) in fresh_runs.iter().enumerate() {
+        assert_eq!(
+            string_field(run, "id", context),
+            format!("run-{}", index + 1),
+            "{context} tall-crop fresh run identifier changed without review"
+        );
+        assert_eq!(
+            string_field(run, "stdout_sha256", context),
+            E2E_TALL_CROP_FRESH_OUTPUT_SHA256,
+            "{context} tall-crop fresh-run stdout hash changed without review"
+        );
+    }
+
+    let source_result = object_field(&capture, "source_result", context);
+    let source_record = object_field(source_result, "record", context);
+    assert_sha256_format(
+        string_field(source_result, "canonical_json_sha256", context),
+        "source_result.canonical_json_sha256",
+        context,
+    );
+    assert_eq!(
+        string_field(source_result, "canonical_json_sha256", context),
+        E2E_TALL_CROP_SOURCE_RECORD_SHA256,
+        "{context} tall-crop source record digest changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "fixture_id", context),
+        E2E_TALL_CROP_FIXTURE_ID,
+        "{context} tall-crop source-result identifier changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_png_sha256", context),
+        E2E_TALL_CROP_INPUT_SHA256,
+        "{context} tall-crop source-result PNG hash changed without review"
+    );
+    assert_eq!(
+        unsigned_field(source_record, "input_png_byte_length", context),
+        6_913,
+        "{context} tall-crop source-result PNG byte length changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_bgr_sha256", context),
+        E2E_TALL_CROP_BGR_SHA256,
+        "{context} tall-crop source-result BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "input_bgr_shape", context),
+        &serde_json::json!([900, 360, 3]),
+        "{context} tall-crop source-result BGR shape changed without review"
+    );
+    for (field, expected) in [
+        ("detector_sha256", E2E_NO_TEXT_DETECTOR_SHA256),
+        ("recognizer_sha256", E2E_NO_TEXT_RECOGNIZER_SHA256),
+        ("dictionary_sha256", E2E_NO_TEXT_DICTIONARY_SHA256),
+    ] {
+        assert_eq!(
+            string_field(source_record, field, context),
+            expected,
+            "{context} tall-crop source-result field {field} changed without review"
+        );
+    }
+    let crop_diagnostics = array_field(source_record, "crop_diagnostics", context);
+    assert_eq!(
+        crop_diagnostics.len(),
+        1,
+        "{context} tall-crop source result must contain one crop diagnostic"
+    );
+    let crop_diagnostic = &crop_diagnostics[0];
+    let pre_rotation_shape = array_field(crop_diagnostic, "pre_rotation_shape", context);
+    assert_eq!(
+        value_field(crop_diagnostic, "pre_rotation_shape", context),
+        &serde_json::json!([307, 145, 3]),
+        "{context} tall-crop pre-rotation shape changed without review"
+    );
+    assert_eq!(
+        value_field(crop_diagnostic, "rotation_applied", context).as_bool(),
+        Some(true),
+        "{context} tall-crop rotation branch must remain applied"
+    );
+    assert_eq!(
+        value_field(crop_diagnostic, "post_rotation_shape", context),
+        &serde_json::json!([145, 307, 3]),
+        "{context} tall-crop post-rotation shape changed without review"
+    );
+    let pre_rotation_height = match pre_rotation_shape[0].as_u64() {
+        Some(value) => value,
+        None => panic!("{context} tall-crop pre-rotation height must be an unsigned integer"),
+    };
+    let pre_rotation_width = match pre_rotation_shape[1].as_u64() {
+        Some(value) => value,
+        None => panic!("{context} tall-crop pre-rotation width must be an unsigned integer"),
+    };
+    let twice_height = match pre_rotation_height.checked_mul(2) {
+        Some(value) => value,
+        None => panic!("{context} tall-crop pre-rotation height multiplication overflows"),
+    };
+    let three_times_width = match pre_rotation_width.checked_mul(3) {
+        Some(value) => value,
+        None => panic!("{context} tall-crop pre-rotation width multiplication overflows"),
+    };
+    assert!(
+        twice_height >= three_times_width,
+        "{context} tall-crop pre-rotation dimensions must satisfy the classic branch"
+    );
+    for field in [
+        "raw_detector_tensors_retained",
+        "raw_recognizer_tensors_retained",
+        "timing_values_retained",
+    ] {
+        assert_eq!(
+            value_field(source_result, field, context).as_bool(),
+            Some(false),
+            "{context} tall-crop source result must not retain {field}"
+        );
+    }
+
+    let expected_bytes = read_fixture_file(fixture_directory, "expected.json", context);
+    assert_digest(
+        &expected_bytes,
+        E2E_TALL_CROP_EXPECTED_SHA256,
+        &format!("{context} tall-crop expected result"),
+    );
+    let expected = parse_json_bytes(
+        &expected_bytes,
+        &format!("{context} tall-crop expected result"),
+    );
+    assert_eq!(
+        string_field(&expected, "schema_version", context),
+        "paddleocr-rust/ocr-result/v1",
+        "{context} tall-crop expected result schema changed without review"
+    );
+    let expected_input = object_field(&expected, "input", context);
+    assert!(
+        value_field(expected_input, "id", context).is_null(),
+        "{context} tall-crop expected input identifier must remain null"
+    );
+    assert!(
+        value_field(expected_input, "page_index", context).is_null(),
+        "{context} tall-crop expected page index must remain null"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "width", context),
+        360,
+        "{context} tall-crop expected width changed without review"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "height", context),
+        900,
+        "{context} tall-crop expected height changed without review"
+    );
+    let expected_models = object_field(&expected, "models", context);
+    let expected_detector = object_field(expected_models, "detector", context);
+    let expected_recognizer = object_field(expected_models, "recognizer", context);
+    assert_eq!(
+        string_field(expected_detector, "family", context),
+        "PP-OCRv6_medium_det",
+        "{context} tall-crop expected detector family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "version", context),
+        format!("m2-onnx-det-v6-medium@{E2E_NO_TEXT_DETECTOR_REVISION}"),
+        "{context} tall-crop expected detector provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "artifact_sha256", context),
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        "{context} tall-crop expected detector hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "family", context),
+        "PP-OCRv6_medium_rec",
+        "{context} tall-crop expected recognizer family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "version", context),
+        format!("m2-onnx-rec-v6-medium@{E2E_NO_TEXT_RECOGNIZER_REVISION}"),
+        "{context} tall-crop expected recognizer provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "artifact_sha256", context),
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        "{context} tall-crop expected recognizer hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "dictionary_sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} tall-crop expected dictionary hash changed without review"
+    );
+    let lines = array_field(&expected, "lines", context);
+    assert_eq!(
+        lines.len(),
+        1,
+        "{context} tall-crop expected line count changed without review"
+    );
+    let line = &lines[0];
+    assert_eq!(
+        string_field(line, "text", context),
+        "Rust",
+        "{context} tall-crop recognized text changed without review"
+    );
+    assert_eq!(
+        value_field(line, "quad", context),
+        &serde_json::json!([[96, 76], [241, 74], [245, 381], [100, 383]]),
+        "{context} tall-crop quadrilateral changed without review"
+    );
+    let confidence = match value_field(line, "confidence", context).as_f64() {
+        Some(value) => value,
+        None => panic!("{context} tall-crop confidence must be a JSON number"),
+    };
+    assert!(
+        (0.0..=1.0).contains(&confidence),
+        "{context} tall-crop confidence must remain in the closed unit interval"
+    );
+    assert_eq!(
+        value_field(source_record, "lines", context),
+        value_field(&expected, "lines", context),
+        "{context} tall-crop source result and expected result differ"
+    );
+}
+
 fn verify_e2e_candidate(
     candidate: &Value,
     expected_key: &str,
@@ -1954,5 +2526,15 @@ mod tests {
 
         verify_common_metadata(&metadata, &directory, &context);
         verify_e2e_reading_order_oracle(&metadata, &directory, &context);
+    }
+
+    #[test]
+    fn classic_v1_e2e_tall_crop_fixture_is_well_formed() {
+        let directory = Path::new(FIXTURE_ROOT).join(E2E_TALL_CROP_FIXTURE_ID);
+        let context = format!("fixture directory {}", directory.display());
+        let metadata = read_json_file(&directory.join("metadata.json"));
+
+        verify_common_metadata(&metadata, &directory, &context);
+        verify_e2e_tall_crop_oracle(&metadata, &directory, &context);
     }
 }

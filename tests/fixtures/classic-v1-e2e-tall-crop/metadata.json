@@ -1,0 +1,63 @@
+{
+  "fixture_id": "classic-v1-e2e-tall-crop",
+  "kind": "end_to_end",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.png",
+    "sha256": "95e9d9c3e198de854feb4c1b6b42cb8c6aedb3768313664879ba55c847683c20",
+    "sha256_scope": "Exact 6,913-byte PNG file.",
+    "provenance": "Self-authored word and layout rendered by an external cv2.putText FONT_HERSHEY_SIMPLEX generator then rotated clockwise with cv2.rotate; no font binary, OpenCV code, upstream image, or model asset is copied into this fixture.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/utility.py:get_rotate_crop_image"
+    ]
+  },
+  "artifacts": {
+    "representation": "onnx",
+    "terms_review": "LIC-001",
+    "local_only_candidate": true,
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "oracle": {
+    "capture_path": "capture.json",
+    "capture_sha256": "8ac605bcad9ab4a2dd4e52edd61d1009e2cb223b97b47cd8ed9ccc1b5fcf248e",
+    "capture_schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1"
+  },
+  "expected": {
+    "path": "expected.json",
+    "sha256": "1db18357fa6d70c66b6d31ed9b9e22eb1b5e2665572d712b86685c100817b692",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/ocr-result/v1",
+    "comparison_profile": "m2-e2e-v1"
+  },
+  "tests": [
+    "fixture_integrity::tests::classic_v1_e2e_tall_crop_fixture_is_well_formed"
+  ],
+  "limitations": [
+    "The fixture covers one synthetic clockwise-rotated Latin word only; it has no multiple-region, Unicode, threshold-boundary, malformed-input, or resource-limit coverage.",
+    "The isolated source capture consumed rendered BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The crop diagnostic records one source TextSystem crop branch only. It does not prove a Rust crop implementation or establish general OpenCV pixel equivalence.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}
