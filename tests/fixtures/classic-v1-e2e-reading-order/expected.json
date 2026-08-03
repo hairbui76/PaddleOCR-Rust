@@ -1,0 +1,44 @@
+{
+  "schema_version": "paddleocr-rust/ocr-result/v1",
+  "input": {
+    "id": null,
+    "page_index": null,
+    "width": 800,
+    "height": 320
+  },
+  "models": {
+    "detector": {
+      "family": "PP-OCRv6_medium_det",
+      "version": "m2-onnx-det-v6-medium@61323801669c338b7891481ec7bac61ce31b576a",
+      "artifact_sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "family": "PP-OCRv6_medium_rec",
+      "version": "m2-onnx-rec-v6-medium@50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "artifact_sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba",
+      "dictionary_sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "lines": [
+    {
+      "quad": [[33, 61], [195, 63], [194, 133], [32, 131]],
+      "text": "Hello",
+      "confidence": 0.9999950528144836
+    },
+    {
+      "quad": [[503, 64], [682, 64], [682, 132], [503, 132]],
+      "text": "World",
+      "confidence": 0.9999793767929077
+    },
+    {
+      "quad": [[33, 224], [186, 224], [186, 294], [33, 294]],
+      "text": "Rust",
+      "confidence": 0.9999958276748657
+    },
+    {
+      "quad": [[504, 224], [644, 224], [644, 292], [504, 292]],
+      "text": "OCR",
+      "confidence": 0.9998599886894226
+    }
+  ]
+}

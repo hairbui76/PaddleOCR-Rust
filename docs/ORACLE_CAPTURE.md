@@ -1,8 +1,8 @@
 # Isolated Oracle Capture Procedure
 
 Roadmap item: ORACLE-001
-Status: Procedure complete; one narrow component crop capture and one narrow
-model-backed classic no-text capture are committed
+Status: Procedure complete; one narrow component crop capture and two narrow
+model-backed classic ONNX captures are committed
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
 ## Purpose
@@ -83,7 +83,7 @@ The reviewed component capture at
 is intentionally limited to four self-authored BGR crop cases. It does not
 meet the model, input-image, or end-to-end metadata requirements above.
 
-## Model-backed no-text oracle
+## Model-backed end-to-end oracles
 
 The reviewed
 [`classic-v1-e2e-no-text`](../tests/fixtures/classic-v1-e2e-no-text/) fixture
@@ -109,6 +109,24 @@ threshold, malformed-input, or resource-limit evidence. No model bytes,
 dictionary entries, raw tensors, virtual environment, external checkout, cache,
 or capture harness were committed.
 
+The separate
+[`classic-v1-e2e-reading-order`](../tests/fixtures/classic-v1-e2e-reading-order/)
+fixture uses the same exact candidate pair, isolated clean classic checkout,
+CPU ONNX Runtime settings, and two-fresh-process reproducibility rule. It
+records a 800-by-320 BGR canvas with the self-authored words `Hello`, `World`,
+`Rust`, and `OCR`, rendered by an external `cv2.putText` call using
+`FONT_HERSHEY_SIMPLEX`. The committed PNG is self-authored project fixture
+material; no font binary, OpenCV source/binary, upstream image, model byte,
+dictionary entry, raw tensor, or capture harness is retained.
+
+The oracle passed the rendered BGR pixels directly to classic `TextSystem`,
+rather than decoding the committed PNG. Its exact result captures four text
+values, confidence values, quadrilaterals, and the observed top-to-bottom,
+left-to-right order. It is one synthetic arrangement only. It does not prove a
+Rust decoder, geometry implementation, runtime/backend, score tolerance,
+Unicode behavior, threshold behavior, error behavior, or a functional Rust OCR
+path.
+
 ## Prohibited shortcuts
 
 - Do not invoke the `PaddleOCR/` symlink as a test oracle.
@@ -122,6 +140,6 @@ or capture harness were committed.
 ## Completion condition
 
 `ORACLE-001` is complete as a procedure. `FIX-001` and `TOL-001` remain
-incomplete: the narrow no-text fixture exists, but the required text,
-geometry/order, tall-crop, Unicode, decoder, raw-tensor, and actual Rust
-differential coverage has not been completed.
+incomplete: narrow no-text and synthetic reading-order fixtures exist, but
+tall-crop, Unicode, threshold, malformed-input, resource-limit, decoder,
+raw-tensor, and actual Rust differential coverage has not been completed.

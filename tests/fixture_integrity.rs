@@ -33,6 +33,19 @@ const E2E_NO_TEXT_FRESH_OUTPUT_SHA256: &str =
     "c6a0c1a835356437be001f438f636d83c1c7b53135ace79917f7f9134d594306";
 const E2E_NO_TEXT_SOURCE_RECORD_SHA256: &str =
     "d73f50c93bf0760ecb958526e423f0b229578865c39c8ee3232a4eb9f0b430c6";
+const E2E_READING_ORDER_FIXTURE_ID: &str = "classic-v1-e2e-reading-order";
+const E2E_READING_ORDER_INPUT_SHA256: &str =
+    "1617b343fa384344a2b260bc4e57c836c93b9d3d35247dd5ea548df331042ea1";
+const E2E_READING_ORDER_BGR_SHA256: &str =
+    "eec2d2d8b45309575caf21d1ab59cf7763731410cd55f61d7af5e880a76f80b4";
+const E2E_READING_ORDER_CAPTURE_SHA256: &str =
+    "f6c146d484e39fd52a2c16370a33be228f3274f927c9e4ed4f077df792f23ef7";
+const E2E_READING_ORDER_EXPECTED_SHA256: &str =
+    "579727f354d95304df8c90fa774c908b160866ee0807e089663d4eb3f978ea73";
+const E2E_READING_ORDER_FRESH_OUTPUT_SHA256: &str =
+    "cfeaaa7eda940a2710a9027af1490b6360b5e5530a20a9763fb380a11e7b631f";
+const E2E_READING_ORDER_SOURCE_RECORD_SHA256: &str =
+    "ae3c765b262b6cd0e46a211cc6e27d8b00233ede490b89cbe216a326d9f09135";
 
 #[test]
 fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
@@ -67,7 +80,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         );
         let expected_profile = match fixture_id {
             "classic-v1-image-inputs" => "m2-image-input-oracle-v1",
-            "classic-v1-e2e-no-text" => "m2-e2e-v1",
+            "classic-v1-e2e-no-text" | "classic-v1-e2e-reading-order" => "m2-e2e-v1",
             _ => "m2-unit-v1",
         };
         assert_eq!(
@@ -92,6 +105,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == "classic-v1-e2e-no-text" {
             verify_e2e_no_text_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == E2E_READING_ORDER_FIXTURE_ID {
+            verify_e2e_reading_order_oracle(&metadata, &directory, &context);
+        }
     }
 
     let expected_ids = BTreeSet::from([
@@ -101,6 +117,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
         "classic-v1-e2e-no-text".to_owned(),
+        E2E_READING_ORDER_FIXTURE_ID.to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
     ]);
@@ -164,10 +181,13 @@ fn verify_common_metadata(metadata: &Value, directory: &Path, context: &str) {
             .is_some(),
         "{context} contains_personal_data must be a boolean"
     );
-    if string_field(metadata, "fixture_id", context) == "classic-v1-e2e-no-text" {
+    if matches!(
+        string_field(metadata, "fixture_id", context),
+        "classic-v1-e2e-no-text" | E2E_READING_ORDER_FIXTURE_ID
+    ) {
         assert!(
             value_field(metadata, "artifacts", context).is_object(),
-            "{context} reviewed no-text fixture must declare its exact candidate artifacts"
+            "{context} reviewed end-to-end fixture must declare its exact candidate artifacts"
         );
     } else {
         assert!(
@@ -1090,6 +1110,529 @@ fn verify_e2e_no_text_oracle(metadata: &Value, fixture_directory: &Path, context
     );
 }
 
+fn verify_e2e_reading_order_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "input.png",
+        "{context} reading-order fixture input path changed without review"
+    );
+    assert_eq!(
+        string_field(input, "sha256", context),
+        E2E_READING_ORDER_INPUT_SHA256,
+        "{context} reading-order fixture input hash changed without review"
+    );
+
+    let artifacts = object_field(metadata, "artifacts", context);
+    assert_eq!(
+        string_field(artifacts, "representation", context),
+        "onnx",
+        "{context} reading-order fixture must retain the reviewed ONNX representation"
+    );
+    assert_eq!(
+        string_field(artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} reading-order fixture must identify its terms review"
+    );
+    assert_eq!(
+        value_field(artifacts, "local_only_candidate", context).as_bool(),
+        Some(true),
+        "{context} reading-order fixture must remain a local-only candidate"
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    let dictionary = object_field(artifacts, "dictionary", context);
+    assert_eq!(
+        string_field(dictionary, "source_path", context),
+        "ppocr/utils/dict/ppocrv6_dict.txt",
+        "{context} reading-order fixture dictionary source changed without review"
+    );
+    assert_eq!(
+        string_field(dictionary, "sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} reading-order fixture dictionary hash changed without review"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "capture_path", context),
+        "capture.json",
+        "{context} reading-order fixture capture path changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_schema_version", context),
+        "paddleocr-rust/classic-onnx-oracle-capture/v1",
+        "{context} reading-order fixture capture schema changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        E2E_READING_ORDER_CAPTURE_SHA256,
+        "{context} reading-order fixture capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(
+        fixture_directory,
+        string_field(oracle, "capture_path", context),
+        context,
+    );
+    assert_digest(
+        &capture_bytes,
+        E2E_READING_ORDER_CAPTURE_SHA256,
+        &format!("{context} reading-order fixture capture document"),
+    );
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} reading-order fixture capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        string_field(oracle, "capture_schema_version", context),
+        "{context} reading-order fixture capture schema disagrees with metadata"
+    );
+    assert_eq!(
+        string_field(&capture, "fixture_id", context),
+        E2E_READING_ORDER_FIXTURE_ID,
+        "{context} reading-order capture fixture identifier changed without review"
+    );
+
+    let capture_input = object_field(&capture, "input", context);
+    assert_eq!(
+        string_field(capture_input, "png_sha256", context),
+        E2E_READING_ORDER_INPUT_SHA256,
+        "{context} reading-order capture PNG hash changed without review"
+    );
+    assert_eq!(
+        unsigned_field(capture_input, "png_byte_length", context),
+        8_988,
+        "{context} reading-order capture PNG byte length changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_sha256", context),
+        E2E_READING_ORDER_BGR_SHA256,
+        "{context} reading-order capture BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "bgr_shape", context),
+        &serde_json::json!([320, 800, 3]),
+        "{context} reading-order capture BGR shape changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_channel_order", context),
+        "BGR",
+        "{context} reading-order capture BGR channel order changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_dtype", context),
+        "uint8",
+        "{context} reading-order capture BGR dtype changed without review"
+    );
+    let renderer = object_field(capture_input, "renderer", context);
+    for (field, expected) in [
+        ("kind", "cv2.putText"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("font_face", "FONT_HERSHEY_SIMPLEX"),
+        ("line_type", "LINE_AA"),
+    ] {
+        assert_eq!(
+            string_field(renderer, field, context),
+            expected,
+            "{context} reading-order renderer field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        value_field(renderer, "canvas_bgr", context),
+        &serde_json::json!([255, 255, 255]),
+        "{context} reading-order renderer canvas changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "foreground_bgr", context),
+        &serde_json::json!([0, 0, 0]),
+        "{context} reading-order renderer foreground changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "font_asset_bundled", context).as_bool(),
+        Some(false),
+        "{context} reading-order fixture must not bundle a font asset"
+    );
+    let layout = array_field(renderer, "layout", context);
+    let expected_layout = [
+        ("Hello", serde_json::json!([40, 120]), 2.0, 4),
+        ("World", serde_json::json!([510, 120]), 2.0, 4),
+        ("Rust", serde_json::json!([40, 280]), 2.0, 4),
+        ("OCR", serde_json::json!([510, 280]), 2.0, 4),
+    ];
+    assert_eq!(
+        layout.len(),
+        expected_layout.len(),
+        "{context} reading-order renderer layout count changed without review"
+    );
+    for (entry, (text, origin, scale, thickness)) in layout.iter().zip(expected_layout) {
+        assert_eq!(
+            string_field(entry, "text", context),
+            text,
+            "{context} reading-order renderer text changed without review"
+        );
+        assert_eq!(
+            value_field(entry, "origin", context),
+            &origin,
+            "{context} reading-order renderer origin changed without review"
+        );
+        assert_eq!(
+            value_field(entry, "scale", context).as_f64(),
+            Some(scale),
+            "{context} reading-order renderer scale changed without review"
+        );
+        assert_eq!(
+            unsigned_field(entry, "thickness", context),
+            thickness,
+            "{context} reading-order renderer thickness changed without review"
+        );
+    }
+    let encoding = object_field(capture_input, "encoding", context);
+    assert_eq!(
+        string_field(encoding, "operation", context),
+        "cv2.imencode('.png', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])",
+        "{context} reading-order PNG encoder changed without review"
+    );
+    assert_eq!(
+        string_field(encoding, "round_trip_operation", context),
+        "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+        "{context} reading-order PNG round-trip operation changed without review"
+    );
+    assert_eq!(
+        value_field(encoding, "bgr_round_trip_equal", context).as_bool(),
+        Some(true),
+        "{context} reading-order PNG must round-trip to the rendered BGR input"
+    );
+
+    let capture_upstream = object_field(&capture, "upstream", context);
+    assert_eq!(
+        string_field(capture_upstream, "repository", context),
+        "https://github.com/PaddlePaddle/PaddleOCR.git",
+        "{context} reading-order capture upstream repository changed without review"
+    );
+    assert_eq!(
+        string_field(capture_upstream, "commit", context),
+        UPSTREAM_BASELINE,
+        "{context} reading-order capture upstream baseline changed without review"
+    );
+    for field in ["status_before", "status_after"] {
+        assert_eq!(
+            string_field(capture_upstream, field, context),
+            "clean",
+            "{context} reading-order capture upstream {field} must be clean"
+        );
+    }
+
+    let capture_artifacts = object_field(&capture, "artifacts", context);
+    assert_eq!(
+        string_field(capture_artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} reading-order capture must identify its terms review"
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    assert_eq!(
+        string_field(
+            object_field(capture_artifacts, "dictionary", context),
+            "sha256",
+            context
+        ),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} reading-order capture dictionary hash changed without review"
+    );
+
+    let execution = object_field(&capture, "execution", context);
+    for (field, expected) in [
+        ("python", "3.12.3"),
+        ("paddlepaddle", "3.3.1"),
+        (
+            "paddle_inference",
+            "not invoked; use_onnx=true selected ONNX Runtime",
+        ),
+        ("onnxruntime", "1.28.0"),
+        ("selected_execution_provider", "CPUExecutionProvider"),
+        ("numpy", "1.26.4"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("gpu", "disabled"),
+    ] {
+        assert_eq!(
+            string_field(execution, field, context),
+            expected,
+            "{context} reading-order execution field {field} changed without review"
+        );
+    }
+    let session_options = object_field(execution, "onnx_session_options", context);
+    assert_eq!(
+        unsigned_field(session_options, "intra_op_num_threads", context),
+        1,
+        "{context} reading-order capture must pin one intra-op thread"
+    );
+    assert_eq!(
+        unsigned_field(session_options, "inter_op_num_threads", context),
+        1,
+        "{context} reading-order capture must pin one inter-op thread"
+    );
+    assert_eq!(
+        value_field(session_options, "enable_mem_pattern", context).as_bool(),
+        Some(false),
+        "{context} reading-order capture must disable ONNX Runtime memory patterns"
+    );
+    let classic_options = object_field(execution, "classic_options", context);
+    for field in [
+        "use_gpu",
+        "use_onnx",
+        "use_angle_cls",
+        "benchmark",
+        "show_log",
+        "cls_argument",
+    ] {
+        assert_eq!(
+            value_field(classic_options, field, context).as_bool(),
+            Some(field == "use_onnx"),
+            "{context} reading-order classic option {field} changed without review"
+        );
+    }
+
+    let reproducibility = object_field(&capture, "reproducibility", context);
+    assert_eq!(
+        value_field(reproducibility, "harness_retained_in_repository", context).as_bool(),
+        Some(false),
+        "{context} must not retain the external reading-order capture harness"
+    );
+    assert_eq!(
+        value_field(reproducibility, "fresh_process_stdout_identical", context).as_bool(),
+        Some(true),
+        "{context} reading-order capture fresh-process outputs must agree"
+    );
+    let fresh_runs = array_field(reproducibility, "fresh_process_runs", context);
+    assert_eq!(
+        fresh_runs.len(),
+        2,
+        "{context} reading-order capture must retain exactly two fresh-process digests"
+    );
+    for (index, run) in fresh_runs.iter().enumerate() {
+        assert_eq!(
+            string_field(run, "id", context),
+            format!("run-{}", index + 1),
+            "{context} reading-order fresh run identifier changed without review"
+        );
+        assert_eq!(
+            string_field(run, "stdout_sha256", context),
+            E2E_READING_ORDER_FRESH_OUTPUT_SHA256,
+            "{context} reading-order fresh-run stdout hash changed without review"
+        );
+    }
+
+    let source_result = object_field(&capture, "source_result", context);
+    let source_record = object_field(source_result, "record", context);
+    assert_sha256_format(
+        string_field(source_result, "canonical_json_sha256", context),
+        "source_result.canonical_json_sha256",
+        context,
+    );
+    assert_eq!(
+        string_field(source_result, "canonical_json_sha256", context),
+        E2E_READING_ORDER_SOURCE_RECORD_SHA256,
+        "{context} reading-order source record digest changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "fixture_id", context),
+        E2E_READING_ORDER_FIXTURE_ID,
+        "{context} reading-order source-result identifier changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_png_sha256", context),
+        E2E_READING_ORDER_INPUT_SHA256,
+        "{context} reading-order source-result PNG hash changed without review"
+    );
+    assert_eq!(
+        unsigned_field(source_record, "input_png_byte_length", context),
+        8_988,
+        "{context} reading-order source-result PNG byte length changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_bgr_sha256", context),
+        E2E_READING_ORDER_BGR_SHA256,
+        "{context} reading-order source-result BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "input_bgr_shape", context),
+        &serde_json::json!([320, 800, 3]),
+        "{context} reading-order source-result BGR shape changed without review"
+    );
+    for (field, expected) in [
+        ("detector_sha256", E2E_NO_TEXT_DETECTOR_SHA256),
+        ("recognizer_sha256", E2E_NO_TEXT_RECOGNIZER_SHA256),
+        ("dictionary_sha256", E2E_NO_TEXT_DICTIONARY_SHA256),
+    ] {
+        assert_eq!(
+            string_field(source_record, field, context),
+            expected,
+            "{context} reading-order source-result field {field} changed without review"
+        );
+    }
+    for field in [
+        "raw_detector_tensors_retained",
+        "raw_recognizer_tensors_retained",
+        "timing_values_retained",
+    ] {
+        assert_eq!(
+            value_field(source_result, field, context).as_bool(),
+            Some(false),
+            "{context} reading-order source result must not retain {field}"
+        );
+    }
+
+    let expected_bytes = read_fixture_file(fixture_directory, "expected.json", context);
+    assert_digest(
+        &expected_bytes,
+        E2E_READING_ORDER_EXPECTED_SHA256,
+        &format!("{context} reading-order expected result"),
+    );
+    let expected = parse_json_bytes(
+        &expected_bytes,
+        &format!("{context} reading-order expected result"),
+    );
+    assert_eq!(
+        string_field(&expected, "schema_version", context),
+        "paddleocr-rust/ocr-result/v1",
+        "{context} reading-order expected result schema changed without review"
+    );
+    let expected_input = object_field(&expected, "input", context);
+    assert!(
+        value_field(expected_input, "id", context).is_null(),
+        "{context} reading-order expected input identifier must remain null"
+    );
+    assert!(
+        value_field(expected_input, "page_index", context).is_null(),
+        "{context} reading-order expected page index must remain null"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "width", context),
+        800,
+        "{context} reading-order expected width changed without review"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "height", context),
+        320,
+        "{context} reading-order expected height changed without review"
+    );
+    let expected_models = object_field(&expected, "models", context);
+    let expected_detector = object_field(expected_models, "detector", context);
+    let expected_recognizer = object_field(expected_models, "recognizer", context);
+    assert_eq!(
+        string_field(expected_detector, "family", context),
+        "PP-OCRv6_medium_det",
+        "{context} reading-order expected detector family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "version", context),
+        format!("m2-onnx-det-v6-medium@{E2E_NO_TEXT_DETECTOR_REVISION}"),
+        "{context} reading-order expected detector provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "artifact_sha256", context),
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        "{context} reading-order expected detector hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "family", context),
+        "PP-OCRv6_medium_rec",
+        "{context} reading-order expected recognizer family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "version", context),
+        format!("m2-onnx-rec-v6-medium@{E2E_NO_TEXT_RECOGNIZER_REVISION}"),
+        "{context} reading-order expected recognizer provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "artifact_sha256", context),
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        "{context} reading-order expected recognizer hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "dictionary_sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} reading-order expected dictionary hash changed without review"
+    );
+
+    let lines = array_field(&expected, "lines", context);
+    let expected_lines = [
+        (
+            "Hello",
+            serde_json::json!([[33, 61], [195, 63], [194, 133], [32, 131]]),
+        ),
+        (
+            "World",
+            serde_json::json!([[503, 64], [682, 64], [682, 132], [503, 132]]),
+        ),
+        (
+            "Rust",
+            serde_json::json!([[33, 224], [186, 224], [186, 294], [33, 294]]),
+        ),
+        (
+            "OCR",
+            serde_json::json!([[504, 224], [644, 224], [644, 292], [504, 292]]),
+        ),
+    ];
+    assert_eq!(
+        lines.len(),
+        expected_lines.len(),
+        "{context} reading-order expected line count changed without review"
+    );
+    for (line, (text, quad)) in lines.iter().zip(expected_lines) {
+        assert_eq!(
+            string_field(line, "text", context),
+            text,
+            "{context} reading-order text order changed without review"
+        );
+        assert_eq!(
+            value_field(line, "quad", context),
+            &quad,
+            "{context} reading-order quadrilateral changed without review"
+        );
+        let confidence = match value_field(line, "confidence", context).as_f64() {
+            Some(value) => value,
+            None => panic!("{context} reading-order confidence must be a JSON number"),
+        };
+        assert!(
+            (0.0..=1.0).contains(&confidence),
+            "{context} reading-order confidence must remain in the closed unit interval"
+        );
+    }
+    assert_eq!(
+        value_field(source_record, "lines", context),
+        value_field(&expected, "lines", context),
+        "{context} reading-order source result and expected result differ"
+    );
+}
+
 fn verify_e2e_candidate(
     candidate: &Value,
     expected_key: &str,
@@ -1100,17 +1643,17 @@ fn verify_e2e_candidate(
     assert_eq!(
         string_field(candidate, "candidate_key", context),
         expected_key,
-        "{context} no-text candidate key changed without review"
+        "{context} end-to-end candidate key changed without review"
     );
     assert_eq!(
         string_field(candidate, "revision", context),
         expected_revision,
-        "{context} no-text candidate revision changed without review"
+        "{context} end-to-end candidate revision changed without review"
     );
     assert_eq!(
         string_field(candidate, "sha256", context),
         expected_sha256,
-        "{context} no-text candidate hash changed without review"
+        "{context} end-to-end candidate hash changed without review"
     );
 }
 
@@ -1401,5 +1944,15 @@ mod tests {
 
         verify_common_metadata(&metadata, &directory, &context);
         verify_e2e_no_text_oracle(&metadata, &directory, &context);
+    }
+
+    #[test]
+    fn classic_v1_e2e_reading_order_fixture_is_well_formed() {
+        let directory = Path::new(FIXTURE_ROOT).join(E2E_READING_ORDER_FIXTURE_ID);
+        let context = format!("fixture directory {}", directory.display());
+        let metadata = read_json_file(&directory.join("metadata.json"));
+
+        verify_common_metadata(&metadata, &directory, &context);
+        verify_e2e_reading_order_oracle(&metadata, &directory, &context);
     }
 }

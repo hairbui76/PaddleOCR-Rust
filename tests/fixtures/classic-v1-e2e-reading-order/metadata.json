@@ -1,0 +1,62 @@
+{
+  "fixture_id": "classic-v1-e2e-reading-order",
+  "kind": "end_to_end",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.png",
+    "sha256": "1617b343fa384344a2b260bc4e57c836c93b9d3d35247dd5ea548df331042ea1",
+    "sha256_scope": "Exact 8,988-byte PNG file.",
+    "provenance": "Self-authored words and layout rendered by an external cv2.putText FONT_HERSHEY_SIMPLEX generator; no font binary, OpenCV code, upstream image, or model asset is copied into this fixture.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/utility.py"
+    ]
+  },
+  "artifacts": {
+    "representation": "onnx",
+    "terms_review": "LIC-001",
+    "local_only_candidate": true,
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "oracle": {
+    "capture_path": "capture.json",
+    "capture_sha256": "f6c146d484e39fd52a2c16370a33be228f3274f927c9e4ed4f077df792f23ef7",
+    "capture_schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1"
+  },
+  "expected": {
+    "path": "expected.json",
+    "sha256": "579727f354d95304df8c90fa774c908b160866ee0807e089663d4eb3f978ea73",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/ocr-result/v1",
+    "comparison_profile": "m2-e2e-v1"
+  },
+  "tests": [
+    "fixture_integrity::tests::classic_v1_e2e_reading_order_fixture_is_well_formed"
+  ],
+  "limitations": [
+    "The fixture covers one synthetic four-line reading-order arrangement only; it has no rotated/tall crop, Unicode, threshold-boundary, malformed-input, or resource-limit coverage.",
+    "The isolated source capture consumed rendered BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}
