@@ -124,6 +124,16 @@ concurrency, malicious-input behavior, portability, or numerical equivalence.
 The full commands, hashes, and cycle trace are in
 [`RUNTIME_ORT_SOURCE_EVIDENCE.md`](RUNTIME_ORT_SOURCE_EVIDENCE.md).
 
+A further temporary C API shared-session probe created one session per model,
+then used four POSIX workers to make eight simultaneous zero-input minimum-shape
+`Run` calls each. Both detector and recognizer probes completed 32 calls twice,
+checking only type/shape/count/finite output and releasing every output; a
+swapped-recognizer hash check failed before dynamic loading. This is a narrow
+Linux-host concurrency signal only, not a long-soak, Rust synchronization,
+network, resource, numerical-equivalence, portability, distribution, or
+backend result. The source/binary hashes, commands, measurements, and limits
+are recorded in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
+
 ## Required evidence after any candidate smoke result
 
 Smoke results are insufficient for RT-002 completion. Every viable candidate
@@ -132,8 +142,8 @@ still needs:
 1. all M2 shape/operator probes plus explicit physical-baseline CPU/thread
    behavior; the QEMU shape probes are only partial portability evidence;
 2. a legal static-oracle capture and raw tensor comparison under m2-tensor-v1;
-3. deterministic repeat, latency, memory, binary, malformed-model, and
-   resource-limit evidence;
+3. deterministic repeat, latency, memory, binary, malformed-model,
+   resource-limit, long-soak, and adapter-level concurrency evidence;
 4. dependency/native-library license, maintenance, vulnerability, and notice
    review;
 5. scorecard and rejected-alternative evidence in RUNTIME_RUBRIC.md;
