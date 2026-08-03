@@ -146,6 +146,16 @@ evidence, not a repository adapter, bounded public resource policy,
 concurrency/cancellation proof, numerical-equivalence result, or backend
 selection.
 
+A later read-only pre-adoption review of that exact `ort`/`ort-sys` source and
+feature closure found process-global dynamic-loader/environment state, native
+pointer ownership behind manual `Send`/`Sync` assertions, and a wrapper
+documented requirement to avoid simultaneous runs on one session. It also
+confirmed that the tested manifest excludes download/copy/model-fetch features
+and recorded a point-in-time empty OSV result for its 12-package normal
+closure. These are constraints for a future adapter, not an approval of its
+unsafe boundary, the native library, or a backend. The review and its limits
+are recorded in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
+
 ## Required evidence after any candidate smoke result
 
 Smoke results are insufficient for RT-002 completion. Every viable candidate
@@ -157,9 +167,12 @@ still needs:
 3. deterministic repeat, latency, memory, binary, malformed-model,
    resource-limit, long-soak, and adapter-level concurrency evidence;
 4. dependency/native-library license, maintenance, vulnerability, and notice
-   review;
+   review, including a locked adoption closure rather than the external spike;
 5. scorecard and rejected-alternative evidence in RUNTIME_RUBRIC.md;
-6. a separate RT-004 decision record before any repository runtime dependency
+6. a project-specific unsafe/FFI design review covering explicit loader and
+   process-init ownership, telemetry, error sanitization, and same-session
+   concurrency before any adapter is introduced;
+7. a separate RT-004 decision record before any repository runtime dependency
    or adapter is introduced.
 
 ## Sources
@@ -167,3 +180,5 @@ still needs:
 - https://crates.io/crates/tract-onnx/0.23.4
 - https://crates.io/crates/ort/2.0.0-rc.13
 - https://github.com/pykeio/ort/releases
+- https://github.com/pykeio/ort
+- https://api.osv.dev/v1/querybatch

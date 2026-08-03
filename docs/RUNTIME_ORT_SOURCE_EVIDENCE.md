@@ -354,6 +354,110 @@ resource policy, concurrency proof, numerical-repeat/equivalence result,
 network-isolation result, portable CPU proof, distribution result, or backend
 selection.
 
+## Pre-adoption Rust wrapper and FFI source review
+
+On 2026-08-03, a read-only, source-level pre-adoption review inspected the
+exact `ort`/`ort-sys` package sources resolved by the external Rust reuse
+probe. It is intentionally a bounded review of the dynamic-load, environment,
+session, error, and build-script paths used by that probe. It is not a full
+unsafe-code audit, a native ONNX Runtime audit, a vulnerability assessment, a
+project adapter implementation, or approval to add either crate.
+
+| Reviewed input | SHA-256 |
+|---|---|
+| `ort` 2.0.0-rc.13 `Cargo.toml` | `346bfbe1fb38845c526fe4196dc0941aca309dc470b0061888bb92d324a6a17c` |
+| `ort/src/lib.rs` | `31b3d2c2e6afef1fed42df51a2f0280bfc53711e5a0db20a8d95c2a4b68e01fb` |
+| `ort/src/environment.rs` | `1070d6f91e3de0e59511f6dfd6a27ce8553c04431dcadb1260db8d815a1250e2` |
+| `ort/src/error.rs` | `d18d0c48bfacd3ff11d5d327832bae99b31283f5b2ce2daa307b67d6898cf18b` |
+| `ort/src/session/mod.rs` | `ebbb4dd9e74cd25fad7da2b26d8d2303ba8da2eabd6df0bd5f7b9236f501bf6a` |
+| `ort-sys` 2.0.0-rc.13 `Cargo.toml` | `730868cba94faf0575056034cabcadfb397fa96d7936ed6ce0cbe0cbe67c38ef` |
+| `ort-sys/src/lib.rs` | `14f9d9004e026b0bd0d3b4431495ab49675346a70ec9c6c08ccd616f69fc2813` |
+| `ort-sys/build/main.rs` | `770915dab5fbfb694a0e035a2b9efe18f357f8eff245fbb91dc96de56251dd55` |
+
+Both crate manifests declare `MIT OR Apache-2.0` and Rust 1.88. Those
+expressions cover the wrapper crates only; they do not settle the native ONNX
+Runtime library, system loader, or model/dictionary terms.
+
+The review replayed the exact external harness feature graph with:
+
+```sh
+cd /tmp/paddleocr-rust-ort-rust-reuse.4iSRSn
+cargo tree --offline --locked --edges normal
+cargo tree --offline --locked -e features
+```
+
+The normal runtime closure was `ort`, `ort-sys`, `libloading`, `smallvec`, and
+the harness-only SHA-256 closure (`sha2`, `cfg-if`, `cpufeatures`, `digest`,
+`block-buffer`, `generic-array`, `typenum`, and `crypto-common`). The selected
+`ort` features were only `std`, `load-dynamic`, and `api-28`.
+`load-dynamic` enables `preload-dylibs`/`libloading` and
+`ort-sys/disable-linking`; it does not enable `download-binaries`,
+`copy-dylibs`, `fetch-models`, `ndarray`, `tracing`, or an execution-provider
+feature. `api-28` includes the prior API-level feature chain. This describes
+only the disposable harness lockfile: Cargo feature unification or a different
+manifest can widen the graph, so a future adoption must lock and inspect its
+own resolved closure.
+
+The following source findings define constraints for any future adapter:
+
+- Dynamic loading is process-global. `ort::init_from` calls
+  `libloading::Library::new`, validates the exported API version only at the
+  parsed minor-version level, and stores the first successful library handle in
+  a `OnceLock`. If code reaches `ort::api` before explicit initialization, the
+  wrapper may instead use `ORT_DYLIB_PATH` or a platform default and panics on
+  loader/API setup failures. The wrapper does not authenticate or hash the
+  library. A future project-owned resolver must define an early, explicit,
+  absolute-path integrity policy; it must not rely on environment-variable or
+  relative-path fallback. The harness's `symlink_metadata` then `open` order
+  remains a non-race-safe test control and is not such a resolver.
+- The environment is also process-global. `EnvironmentBuilder::commit` returns
+  `false` when configuration was already committed, while a first session may
+  create a default environment. Its source documentation says library crates
+  should not configure the application environment. A future adapter therefore
+  needs one explicit process-init ownership and failure policy, including an
+  explicit telemetry choice; it cannot silently assume its CPU/thread/provider
+  configuration took effect.
+- The wrapper intentionally contains unsafe FFI calls, raw native-pointer
+  ownership, manual destruction, and `unsafe impl Send`/`Sync` assertions for
+  API/environment/session-related types. This is expected for a native binding
+  and is not itself a defect finding, but it means the binding cannot be treated
+  as a safe internal implementation detail without a project-specific boundary
+  review. Native error messages are copied into `ort::Error` strings, so public
+  project errors must be normalized and sanitized rather than forwarded as
+  opaque native diagnostics.
+- `Session` and `SharedSessionInner` have manual `Send`/`Sync` implementations,
+  but the wrapper's own documentation makes `run`, `run_with_options`, and
+  binding execution take `&mut self` because the underlying `Run` paths are not
+  considered thread-safe. It recommends one session per worker or batching
+  until upstream thread-safety issues are fixed. The earlier 32-call C shared
+  session control does not supersede that Rust-wrapper contract. A future Rust
+  adapter must reject or serialize same-session concurrent runs by construction
+  unless a separately qualified backend/version policy proves otherwise.
+- With `disable-linking`, the `ort-sys` build script returns before library
+  linkage/download handling. That kept the spike from build-time native
+  acquisition, but shifts all loader identity, availability, ABI, and
+  distribution responsibility to the caller. The reviewed dynamic loader holds
+  the library for the process lifetime; this evidence does not qualify reload,
+  unload, cross-platform loader behavior, providers, custom operators, or
+  external-data ONNX graphs.
+
+For a time-bounded advisory signal, an unauthenticated query to the OSV
+`querybatch` endpoint on 2026-08-03 returned twelve empty results for the exact
+normal closure above: `ort`/`ort-sys` 2.0.0-rc.13, `libloading` 0.9.0,
+`cfg-if` 1.0.4, `smallvec` 1.15.2, `sha2` 0.10.9, `cpufeatures` 0.2.17,
+`digest` 0.10.7, `block-buffer` 0.10.4, `generic-array` 0.14.7, `typenum`
+1.20.1, and `crypto-common` 0.1.7. The query is reproducible through
+`https://api.osv.dev/v1/querybatch`; its empty result is not an assurance of
+absence of vulnerabilities and does not cover the source-built ONNX Runtime,
+its C/C++ dependencies, the operating system, other features, or future
+versions. The historical RustSec `sha2` AVX2 advisory does not affect the
+tested 0.10.9 `force-soft` harness configuration.
+
+Conclusion: this pre-adoption source review makes the required ownership,
+loader, telemetry, error, and concurrency invariants more concrete, but clears
+none of the RT-002, RT-003, RT-004, `SAFE-001`, `SUPPLY-001`, or licensing
+gates. No `ort` dependency or unsafe code has been added to this repository.
+
 ## No-AVX execution evidence
 
 The first source-built artifact arrangement was copied into a temporary QEMU
@@ -600,8 +704,10 @@ This source build is not hermetic or approved for distribution:
   attestation.
 - The source license is MIT and ThirdPartyNotices.txt exists, but neither file
   proves the exact set of components linked into this shared library. Nested
-  terms, notices, patches, vulnerability posture, Rust wrapper, toolchain, and
-  dynamic-loader distribution terms remain unreviewed.
+  terms, notices, patches, vulnerability posture, toolchain, and dynamic-loader
+  distribution terms remain unreviewed. The bounded `ort`/`ort-sys` source
+  review above records wrapper constraints and an empty point-in-time OSV
+  closure query; it is not a native-library or complete supply-chain review.
 - The model and dictionary licensing gates remain open. This experiment does
   not approve retention, conversion, redistribution, bundling, or
   model-derived fixture capture.
@@ -618,7 +724,7 @@ This source build is not hermetic or approved for distribution:
 | CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
 | Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. A separate four-worker shared-session probe also completed 32 zero-input calls twice for each minimum-shape model, with type/shape/count/finite checks and a pre-load swapped-hash rejection. The external Rust-wrapper reuse probe completed 24 sequential calls twice for each minimum-shape model and rejected swapped-length/symlink paths before its loader call. No project Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, broad concurrency contract, or public-error review exists. |
 | Supply chain/license | Incomplete and blocked for acceptance; see the preceding limits. |
-| Unsafe/FFI boundary | Incomplete: the external ort/ort-sys native boundary has no project adapter review. |
+| Unsafe/FFI boundary | Partial pre-adoption source review: the exact external `ort`/`ort-sys` configuration was inspected for its dynamic-loader, global-environment, raw-pointer, error, and same-session concurrency constraints. It identifies manual `Send`/`Sync` assertions and a wrapper-documented non-concurrent `Run` contract, but no project adapter, complete unsafe audit, native-library review, panic/exception containment proof, or targeted project tests exist. |
 
 ## Required next evidence
 
@@ -638,6 +744,8 @@ This source build is not hermetic or approved for distribution:
 5. Expand the bounded C API and external Rust-wrapper evidence to
    malicious/external-data and oversized inputs, long-soak/leak analysis,
    cancellation, broader concurrency, and request-level limits; then implement
-   and review the project Rust adapter's ownership and sanitized public errors.
+   and review the project Rust adapter's ownership, explicit loader/process-init
+   policy, serialized/session-per-worker concurrency policy, and sanitized
+   public errors.
 6. Run end-to-end offline golden and RT-003 scorecard experiments before
    RT-004 considers a backend decision.
