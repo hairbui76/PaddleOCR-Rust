@@ -294,6 +294,49 @@ suite, including the crop regressions. It does not prove all x86-64 hardware,
 toolchains, optimized binaries, decoder paths, OpenCV equivalence, model
 runtime behavior, or OCR support.
 
+### Current full-suite QEMU replay (2026-08-03)
+
+At workspace commit `986ea76cfbbda450970d3f8536bc4eac3f7ff125`, the complete
+feature-enabled release test set was rebuilt outside the repository with Rust
+`1.94.0` from `Cargo.lock` SHA-256
+`e8fd73d88cd777d27419bf6c28412ac344bc30b87714057cfadde24752782c4c`:
+
+```text
+CARGO_TARGET_DIR=<temporary-target> \
+RUSTFLAGS='-C target-cpu=x86-64 -C target-feature=+crt-static,-avx,-avx2,-fma' \
+CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc \
+cargo test --locked --workspace --all-features --release --no-run
+```
+
+The resulting static PIE test binaries had SHA-256 values
+`7e40c19ab9e3797a6b416737a1cbe1cf5aa5015ae0b17fd647b54997edb3e892`
+(library), `03623ec3927ae110d36264661b000e1f13bbf5c7de691e7af59a82140ab498d9`
+(binary harness), `4db1941fa726f56deb87d5a3dfb3f475f46a4da5378c5c785e1f97ec365ddbc5`
+(contract), `cd29ebae1be6e58b98cc588b909e8a38f23af9a0eada60e8e54bad951b498639`
+(fixture integrity), and
+`c083466e204bc3e7fa2c8841cb42e0f35fdfaaad48b8baa44cbef634dcc403da`
+(foundation).
+
+A disposable initramfs mirrored the committed fixture tree only at the
+compile-time workspace path required by `fixture_integrity`; it contained no
+network device and no model. QEMU `9.0.2` TCG ran it with one `qemu64` vCPU,
+256 MiB memory, and `-nic none`, using the external Alpine
+`6.12.94-0-virt` kernel SHA-256
+`12eb24189f3eb30bd0dcd919248caaa054ed4e87b799a53fdcc3999f157933e4`.
+The initramfs and QEMU log SHA-256 values were respectively
+`c35469494596a31b01a9dbb793b795cc05875f4a007e67214e7b7283f2fb37f9` and
+`3491979e31950b48517b2c8d99886c8809e5aa5db9a8a9a4afbbe8556ec971de`.
+Its guest `/proc/cpuinfo` flags omitted `avx`, `avx2`, and `fma`; all 82
+library tests (including the four feature-gated fuzz regressions), the
+zero-test binary harness, three contract tests, one fixture-integrity test,
+and three foundation tests passed with `guest-result=0`, and QEMU exited zero.
+
+The initramfs, kernel, test binaries, and log are temporary external evidence,
+not repository artifacts. This is one emulated portable-baseline replay only;
+it does not prove physical CPU support, all toolchains, all distribution
+binaries, SIMD/dispatch behavior, decoder behavior, OpenCV equivalence, model
+runtime behavior, or OCR support.
+
 ## Review and promotion procedure
 
 1. Record the isolated environment, package provenance, and the command used.

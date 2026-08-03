@@ -60,6 +60,15 @@ the full byte selector range. It is a no-panic structural check for the
 existing private polygon/hull/minimum-area code; it does not establish contour
 or OpenCV equivalence.
 
+At commit `986ea76cfbbda450970d3f8536bc4eac3f7ff125`, the static
+`--all-features` release suite also ran under one disposable QEMU `9.0.2` TCG
+`qemu64` guest with one vCPU, 256 MiB memory, and no network. The guest flags
+omitted `avx`, `avx2`, and `fma`; all four fuzz regressions were among the 82
+passing library tests. This is a single emulated source-level replay, not a
+coverage-guided campaign, native-decoder exercise, physical-platform claim, or
+general crash-free guarantee. The external artifact hashes and full test-set
+context are recorded in [`docs/CROP_ORACLE_CAPTURE.md`](CROP_ORACLE_CAPTURE.md).
+
 ## Running it
 
 Run the deterministic test:
