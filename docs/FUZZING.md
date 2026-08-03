@@ -69,6 +69,58 @@ coverage-guided campaign, native-decoder exercise, physical-platform claim, or
 general crash-free guarantee. The external artifact hashes and full test-set
 context are recorded in [`docs/CROP_ORACLE_CAPTURE.md`](CROP_ORACLE_CAPTURE.md).
 
+## External coverage-guided campaign
+
+At repository commit `80f259c2e3649f8d4390e929c2d3b2093bde4510`, a
+disposable external fuzz workspace exercised this target through libFuzzer. It
+was not created inside this repository and introduced no dependency, fuzz
+workspace, lockfile, corpus, artifact, model, or generated file here.
+
+The external harness had only these dependencies:
+
+```toml
+libfuzzer-sys = "0.4"
+paddleocr-rust = { path = "/mnt/ssdvolumes/repo/PaddleOCR-Rust", features = ["fuzzing"] }
+```
+
+Its generated lock resolved `libfuzzer-sys` `0.4.13`. The external
+`Cargo.toml`, fuzz target source, `Cargo.lock`, and release binary had
+these SHA-256 values, respectively:
+
+```text
+ac729b94fc2cc6ffe22f96c509a29429a0d647d597d67a806050594df73c0d9d
+fb2da4ff465fc03e5e1a8e64eed448ca74f9e90143b10bce048e487e10957e3f
+8c4d66ab3bb308995e11f65cc958e74dafdb4a277227919f9b38b6236e8dba2d
+4ed62d55c3f4e707ab94e27ef26e5cb17cdd4f5f55cac53ff47a38a2ed54b9f5
+```
+
+The target was built with `cargo-fuzz` `0.13.2` and
+`rustc 1.99.0-nightly (73dc9167f 2026-08-01)` on Linux `x86_64`.
+The external binary contained libFuzzer and AddressSanitizer symbols. This
+records the harness instrumentation, not a project runtime dependency or a
+native-boundary safety approval.
+
+The fixed-seed campaign started with four self-authored text inputs totaling
+130 bytes and ran:
+
+```sh
+cargo fuzz run --fuzz-dir "$FUZZ_DIR" --target-dir "$TARGET_DIR" primitives "$SEED_CORPUS" -- \
+  -max_total_time=10 -max_len=16384 -timeout=5 -rss_limit_mb=512 \
+  -seed=20260803 -print_final_stats=1 -verbosity=1
+```
+
+It began at `cov: 685` and `ft: 905`, then completed 82,656 executions in
+11 seconds with `cov: 869`, `ft: 2451`, a minimized
+252-file/5,317-byte corpus, 438 newly added units, and 283 MiB peak RSS. The
+process returned zero and wrote no file to its external crash-artifact
+directory. No model, decoder, Python process, upstream checkout, or OCR
+pipeline was loaded by this target.
+
+This is a finite result for the current pure driver only. In particular, it
+does not establish a general absence of crashes, a coverage percentage,
+resource behavior beyond the stated run, native decoder safety, model/runtime
+safety, portability, or OCR compatibility.
+
 ## Running it
 
 Run the deterministic test:
@@ -83,16 +135,18 @@ Run one stdin-oriented target invocation:
 cargo run --locked --features fuzzing --bin fuzz-primitives < corpus-input
 ```
 
-A mutator or fuzzing engine is intentionally not bundled or installed by
-this repository. Any future engine integration must preserve the feature
-gate, fixed input/resource limits, offline normal tests, and the boundary
-that native decoder fuzzing uses a separately reviewed malformed corpus.
+A mutator or fuzzing engine is intentionally not bundled or installed by this
+repository. The recorded campaign used an external workspace so normal project
+builds and tests remain offline and tool-free. Any future campaign must
+preserve the feature gate, fixed input/resource limits, offline normal tests,
+and the boundary that native decoder fuzzing uses a separately reviewed
+malformed corpus.
 
 ## Limitations and next work
 
-`FUZZ-001` is not complete. The in-process mutation regression is neither an
-external coverage-guided engine nor a duration-based campaign. Manifest,
-config, schema, and document parsers and native decoder boundaries do not yet
-exist in the Rust implementation, so they are not covered. No randomized
-campaign duration, corpus-coverage metric, crash-free claim, or
+`FUZZ-001` is not complete. The deterministic regressions do not replace the
+recorded finite external campaign, and the campaign does not replace targeted
+fuzzing of future boundaries. Manifest, config, schema, and document parsers
+and native decoder boundaries do not yet exist in the Rust implementation, so
+they are not covered. No coverage percentage, general crash-free claim, or
 decoder/runtime/model safety claim is made by this target.
