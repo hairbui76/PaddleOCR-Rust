@@ -2,8 +2,9 @@
 
 Roadmap items: MOD-001, LIC-001  
 Status: User-authorized external ONNX candidates were inventoried, parsed, and
-given a source-level recognizer CTC index-construction inspection; neither
-candidate is accepted, supported, converted, redistributed, or bundled
+given source-level recognizer CTC index-construction and Unicode-structure
+inspections; neither candidate is accepted, supported, converted,
+redistributed, or bundled
 Inspection date: 2026-08-02  
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
@@ -179,6 +180,47 @@ For that source-level construction, the structural index sequence is therefore
 `0 = blank`, `1..=18,708 = character_dict entries in YAML order`, and
 `18,709 = literal U+0020 space`. The ONNX output's final dimension agrees with
 that count.
+
+### Recognizer dictionary Unicode structural audit
+
+On 2026-08-03, a disposable external Python 3.12.3 (Unicode 15.0.0)
+standard-library harness audited only aggregate Unicode properties of the exact
+local recognizer `inference.yml`. It first required a bounded regular,
+non-symlink file, the recorded YAML SHA-256, the recorded ordered-entry-stream
+SHA-256, 18,708 entries, and no exact duplicate. It emitted one sorted JSON
+object of counts only: no dictionary entry, decoded text, ONNX tensor, or model
+output was printed, retained, or added to the repository. The harness source
+SHA-256 was `cfe5fb23f85ad34d6cf53e05a9adca7e36219ae3e92587908028395497bb970b`;
+its aggregate result SHA-256 was
+`6a6b76ee7b118b3453e4914da47162662a767f257c7bdaa0a3e9d3cb87f909e9`.
+
+| Aggregate check | Result |
+|---|---|
+| Pinned input and ordered stream | 150,580-byte YAML and 18,708-entry stream reverified as `991b700facf5b50a7de193468207d5f4255b538dde0d312ae3b7c7a9b6873129` and `b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d` |
+| Scalar shape | Every one of 18,708 entries is exactly one Unicode scalar; total scalar count is 18,708 |
+| Whitespace and non-printable entries | Exactly one each, both `U+3000`; the serialized list still contains no literal `U+0020` |
+| Excluded scalar classes | No entry contains a combining mark, control, format, private-use, unassigned, or noncharacter scalar |
+| General categories | `Ll=386`, `Lm=11`, `Lo=16,150`, `Lt=4`, `Lu=287`, `Nd=20`, `Nl=29`, `No=73`, `Pc=2`, `Pd=7`, `Pe=22`, `Pf=3`, `Pi=3`, `Po=47`, `Ps=21`, `Sc=38`, `Sk=6`, `Sm=273`, `So=1,325`, `Zs=1` |
+| NFC transform | `4` entries change; transformed values form `4` collision groups containing `8` entries |
+| NFKC transform | `290` entries change; transformed values form `160` collision groups containing `376` entries |
+| Case-fold transform | Transformed values form `290` collision groups containing `595` entries |
+
+The same bounded harness rejected the detector YAML before parsing because its
+digest did not equal the recognizer's pinned digest (controlled exit `1`). This
+checks the audit's input identity; it does not make the disposable harness a
+project model-inspection tool or artifact manifest.
+
+For this candidate's future decoder, the rule is therefore exact-scalar
+preservation: map each class to its original scalar in index order, append
+only the literal `U+0020` at class `18,709`, and preserve the resulting UTF-8
+unchanged. In particular, default NFC/NFKC normalization, case folding, or
+whitespace cleanup must not run before or after the CTC mapping. The serialized
+`U+3000` and appended `U+0020` are distinct class values even though both are
+space-like characters.
+
+This is source-level dictionary structure only. It neither establishes model
+language coverage, runtime score semantics, CTC decoding safety, text-output
+compatibility, terms for the embedded data, nor support for the candidate.
 
 This does **not** prove that a selected runtime emits semantically correct
 scores for every class, that the ONNX export is behaviorally identical to the
