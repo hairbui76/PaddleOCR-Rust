@@ -49,6 +49,13 @@ CPU-dispatched test path.
 records only private 8-connected bitmap components; it is not a model tensor,
 OpenCV contour, or detector result fixture.
 
+`classic-v1-ctc-score-boundary` is a self-authored component-unit fixture for
+the source `TextSystem` score-filter condition. Its capture uses fake detector,
+crop, and recognizer collaborators in a clean external checkout; it records the
+immediately below/equal/above `0.5` result selection but no model, CTC output,
+dictionary, tensor, or crop pixels. The offline integrity gate checks the
+capture and expected selection only. It is not a Rust OCR-pipeline test.
+
 `classic-v1-image-inputs` records self-authored encoded PNG/JPEG byte streams,
 five bounded negative inputs, and a version-recorded OpenCV `IMREAD_COLOR` BGR
 capture. Its generator writes only stdout and runs outside normal Rust tests.

@@ -72,6 +72,17 @@ const E2E_UNICODE_FRESH_OUTPUT_SHA256: &str =
     "143f6bb51f2fe9bd3aed4e73dc210ceaafd2a8ff6397deeec9720f9df0c83c35";
 const E2E_UNICODE_SOURCE_RECORD_SHA256: &str =
     "a201b8eb2ef306d753d62f76f7f76986a35c5f2414a8528f5079b72e01a7c617";
+const SCORE_FILTER_FIXTURE_ID: &str = "classic-v1-ctc-score-boundary";
+const SCORE_FILTER_INPUT_SHA256: &str =
+    "f1b13a4af8568815bf28f42828479a383676fc04993e52714fb02101dbafc4af";
+const SCORE_FILTER_CAPTURE_SHA256: &str =
+    "54bf5d9280d442052ec6b17fb38675efa3224c2d03f0ade11ca8feea0da56a4c";
+const SCORE_FILTER_EXPECTED_SHA256: &str =
+    "3e8a69017de686cb8d75039455edec16bb0f536205ced7797a93504f3ae7678e";
+const SCORE_FILTER_FRESH_OUTPUT_SHA256: &str =
+    "b58c613b400325a58b9f5a08ca4e44463dfc7ca33636c4d778b17fc0cf6f26c4";
+const SCORE_FILTER_SOURCE_RECORD_SHA256: &str =
+    "b7ebdfd334db75c8be1baf5648db4420c1969c631b53cce5c0169d1d0babd4f8";
 
 #[test]
 fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
@@ -143,6 +154,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == E2E_UNICODE_FIXTURE_ID {
             verify_e2e_unicode_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == SCORE_FILTER_FIXTURE_ID {
+            verify_score_filter_oracle(&metadata, &directory, &context);
+        }
     }
 
     let expected_ids = BTreeSet::from([
@@ -155,6 +169,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         E2E_READING_ORDER_FIXTURE_ID.to_owned(),
         E2E_TALL_CROP_FIXTURE_ID.to_owned(),
         E2E_UNICODE_FIXTURE_ID.to_owned(),
+        SCORE_FILTER_FIXTURE_ID.to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
     ]);
@@ -2762,6 +2777,387 @@ fn verify_e2e_unicode_oracle(metadata: &Value, fixture_directory: &Path, context
     );
 }
 
+fn verify_score_filter_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let metadata_input = object_field(metadata, "input", context);
+    assert_eq!(
+        string_field(metadata_input, "path", context),
+        "input.json",
+        "{context} score-filter input path changed without review"
+    );
+    assert_eq!(
+        string_field(metadata_input, "sha256", context),
+        SCORE_FILTER_INPUT_SHA256,
+        "{context} score-filter input hash changed without review"
+    );
+    assert!(
+        value_field(metadata, "artifacts", context).is_null(),
+        "{context} score-filter oracle must not introduce a model artifact"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "capture_path", context),
+        "capture.json",
+        "{context} score-filter capture path changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_schema_version", context),
+        "paddleocr-rust/classic-score-filter-oracle-capture/v1",
+        "{context} score-filter capture schema changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        SCORE_FILTER_CAPTURE_SHA256,
+        "{context} score-filter capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(
+        fixture_directory,
+        string_field(oracle, "capture_path", context),
+        context,
+    );
+    assert_digest(
+        &capture_bytes,
+        SCORE_FILTER_CAPTURE_SHA256,
+        &format!("{context} score-filter capture document"),
+    );
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} score-filter capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        string_field(oracle, "capture_schema_version", context),
+        "{context} score-filter capture schema disagrees with metadata"
+    );
+    assert_eq!(
+        string_field(&capture, "fixture_id", context),
+        SCORE_FILTER_FIXTURE_ID,
+        "{context} score-filter capture fixture identifier changed without review"
+    );
+
+    let capture_input = object_field(&capture, "input", context);
+    assert_eq!(
+        string_field(capture_input, "fixture_path", context),
+        "input.json",
+        "{context} score-filter capture input path changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "fixture_sha256", context),
+        SCORE_FILTER_INPUT_SHA256,
+        "{context} score-filter capture input hash changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "synthetic_image_shape", context),
+        &serde_json::json!([16, 60, 3]),
+        "{context} score-filter synthetic image shape changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "synthetic_image_dtype", context),
+        "uint8",
+        "{context} score-filter synthetic image dtype changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "drop_score", context).as_f64(),
+        Some(0.5),
+        "{context} score-filter threshold changed without review"
+    );
+    for field in ["mock_detector", "mock_crop", "mock_recognizer"] {
+        assert_non_empty(string_field(capture_input, field, context), field, context);
+    }
+
+    let capture_upstream = object_field(&capture, "upstream", context);
+    assert_eq!(
+        string_field(capture_upstream, "repository", context),
+        "https://github.com/PaddlePaddle/PaddleOCR.git",
+        "{context} score-filter capture upstream repository changed without review"
+    );
+    assert_eq!(
+        string_field(capture_upstream, "commit", context),
+        UPSTREAM_BASELINE,
+        "{context} score-filter capture upstream baseline changed without review"
+    );
+    for field in ["status_before", "status_after"] {
+        assert_eq!(
+            string_field(capture_upstream, field, context),
+            "clean",
+            "{context} score-filter capture upstream {field} must be clean"
+        );
+    }
+    assert!(
+        array_field(capture_upstream, "reference_paths", context)
+            .iter()
+            .any(|value| {
+                value_as_str(value, "score-filter upstream reference path", context)
+                    == "tools/infer/predict_system.py:TextSystem.__call__"
+            }),
+        "{context} score-filter capture must name the classic filter loop"
+    );
+
+    let execution = object_field(&capture, "execution", context);
+    for (field, expected) in [
+        ("python", "3.12.3"),
+        ("paddlepaddle", "3.3.1"),
+        ("numpy", "1.26.4"),
+        (
+            "model_inference",
+            "not invoked; fake collaborators exercised only the classic filter loop",
+        ),
+        ("gpu", "disabled"),
+    ] {
+        assert_eq!(
+            string_field(execution, field, context),
+            expected,
+            "{context} score-filter execution field {field} changed without review"
+        );
+    }
+    let process_environment = object_field(execution, "process_environment", context);
+    for field in [
+        "PYTHONDONTWRITEBYTECODE",
+        "PYTHONNOUSERSITE",
+        "OMP_NUM_THREADS",
+        "MKL_NUM_THREADS",
+        "OPENBLAS_NUM_THREADS",
+    ] {
+        assert_eq!(
+            string_field(process_environment, field, context),
+            "1",
+            "{context} score-filter environment {field} changed without review"
+        );
+    }
+
+    let reproducibility = object_field(&capture, "reproducibility", context);
+    assert_eq!(
+        string_field(reproducibility, "harness_sha256", context),
+        "d57d413b4561dca0227a4d07b527a3399e1b2e38221023b9837f1ac4eb13ace4",
+        "{context} score-filter harness digest changed without review"
+    );
+    assert_eq!(
+        value_field(reproducibility, "harness_retained_in_repository", context).as_bool(),
+        Some(false),
+        "{context} must not retain the external score-filter capture harness"
+    );
+    assert_eq!(
+        value_field(reproducibility, "fresh_process_stdout_identical", context).as_bool(),
+        Some(true),
+        "{context} score-filter fresh-process outputs must agree"
+    );
+    let fresh_runs = array_field(reproducibility, "fresh_process_runs", context);
+    assert_eq!(
+        fresh_runs.len(),
+        2,
+        "{context} score-filter capture must retain exactly two fresh-process digests"
+    );
+    for (index, run) in fresh_runs.iter().enumerate() {
+        assert_eq!(
+            string_field(run, "id", context),
+            format!("run-{}", index + 1),
+            "{context} score-filter fresh run identifier changed without review"
+        );
+        assert_eq!(
+            string_field(run, "stdout_sha256", context),
+            SCORE_FILTER_FRESH_OUTPUT_SHA256,
+            "{context} score-filter fresh-run stdout hash changed without review"
+        );
+    }
+
+    let source_result = object_field(&capture, "source_result", context);
+    assert_eq!(
+        string_field(source_result, "canonical_json_sha256", context),
+        SCORE_FILTER_SOURCE_RECORD_SHA256,
+        "{context} score-filter source record digest changed without review"
+    );
+    for field in [
+        "timing_values_retained",
+        "raw_detector_tensors_retained",
+        "raw_recognizer_tensors_retained",
+    ] {
+        assert_eq!(
+            value_field(source_result, field, context).as_bool(),
+            Some(false),
+            "{context} score-filter source result must not retain {field}"
+        );
+    }
+    let source_record = object_field(source_result, "record", context);
+    assert_eq!(
+        string_field(source_record, "fixture_id", context),
+        SCORE_FILTER_FIXTURE_ID,
+        "{context} score-filter source-result identifier changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "upstream_commit", context),
+        UPSTREAM_BASELINE,
+        "{context} score-filter source-result baseline changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "drop_score", context).as_f64(),
+        Some(0.5),
+        "{context} score-filter source-result threshold changed without review"
+    );
+
+    let input_bytes = read_fixture_file(fixture_directory, "input.json", context);
+    assert_digest(
+        &input_bytes,
+        SCORE_FILTER_INPUT_SHA256,
+        &format!("{context} score-filter input document"),
+    );
+    let input = parse_json_bytes(
+        &input_bytes,
+        &format!("{context} score-filter input document"),
+    );
+    assert_eq!(
+        string_field(&input, "schema_version", context),
+        "paddleocr-rust/classic-score-filter-input/v1",
+        "{context} score-filter input schema changed without review"
+    );
+    assert_eq!(
+        string_field(&input, "fixture_id", context),
+        SCORE_FILTER_FIXTURE_ID,
+        "{context} score-filter input identifier changed without review"
+    );
+    assert_eq!(
+        value_field(&input, "drop_score", context).as_f64(),
+        Some(0.5),
+        "{context} score-filter input threshold changed without review"
+    );
+    let input_pairs = array_field(&input, "pairs", context);
+    assert_eq!(
+        input_pairs.len(),
+        3,
+        "{context} score-filter input pair count changed without review"
+    );
+    let expected_pairs = [
+        (
+            "below",
+            0.499_999_999_999_999_94,
+            serde_json::json!([[2, 2], [12, 2], [12, 10], [2, 10]]),
+        ),
+        (
+            "at",
+            0.5,
+            serde_json::json!([[22, 2], [32, 2], [32, 10], [22, 10]]),
+        ),
+        (
+            "above",
+            0.500_000_000_000_000_1,
+            serde_json::json!([[42, 2], [52, 2], [52, 10], [42, 10]]),
+        ),
+    ];
+    for (pair, (text, score, quad)) in input_pairs.iter().zip(expected_pairs) {
+        assert_eq!(
+            string_field(pair, "text", context),
+            text,
+            "{context} score-filter input text changed without review"
+        );
+        assert_eq!(
+            value_field(pair, "score", context).as_f64(),
+            Some(score),
+            "{context} score-filter input score changed without review"
+        );
+        assert_eq!(
+            value_field(pair, "box", context),
+            &quad,
+            "{context} score-filter input box changed without review"
+        );
+    }
+    assert_eq!(
+        value_field(source_record, "input_boxes", context),
+        &serde_json::json!([
+            [[2, 2], [12, 2], [12, 10], [2, 10]],
+            [[22, 2], [32, 2], [32, 10], [22, 10]],
+            [[42, 2], [52, 2], [52, 10], [42, 10]]
+        ]),
+        "{context} score-filter source input boxes changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "input_results", context),
+        &serde_json::json!([
+            ["below", 0.49999999999999994],
+            ["at", 0.5],
+            ["above", 0.5000000000000001]
+        ]),
+        "{context} score-filter source input results changed without review"
+    );
+
+    let expected_bytes = read_fixture_file(fixture_directory, "expected.json", context);
+    assert_digest(
+        &expected_bytes,
+        SCORE_FILTER_EXPECTED_SHA256,
+        &format!("{context} score-filter expected result"),
+    );
+    let expected = parse_json_bytes(
+        &expected_bytes,
+        &format!("{context} score-filter expected result"),
+    );
+    assert_eq!(
+        string_field(&expected, "schema_version", context),
+        "paddleocr-rust/classic-score-filter/v1",
+        "{context} score-filter expected schema changed without review"
+    );
+    assert_eq!(
+        string_field(&expected, "fixture_id", context),
+        SCORE_FILTER_FIXTURE_ID,
+        "{context} score-filter expected identifier changed without review"
+    );
+    assert_eq!(
+        value_field(&expected, "drop_score", context).as_f64(),
+        Some(0.5),
+        "{context} score-filter expected threshold changed without review"
+    );
+    assert_eq!(
+        value_field(&expected, "retained_input_indexes", context),
+        &serde_json::json!([1, 2]),
+        "{context} score-filter retained indexes changed without review"
+    );
+    let lines = array_field(&expected, "lines", context);
+    assert_eq!(
+        lines.len(),
+        2,
+        "{context} score-filter expected line count changed without review"
+    );
+    let expected_lines = [
+        (
+            "at",
+            0.5,
+            serde_json::json!([[22, 2], [32, 2], [32, 10], [22, 10]]),
+        ),
+        (
+            "above",
+            0.500_000_000_000_000_1,
+            serde_json::json!([[42, 2], [52, 2], [52, 10], [42, 10]]),
+        ),
+    ];
+    for (line, (text, score, quad)) in lines.iter().zip(expected_lines) {
+        assert_eq!(
+            string_field(line, "text", context),
+            text,
+            "{context} score-filter retained text changed without review"
+        );
+        assert_eq!(
+            value_field(line, "score", context).as_f64(),
+            Some(score),
+            "{context} score-filter retained score changed without review"
+        );
+        assert_eq!(
+            value_field(line, "box", context),
+            &quad,
+            "{context} score-filter retained box changed without review"
+        );
+    }
+    assert_eq!(
+        value_field(source_record, "kept_boxes", context),
+        &serde_json::json!([
+            [[22, 2], [32, 2], [32, 10], [22, 10]],
+            [[42, 2], [52, 2], [52, 10], [42, 10]]
+        ]),
+        "{context} score-filter source kept boxes changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "kept_results", context),
+        &serde_json::json!([["at", 0.5], ["above", 0.5000000000000001]]),
+        "{context} score-filter source kept results changed without review"
+    );
+}
+
 fn verify_e2e_candidate(
     candidate: &Value,
     expected_key: &str,
@@ -3103,5 +3499,15 @@ mod tests {
 
         verify_common_metadata(&metadata, &directory, &context);
         verify_e2e_unicode_oracle(&metadata, &directory, &context);
+    }
+
+    #[test]
+    fn classic_v1_ctc_score_boundary_fixture_is_well_formed() {
+        let directory = Path::new(FIXTURE_ROOT).join(SCORE_FILTER_FIXTURE_ID);
+        let context = format!("fixture directory {}", directory.display());
+        let metadata = read_json_file(&directory.join("metadata.json"));
+
+        verify_common_metadata(&metadata, &directory, &context);
+        verify_score_filter_oracle(&metadata, &directory, &context);
     }
 }

@@ -1,0 +1,41 @@
+{
+  "fixture_id": "classic-v1-ctc-score-boundary",
+  "kind": "component_unit",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.json",
+    "sha256": "f1b13a4af8568815bf28f42828479a383676fc04993e52714fb02101dbafc4af",
+    "sha256_scope": "Exact UTF-8 bytes of input.json.",
+    "provenance": "Self-authored score-boundary pairs and quadrilaterals used only with isolated fake collaborators.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/utility.py:get_args",
+      "tools/infer/predict_system.py:TextSystem.__call__"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "capture_path": "capture.json",
+    "capture_sha256": "54bf5d9280d442052ec6b17fb38675efa3224c2d03f0ade11ca8feea0da56a4c",
+    "capture_schema_version": "paddleocr-rust/classic-score-filter-oracle-capture/v1"
+  },
+  "expected": {
+    "path": "expected.json",
+    "sha256": "3e8a69017de686cb8d75039455edec16bb0f536205ced7797a93504f3ae7678e",
+    "sha256_scope": "Exact UTF-8 bytes of expected.json.",
+    "schema_version": "paddleocr-rust/classic-score-filter/v1",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "fixture_integrity::tests::classic_v1_ctc_score_boundary_fixture_is_well_formed"
+  ],
+  "limitations": [
+    "This is source-level component evidence only for the classic score >= drop_score rule with mocked collaborators.",
+    "It does not select a decoder/runtime, bind a dictionary, load a model, establish a Rust OCR pipeline, or claim detector, recognizer, text, score, or OCR support.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}

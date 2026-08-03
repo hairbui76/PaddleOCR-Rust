@@ -166,6 +166,24 @@ bidirectional text, normalization, a Rust decoder, runtime/backend, model
 support, API, CLI, threshold, error, resource-limit, or functional Rust OCR
 behavior.
 
+The component
+[`classic-v1-ctc-score-boundary`](../tests/fixtures/classic-v1-ctc-score-boundary/)
+fixture is a narrower source-only capture of the score-filter loop in classic
+`TextSystem.__call__`. An isolated clean checkout receives a self-authored
+synthetic image and fake detector, crop, and recognizer collaborators; it never
+loads a model or executes CTC decoding. The three returned scores are the
+immediate predecessor of `0.5`, `0.5`, and the immediate successor of `0.5`.
+The source keeps the equality and successor values in input order and drops the
+predecessor, matching its `score >= drop_score` condition across two fresh
+processes.
+
+The fixture retains only the self-authored JSON input/expected output and a
+small capture record. It retains no model, tensor, dictionary, crop pixel,
+external harness, or upstream code. It is source-level contract evidence only:
+it does not implement or validate a Rust score filter, detector, recognizer,
+CTC decoder, image decoder, API, CLI, malformed-input behavior, resource
+limits, or OCR support.
+
 ## Prohibited shortcuts
 
 - Do not invoke the `PaddleOCR/` symlink as a test oracle.
@@ -180,6 +198,6 @@ behavior.
 
 `ORACLE-001` is complete as a procedure. `FIX-001` and `TOL-001` remain
 incomplete: narrow no-text, synthetic reading-order, one tall-crop branch, and
-one Unicode phrase fixtures exist, but threshold, malformed-input,
-resource-limit, decoder, raw-tensor, and actual Rust differential coverage has
-not been completed.
+one Unicode phrase fixtures exist, and one source-only score-filter boundary is
+captured, but detector thresholds, malformed-input, resource-limit, decoder,
+raw-tensor, and actual Rust differential coverage has not been completed.

@@ -1,0 +1,22 @@
+{
+  "schema_version": "paddleocr-rust/classic-score-filter-input/v1",
+  "fixture_id": "classic-v1-ctc-score-boundary",
+  "drop_score": 0.5,
+  "pairs": [
+    {
+      "box": [[2, 2], [12, 2], [12, 10], [2, 10]],
+      "text": "below",
+      "score": 0.49999999999999994
+    },
+    {
+      "box": [[22, 2], [32, 2], [32, 10], [22, 10]],
+      "text": "at",
+      "score": 0.5
+    },
+    {
+      "box": [[42, 2], [52, 2], [52, 10], [42, 10]],
+      "text": "above",
+      "score": 0.5000000000000001
+    }
+  ]
+}

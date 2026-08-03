@@ -1,0 +1,90 @@
+{
+  "schema_version": "paddleocr-rust/classic-score-filter-oracle-capture/v1",
+  "fixture_id": "classic-v1-ctc-score-boundary",
+  "capture_scope": "Classic TextSystem score-filter branch executed with self-authored fake detector, crop, and recognizer collaborators; no model inference.",
+  "input": {
+    "fixture_path": "input.json",
+    "fixture_sha256": "f1b13a4af8568815bf28f42828479a383676fc04993e52714fb02101dbafc4af",
+    "synthetic_image_shape": [16, 60, 3],
+    "synthetic_image_dtype": "uint8",
+    "drop_score": 0.5,
+    "mock_detector": "returned three fixed np.float32 quadrilaterals and elapsed 0.0",
+    "mock_crop": "returned one 2-by-2 uint8 BGR-like array per quadrilateral",
+    "mock_recognizer": "returned three self-authored text/score pairs and elapsed 0.0"
+  },
+  "upstream": {
+    "repository": "https://github.com/PaddlePaddle/PaddleOCR.git",
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "checkout_location": "separate external clone outside this repository",
+    "status_before": "clean",
+    "status_after": "clean",
+    "reference_paths": [
+      "tools/infer/utility.py:get_args",
+      "tools/infer/predict_system.py:TextSystem.__call__"
+    ]
+  },
+  "execution": {
+    "python": "3.12.3",
+    "paddlepaddle": "3.3.1",
+    "numpy": "1.26.4",
+    "model_inference": "not invoked; fake collaborators exercised only the classic filter loop",
+    "gpu": "disabled",
+    "process_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    }
+  },
+  "reproducibility": {
+    "harness_sha256": "d57d413b4561dca0227a4d07b527a3399e1b2e38221023b9837f1ac4eb13ace4",
+    "harness_retained_in_repository": false,
+    "command_template": "env PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 XDG_CACHE_HOME=\"$ORACLE_ROOT/cache\" PADDLE_HOME=\"$ORACLE_ROOT/paddle-home\" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=\"$ORACLE_ROOT/upstream\" \"$ORACLE_ROOT/venv/bin/python\" \"$ORACLE_ROOT/capture_score_filter.py\"",
+    "fresh_process_runs": [
+      {
+        "id": "run-1",
+        "stdout_sha256": "b58c613b400325a58b9f5a08ca4e44463dfc7ca33636c4d778b17fc0cf6f26c4"
+      },
+      {
+        "id": "run-2",
+        "stdout_sha256": "b58c613b400325a58b9f5a08ca4e44463dfc7ca33636c4d778b17fc0cf6f26c4"
+      }
+    ],
+    "fresh_process_stdout_identical": true
+  },
+  "source_result": {
+    "record": {
+      "drop_score": 0.5,
+      "fixture_id": "classic-v1-ctc-score-boundary",
+      "input_boxes": [
+        [[2, 2], [12, 2], [12, 10], [2, 10]],
+        [[22, 2], [32, 2], [32, 10], [22, 10]],
+        [[42, 2], [52, 2], [52, 10], [42, 10]]
+      ],
+      "input_results": [
+        ["below", 0.49999999999999994],
+        ["at", 0.5],
+        ["above", 0.5000000000000001]
+      ],
+      "kept_boxes": [
+        [[22, 2], [32, 2], [32, 10], [22, 10]],
+        [[42, 2], [52, 2], [52, 10], [42, 10]]
+      ],
+      "kept_results": [
+        ["at", 0.5],
+        ["above", 0.5000000000000001]
+      ],
+      "upstream_commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854"
+    },
+    "canonical_json_sha256": "b7ebdfd334db75c8be1baf5648db4420c1969c631b53cce5c0169d1d0babd4f8",
+    "timing_values_retained": false,
+    "raw_detector_tensors_retained": false,
+    "raw_recognizer_tensors_retained": false
+  },
+  "limitations": [
+    "This isolated source capture tests only the score >= drop_score loop with three mocked recognition results and normal-length matching lists.",
+    "It does not exercise detector or recognizer inference, a dictionary, real crop pixels, model/tensor ABI, decoded input, malformed input, resource limits, batch mismatch behavior, a Rust implementation, or OCR support.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}
