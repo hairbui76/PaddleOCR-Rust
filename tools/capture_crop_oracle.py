@@ -246,6 +246,107 @@ CASES: tuple[CropCase, ...] = (
 )
 
 
+def scalar_grid_cases() -> tuple[CropCase, ...]:
+    """Build a broad, deterministic BGR corpus for scalar OpenCV comparison.
+
+    The cases vary source dimensions, border crossings, affine-like shear, and
+    genuinely projective lower-edge perturbations. The four rotation groups
+    deliberately cover wide, tall, balanced, and narrow crop extents without
+    using random input or externally sourced image data.
+    """
+
+    source_sizes = (
+        (3, 3),
+        (4, 7),
+        (5, 11),
+        (6, 4),
+        (7, 13),
+        (8, 5),
+        (9, 15),
+        (10, 6),
+        (11, 16),
+        (12, 8),
+        (13, 14),
+        (14, 9),
+        (15, 12),
+        (16, 10),
+        (3, 16),
+        (4, 12),
+        (5, 15),
+        (6, 9),
+        (7, 14),
+        (8, 3),
+        (9, 11),
+        (10, 4),
+        (11, 13),
+        (12, 6),
+    )
+    origins = (
+        (-1.125, -0.875),
+        (-0.375, 0.125),
+        (0.25, -0.5),
+        (0.625, 0.375),
+        (-0.75, 0.625),
+        (0.125, -1.0),
+    )
+    shears = (-0.625, -0.25, 0.125, 0.5, 0.75, -0.5)
+    cases: list[CropCase] = []
+
+    for index, (width, height) in enumerate(source_sizes):
+        origin_x, origin_y = origins[index % len(origins)]
+        shear_x = shears[index % len(shears)]
+        shear_y = shears[(index * 3 + 1) % len(shears)]
+        perspective_x = shears[(index * 5 + 2) % len(shears)] * 0.5
+        perspective_y = shears[(index * 7 + 4) % len(shears)] * 0.5
+
+        # The grid uses four bounded extent profiles. Every source side is at
+        # least three pixels, while the spans and perturbations keep each
+        # quadrilateral strictly convex and at least one output pixel wide/high.
+        match index % 4:
+            case 0:
+                span_x = max(1.25, width * 0.55 + 0.125)
+                span_y = height + 0.375
+            case 1:
+                span_x = width + 0.5
+                span_y = max(1.25, height * 0.55 + 0.25)
+            case 2:
+                span_x = width * 0.8 + 0.375
+                span_y = height * 0.8 + 0.125
+            case _:
+                span_x = max(1.25, width * 0.45 + 0.5)
+                span_y = height * 0.65 + 0.625
+
+        points = (
+            (origin_x, origin_y),
+            (origin_x + span_x, origin_y + shear_y),
+            (
+                origin_x + span_x + shear_x + perspective_x,
+                origin_y + span_y + shear_y + perspective_y,
+            ),
+            (origin_x + shear_x, origin_y + span_y),
+        )
+        seed = (0xC0FF_EE00 + index * 0x9E37_79B9) & 0xFFFF_FFFF
+        cases.append(
+            CropCase(
+                identifier=(
+                    f"classic-v1-crop-scalar-grid-{index:02d}-bgr-{width}x{height}"
+                ),
+                description=(
+                    "A deterministic scalar OpenCV coverage-grid crop with "
+                    "high-variation self-authored BGR bytes and a bounded "
+                    "projective quadrilateral."
+                ),
+                rows=lcg_bgr_rows(width, height, seed),
+                points=points,
+            )
+        )
+
+    return tuple(cases)
+
+
+SCALAR_GRID_CASES = scalar_grid_cases()
+
+
 def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments without importing optional oracle packages."""
 
@@ -253,6 +354,12 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
         description=(
             "Capture self-authored OpenCV crop oracle cases as one stdout JSON document."
         )
+    )
+    parser.add_argument(
+        "--suite",
+        choices=("baseline", "scalar-grid"),
+        default="baseline",
+        help="select the deterministic case suite (default: baseline)",
     )
     parser.add_argument(
         "--case",
@@ -274,6 +381,14 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
         ),
     )
     parser.add_argument(
+        "--disable-optimized",
+        action="store_true",
+        help=(
+            "call cv2.setUseOptimized(False) before capture and record the "
+            "scalar setting in the JSON environment"
+        ),
+    )
+    parser.add_argument(
         "--indent",
         type=int,
         default=2,
@@ -282,13 +397,25 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
     return parser.parse_args(arguments)
 
 
-def selected_cases(case_ids: Sequence[str] | None) -> tuple[CropCase, ...]:
+def suite_cases(suite: str) -> tuple[CropCase, ...]:
+    """Return the deterministic suite selected by the command line."""
+
+    if suite == "baseline":
+        return CASES
+    if suite == "scalar-grid":
+        return SCALAR_GRID_CASES
+    raise ValueError(f"unknown crop suite {suite!r}")
+
+
+def selected_cases(
+    case_ids: Sequence[str] | None, available_cases: Sequence[CropCase]
+) -> tuple[CropCase, ...]:
     """Return the requested deterministic cases or report unknown identifiers."""
 
     if case_ids is None:
-        return CASES
+        return tuple(available_cases)
 
-    by_identifier = {case.identifier: case for case in CASES}
+    by_identifier = {case.identifier: case for case in available_cases}
     selected: list[CropCase] = []
     for case_identifier in case_ids:
         case = by_identifier.get(case_identifier)
@@ -380,10 +507,29 @@ def capture_case(case: CropCase, cv2: Any, numpy: Any) -> dict[str, Any]:
     }
 
 
-def capture_document(cases: Sequence[CropCase], cv2: Any, numpy: Any) -> dict[str, Any]:
+def capture_document(
+    cases: Sequence[CropCase],
+    cv2: Any,
+    numpy: Any,
+    *,
+    opencv_optimized: bool | None = None,
+) -> dict[str, Any]:
     """Create a single reviewable capture document for selected cases."""
 
     build_information = cv2.getBuildInformation()
+    environment: dict[str, Any] = {
+        "python": sys.version,
+        "opencv": cv2.__version__,
+        "opencv_distribution": installed_opencv_distribution(),
+        "opencv_build_information_sha256": hashlib.sha256(
+            build_information.encode("utf-8")
+        ).hexdigest(),
+        "numpy": numpy.__version__,
+        "platform": platform.platform(),
+    }
+    if opencv_optimized is not None:
+        environment["opencv_optimized"] = opencv_optimized
+
     return {
         "schema_version": SCHEMA_VERSION,
         "purpose": "developer-only OpenCV crop oracle; not a normal Rust test dependency",
@@ -396,16 +542,7 @@ def capture_document(cases: Sequence[CropCase], cv2: Any, numpy: Any) -> dict[st
             "border_mode": "BORDER_REPLICATE",
             "post_warp_rotation": "numpy.rot90 when height / width >= 1.5",
         },
-        "environment": {
-            "python": sys.version,
-            "opencv": cv2.__version__,
-            "opencv_distribution": installed_opencv_distribution(),
-            "opencv_build_information_sha256": hashlib.sha256(
-                build_information.encode("utf-8")
-            ).hexdigest(),
-            "numpy": numpy.__version__,
-            "platform": platform.platform(),
-        },
+        "environment": environment,
         "cases": [capture_case(case, cv2, numpy) for case in cases],
     }
 
@@ -482,13 +619,14 @@ def main(arguments: Sequence[str] | None = None) -> int:
     if parsed.indent < 0:
         print("--indent must be non-negative", file=sys.stderr)
         return 2
+    available_cases = suite_cases(parsed.suite)
     if parsed.list:
-        for case in CASES:
+        for case in available_cases:
             print(case.identifier)
         return 0
 
     try:
-        cases = selected_cases(parsed.case)
+        cases = selected_cases(parsed.case, available_cases)
     except ValueError as error:
         print(f"capture configuration error: {error}", file=sys.stderr)
         return 2
@@ -504,11 +642,22 @@ def main(arguments: Sequence[str] | None = None) -> int:
         )
         return 2
 
+    if parsed.disable_optimized:
+        cv2.setUseOptimized(False)
+        if cv2.useOptimized():
+            print("OpenCV did not disable optimized code paths", file=sys.stderr)
+            return 1
+
     try:
         if parsed.inverse_mapping_oracle:
             inverse_mappings = inverse_mapping_oracle(cases, cv2, numpy)
         else:
-            document = capture_document(cases, cv2, numpy)
+            document = capture_document(
+                cases,
+                cv2,
+                numpy,
+                opencv_optimized=False if parsed.disable_optimized else None,
+            )
     except (ValueError, cv2.error) as error:
         print(f"crop oracle capture failed: {error}", file=sys.stderr)
         return 1

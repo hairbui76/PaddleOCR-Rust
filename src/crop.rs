@@ -285,6 +285,8 @@ mod tests {
 
     const CAPTURED_OPENCV_CROP_ORACLE: &str =
         include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
+    const CAPTURED_OPENCV_CROP_SCALAR_GRID: &str =
+        include_str!("../tests/fixtures/classic-v1-crop-scalar-grid/capture.json");
 
     fn dimensions(width: u32, height: u32) -> ImageDimensions {
         match ImageDimensions::new(width, height) {
@@ -437,6 +439,101 @@ mod tests {
                 capture_f32(&coordinates[1], &format!("{context} corner {index} y")),
             )
         })
+    }
+
+    fn execute_captured_opencv_crop_oracle(
+        capture_json: &str,
+        context: &str,
+        expected_case_count: usize,
+        expected_opencv_optimized: Option<bool>,
+    ) {
+        let capture: Value = match serde_json::from_str(capture_json) {
+            Ok(value) => value,
+            Err(error) => panic!("{context} is not valid JSON: {error}"),
+        };
+        assert_eq!(
+            capture_string(&capture, "schema_version", context),
+            "paddleocr-rust/crop-oracle/v1"
+        );
+        let environment = capture_object(&capture, "environment", context);
+        match expected_opencv_optimized {
+            Some(expected) => assert_eq!(
+                environment.get("opencv_optimized").and_then(Value::as_bool),
+                Some(expected),
+                "{context} OpenCV optimized setting"
+            ),
+            None => assert!(
+                environment.get("opencv_optimized").is_none(),
+                "{context} must not retroactively assign an OpenCV optimized setting"
+            ),
+        }
+        let cases = capture_array(&capture, "cases", context);
+        assert_eq!(cases.len(), expected_case_count, "{context} case count");
+        let mut fixture_ids = BTreeSet::new();
+
+        for case in cases {
+            let fixture_id = capture_string(case, "fixture_id", context);
+            assert!(
+                fixture_ids.insert(fixture_id),
+                "duplicate crop capture fixture {fixture_id:?}"
+            );
+            let (source_dimensions, source_pixels) = capture_bgr_pixels(case, "input", fixture_id);
+            let source = must_ok(InterleavedImage::new(source_dimensions, 3, source_pixels));
+            let plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
+                capture_points(case, fixture_id),
+            ))));
+
+            let pre_rotation = capture_object(
+                case,
+                "pre_rotation_output",
+                &format!("{fixture_id} pre-rotation"),
+            );
+            assert_eq!(
+                plan.warp_width(),
+                capture_u32(
+                    match pre_rotation.get("width") {
+                        Some(value) => value,
+                        None => panic!("{fixture_id} pre-rotation is missing width"),
+                    },
+                    &format!("{fixture_id} pre-rotation width"),
+                ),
+                "{fixture_id} pre-rotation width"
+            );
+            assert_eq!(
+                plan.warp_height(),
+                capture_u32(
+                    match pre_rotation.get("height") {
+                        Some(value) => value,
+                        None => panic!("{fixture_id} pre-rotation is missing height"),
+                    },
+                    &format!("{fixture_id} pre-rotation height"),
+                ),
+                "{fixture_id} pre-rotation height"
+            );
+            let expected_rotation = match case
+                .get("rotates_counter_clockwise")
+                .and_then(Value::as_bool)
+            {
+                Some(value) => value,
+                None => panic!("{fixture_id} rotates_counter_clockwise must be a boolean"),
+            };
+            assert_eq!(
+                plan.rotates_counter_clockwise(),
+                expected_rotation,
+                "{fixture_id} rotation decision"
+            );
+
+            let (expected_dimensions, expected_pixels) =
+                capture_bgr_pixels(case, "output", fixture_id);
+            let crop = must_ok(classic_perspective_crop(&source, plan));
+            assert_eq!(
+                crop.dimensions(),
+                expected_dimensions,
+                "{fixture_id} dimensions"
+            );
+            assert_eq!(crop.channels(), 3, "{fixture_id} channels");
+            assert_eq!(crop.pixels(), expected_pixels, "{fixture_id} pixels");
+        }
     }
 
     fn patterned_bgr_pixels(width: u32, height: u32, seed: u8) -> Vec<u8> {
@@ -844,81 +941,22 @@ mod tests {
 
     #[test]
     fn classic_crop_executes_every_captured_opencv_oracle_case() {
-        let capture: Value = match serde_json::from_str(CAPTURED_OPENCV_CROP_ORACLE) {
-            Ok(value) => value,
-            Err(error) => panic!("crop capture fixture is not valid JSON: {error}"),
-        };
-        assert_eq!(
-            capture_string(&capture, "schema_version", "crop capture fixture"),
-            "paddleocr-rust/crop-oracle/v1"
+        execute_captured_opencv_crop_oracle(
+            CAPTURED_OPENCV_CROP_ORACLE,
+            "crop capture fixture",
+            15,
+            None,
         );
-        let cases = capture_array(&capture, "cases", "crop capture fixture");
-        assert_eq!(cases.len(), 15, "crop capture fixture case count");
-        let mut fixture_ids = BTreeSet::new();
+    }
 
-        for case in cases {
-            let fixture_id = capture_string(case, "fixture_id", "crop capture case");
-            assert!(
-                fixture_ids.insert(fixture_id),
-                "duplicate crop capture fixture {fixture_id:?}"
-            );
-            let (source_dimensions, source_pixels) = capture_bgr_pixels(case, "input", fixture_id);
-            let source = must_ok(InterleavedImage::new(source_dimensions, 3, source_pixels));
-            let plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
-                capture_points(case, fixture_id),
-            ))));
-
-            let pre_rotation = capture_object(
-                case,
-                "pre_rotation_output",
-                &format!("{fixture_id} pre-rotation"),
-            );
-            assert_eq!(
-                plan.warp_width(),
-                capture_u32(
-                    match pre_rotation.get("width") {
-                        Some(value) => value,
-                        None => panic!("{fixture_id} pre-rotation is missing width"),
-                    },
-                    &format!("{fixture_id} pre-rotation width"),
-                ),
-                "{fixture_id} pre-rotation width"
-            );
-            assert_eq!(
-                plan.warp_height(),
-                capture_u32(
-                    match pre_rotation.get("height") {
-                        Some(value) => value,
-                        None => panic!("{fixture_id} pre-rotation is missing height"),
-                    },
-                    &format!("{fixture_id} pre-rotation height"),
-                ),
-                "{fixture_id} pre-rotation height"
-            );
-            let expected_rotation = match case
-                .get("rotates_counter_clockwise")
-                .and_then(Value::as_bool)
-            {
-                Some(value) => value,
-                None => panic!("{fixture_id} rotates_counter_clockwise must be a boolean"),
-            };
-            assert_eq!(
-                plan.rotates_counter_clockwise(),
-                expected_rotation,
-                "{fixture_id} rotation decision"
-            );
-
-            let (expected_dimensions, expected_pixels) =
-                capture_bgr_pixels(case, "output", fixture_id);
-            let crop = must_ok(classic_perspective_crop(&source, plan));
-            assert_eq!(
-                crop.dimensions(),
-                expected_dimensions,
-                "{fixture_id} dimensions"
-            );
-            assert_eq!(crop.channels(), 3, "{fixture_id} channels");
-            assert_eq!(crop.pixels(), expected_pixels, "{fixture_id} pixels");
-        }
+    #[test]
+    fn classic_crop_executes_every_captured_opencv_scalar_grid_case() {
+        execute_captured_opencv_crop_oracle(
+            CAPTURED_OPENCV_CROP_SCALAR_GRID,
+            "crop scalar-grid capture fixture",
+            24,
+            Some(false),
+        );
     }
 
     #[test]

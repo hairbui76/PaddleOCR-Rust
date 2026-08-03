@@ -1,0 +1,1611 @@
+{
+  "algorithm": {
+    "border_mode": "BORDER_REPLICATE",
+    "interpolation": "INTER_CUBIC",
+    "post_warp_rotation": "numpy.rot90 when height / width >= 1.5"
+  },
+  "cases": [
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-00-bgr-3x3",
+      "input": {
+        "base64": "QLkEaWukReLGZPyQ+YGlwAbtF+xbv1zwuC99",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9bd4f3bf766b591f0ce74df4801ea3fe3bdaae8d1eb968846f833ca4fe70c1a8",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "QLgDSMUeUP+P",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "6485e6adb5f7247a97ab1f1c486377ed41c5ffc81cadceab85f3b52553f98c12",
+        "shape": [
+          1,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.5817368436847646,
+          0.1077290451268083,
+          0.7487168636313174
+        ],
+        [
+          0.12459367986430936,
+          0.8846151151544159,
+          0.9142061156074617
+        ],
+        [
+          0.05959004822218737,
+          0.02940702891965918,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.125,
+          -0.875
+        ],
+        [
+          0.6499999761581421,
+          -1.125
+        ],
+        [
+          0.08749999850988388,
+          2.625
+        ],
+        [
+          -1.75,
+          2.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 3,
+        "width": 1
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-01-bgr-4x7",
+      "input": {
+        "base64": "RltxH98bg4UkjEQC5JyRxkebjkpuBqeA9j1/VCxgmx7hmdAsDJLog6zr6YKu0/oGtzfYLxcbS/5JBxhKwrFV4f08KMn1v03uh+3wu24As2vIW/cJ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "bad78f9c6781f39e528683c7b209f1ce17c02854f79594811c21130879f4ce3d",
+        "shape": [
+          7,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "Wld9WK1Qim1AGIhm/5yOyTqKkxa2ZL9S00aTZmKUwDzp4fUbD4P2QW3RkbZzS30p",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1275a82dceed54ac91a47156529838a35e845bc6a9b7a648bbb753c7761eb01c",
+        "shape": [
+          4,
+          4,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8323170644556797,
+          0.05075104169607717,
+          0.3057750189588702
+        ],
+        [
+          -0.15619862693159572,
+          0.9371917615895742,
+          -0.17572345529804512
+        ],
+        [
+          -0.011280921584196045,
+          -0.008678492153756823,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.375,
+          0.125
+        ],
+        [
+          4.125,
+          0.875
+        ],
+        [
+          3.75,
+          4.724999904632568
+        ],
+        [
+          -0.625,
+          4.224999904632568
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 4
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-02-bgr-5x11",
+      "input": {
+        "base64": "Tf3f1VKSwSmDs4xzzrZ+zIlKBqeBTfERM0yBCbRYh8QJKuju98g8PI8gVu31SOoAKGSvOdhTnU18rDjBP6b8XHn+Ui3C8sKL3tUvoAXtSkNVkKpQX6wfuSY6J+8LSLB+a5WB3fHg/Nzkgwoy9t5lBlC2n5Hlk4QVWLHG1OAiD9UPH959ZLzXaP1wYv/iJ8yxu8841d+aGZQfYw9mq+pJAvvj1sCj",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a784ef677b63e88a12fbe25eebadb805f9eeceea5239ea64da0a50ad88fcc241",
+        "shape": [
+          11,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "yq54cI1zFayDiUmn+Mdoim0f9e7mq5KLvUx9cnxelqYOcapCmmesecE3m7i0JWXY7hyJTpFbZu6yKZabUUzpX3hBW6COnsJiaN/Zkpt/b8dPPr82UIn/cjSYUcUhu29d",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3c39a9fdff6f03c9b379814cd13d4db8203d4ebe0e645cf73eed428d60f3ab21",
+        "shape": [
+          4,
+          8,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8786484604188063,
+          -0.01230600058321204,
+          -0.2258151153963076
+        ],
+        [
+          0.04751746121122542,
+          0.831555571196445,
+          0.4038984202954161
+        ],
+        [
+          -0.00956959880937216,
+          -0.008067030817155178,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          -0.5
+        ],
+        [
+          4.625,
+          -0.75
+        ],
+        [
+          4.4375,
+          7.862500190734863
+        ],
+        [
+          0.375,
+          8.425000190734863
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 8,
+        "width": 4
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-03-bgr-6x4",
+      "input": {
+        "base64": "U59NisUJ/8zi2tTludFq08v4fQSUkzyhcVqEvj1Qc2oxuwCw4v6R9XNVw1k8vdv7mZCFQ5mM75uwUFk5vZui2PbAe5GQJDcp",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "ab9d9c2fe7266fb70780cbfbdd1eeaa08387db9eb3897daa650c7c11acb96263",
+        "shape": [
+          4,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "cHlDkYKkuURj1leTtEg4v9HwnGpAv4+O2Pe/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a482d9f0f8d164725dd075cf024b5a25dc6f6bcadf7c2c5374647a45110d67fa",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9410996055126353,
+          -0.1459069198980111,
+          -0.5334721584836428
+        ],
+        [
+          -0.2069138319475209,
+          0.8828323627979826,
+          -0.201740991082043
+        ],
+        [
+          -0.0017092173871794097,
+          -0.023199448070533764,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.625,
+          0.375
+        ],
+        [
+          3.825000047683716,
+          1.125
+        ],
+        [
+          4.074999809265137,
+          4.224999904632568
+        ],
+        [
+          1.125,
+          3.5999999046325684
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 3,
+        "width": 3
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-04-bgr-7x13",
+      "input": {
+        "base64": "WUG7QDh/PW9AARtXo+tW2Q2m9WKn2oYxr2mGc8ZIXxBYTRdyzjXlrleKMcWDMsv2Cr1bTVrEQOrj9HmxOpBIVHKCpfVdVq3GiqSsaDPHdvNw+hHfXh78ShrPnDy2j37vgymHSWaIUfgItiznE7ydBNuCSoMUBakbgnjf5LoSt+BovoZEq+FxF37bb7tGFOdy66ni+CELF7nLI1VPjtUOOgTzDhAz7ZOKId9cMrXHY5pF/VZRbzX+GC24M/Q7jAQkPqwuKEmrH06nRftwC8OD7JE6x/Yq/Pm9X9TVH4/detgAA5pgfY5f8U1CeGm66BrtfVX8ocNOhMGhxrrwHGK5pDlDq9qhf4aZ0sIk6PQJYza4",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9ba07fecff04adf354db406ff5a9a4d9ea8a876b09bf3961a2b18a81f031f097",
+        "shape": [
+          13,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "TX8/TaNLKZyPh5XYgHasLahdR6ubvLIAqkBtAGvPU3D8hXW0iIiEelttZqqtQ+6tkZKZNle0P+5yjKBkEnx4OoBwRaq+wFztxJi5puKkrVpqhqt5RsuSbGOeTSjxjpiJqZNdNLK/K6Bfx99gsqi9jzxfpjlBwGdZf7pQMaF7UDrGlAb/wJW3+XscjIcgTEw+spwY/4QgQFuoFGS/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "aecaf4ec2d5d40f1b84f6529d02f4ae0e6b6418d19298d03193724bea43047a5",
+        "shape": [
+          4,
+          13,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0114978461955233,
+          -0.056719505394141494,
+          0.7940730755179809
+        ],
+        [
+          0.06674052916026646,
+          1.0611743881887488,
+          -0.6131785957477675
+        ],
+        [
+          0.0019098486427291553,
+          0.006831114499421512,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.75,
+          0.625
+        ],
+        [
+          3.2249999046325684,
+          0.375
+        ],
+        [
+          4.349999904632568,
+          13.8125
+        ],
+        [
+          0.0,
+          14.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 13,
+        "width": 4
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-05-bgr-8x5",
+      "input": {
+        "base64": "YOIp9qz2fBKfKWPIjQVD305UbL+6IdDC7XeIKE5AS7aA3i80uWs5Zzq+njHLp7zxe+oyVxv9kjkXmZkot4Xvz+9EzlgriCJj4YzrTcq1Dcv9MMQnXVdrkxQZV2ILs+Unj3MK/6Bb+4aa0LxCIau4g6BooPyrPzue",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1b5d61fd114712b64a81c140725e3a798d5aa1606579e17987a2bddc7649c6fd",
+        "shape": [
+          5,
+          8,
+          3
+        ]
+      },
+      "output": {
+        "base64": "cd4/9pj8aA6fKFy9rAE01HtqOd3GCtO9WuUi6KvndC6cW1Cgoigzlz2lgIjhhOD2/3uPPUNKP6Zo20ofxYOKm6uHyTVrhyqO",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "753c4ba6787b619af636c6f7e2cf97824ee25e04f5d8fbd53dc1840bbb682541",
+        "shape": [
+          3,
+          8,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9840905985589056,
+          0.16401509975981762,
+          0.04100377493995441
+        ],
+        [
+          -0.08873401183635077,
+          1.0056521341453089,
+          1.0167438856248525
+        ],
+        [
+          0.007405793059214507,
+          0.011609154257619604,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.125,
+          -1.0
+        ],
+        [
+          8.625,
+          -0.25
+        ],
+        [
+          8.375,
+          3.0
+        ],
+        [
+          -0.375,
+          2.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 3,
+        "width": 8
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-06-bgr-9x15",
+      "input": {
+        "base64": "ZoSWqx9turX+UKs6eCAv5ZAD5BzNZxtSK4WK3dc4N1yncEb2pKGNHx7zC5wSHK3s7BYIYdw15IhKPbmgNXmVS2sG+Lz4u5cBN3MqMWKio6OLZXduXZHZ2w9kEYhg1kxgm72OtdsvpRMr6k2cMJrUAWZO9nVCeM0grD759JUBX+vBXS8L8QUMxf9FfHeqAQIzG4SNG2N8Fd9445o4ccDTcg0DR2DD2aQ420eDTGHn+JbsD4l6ecOLU+5A45j577WuVCGExLzax0ILhvKeS3KAvr9JfR8iB4ttrRSFUJN8EYsNfNvCLsxVbAFtHd/B2mxxHeM7C+GV+dB49PeOC2r6K1QtgFNMB7L1UjkceoBskao03t+1HU841DVIcnSRz4ji6aHx5i91xs+2/MvJqYfHmdeTxAQeqjKF7031GLfX1Dkvmeth05j7oAqeyh7CoumgeqyMVxSxVqPVEUKGdb/+7S4rchkYgkLAT9d+vbNE2lY5KRt/EQCVojp63rwm2ifwksDM28LbDUCpNg3eywp9hc9dnMIL",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "17717851c8172b631873fd28b0692eda6188e9ef2640dd0d3f0a6f6e67679443",
+        "shape": [
+          15,
+          9,
+          3
+        ]
+      },
+      "output": {
+        "base64": "+HdG/3s6CLI0no4Am82G5aUDD958FIF7U1+AcQVXkGNa23jwlC0ekSgfESLc/7/x2EpjoED4J2aA/aLxfO58JshhKEtgo0VsS5cqTJ4uoZ6NRmoFFotgfs0ZE2yUalDGzWQuUsu3YH/Pmygbtbv6t7T9aEPzOnuX5xVtxmVAIApI+m5zdpLAQKUh/+h9ZKOOqx9soiFsPnGaVbqbSJPLAHNurq+UoYlhgkaPgHCJjeOB0cWHYoiYbJKR9t8p6XtFVXZzRLHYxP9ASFzb/6uoiR+HAOt/tqtBZYOXco6M6NUz14BOU3l+QKzJvvFKVWHM95+liCmGEeqAtq1H",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b9695308eb17431f88a6ab919439b0f8b620ffdbcf2f3820c022808643c94535",
+        "shape": [
+          7,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.948918628845328,
+          0.04891333138377979,
+          1.1103326224118009
+        ],
+        [
+          0.03287929260013826,
+          0.996242540699279,
+          0.9087014272870245
+        ],
+        [
+          0.004081170900686503,
+          0.0010710802742080396,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.125,
+          -0.875
+        ],
+        [
+          6.449999809265137,
+          -1.125
+        ],
+        [
+          5.887499809265137,
+          11.375
+        ],
+        [
+          -1.75,
+          11.25
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 12,
+        "width": 7
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-07-bgr-10x6",
+      "input": {
+        "base64": "bCYEYZLk+Fhcd/OrYjob7NKxW3rgrmXiaZSMk2AwIwLPAV64j9fi2AEoeAhZkZ3mXUPfa5xuNdd94dkXsm47xujIISDF7QyejltpFfmPOnoYmiq2XMpIJAmuzK62+rOYpwcRaxUDUKG9A973PonvgCszS+7asWCjQSEGfIJ4s3HtrANvlJjaHL/6g1Tc95CTs/FirQS1lXLOQ70s4rY2DpIL4weL0CyPOPuXWTd4whS/GKOP",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e68a4e7b382e5714c7616ccac21629242a69c5788c212fa72f00ce6b441af61a",
+        "shape": [
+          6,
+          10,
+          3
+        ]
+      },
+      "output": {
+        "base64": "ZBUFNF6yp5eyxYdtggIrQQ26SmqrNKXxsBOz1hdt05hk/tqnuVxpfQAAY1NXdFpHhmtUrX66tyWwqy6J",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "85680296e531da85f40e8d8ac5a0f2fafac59f674549ca430849b3753bff3133",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.942590115639683,
+          0.05207680087148952,
+          0.34696169325594484
+        ],
+        [
+          -0.12803228007939957,
+          0.8535485338626639,
+          -0.15470567176260783
+        ],
+        [
+          -0.009409725784267029,
+          -0.006946722831267056,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.375,
+          0.125
+        ],
+        [
+          4.625,
+          0.875
+        ],
+        [
+          4.25,
+          5.150000095367432
+        ],
+        [
+          -0.625,
+          4.650000095367432
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-08-bgr-11x16",
+      "input": {
+        "base64": "c8hyFwVbNvy7njsdTVQI8hRf09fz9bBzp6KOSOgpDqj2knV6ew02keVd5XShBo7hzm+1dV2mhyWxhvmPMGPiQmSKS4STH4E75EKo+pB80FKmz979XAO2bQP5htQLHRrQs1GUIVDW+i9PHW9STHgL//EZoWdx6vIm1gQTBW/wB/Ya+9fTOCqndICviTIO7h70S143P6XtFAUko+AgVKyZqhcTgK9TxrTmlbCrZg0IjJKTIb2jg1IYj6/Hkzy2U2U4apbaYS8KbzVvyOrMiyJ+j+xZMkgbEh4d+1Q2gZccpz8a9Rsk3wpL57aYw1bIzb/0vXF7dgDdbd9PIjUr+3M7sm8WVsv3j99S0rAUDAzOvx6xSV8ISRJs17f/YYvp9aTX9lOHu5ET5aPymSEIoB+Svrc1jW2TyanaBKnxBnB3B0uAd4zvS8c82gjLknjV6+/aA/uSqvzM1JLJ130Unv8u/CPGKPNFj+jMy7ZwoPuVM8oK1+VWKZfCf18vAkKKx4cuNvQA6SYDDiCzuy3VarBdO4l53ZxBXmvy4U/jMko/I3hYK5+IF276U/8ym4N8BhEwfQS2Pe8G7REwyOOW/Qq5xGgIchjG0Rq0smTwKI+Ul/wrD5GMYymJ1vAcLTnC/qJTjZzOd2TfAmmQkcpXB4raShqncnBQFKIQiMVO9r4n3LcwbucYpwFoaCXqJrdJTWsV",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a6a58fb872f5b5a180dc99ffa9f05f5b78a515413d4fac81dc8339c4f4a2fd83",
+        "shape": [
+          16,
+          11,
+          3
+        ]
+      },
+      "output": {
+        "base64": "916u5V6orX3Ls6asZ3+HU2yLhzoqRHMVmcuzOqX/YqxIiXk6BFBXiCNW/1KE3cxHiSwSYFFkdo70/q2DjqhOLZd4E04kRzR3fzuzgZHh0pm9gVhKiDt+4JS8g3G/q3lkgS8Agk5YynjAwKMis1VtiXrQY99aomOGSTEnfmB71szgW6CgXGT73T+Sv5tEq89JWNiXheOA/46WXmdlczxJjRgpe0BNwrHCtUyLu4lDLPqNieSTxJiHf7ALnXZFSp4zCDyATT1UXGFErUlGmGJndXJnsrGs0YjePwTsnTmGp/DFbd8dcplPcmaBHVGkQ4BAWZlpgWlnVHhtVVqlQjWuq63djHmW2ZOnlYdVlxgwvJLXeelqVKxpMQBpYNdLX0SH",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4c2e50e3d18b9a42c150759ccdcf1d13980c0f373c664d8aacca677e253ddd9a",
+        "shape": [
+          6,
+          16,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9516991118807723,
+          -0.00726487871664712,
+          -0.24155721732851668
+        ],
+        [
+          0.03754606517726738,
+          0.9273878385238784,
+          0.45430740296762234
+        ],
+        [
+          -0.003512496392584254,
+          -0.003103369715231608,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          -0.5
+        ],
+        [
+          6.425000190734863,
+          -0.75
+        ],
+        [
+          6.237500190734863,
+          15.3125
+        ],
+        [
+          0.375,
+          15.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 16,
+        "width": 6
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-09-bgr-12x8",
+      "input": {
+        "base64": "eWrgzHnSdJ8axYOPN2/0+FYNSjQFPPoD5bGQ/XEh+k0eJI08ZkOKSsiSUt/oe37cP5yLfx7e2XTkKhkHrViIveFMdOhgUvbZOirn3idpZyozBJFFWzwltf1DQftgQIIJv5sX14uqpL3hNwCsW2Ynfrb/9+AII4Wpa+cgjVxoW3xGSqw227x1y0BlkBA/5KtU48wN0EYmk5h7AwMVxaH7RpsbHFcbvDw98mS+c+SYVhBmKte3CJneLJCKa44VBL59dlEGr+miw6+h6ebjq3n8+INgDF0XmOh1InQOmRnschkhsrvVuCnGJBCtlhJMxug2DTgaqw8AJ+e6udN58vdc9X2LQYfN0/UAEmyQVdIA1thv/iCxX3QHWPha2BYVCDLS",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "bf27ea3f53f40323ea9acaa841b17814f64a84f5b60fd6bbfaa0bca523ed29ee",
+        "shape": [
+          8,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "jYTFZ8yMpZG3QpjJlSSnx068LUAIs1+Twd5AdOReUPbgUu3eklh4YlmCIYtxS0A6rN9eUvV0QnUExpoh1Yu5l5zZRwCWWgeUho3x6r8HIpKlZ9sRkFxrVYFBYa5A6KmGqzpcjBg8xd5tssxw0k02kpl4CwYjxqnxOJ4PRlYw6U6B2YjbdbRzKkJWRPmxSuWh",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8cafdfc73755b0ce6263351069e9feeeb6ea697b708638bbb269243ccc21821f",
+        "shape": [
+          4,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9403665618842882,
+          -0.10111468199980572,
+          -0.5498110954277529
+        ],
+        [
+          -0.05080396218277423,
+          0.846732703046237,
+          -0.28577228727810505
+        ],
+        [
+          -0.0016965941891990378,
+          -0.004002992825733581,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.625,
+          0.375
+        ],
+        [
+          13.125,
+          1.125
+        ],
+        [
+          13.375,
+          5.650000095367432
+        ],
+        [
+          1.125,
+          5.025000095367432
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 12
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-10-bgr-13x14",
+      "input": {
+        "base64": "gAxOguxIs0J47csAIong/pe8wpIYgkSTI7+SsvoZ5vNFtaX/UXnfA6zHv0sv8G/XsMhiid8XKsMYzjl+Kk0uOV4OnksuhGt2kRImwr5W/QLAOUSMW3WT/viO+yG2ZOlByuWajcV+T0tzUZEHaVVC/HzlTFmgXRcs/8otFUnfrwFymoCafk9CIgEal+5x2zm1ezniYudeEivRYyYJN5de4yAjuP/js8WUTxjSgLooII46M/DMjeCkynFOQ+B0thbDgQsx/aM6FynTCuL6y9F7YRlo53ETHrHOSZPmsZu8PvMob1uGkElBYWrCaM3PwBF4Xf+64B4k4u8mUHLI6nt9OIsALEOiFwuuUigMnpgx7JIutOBbdtWh2Tm1UKJBG8HNBAQekPOxBHcuNXdGmLdd5JjWVdYI6CAuGQbs8ygXOl3SVS58wvd9FQf4WdLoNfUUi0mZ/eXmUoG9nLiixz5fDBdh3sxznY7YR5VjgkLmjD7bha4sQi7vXITkJ8nttOdt2ikz+IorDwG9QU3MCFY98kKWHnZ38nM5Ll+yuAzv0YsEQrcqtP6fx51H0Fk8Z2cyWxvyogE4H4riodXxOLtc42PXeES/RZ9UfgasBIdNrXamR7sngtn2sydSEissNg5mq6UG2p8FN8db8aPgNJP2qonjjDa9hcEN7DDtUkbVsXty/XgyaRZQMpSOfDEzFG0sSkr9r52+C+SCC+2Eh11Q+THG",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "39ddde991453f7aefa87865ed4c8d92973ef3c92a3d207a3ad9f660d1658b168",
+        "shape": [
+          14,
+          13,
+          3
+        ]
+      },
+      "output": {
+        "base64": "D4WgNoSAzYRA5masss8tScVunKBlwlNES0JhL51RtLMksEngjkG8aDZ0vKWv5uh6soZGQeUw1ougPHc8QEwefVkaqgBbuDpWa5p9QkWu81uMv12YaZJAhZplp8OFgy2VUH5UEWxMlGEc8JFmhpvTk0ibbWeXUVwSHXE5kPKvzFi9jX6f2K8uiEtkOHvckf/Phm6bhShRfLYuArnRa87vrNZkdMA/mNOvmDabN57LkK+H63UbrIxbpH6pZo+BX3KXO3aeKFFMrvxsis2PuYG7omtPa8hvGGJql4uHYZk1CGE3M09/kEuAMTbnukdLhkelSDWKh+aDGiqdSJ/yK/c+R2pA38STtZ3hAAB61JdLs5bXO4N4lni3bCf/fqpxPIuPWmPad8n/fcucAQC5U13DD21h3FB+K1mJ6V9bPnd4kwf/w3tPKcdTw/+UXlgqTSL5mQM6P4Hbicr1SrVbzlnefi3Ha5wpayN/JrJa",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "42837457914db0ee826d2e351616382feeb381e0967579db92fe22f6dff3d76d",
+        "shape": [
+          11,
+          11,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0269232057953626,
+          -0.06800816046958492,
+          0.8126975046400127
+        ],
+        [
+          0.023302162629912106,
+          1.0043231737929326,
+          -0.6102253616481491
+        ],
+        [
+          0.0006331047489597394,
+          0.002977834786653347,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.75,
+          0.625
+        ],
+        [
+          10.024999618530273,
+          0.375
+        ],
+        [
+          11.149999618530273,
+          11.762499809265137
+        ],
+        [
+          0.0,
+          11.949999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 11,
+        "width": 11
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-11-bgr-14x9",
+      "input": {
+        "base64": "hq27OF+/8eXXFBNyDKTNBdlqOe8ryY8kYc2UZ4IR0pltR7zBPK8zvI/8LLd2ZWDRIfU4k6BPfBJLc1n2qELVtdrQx6/7tuEU5/lkp1VDlNpObvjUWq8CRvLYtkcLh1B61i8dQgBR+dgFaiFid0Ree0HLotI3lqmvlK05nTZXA4ef6VT9IeEQesHPncyj0cYVE6a384iXkb4nw0n9qI3Af6QrVaerqU3rrMzmjZC46gwOPArgEihqZ1ERHDLTaG8IjMZcS1zSa6MFK94R6ij6yrBwwoYPo3smcLO+yh2LCcwuLPs3aGi8n8TYO4lTuTq6rcZZFi1InPaR5xEW4f+de5h1F/93WyFdkuOI6F5jA0zsaaAEjDc7W3sQxy5uLk/HC13peqSAE+HMgyLmlIPD94gmuQvCeFtYo7Rq6gTnVGb7RP/Dfo+es4YPPP9x2vgxz3AcJtn0kHk3f1Xo3F73ExEuOTkJJGHdhQTddGaPOXhEXJOXTnoFyhc/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1a2ca62aa2edbd3c85add83c2bd5f7d683c431d93f209ad921282cb8d46d2bee",
+        "shape": [
+          9,
+          14,
+          3
+        ]
+      },
+      "output": {
+        "base64": "fKO7P2TB9ePaEA10A6jXAONlIv8cgKq5Pl3BuPC1SlVjPFWKS47OelrGKblkXoHUPrYnko5RxBUWSQCD8q8hTKIAatbefY4kdZuNu7GWza0mL7eLD5zFwGT/oWweW0mtIDaxZksOKzS3yriem5lnqnVwwSe0QHlMFf8jUYWe",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "ce827263fb4c37a2ab42916a7f9ba71365d3f494fcc3e6072417123ed161abfd",
+        "shape": [
+          6,
+          7,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0482312258884603,
+          0.08094449739979906,
+          -0.050084405836258415
+        ],
+        [
+          -0.10459562186263592,
+          0.948333664821274,
+          0.9614081175541038
+        ],
+        [
+          0.004114342636446058,
+          0.0061496341103355655,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.125,
+          -1.0
+        ],
+        [
+          6.925000190734863,
+          -0.25
+        ],
+        [
+          6.675000190734863,
+          6.474999904632568
+        ],
+        [
+          -0.375,
+          5.474999904632568
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 7
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-12-bgr-15x12",
+      "input": {
+        "base64": "jE8p7tM2L4g2O1vk9765CxsYsUw+ENm0ntyWHAsJvj+U2NSDJ+WHdHMwmSK+2lDMkiIPnWGIzmF/F3ltJTd7MFeS8RPJ6FaxPuGji+wwKrLbo6sbWuhwj+wjcG1gq7ey4nmh+Dolo2aWhLK8hjN5+gex+EvOzzwyKZBGJSTOVwzLOChhxHPd0YKEpKnVyFR2qxONhSnPEFF9I2zxGoIjGyk08U9zn9VCCYD6mmZItIvhRST1l28xBTLV9IQyGcdNl4CHmRZqwB03TNooCoB5M0d3nJsLKUR+ltOW4p9b1KY16JvoQYc33B7tDkTXsmP7/Y35SzxrVv79fq9l2YO+v6bpArtNnzcL0p8EMSSUGgarHmGuopjW3LxrP7maQd3CEba0ZFVPI0tq0c2FkE4oCnh3Hj99B5aDLmPo4OG4bW8kM9AKOia+UAUlICz7f/tOE5ifT80Bz3CxYvMv8X6PGwz8lKagqjTjwnNWZYo35bKtM3gCWsUcOKmZS09RoUesfV1nBu5TD+HHxm3EpvweqPyzX1CthnuAfG6BPs2ffp6wWdDNUY1DOjpcBi79yL4zOTEuBhRpUQSTeshLc2z/Al+mfXG5uSTzSqho4H8HxO8hfuXDoYpkkV+I9x6Wbnt6ya0/PNkqbCUmUX1pYZwSCfcfpvsr9t8LUZuMrs6Chj60jQpMKio3/QMz0awd23BDgEq590qxU2jf56RJ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1e199a3a272d003ec897501eb9c152857dc41af70c05e1b8996f8c3d0bd330a9",
+        "shape": [
+          12,
+          15,
+          3
+        ]
+      },
+      "output": {
+        "base64": "pWZUrV9MPVSXhzB+LGfowhAwPlaGJuOvb7pcNEdKbYRcml6EDBQQChYSKDp/grO8Gz91uCyJ6LD/IaPBKDC7SMdqcdyBn8Gd9Lux9b24G3dssVeSjizJfpaQe23qY4hoRiQcScNTscB6trk1O1vkOVrc4F53+TYunTF8MbVVZkPev6yHOHBsfqF6a6pznaYsNYwxQo4wolmB2ouywmx9x1dtqEfDUZuTbLEOlamRWnK1uZ138s81670ylicunbuzkpPPG0edWYlwMEaer55ShHRJl067bZ2JhUcnjkU72FjccGtS1n5ovINIwW/9QDew+9yirmhYhHCmQLF0i08nl08/z1TKeHRezX9yq3xUsm/rPzyt8NSWqWtXhW2oR615",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c6b124cf532712d70ae80069d5259af2a0e26d744b8e48cce0b2b3025b4de792",
+        "shape": [
+          8,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9807394367410155,
+          0.049532294784899754,
+          1.1466726242704297
+        ],
+        [
+          0.029120634846067465,
+          0.9755412673432595,
+          0.8863593231271779
+        ],
+        [
+          0.0036171266695708302,
+          0.0009426264250364648,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.125,
+          -0.875
+        ],
+        [
+          7.25,
+          -1.125
+        ],
+        [
+          6.6875,
+          11.625
+        ],
+        [
+          -1.75,
+          11.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 12,
+        "width": 8
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-13-bgr-16x10",
+      "input": {
+        "base64": "k/GXo0atbSuUYqJV4dilEV3GKKlRViRE3OqY0pQBquW8aetFExvcLVZlB44FT0HHA07lpyLAH6+yu5nloywhrNNUGneWG8tOlMnib4MdwYpp2F5jWSHf2OZtK5O2zh7r7sIkrnX5TvQonkMXlCKVecyXTsRlCM61vnNTrRFGq5L4iP3FZwWrKEI5qocHvuLWQ4FiFskIj+TTg47mi3iFt648jfc7ll2ZZjUNpzzYfgm1Tj4JHLb3oxOZzNaRyyCSojuy588BFJdpbdY/Ktj3m91/d68Hrw7WvfNu+yErn4A7pTuZGaayGXgC4QBarIw9TVSZgEuPEAZoFU6z0QjeArNe7Xci4025EVuAeurFMcBp0yFXuPpwXf3GtkXGVGu8GA+ATwYdMrUJH3gkjBqOHGjIgnQ3ltKtuBFl172Ih3hMIqBR9r7f7YQ8BFmEJP5rV78iecEODmgrRJB2BZ4oIgbJ7xM3MQfpAOPPV67gku0WCl1tZhEypjz03RKDGPjLz/cAjSDnkNFLif0/dc8OA1jBf75IUH8kIvZoga33VagGZV0fIFWVdInmIRnd+Ok0p7zMOJ2CakFsZsF5kMRREdyNgIi282dDMPlGznvkTyxfmnoRsWKbAPuk6pfLirGE",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e4014b392060eb37ca9152ce824815c5ba86f1d07d86fd848a4cb40c40128b3a",
+        "shape": [
+          10,
+          16,
+          3
+        ]
+      },
+      "output": {
+        "base64": "fvCgn2qvajOma5WG0ah2U4eZH5ByP3FBt+LIlZQKvqt7rm5cSTDitd1sHX6xyQjsK2K1nTLbPbWUnJOOnghQoc1vOJqEAOWQtJaRli0st6Hcn+TDaACmOWIwpIoYwOTivroZcaJnaPCFjo2OlUKPpJ1fhvZEcJGfbzANoTXJgxDNTk8RIK31oxKazNWRyiCNdkOpmKElY9RJaMpyN9zImdqaedUJnxa8ueF2/SkxqHc2rDqSJ6O1DY8N1gBdpYNKZ1CokWmSTC5uAD6NoyTpL5KKsJQY/0+fK0iHbNvEMNR6sS1Q1uFwhf+3jWLFSX+2",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "25e65b73f95bba272925b379375afb4d635467284b5a115838d9d492b0940562",
+        "shape": [
+          5,
+          16,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9270940570639228,
+          0.040308437263648814,
+          0.3426217167410149
+        ],
+        [
+          -0.03913830948263017,
+          0.8610428086178638,
+          -0.1223072171332193
+        ],
+        [
+          -0.0025204308475293463,
+          -0.0016032551310690823,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.375,
+          0.125
+        ],
+        [
+          16.125,
+          0.875
+        ],
+        [
+          15.75,
+          6.375
+        ],
+        [
+          -0.625,
+          5.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 16
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-14-bgr-3x16",
+      "input": {
+        "base64": "mZMFWbkkq8/ziurHzPOSF550oAdknW7VGvmahxz5lovj+wMH/lEw5jqadPpMxDHCdHu8seP4cf7lYLldICHIJ1AWRNtkTUDs6rAhVBoKV2L2DhGqWFpNIOG45boL8YUj+gynZK/M+IK6t9RxoxGx95J9oz39QWE4U1ZgNf6+/xck19EoC5h4fwPvsWU5tW82",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "6afd457f6dfd6a7030c85da943ef2306713ce20f6286a840264f5981b891dda1",
+        "shape": [
+          16,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "kMu1b7+MN9yuzUBamrVqkr7kME6aTnbBQ1ObXqSG/0J51bCXhZMAmfCQpy+CiUD7/D9RlXHOSt+HbXwEdkZLfl5G0rtfsm/N",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3e5522c7509a65873b17df4ccf18ca571b919be54b38cc971e04bbb3ebe42954",
+        "shape": [
+          2,
+          12,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.6998061790752413,
+          -0.006767951341858483,
+          -0.17833552043973958
+        ],
+        [
+          0.0741176261797252,
+          0.82270567886858,
+          0.39282343288935867
+        ],
+        [
+          -0.011484371794876415,
+          -0.008756435371633127,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          -0.5
+        ],
+        [
+          3.0250000953674316,
+          -0.75
+        ],
+        [
+          2.8375000953674316,
+          11.862500190734863
+        ],
+        [
+          0.375,
+          12.425000190734863
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 12,
+        "width": 2
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-15-bgr-4x12",
+      "input": {
+        "base64": "nzVzDyyb6nJSsTI4tg1+HuAjF2R35LhlWAecPKXxgjELjBrJ6YeEnx3P4WWUOSK95aeSu6Qxw00ZBNnUnRZuo8zZbT4xf7WJQZhgOLH47jqDQ8XyWJO8adsCoOBgFe1bBlYqGuqgohBM0WXMsQDMdldj+baUevO76Dltves1U51RJqWMripG18Okt0Nqq/2X",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "36123923ead0cd1276f324f3b8502f6bf2accd3d560e4f3e8b85ebeb7cd3fb3f",
+        "shape": [
+          12,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "H3tsZkkc52KXwEkLejpC7FyGlMhcvxJcPFZoO62YgjruwYpNtcS+O7T/adURJe+N",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b2cbc0955a9b8d81e35c34caae9fbe1ccef55f618f0db64369bcddb8d959e125",
+        "shape": [
+          2,
+          8,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8781455910104254,
+          -0.05211546416201507,
+          -0.5292976953207604
+        ],
+        [
+          -0.2805384870652665,
+          0.860318009163994,
+          -0.1472826990207061
+        ],
+        [
+          0.0016467141018167658,
+          -0.012882248004161162,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.625,
+          0.375
+        ],
+        [
+          2.924999952316284,
+          1.125
+        ],
+        [
+          3.174999952316284,
+          9.425000190734863
+        ],
+        [
+          1.125,
+          8.800000190734863
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 8,
+        "width": 2
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-16-bgr-5x15",
+      "input": {
+        "base64": "ptfgxKARKBWw2HqqoChqJCLRj8GKKgP1lhWe8S7qbtczHTKL1L3ZWAEETtHbrhK3VtRoxWRpFJxMqPpMGwsUH0mbl6L+sioml4CfHEjlhBIReHg5V80qstVNWga2OFSUEqCt0CV0TZ3e6/Unv+/o9R1JTy8rtIY+fRx6RditpyN9dXnvUbwTLoRZviGcoor3C8jiy6yxDZzWo/fD4FmtizxUYu+TefadfVFIzb+I3YMvaotGq4xKe7XjVMyu4Clhw2oz0fzJEAX/z8mFit501qGWB+38P2reMlP3RKibAQ1P",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3b0354cfe5e3254262a08767ef803f752352f920a3037aa02184a310a8a3cc7a",
+        "shape": [
+          15,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "pKVOY4GzUmyXcL56V2TAeDwUKJSy8WmSiluVzW/p4YigjMyYjNSbeYPGLFP3bHjKOXSAb45laUCBFRlNTx2ObmKmuf+rU3uRlmOZdNKdhIB5Q1P/KUXrQWvdR0vtOotqpo9vfQByAiVOIi3/mlF44r0iVhxrAJaGLNLYnMBb69mFPP/1AvL+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "62b558d3dbba48345da6fcddb9fa92e0e6dfa3aeab90b0cbc0c2ae54b469da5a",
+        "shape": [
+          3,
+          15,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0480598804168832,
+          -0.05112487221545771,
+          0.8179979554473233
+        ],
+        [
+          0.09559644638503428,
+          1.0993591334278985,
+          -0.6154021236036604
+        ],
+        [
+          0.002619393992110376,
+          0.008226433380177976,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.75,
+          0.625
+        ],
+        [
+          2.125,
+          0.375
+        ],
+        [
+          3.25,
+          15.8125
+        ],
+        [
+          0.0,
+          16.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 15,
+        "width": 3
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-17-bgr-6x9",
+      "input": {
+        "base64": "rHhOehOIZrgP/8Ici0JWKmR/Bh+ccU2G1CSgprbiWn1ar0pNwPMtEeU5uz0iIwOyxwA/zyWiZuuATRrEmAC7msVdwAbM5KDE7WfeAd/SG+qerSuBVwaY+s+XFSwLXLvMHuowhl9H9ytwBYaBzt4DdOIvpKjC7RjBEv+HzcUk+6iqxU5T9E/ghUQOxP7OmBhYoza3XU3qjC8sAxq3UU4QJ8Bc",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7eb96a602e43e0a1a3087274a9224bb226ef5b762279af0dd3a68544324fa6af",
+        "shape": [
+          9,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "p2xVbyJ7hdQA+pojVj5wEWuJqnVQdx2EkqUz1rxqW11WhVNSAiCcYGx42x6MVFnbrjI5ziCQ0/8rGddLtB1KVmGA4ASt4ZXGdPGMRFHRVVnPs3BzaxSw/+ab",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "bb2382948d34e1beb67d041b5466266192f63d64ace38664ee6af0b68739f39c",
+        "shape": [
+          5,
+          6,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9427012897957909,
+          0.09064435811287208,
+          -0.027193303111601837
+        ],
+        [
+          -0.11326567739958764,
+          0.9816358707964263,
+          0.9957940804713746
+        ],
+        [
+          0.0052264544714197055,
+          0.008139941987759015,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.125,
+          -1.0
+        ],
+        [
+          6.625,
+          -0.25
+        ],
+        [
+          6.375,
+          5.199999809265137
+        ],
+        [
+          -0.375,
+          4.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 6
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-18-bgr-7x14",
+      "input": {
+        "base64": "sxq8MIb/pFtuJgqNdVxDMKYtfnyvuJgWEjKiWz/aRiKCQGEPqymByshuKKlpmPStOC0V2ebauDmz8To7FfVhFkIf6mqZFhVhRE8d5Xa/scIs4t7IVj8HQ8niz1JgfyIFKjS0PJobobkBHhfc3M0f86gV+iFaJqpEp+KTVbOcTy7WFCK2l+Gu3QXDy9wAj6a4O6OM7u4iC8KDYz2rw0Ryw0Vkmz4jZQZLN7pw52uocX/WfL5vtRvWtnZqBHFrQ9rr2t+JbW/5uPljEcGzyY5xp8+lvBb0S/2PgJKndaw6l8FcVFsOVEEYTDtt/qnsilqG3je3ipZBtCyCCGc8p5yBUvemgyRON7whUQXr6Mi8o2MhXuKnKOJ05EOOC/+iszKiOst44nwo",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "414d6c7609aa9a62faf8d95066c0e33bd3c736909cd2e831b740882f9998e5ed",
+        "shape": [
+          14,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "bUhRakFXNlYdynnbp1qJQiFsmWBK6FFfvVF7gcGKfe9KNQ+MPBGJUymqnbCMGCUX1TAT/2Bcs2zJe02bbKbIf4+5mmyEkm+PPznUT1wxejmUra2Y39ATGHy8R36s7nq+hOmPOnn/PnH4O1l0jO6momFzQ5yLalWUO0uqmOFFbrqgharhvhC3whyluK8FB5NfDTMATyUgDgP/lWufzvYYEtGlfoT/sxm+tSmnpacVF5plITgOTzYyHhH4iWigxvEgH8yjfY3/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "db3fca97c4efa5b77709280a779f2fff3e828a38ba11b5b881ba479597d3a755",
+        "shape": [
+          6,
+          11,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0318522486012545,
+          0.05694548929247453,
+          1.2106610828073265
+        ],
+        [
+          0.04097347338812031,
+          0.9792659983459355,
+          0.9029529061143289
+        ],
+        [
+          0.005537182259687495,
+          0.0014890786138605366,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.125,
+          -0.875
+        ],
+        [
+          4.849999904632568,
+          -1.125
+        ],
+        [
+          4.287499904632568,
+          10.574999809265137
+        ],
+        [
+          -1.75,
+          10.449999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 11,
+        "width": 6
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-19-bgr-8x3",
+      "input": {
+        "base64": "ubwq5fl24/7MTlL/YHcvN+fc9dnC/+KnUEGkEcjSMsip0nnSll/WgqyilRSxDOSoqVrs46cSCYjnllqzk+oHkb7hE85nSIr+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3834f62c656aadfaf4ece1a28a1ca2e88daa615859e128eb464bed1f317472ed",
+        "shape": [
+          3,
+          8,
+          3
+        ]
+      },
+      "output": {
+        "base64": "qqculdWEgfeyqovZbTTWjoeIO6mWVF/m",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "fe1f8426517db7335084274f9cae42460461edf54a94dd1db88a23379439efac",
+        "shape": [
+          2,
+          4,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8767404036138051,
+          0.08512042595906529,
+          0.3181375981102938
+        ],
+        [
+          -0.13479569137023367,
+          0.7368830956837856,
+          -0.14265877122431087
+        ],
+        [
+          -0.018899457627035442,
+          -0.017120627969520928,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.375,
+          0.125
+        ],
+        [
+          3.7249999046325684,
+          0.875
+        ],
+        [
+          3.3499999046325684,
+          3.200000047683716
+        ],
+        [
+          -0.625,
+          2.700000047683716
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 4
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-20-bgr-9x11",
+      "input": {
+        "base64": "v16Xm23tIaErdZpxSpEbPSmKbTfVRSw3jk+mxlDKHm7RY5CUgZUqO4/XAoD4gdWjG4bC7WhLW9caOnoqEN+uDTujPTI0e/+c8R6arqSZ3nFGTEVXVbHk1L53RJ8LxvB2Qsi6qA/C9tQlUjmR+apW8DPhpROImM9K0aitZY2L9zkvs8p+3gZJi4Yu2JhkfMF5a303EjCTCugvI4KUpi83+050046zUhb58SKXARfIBXt9jvKYv6lj8jfytBUpp4t28FTfCeIpYe3HU7nhCT1vefy0cj/tVpA/zdJXprDaLnVpzptwBX8Ox++YpCD0fawJfsX29bSJKDtZNqXZlqXD2RKQWZz4v+l90X3jelUf0dedyGP6VKWo58VE+Rb72E6XSHwOt97Gn5pb",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7b53d153df9c3bddaec2b4bdbed353a44e3600bd5116e413aeac39c01c4cc07c",
+        "shape": [
+          11,
+          9,
+          3
+        ]
+      },
+      "output": {
+        "base64": "QG0nL3iCJ3i8frhWyt2wVWybBX50N562HqJoZl1J7Qnacp1YeaJSP0ptMGJEnOQ/hJBPAB+LLKrslcF/rHqI4YuPKqYrW5pALqmobMN2rV9VcqJfuTGZMsZZP55JU6HOZ8Cfen2/QnnOF4VuXsmryjDq1JV9iCLQqWKyhZzFElqAfWPZvmGvr0/XaKdFNnRj5IKKs4w6oWzCyGynyciLr4hu0qe8",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2cf676fe89bf02c86e608939ccac68e972750a3d75e5be123c03aacccadb626a",
+        "shape": [
+          5,
+          11,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9555720872304674,
+          -0.010500792167367773,
+          -0.24414341789130076
+        ],
+        [
+          0.04467842687240703,
+          0.906972031422928,
+          0.4423164089933623
+        ],
+        [
+          -0.006320038904855216,
+          -0.00544650515128625,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          -0.5
+        ],
+        [
+          5.324999809265137,
+          -0.75
+        ],
+        [
+          5.137499809265137,
+          10.3125
+        ],
+        [
+          0.375,
+          10.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 11,
+        "width": 5
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-21-bgr-10x4",
+      "input": {
+        "base64": "xgAFUeBkX0WKnOLiNawIQ2s45JTojHfHzF2oe9nCChT49KhWbMt+9HMMb+w/9sWdjLOY9ymDrSZN3pqijtRUibdlZpUCrXQ5RwbZkjuGdEnUgfifVetSHbjB/sVg6VeuThI9XkmWoGK3a8rsB5lyb/nH+4wg0mLN",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7040b88ec35e753989f9ab2362b1cae8828792e31989160789f53dda43bc5581",
+        "shape": [
+          4,
+          10,
+          3
+        ]
+      },
+      "output": {
+        "base64": "j4lcbZqCyZx7ZOkYyL17orij8h6ItCZW4qKn2Zmiq7Nharwhx3IiRx/JoUKHeGbVef+JTeBfIKfSL6nH",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "d57c76f5047099133ba87d3ee08fd96190d05c70f77e1e0109bb02316d111c98",
+        "shape": [
+          2,
+          10,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9175706054828072,
+          -0.1872593035968099,
+          -0.5032593895779509
+        ],
+        [
+          -0.05751121638050221,
+          0.8051570293270307,
+          -0.2659893757598225
+        ],
+        [
+          -0.0036921269762273303,
+          -0.008462577246474538,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.625,
+          0.375
+        ],
+        [
+          11.125,
+          1.125
+        ],
+        [
+          11.375,
+          3.450000047683716
+        ],
+        [
+          1.125,
+          2.825000047683716
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 10
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-22-bgr-11x13",
+      "input": {
+        "base64": "zKJzB1PanejowylUH8b0Sa3mXPH708FYCWyqMGK69roghsAYWAHTrVZB3VeHa7aY/d9vAeq8/nWBg7oaC8n6BDQnkPnP3+nWne0YdtJzCyFhtqvmVCTBZbIMueu2Db/mWlzAFIRqSvBJhVpHFYiN7r6tUQW3C/RQ+27HdWd6n0SIUXNFJCrkOgeY5VTHadw6m1jiNXIECA7c48h8iBv9M1eEDN5CPienq4q/G8PomXcloCXByTjvLfl5ZLnnCjwABsk1pVVYCeArlLEPSexsSyrDJ2nlYSPvGxII17R5xCh2R9vStr0EQaPCSZf7cP6NHlM1X9LQnUswZOJ3ha0EXy15LxSjRxXaUfTbDOGC/0saM+NNgWjd6Uf66C1T/mqMVS6ljEBjvm6X3nu+ZkUgxdmdCUzFoegpljLRgnvZbMq8iffPkhQEdv0IBO5a8Blxux/A7FeGRBx2PRrzv76CZ9ICI+aD7nEdLs4U0+/No/jEmmcy07j9h2MiAe9EQynmr2NoT+IbE0P3YQ2YvTt+NptCo5O6aaPl/ryN3JMP4P8MzUz7Ylp6fE3EFFrA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4060b55c4a0bec3b367bf54915af83f36fbc026f7147ba8b231ec016b29038cb",
+        "shape": [
+          13,
+          11,
+          3
+        ]
+      },
+      "output": {
+        "base64": "orUef4JVORzWynl9s1eJYNnGd+C7duLAvYtYk/mSpc+2u4qhsrgnbnx9gJB/o7nAUnaH0LgvNbCJXOmGl+pIUJtKVpeGj0zBTG24cI1eq7OAFT7KD0CWlziGgo1ulrezd1ZsAFNxxZ6is0zMNgnHczLHaYb7frRRpUyOrDygMI6nftDHRziDAMU1gK8aVuhlWGKfSELKgyT/H0oyobeugTE3NKqjUY3XY/+mKFJRQL3QgEVWQKtYlrcTiid/TvbjAPSu5VwqQNcvcnbk5EvU2lNN42poRRSV6X/NY0coy9iMAFfBqec2pTDeiXbMhczOiqOjAP1a7iN0ux+/41aBNhiEWS/zu9hWPeYpeLdx",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9a13a0968933541263dc84695d36be1f98f2ac65a094bde4d5ae128ee2c357bb",
+        "shape": [
+          10,
+          9,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9872150510876673,
+          -0.07034786842292946,
+          0.7843787060800814
+        ],
+        [
+          0.02691936083035043,
+          0.9879405630117079,
+          -0.5972733312595546
+        ],
+        [
+          0.0008259123110303071,
+          0.00375124277535042,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.75,
+          0.625
+        ],
+        [
+          8.425000190734863,
+          0.375
+        ],
+        [
+          9.550000190734863,
+          10.962499618530273
+        ],
+        [
+          0.0,
+          11.149999618530273
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 10,
+        "width": 9
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A deterministic scalar OpenCV coverage-grid crop with high-variation self-authored BGR bytes and a bounded projective quadrilateral.",
+      "fixture_id": "classic-v1-crop-scalar-grid-23-bgr-12x6",
+      "input": {
+        "base64": "00ThvMdR24tH63HFCuDgUO6U1E8OGQzoR3qs5eqy4mBHF9faQzgnZjp2SsPO4KaTbgxFC6v0UMS0J9qRiL6hgLDpuV2dEl509NVXWmlgofnu7F8uVF0vrq1WcxILMCYfZqZEyr499X7bn+uhJHepbISTpn5ORIfTkFHU/lTy88m0oEeox7yxkcdN7DH5X2qaM8W3xhI9h6EyQ+tx+hBf0NyNqIYKNa/+CD/SKJp4ZPX4qT/VTn+2ytk8PAtGvJRFEYRg8w7wXVpdtawmaUTrtMDLAn3h5+xH",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c0b905baf568fa94f0f55b4a564102ce3f88b490cdea79b969a751118e381f46",
+        "shape": [
+          6,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "0FLSvstJ4YdG6m7JAfTuWPWJx0LSq6dcoZxu55S0Wk59CbHsXFoVXDJaVt319ZNfa0IXm7JYy8l4YIp9nKSFcn+obV7U8U3z",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2aadae7a12da257e7de94cdd6e5b374fd1915d0411094ccb8e637056ea6c8368",
+        "shape": [
+          4,
+          6,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0383722887891516,
+          0.11473726706129883,
+          -0.01505926903734506
+        ],
+        [
+          -0.11461083732116022,
+          0.901605268166649,
+          0.9159316228317937
+        ],
+        [
+          0.006308105135930456,
+          0.010392304740283053,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.125,
+          -1.0
+        ],
+        [
+          6.025000095367432,
+          -0.25
+        ],
+        [
+          5.775000095367432,
+          4.525000095367432
+        ],
+        [
+          -0.375,
+          3.5250000953674316
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 6
+      },
+      "rotates_counter_clockwise": false
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "opencv_optimized": false,
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "purpose": "developer-only OpenCV crop oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/crop-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_path": "tools/infer/utility.py:get_rotate_crop_image"
+  }
+}

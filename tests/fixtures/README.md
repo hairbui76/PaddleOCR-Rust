@@ -33,11 +33,14 @@ values for direct fixture files.
 
 For `classic-v1-crop-oracle`, the gate also verifies the full capture document,
 its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
-metadata's concatenated input/output digests across all fifteen reviewed cases. The
-gate proves repository fixture integrity and metadata consistency only; it does
-not replace source review, artifact-term review, or oracle/model equivalence.
-Its dev-only SHA-256 implementation uses the `sha2` `force-soft` feature, so
-the hash check itself does not select a CPU-dispatched test path.
+metadata's concatenated input/output digests across all fifteen reviewed cases.
+For `classic-v1-crop-scalar-grid`, it verifies the separate 24-case capture,
+its explicit disabled-OpenCV-optimization setting, ordered case IDs, every BGR
+payload, and aggregate digests. The gate proves repository fixture integrity
+and metadata consistency only; it does not replace source review, artifact-term
+review, or oracle/model equivalence. Its dev-only SHA-256 implementation uses
+the `sha2` `force-soft` feature, so the hash check itself does not select a
+CPU-dispatched test path.
 
 `classic-v1-db-components` is a self-authored component-unit fixture. It
 records only private 8-connected bitmap components; it is not a model tensor,

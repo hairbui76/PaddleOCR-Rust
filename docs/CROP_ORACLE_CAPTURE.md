@@ -1,7 +1,7 @@
 # OpenCV Crop Oracle Capture
 
 Roadmap items: `CROP-001`, `GEO-002`, `FIX-001`, `TOL-001`
-Status: One reviewed component capture and its inverse-mapping sidecar are committed; no model-backed capture exists
+Status: Two reviewed component captures are committed; the baseline capture has an inverse-mapping sidecar, and no model-backed capture exists
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and boundary
@@ -60,6 +60,16 @@ record rather than crop bytes:
 cd /path/outside/both-repositories
 python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py \
   --inverse-mapping-oracle > crop-inverse-mappings.csv
+```
+
+The separate broad scalar grid is an explicit OpenCV configuration, not a
+default-dispatch oracle. It selects the `scalar-grid` suite and turns off
+OpenCV optimized paths before capture:
+
+```sh
+cd /path/outside/both-repositories
+python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py \
+  --suite scalar-grid --disable-optimized > crop-scalar-grid.json
 ```
 
 The input corpus currently covers identity bytes, left-border replication, a
@@ -154,6 +164,28 @@ warp-to-source coordinates against the private plan. It therefore covers the
 mapping direction used by the crop sampler, while remaining limited to this
 recorded OpenCV environment and the self-authored cases.
 
+### Scalar-grid capture
+
+The separate reviewed scalar capture is
+[tests/fixtures/classic-v1-crop-scalar-grid/capture.json](../tests/fixtures/classic-v1-crop-scalar-grid/capture.json).
+It was captured on 2026-08-03 with the same Python 3.12.3, NumPy 2.5.1,
+OpenCV 5.0.0, and opencv-python-headless 5.0.0.93 environment, after the
+generator called `cv2.setUseOptimized(False)`. Its exact JSON SHA-256 is
+`4fd7d7fa9fbb48b93c783f3661742a862bad5660383cf5a70c34a7a4eb45a3e4`.
+The 24 self-authored BGR cases vary source sides from 3 through 16 pixels,
+border crossings, shear, lower-edge perspective perturbation, wide/tall/
+balanced extents, and high-variation bytes. They contain 6,189 input bytes,
+3,303 output bytes, and 11 post-warp rotations.
+
+`crop::tests::classic_crop_executes_every_captured_opencv_scalar_grid_case`
+checks every input, quadrilateral, pre-rotation dimensions, rotation decision,
+and output byte array offline. The fixture metadata and
+`tests/fixture_integrity.rs` pin its suite name, scalar setting, environment,
+ordered IDs, per-payload hashes, and aggregate hashes. Exact agreement is only
+evidence for these 24 self-authored cases and the recorded scalar environment;
+it does not select an OpenCV dispatch policy or establish universal OpenCV,
+decoder, model, or OCR equivalence.
+
 ## Scalar nearest-even rounding regression
 
 A separate deterministic 1,024-case self-authored BGR probe (3–20 pixel
@@ -222,9 +254,10 @@ and CTC regressions are checked against the profile used for distribution.
 This profile preserves the existing scalar operation order rather than trying
 to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel
 equivalence, select an optimization implementation, or relax the fifteen
-reviewed fixture expectations. A future optimization proposal must update this
-policy first, retain a portable baseline regression, and provide separately
-reviewed numerical evidence before it changes the sampler.
+baseline or twenty-four scalar-grid fixture expectations. A future optimization
+proposal must update this policy first, retain a portable baseline regression,
+and provide separately reviewed numerical evidence before it changes the
+sampler.
 
 ### Runtime no-AVX baseline evidence
 

@@ -1,0 +1,48 @@
+{
+  "fixture_id": "classic-v1-crop-scalar-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/input",
+    "sha256": "134c858e3a7e62bbb0783aa1d33c10cb4a63c8ea11ec0d4f4574c358e1ba8e3d",
+    "sha256_scope": "Concatenation of the twenty-four raw C-order input byte arrays in capture document order.",
+    "provenance": "Self-authored in-memory BGR uint8 values emitted by tools/capture_crop_oracle.py --suite scalar-grid.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/utility.py:get_rotate_crop_image"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_crop_oracle.py",
+    "suite": "scalar-grid",
+    "capture_sha256": "4fd7d7fa9fbb48b93c783f3661742a862bad5660383cf5a70c34a7a4eb45a3e4",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+      "opencv_optimized": false
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/output",
+    "schema_version": "paddleocr-rust/crop-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "a8f6b46611a7e33ed4b9f89c592aa530cbbb2b81c4c8b5e1294ad77f6d39c093",
+    "sha256_scope": "Concatenation of the twenty-four raw C-order output byte arrays in capture document order."
+  },
+  "tests": [
+    "crop::tests::classic_crop_executes_every_captured_opencv_scalar_grid_case"
+  ],
+  "limitations": [
+    "This is an exact regression fixture only for its twenty-four self-authored BGR cases and the recorded scalar OpenCV 5.0.0 environment.",
+    "It does not establish image-decoder, RGB/BGR conversion, alpha, orientation, detector, recognizer, model, or end-to-end OCR compatibility.",
+    "It does not establish universal OpenCV INTER_CUBIC bit equivalence or a portable SIMD/FMA policy."
+  ]
+}

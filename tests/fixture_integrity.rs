@@ -59,6 +59,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == "classic-v1-crop-oracle" {
             verify_crop_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == "classic-v1-crop-scalar-grid" {
+            verify_crop_scalar_grid_oracle(&metadata, &directory, &context);
+        }
         if fixture_id == "classic-v1-image-inputs" {
             verify_image_input_oracle(&metadata, &directory, &context);
         }
@@ -66,6 +69,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
 
     let expected_ids = BTreeSet::from([
         "classic-v1-crop-oracle".to_owned(),
+        "classic-v1-crop-scalar-grid".to_owned(),
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
@@ -314,6 +318,145 @@ fn verify_crop_oracle(metadata: &Value, fixture_directory: &Path, context: &str)
         &geometry_bytes,
         string_field(geometry_oracle, "sha256", context),
         &format!("{context} geometry oracle"),
+    );
+}
+
+fn verify_crop_scalar_grid_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    let expected = object_field(metadata, "expected", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "capture.json#/cases/*/input",
+        "{context} crop scalar-grid input path changed without a payload-integrity update"
+    );
+    assert_eq!(
+        string_field(expected, "path", context),
+        "capture.json#/cases/*/output",
+        "{context} crop scalar-grid expected path changed without a payload-integrity update"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "generator", context),
+        "tools/capture_crop_oracle.py",
+        "{context} crop scalar-grid generator changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "suite", context),
+        "scalar-grid",
+        "{context} crop scalar-grid suite changed without review"
+    );
+    let capture_bytes = read_fixture_file(fixture_directory, "capture.json", context);
+    assert_digest(
+        &capture_bytes,
+        string_field(oracle, "capture_sha256", context),
+        &format!("{context} crop scalar-grid capture document"),
+    );
+
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} crop scalar-grid capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        "paddleocr-rust/crop-oracle/v1",
+        "{context} crop scalar-grid capture schema changed without review"
+    );
+    verify_scalar_grid_capture_environment(
+        object_field(oracle, "environment", context),
+        object_field(&capture, "environment", context),
+        context,
+    );
+
+    let cases = array_field(&capture, "cases", context);
+    let expected_case_ids = [
+        "classic-v1-crop-scalar-grid-00-bgr-3x3",
+        "classic-v1-crop-scalar-grid-01-bgr-4x7",
+        "classic-v1-crop-scalar-grid-02-bgr-5x11",
+        "classic-v1-crop-scalar-grid-03-bgr-6x4",
+        "classic-v1-crop-scalar-grid-04-bgr-7x13",
+        "classic-v1-crop-scalar-grid-05-bgr-8x5",
+        "classic-v1-crop-scalar-grid-06-bgr-9x15",
+        "classic-v1-crop-scalar-grid-07-bgr-10x6",
+        "classic-v1-crop-scalar-grid-08-bgr-11x16",
+        "classic-v1-crop-scalar-grid-09-bgr-12x8",
+        "classic-v1-crop-scalar-grid-10-bgr-13x14",
+        "classic-v1-crop-scalar-grid-11-bgr-14x9",
+        "classic-v1-crop-scalar-grid-12-bgr-15x12",
+        "classic-v1-crop-scalar-grid-13-bgr-16x10",
+        "classic-v1-crop-scalar-grid-14-bgr-3x16",
+        "classic-v1-crop-scalar-grid-15-bgr-4x12",
+        "classic-v1-crop-scalar-grid-16-bgr-5x15",
+        "classic-v1-crop-scalar-grid-17-bgr-6x9",
+        "classic-v1-crop-scalar-grid-18-bgr-7x14",
+        "classic-v1-crop-scalar-grid-19-bgr-8x3",
+        "classic-v1-crop-scalar-grid-20-bgr-9x11",
+        "classic-v1-crop-scalar-grid-21-bgr-10x4",
+        "classic-v1-crop-scalar-grid-22-bgr-11x13",
+        "classic-v1-crop-scalar-grid-23-bgr-12x6",
+    ];
+    assert_eq!(
+        cases.len(),
+        expected_case_ids.len(),
+        "{context} expected twenty-four reviewed crop scalar-grid cases"
+    );
+
+    let mut input_bytes = Vec::new();
+    let mut output_bytes = Vec::new();
+    for (case, expected_fixture_id) in cases.iter().zip(expected_case_ids) {
+        assert_eq!(
+            string_field(case, "fixture_id", context),
+            expected_fixture_id,
+            "{context} crop scalar-grid case order or identifier changed without an integrity-gate update"
+        );
+        input_bytes.extend(decode_crop_payload(case, "input", context));
+        output_bytes.extend(decode_crop_payload(case, "output", context));
+    }
+    assert_digest(
+        &input_bytes,
+        string_field(input, "sha256", context),
+        &format!("{context} concatenated crop scalar-grid inputs"),
+    );
+    assert_digest(
+        &output_bytes,
+        string_field(expected, "sha256", context),
+        &format!("{context} concatenated crop scalar-grid outputs"),
+    );
+}
+
+fn verify_scalar_grid_capture_environment(oracle: &Value, captured: &Value, context: &str) {
+    for field in ["numpy", "opencv", "opencv_build_information_sha256"] {
+        assert_eq!(
+            string_field(captured, field, context),
+            string_field(oracle, field, context),
+            "{context} crop scalar-grid environment disagrees on {field}"
+        );
+    }
+    let captured_distribution = object_field(captured, "opencv_distribution", context);
+    let captured_distribution = format!(
+        "{} {}",
+        string_field(captured_distribution, "name", context),
+        string_field(captured_distribution, "version", context)
+    );
+    assert_eq!(
+        captured_distribution,
+        string_field(oracle, "opencv_distribution", context),
+        "{context} crop scalar-grid environment disagrees on OpenCV distribution"
+    );
+    let captured_python = string_field(captured, "python", context);
+    assert!(
+        captured_python.starts_with(string_field(oracle, "python", context)),
+        "{context} crop scalar-grid environment disagrees on Python version"
+    );
+    assert_eq!(
+        value_field(captured, "opencv_optimized", context).as_bool(),
+        Some(false),
+        "{context} crop scalar-grid capture must disable OpenCV optimized paths"
+    );
+    assert_eq!(
+        value_field(oracle, "opencv_optimized", context).as_bool(),
+        Some(false),
+        "{context} crop scalar-grid metadata must record disabled OpenCV optimized paths"
     );
 }
 
