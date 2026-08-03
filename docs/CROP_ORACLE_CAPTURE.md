@@ -171,18 +171,19 @@ The separate reviewed scalar capture is
 It was captured on 2026-08-03 with the same Python 3.12.3, NumPy 2.5.1,
 OpenCV 5.0.0, and opencv-python-headless 5.0.0.93 environment, after the
 generator called `cv2.setUseOptimized(False)`. Its exact JSON SHA-256 is
-`4fd7d7fa9fbb48b93c783f3661742a862bad5660383cf5a70c34a7a4eb45a3e4`.
-The 24 self-authored BGR cases vary source sides from 3 through 16 pixels,
-border crossings, shear, lower-edge perspective perturbation, wide/tall/
-balanced extents, and high-variation bytes. They contain 6,189 input bytes,
-3,303 output bytes, and 11 post-warp rotations.
+`6cad11b4d131d566ce4da8fc1eba5e0c2965972f4c1ee55463038606e3b84c09`.
+The 36 self-authored BGR cases include the original 3–16-pixel coverage grid
+plus one/two-pixel source axes, far replicated borders, low binary phase
+boundaries, larger 17–31-pixel sources, and an exact output aspect ratio just
+below the rotation boundary. They contain 9,744 input bytes, 7,293 output
+bytes, and 14 post-warp rotations.
 
 `crop::tests::classic_crop_executes_every_captured_opencv_scalar_grid_case`
 checks every input, quadrilateral, pre-rotation dimensions, rotation decision,
 and output byte array offline. The fixture metadata and
 `tests/fixture_integrity.rs` pin its suite name, scalar setting, environment,
 ordered IDs, per-payload hashes, and aggregate hashes. Exact agreement is only
-evidence for these 24 self-authored cases and the recorded scalar environment;
+evidence for these 36 self-authored cases and the recorded scalar environment;
 it does not select an OpenCV dispatch policy or establish universal OpenCV,
 decoder, model, or OCR equivalence.
 
@@ -254,7 +255,7 @@ and CTC regressions are checked against the profile used for distribution.
 This profile preserves the existing scalar operation order rather than trying
 to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel
 equivalence, select an optimization implementation, or relax the fifteen
-baseline or twenty-four scalar-grid fixture expectations. A future optimization
+baseline or thirty-six scalar-grid fixture expectations. A future optimization
 proposal must update this policy first, retain a portable baseline regression,
 and provide separately reviewed numerical evidence before it changes the
 sampler.

@@ -1588,6 +1588,798 @@
         "width": 6
       },
       "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A one-pixel source with a far exterior quadrilateral exercises replicated cubic taps when every sample resolves to one pixel.",
+      "fixture_id": "classic-v1-crop-scalar-grid-24-bgr-1x1",
+      "input": {
+        "base64": "l8v4",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "d8d359ea6901c68e780f6dee28cbf4d9088f2ace8464dd0d934fe17ae884a3e4",
+        "shape": [
+          1,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4l8v4",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "45a65932bfde3c9c4ebf6d9958de69ff2c9a3cbb5b0a10ae6e33187bf47f6745",
+        "shape": [
+          3,
+          6,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9770190413657258,
+          0.06303348653972445,
+          2.7655942219304
+        ],
+        [
+          -0.0315167432698621,
+          0.772160210111622,
+          0.8785292186474065
+        ],
+        [
+          -1.555138401751151e-18,
+          3.810089084290316e-17,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -2.75,
+          -1.25
+        ],
+        [
+          3.375,
+          -1.0
+        ],
+        [
+          3.125,
+          2.875
+        ],
+        [
+          -3.0,
+          2.625
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 3,
+        "width": 6
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A one-column source crosses both horizontal borders before a tall scalar crop rotates counter-clockwise.",
+      "fixture_id": "classic-v1-crop-scalar-grid-25-bgr-1x7",
+      "input": {
+        "base64": "EtiUx3blyu1wlIl+iSpsTnfmT9S6",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a1e375987e76831a88eed56ed7fdef9ace0bda30ac071819792fb372fe4d7458",
+        "shape": [
+          7,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "EtiUAuGNu3bmyu1wkX19gCt9SJTpT961T9S6",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "09b5deef46a64198e14304601cef3e598fa702e8eb6a93ffee5905b27bd0eda5",
+        "shape": [
+          1,
+          9,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.6638297872340425,
+          0.017021276595744688,
+          0.43617021276595747
+        ],
+        [
+          -0.1531914893617023,
+          0.9191489361702128,
+          1.0531914893617023
+        ],
+        [
+          -4.9133274281283527e-17,
+          -1.2598275456739366e-18,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.625,
+          -1.25
+        ],
+        [
+          0.875,
+          -1.0
+        ],
+        [
+          0.625,
+          8.75
+        ],
+        [
+          -0.875,
+          8.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 9,
+        "width": 1
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A one-row source crosses both vertical borders in a wide scalar crop without post-warp rotation.",
+      "fixture_id": "classic-v1-crop-scalar-grid-26-bgr-7x1",
+      "input": {
+        "base64": "Z33us42hi2s8Kq4drIP2LjrU9u0U",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "841dbd50de1197cbce89e82233b8d3b83d0fcca23487b17df09f1553a5ae2393",
+        "shape": [
+          1,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "Z33uX3v2po29oWxTMaIKmJfHOjb4xMI+/fMN9u0U",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b11bf2c817c7244dbdf2fc178b1aad8e1d3d9735f20584a12436226f00c5a9be",
+        "shape": [
+          1,
+          10,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.995850622406639,
+          -0.16597510373443994,
+          1.1410788381742738
+        ],
+        [
+          0.016597510373443983,
+          0.6639004149377594,
+          0.43568464730290457
+        ],
+        [
+          6.633697740498862e-18,
+          4.330330469492313e-17,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.25,
+          -0.625
+        ],
+        [
+          8.75,
+          -0.875
+        ],
+        [
+          9.0,
+          0.625
+        ],
+        [
+          -1.0,
+          0.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 1,
+        "width": 10
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A two-pixel source uses phases immediately around integral coordinates to exercise scalar f32 cubic phase construction.",
+      "fixture_id": "classic-v1-crop-scalar-grid-27-bgr-2x2",
+      "input": {
+        "base64": "onUKjlz8DbaqH2p2",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2764b6105789f5f335f286269905104691b66d9a8157605f78d5b124328132af",
+        "shape": [
+          2,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "onUKjlz8DbaqH2p2",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2764b6105789f5f335f286269905104691b66d9a8157605f78d5b124328132af",
+        "shape": [
+          2,
+          2,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000002980232203,
+          5.960466964438913e-08,
+          1.192093179724873e-07
+        ],
+        [
+          1.1920933218333947e-07,
+          1.0000003576278615,
+          -1.1920931797248475e-07
+        ],
+        [
+          1.4901162259661707e-07,
+          1.1920928599806831e-07,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -1.1920928955078125e-07,
+          1.1920928955078125e-07
+        ],
+        [
+          1.9999998807907104,
+          -1.1920928955078125e-07
+        ],
+        [
+          2.000000238418579,
+          2.000000238418579
+        ],
+        [
+          -2.384185791015625e-07,
+          1.9999998807907104
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 2,
+        "width": 2
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A narrow two-column source combines far replicated borders, perspective skew, and tall-result rotation.",
+      "fixture_id": "classic-v1-crop-scalar-grid-28-bgr-2x9",
+      "input": {
+        "base64": "WKljMKF3DGIXCWvqYC//YbG55r5JfRuSusCWeoGVCsTQ6SjVj0WszfqSmG1fTF1Q2gng2x06",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "959368d2810420e5c282f41a199e8e0ff0e46afefcbd52305614dafadacf0bc4",
+        "shape": [
+          9,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "NKdqB27bW7S+fRqSgICZ7jTUwfuJTlRM2x063B062x06L6VsBmv6YMCzcgiZenmY/x7V0f+NRGRSyCQr4B0m2x8oTaprC2ZlZmHkwYRinqiaX4jSpYunenJcwiSN4Qul2hGfWahfDVkTby3/9NQ+uMaaANXPd0C4mWhhxjC44AD/2gfxTqFXD1Mydzz768ZEtsCZDcnPdVa6lWVmuz2b4QDu2gngRJtKEUxEfkH27MhEt8CYEMzOa12+l19ttEmL4QDt2gng",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9d5628d138d263b0326e8233e36e5dddd35e8a8bec6f265452f228d0c5c52e83",
+        "shape": [
+          6,
+          11,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0959602808317066,
+          -0.04326159003283042,
+          2.61372106448351
+        ],
+        [
+          0.1132019734680943,
+          0.9244827833227701,
+          0.037733991156031425
+        ],
+        [
+          0.03127150191115493,
+          -0.013864706539279627,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -2.375,
+          0.25
+        ],
+        [
+          3.75,
+          -0.5
+        ],
+        [
+          3.25,
+          10.875
+        ],
+        [
+          -2.0,
+          9.75
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 11,
+        "width": 6
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A short nine-column source combines far replicated borders and a wide projective crop.",
+      "fixture_id": "classic-v1-crop-scalar-grid-29-bgr-9x2",
+      "input": {
+        "base64": "rQ1sz6fnMYJDQhgD+6qy82xp61tMspVrO1RqMVtbgTrsQJt4Zo3a4qocrpZjTRWBq+J90n5d",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "261818262b12e96dfeedf451e0541a8a8984a6160c670809b6648e361b9f808e",
+        "shape": [
+          2,
+          9,
+          3
+        ]
+      },
+      "output": {
+        "base64": "ujGOrbPQHV4bdzcv/6iw81tV3HdWcnttMk9qO1RqsRp3w6/hJXMvXCMW/6638mBa4GxRg4VuLk1qOlRquABq2aznMoJDQhIA/6279GZi42JOlZFuOU9pSlhpQkxRiUXgR49+VITJ3akttJlgSxaCtOl733dZ3oFcJGJKbTjLUn6WTJLTz6Y/waVSTxN/p95+03tc0n5d",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "5d3c45170d2a363625059bda1a66c4970535b28a2ec06f43126e6b8b18a8d9ec",
+        "shape": [
+          5,
+          10,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9893590775062066,
+          0.1522090888471087,
+          0.07610454442355437
+        ],
+        [
+          -0.024523554702784032,
+          1.029989297516929,
+          2.19485814589917
+        ],
+        [
+          0.004614328225002741,
+          0.0037182772352452854,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          -2.125
+        ],
+        [
+          10.75,
+          -1.875
+        ],
+        [
+          10.125,
+          3.25
+        ],
+        [
+          -0.5,
+          2.75
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 10
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A larger interior scalar crop uses thirty-second phases and a non-affine lower edge without relying on replicated borders.",
+      "fixture_id": "classic-v1-crop-scalar-grid-30-bgr-17x19",
+      "input": {
+        "base64": "ejFwAebzmG6XiIisipX1Qiu0asaK4BACIopTdO5q3CLbI3Mnykm+g71o8QvbCN6DYOoFQbbiiOU7DiP1f1ybie6KMDY9JAzyEijKqK9Ec52h6aQAvaSwJOhr7lV03pc7DqTKPpFgs28o7dnAn9wWwdlczQukDjsPjW8cC1nO80M6Bq3G/W9pYLWvqIitdi5VmD9M5FObYqeyu9iFIBrZ4RKWg8WbVmfjljuFJDvOJvIS4y9+l1zfoQXGEyIeyXWH3ZA/q2mwasfIMIKvELFrYyDuyUAg8vJnV9qANw3y+NyEghVYSaq1kG4CdjhYA3CrO1ixBYKXXhicFZkNCsKVu5RQfiEDBQ120Pr6waK7rP6GcMMdNRdrhu1pmN+We4c0QTI40D8Yu2RXNGxB4uGZxMLVHUuWz+Y2h51+35ZwCIhfsUSjjcuN/JOg76Ftl7ecWX4jxuW1HGLKSg8wVQpaL2mt5kpentWQNwNowQENhlVVs3s7RlDi+Dvf0+t+xsHUfFqn7AmgZykZ84JzvIyP9WcSEcjCu4+ahJ8VHSM1hlVaP1UiyXiegjTfqnwhbFu04osUAUWn/59wnufFuvz1xmg2Afi7YFcLpgQSmBgeeQC+ZPbun1aRDvLHHNgb0l9tsW//8eIl8+mzebF26yR8epg2bgmEoSmoHNlLQIWEGMbjbekCIylY88IlQLZLFPr1re55Qo30Lt4pZdLXmPR5f04InJRKYfC1XMM+8EuZjXzkzlT8NU2M1HXT0G9aFt576Wo4hQVYqG8y5e2vYXLVS8Jqgw/fQLNngVspyzPyqdFOEiMl5iryFhXvUm9pcXPTdavMx8z2lSLxC4Wl8qY8zLrUBjxiisNP/Rg4paN9DrnL0DviJymrSY/IUKnHYQLrENfNAdW9lXkEbS22sZFR1jloIJX6KvDSR0W6dklpZuHUlqsifZ1lomnNgv2cu+s21lkMhjfc42UqDriibxbZlDHgE8J8l7WPj+5Oyc0ejRtf3dfQsbeJYWyBAbWX1dAg9di/dNiuirf8V2taFfHu+jKAmwQix2jYZ88RK4Qmw9SR9q1DfHZtR1xkdumnfsp7VCO5JSSqjJCYACl1WZ8uMRsFHKs2Gm4dfUbTnxok3Xtt/NOqOpWFA57sTPeg55PxTSOSn7dWHM9SAaabaVXsDMiV0H/FUGZeP0NCCUe8dfyExNiEmH6NpPFs2+/zmbxyVMnaAhA1xoRkhpj5nu5ec8Ov+zNQdVyYlzUeon2KGCanymIIRzbCChkMnQZcYdmnsABN+UC3pVug",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7dbfefb3bebcc1aa86c1efed118b0901043a31509c0fbe71d385e24a129e2852",
+        "shape": [
+          19,
+          17,
+          3
+        ]
+      },
+      "output": {
+        "base64": "QrbffuE/EBv8f1+dgvOPMi9RJBv4MySojLZHgKqS5Y8io5iSP8t433V07XhmAL66sW8s8OK5ktocwc1gyhiaBjwHhmQwCUTh6ls1DbG+/4lDgcPFfaackShfqls0r1ypv9iDJiHY3x2TgMWaYlPjjD5vHzq4H+8m+CJyeGnztxO8JD8w2XqP0nQ6qmKYpaPMD7VpXiH00T4j7O9jTtKGPAHw6MqVeTZKXZCzlVsbdyN4AGGUUWO1MouFeSquD6k7vZhSgSEGBwdv0P34xKi7oPSOfsMfMApnc/F2l8x1eHU4KC5IvkMtiXVxO19XtdpnFUWby+I3g59+45x3C4pmuFOdgtR86X2c46xjlceaU44atM+uME2gYRMqOSRefIitp+ONNAxuvQAOilNVrHw3SVDe9kTj3/B+x73Yi2Kj0AyKd0IoyHOCoWx53EIbCrjXi5sMIic0gVdfPlQgyneYgzDmrXoocGWr2okmADqo/495it211enlw4BBJuyQXVksjSEngQOpXevup1uTEO/JGtgc0lxrs2/7/OAh4dqyh6N06T+OeaJSgAB5dlqyFsUpIMP/Y/QUKClV8rkkSLRCF/b0re55QI31MOAlctnYmului0gBmp1TWd22b6U+zVul+ED/MzCvwnfPz2RwG9uG7248hQBdqHIy4u20WXLRVMBtfw7WPb5YilpE0U7Ynb0+0jroLyn+PlCBVYDVZqvTwM3olCX2D4mj96E8vrTVBEBan7pM+h88iamEKaDmxDfPP7vBZ9qZhxC4JqrRHsmqeX8FZyq2u4hbvj9xGJ/6Mu7NTziud11yaubBkKUfiYyFqf9h4P9bzJ8amlPm4FEtBNTEjRjOlCDOHceHn751kec6zb4gmCly3+LOoaSARXKEn3NTq3i5h8W7WJrRUHlRErapzFpkfRkNzV3gZa0ARn0629qc26hHWGdxSXt0gPCmd2SWEmZxOJCUIyWkIrtfdS01EqM/EmklWUPOoUk+9p6A3MapI6OYHMDxfvStyWnjx6BOcLWfRtN7cJvSdYWCtnzGdUtKaVVjBEGylelml6WXbF9ivNh91OLUkpl4RJK2",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "229af4e325c964236142a29d0698d06612dc81f20e688454a165036a0bd9ec22",
+        "shape": [
+          17,
+          16,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9990417153228988,
+          0.019381761672931017,
+          -0.04999613522449251
+        ],
+        [
+          0.01972033600411999,
+          1.0057371362101197,
+          -0.9749241112036822
+        ],
+        [
+          -0.0004330522946097345,
+          0.002553847496066181,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.03125,
+          0.96875
+        ],
+        [
+          15.96875,
+          0.65625
+        ],
+        [
+          16.34375,
+          18.21875
+        ],
+        [
+          -0.3125,
+          18.6875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 17,
+        "width": 16
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A wide larger source exercises a high horizontal output extent with cubic samples beyond every source edge.",
+      "fixture_id": "classic-v1-crop-scalar-grid-31-bgr-31x3",
+      "input": {
+        "base64": "wrFbZ/LQhhIIhaYFiBIg0SjY3OKZka01vCMnhMEr0yW3fhARi04iwY2wN9vdq1rfbg+nSHq+PdiMK6wBkCX0n3RPQ3dcxQYtdtETsNrA2jsgKv9zgz7KTsTuPbIgA80OEIEIUKfUpva6rtUyM6ysSDb/J6X6yBtefO3pDWd5/T/n41foNcybjRcGfyGg/oO97dZMs6nIG6WUoSOcYXDJU5e4DR5Qs6I4C4d3Ud95taXHbnwH3F3Zk61ywwAMBRe/A7jqZ8hDnBLa14WrrxQ7X4j4qJ9mXYdtLr8D6WuIdUxTDZLK8euMCY6P1y3V+bOfOhmnDJxNfUlA24Qfg38QGPJYjuKizJ3e8jn/5hqIX2sp6zNzV2s0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a44d8a7b41e22995e49970dee07241ca8388b66b835679c028123c8161784b5b",
+        "shape": [
+          3,
+          31,
+          3
+        ]
+      },
+      "output": {
+        "base64": "ybBeybBe06lTmOqycnd1iFEAfFwAsgCM8ZXPuuxSqk4cln0OwXSIqgFcayoAwWlpZ9jmear2ixG5QTW/MMKxI9MCa0ewr1SLUIRHtAw5ipYApP2q+T9AQOZFcFvGUa7/Nbs/NbIUNrIZNrIahcJGgcNFgsM8Vd91Y2ZijpxTm5YcilmCkoPiaLmznjxSqJJoaJSnmh2T1TSUnZmoWoxpfC6FvjzGxJSErc2VS8aOYFWVjzrEUpbANDh8f00iYqdTKbRnhNecg5ZioWWIsJK1ibljj7JukLFvJZYFKJIFL5MBBlAXGqLXeu+9sLB4e7GYaTOoN23/k2ucm5uhEbVgm3SD80e+P4i1dqZ2gnNde028/5CpxpGTKGSdNH1aq0xUroVHQ5pAMdRpp8SksoDe40LbuD1lfWQx10B4T3g0XXE6XHA52AAM2AAM2gAKDATLAK32UdI8jQ3V4XDHzyErcV/Olqyce4ZmJ7MPqJxHu01dFmCNi9LBkOKHO1Ov/1rMvIClCi6JIZI9pFEx24UOZZUUH/9rn9uz247q+Cv73ht7YGsp6zJyV2ozVmozV2s0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "96ed871984ea3867f2df3942ec2459c1aa467c11e051dbe96a38369726241280",
+        "shape": [
+          4,
+          36,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.011152725400111,
+          -0.18959113601252098,
+          2.385688461490887
+        ],
+        [
+          -0.016444672541774546,
+          0.9570799419312784,
+          0.6766982750940225
+        ],
+        [
+          0.0004917428408804374,
+          -0.013890118215004198,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -2.5,
+          -0.75
+        ],
+        [
+          33.875,
+          -0.125
+        ],
+        [
+          32.625,
+          3.875
+        ],
+        [
+          -1.75,
+          3.25
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 36
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A tall larger source exercises a high vertical output extent, replicated borders, and post-warp rotation.",
+      "fixture_id": "classic-v1-crop-scalar-grid-32-bgr-3x31",
+      "input": {
+        "base64": "PVGAYP7jQlDI6mlTI3SeB2zlYa4AfWXn4UlWF4Cy2mGlCNscq6Z9FnykRyYNLFbRQduzAXTWFhoPbLrs93kBSqviE0FWyrJATHr3p5wBppWtD1bZIpWbcW0e4fjUBMDgxdbdcM2rscaGM8lwRLBJU3A52ejC9z0W0io5JLAvjJd+3iLsMee+hQgdxTxKufFwXhcAg19+uhen3eCA/p7QRXT5/533Yo89Rgal7MlfQbVhaL+lWe9CZ+kJqz4Ct+smWinFD+lDUJJJQdWGrqzSUXTxROtiUnzbKgIhttKiLtn3dfhyI/OgDauneDK9ajHUqnvsl4L0gC+Qo39hXFDgYSXoUpgXJJQanJJlPYor3TQl0kuOE2fc",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "9639f853b81fcea68a6d647dff9bf910042120aa63484e5b6d7fb3dd3a56e318",
+        "shape": [
+          31,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "QUjHRUXEAGjx4VJBBKcAAEeo6HAG0LtNkIGTqJdmYNOfwezAO749F/Cys/90vxGqNHD8RACtbMCqsy4ECvIsqrjGcW/mLb7/AMbHUo/KxH/Rm4tEUqQCO5IKEXSdAGf5AGrkAGrkAGrkUqvcVa3dEIzWrE2wYZpMDWyLmq+ceXlCqptOSZF1Y9HFj8B8gIVCdHy3uqt8rUmLoXrvUUF7QKmMi5UOOn1eY7GyYbuiZNC9TOnMIq20llLck1VxYVxzZYNNbn52ZFjOZV3DZV3DZV3DTaGoTaSqb46Tc4pjfmi4V6KjNYOmGmifd4puEX7Lc+HTfrdzhVEZ8zGDuyN4ciMo1ZuM1LGZjKppYvYod6JhZXyJMtVxYrWBjZtuQPaUYzXHgji0bSbyY1a+m45H7EBn7T9o6kJo6kJpPEt9PEp8YU12v5cIB4iWtaV+ESmVL2RlUJP/Akjk9f7SWMmhapcx7Fgud3JfZQAAiXUd/9rU/6fTtN1Hb/8yr+QSSHxwTFf2GwATc+pce2Okk13siXn/QV+yHJMOv0IX7Csd3jIc3jId",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1fef01fc746a3361dc88856728bee893d80701e315388916e0759b2103bf461a",
+        "shape": [
+          4,
+          35,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.8892737962688655,
+          -0.015711551170828,
+          0.6276764692745789
+        ],
+        [
+          -0.1195692284156087,
+          0.7373435752295863,
+          1.7536820167622598
+        ],
+        [
+          0.002999235188026622,
+          -0.0078027855644241355,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.75,
+          -2.5
+        ],
+        [
+          3.875,
+          -1.75
+        ],
+        [
+          3.25,
+          33.625
+        ],
+        [
+          -0.125,
+          32.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 35,
+        "width": 4
+      },
+      "rotates_counter_clockwise": true
+    },
+    {
+      "description": "A balanced all-side exterior crop carries strong but bounded projective skew across a square high-variation source.",
+      "fixture_id": "classic-v1-crop-scalar-grid-33-bgr-16x16",
+      "input": {
+        "base64": "5JAoCKN7VUgNE09eCpBoK6fSbDlBnoTcBZCjQSYuTSI32e3egogUFUuCShVVlVWrIW4QOLETSgrRrj5iKheMrqHm5snO3r9jhA2q2LbxVws3cz0iIJdnL9wfARwbl4JuNnWtssRMq61pNwedFQZUIFHJrJk+vnEgZtDnXpIXmNQvGZx1BrAxoUnXP807yrZ3+SzcMx01A+dSAjGMCpi5Bek41eKYAa4hGxlzRtfGaVHdLQ98NLm6wChLYHzmrlTc5Qs7vuRGgUZ4fAdZehfhoNIvSvJgHjscFJQ8e2eAXebIoXbBuJwQWp/SpcuccBENzWpXBt9KKp/mGdBHuMpMZVrd8phDNMPccUI71pYXdfTp68YgVTgzJBJsahXj2xtPiHTf5B1TBn91Sfcop+QIZWWT55nJ9QW2r3Kfi9qXS09j8DI3PlBKKdK1UeHxRU4jpBTRwaamUZd5ZUTFcHbgwSCxohwDmgT2WaoBl3o9SqYt917au4HPPNDRdVJfhF+5F+arDS6wrDR6nQNULWCIG6qZKxk90DhNuJeRNkJf1vvGmI194ye/Z0pcmpXY2RRh6iqcqsHxTKfZ7TvomT3TAsygTc6tqLxFhQRJSyxlgA3hrdWqRFnNW31cW1PJ42v88KyyWnjwKrmICdvcwlXhZaT7wS0kjIGvlsEa2BqvNMoZP0ltls6P4lMyWyERkNFmbr8OOCUnMxu2TehJuJBLAlSuYUi8KXoUjpscaHqPbsCffC7GbteySxaGeO20CU7v0yQPHgP3edSDsbJxPmBY17mDV8aLX88ikkTCgQIyYo7qnyoY6Ucj3h069nOEpLfDYv6EGmqXY7SotQAzerYtkRHxT1NPOA8h8UsFF1WRMk9m6HGYYGhGSX5ZsajY1txf5sDd3noA2cAzUEB5ofH4/LQToQoj0Vhe2gaY9b1mHhAph/m/FOcjEbwITS05Ibr9XiFbMM7le6Yp5ryorcsmc7+Tiu4pSpGfDIYUNtMTrjubi6e74cqWA3p1ab4RA6wK",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4d50c4ea9bcc6bb82edfe35a9cee12dae370aff5d1f2df172f8a25964fe34229",
+        "shape": [
+          16,
+          16,
+          3
+        ]
+      },
+      "output": {
+        "base64": "5JAo5JAo9o4hH6h5TVQWHkdRCIZfI63RYz1Eon3WBpapOyEnUSk84v3ldXYLEC6NaR9rnFe7lVCy+pQr+ZQr/5IkGqeDTlYNG0hRCYNhLavSdlNdso+/LWmneVp/TAo4sZV+RpFDE6AuJwc5n32FknV4T3YFQ3QFOG4FLbUJPxjDrjdwMQh8kX3e38jK67hFkE69t7Cmf3klNnJABqc+fX+nNrQd07hyx7hvGHqHHnqSIHWhp8NQtL9fOxqeERBeAFuopaRXhoYRSI26PbdjhpKRFjx4FruiyR1jV4jbvF/hsFje2D3n4zfl9TPoQhM/BdxLCjp8GnfRHewtpv+LCZIdAEM9T5WtW6jYc0jGpqs5cJjCo8ycbAoLcRAK7wZV6wdL6ARBwuFDhlWAeB5QjSHFpZxvgtlKJ4RuLHQ4tGQfdP/g2NZfelMiKBZsahbf2xxO1h9P11hC1F9J0WVRDdpGIKLiDeNPsfMaW2HK9oyFp4bVn0eRs8FmV4qa61UnTT0vJLWdTuf7Q1cwQFQxkX7JjXvSi3bX6BxWEnVwRNxDl9sthViJyW6G4gDZiHRfmbBcOIci5VCow3HCRNfda2Fmi1mxlVW4qxLcqw7YqhTTwqWnXpZ4bTC5VmPilknDbgsEowCYmZ5eW1lHoOeFq6eR6ji9ez5riJXM1St+5RdyIsa1GtayFdavDy2upjaBswJcS0aIAr+YCnV/q342vEdsNydUhy/buby5a27QTnBuTVqkwG7u3YjxqFqcvUaby0Khor/vSazZ2FLwujTlKLbCZbORoLeAjXU3ryB6YWFgP3hZcKmY3YZSgBYNcJ9Pccly/3O8/4K885DFXob8K7qJAObQuGnNYY//oyhdb1J8fsMQqm+EacBzX1SjbrXIVVOQcqiaN5LjC0j6mNJSjtVCer8zOis5Lxu1R+FPsZ48K2SNTmfQMZssc4hOfzpZcIq7e1GIxUkp4CY080dhzKSts8q1oVwAs00ApjETHwXWc76GrsFzPmJWz6CEc7yORLQnol1qcRZaJlCdqFt/wktLX1k9iI6uzcejzuFeo3U5mpE9cZRkBEzSYL6pvBA7fKkalCreaDduQw8t4hwZt254K0hNcXuCY+N5AM8BOWkaQ2GeFcb/iP+1mf/FpOespnEVvrtZVyJgjuDz+Mw7tC0Pv1NSsCWOyJxehWM6b3Cflu2gWLljIIk5SbQPAKoM15jLzIjGuX+fmqxZqbAmtZqbsdFbiMF+i+c4YrSJCoRIAMkAfYNcq1vCx8K0k6WVFoxQUsIBAKoIVBZSUwZEQTx6IuDwe6Mm8MSsuckhdbyKie86ZrKEGntREr8AeYVTpFi6ucayl66NEIdTWMAEAKoJXiFbYRZSUEuDNdfVhKUo5buot8sseb2Iiew7Z7OCG3tUEb0AdYtPplS5s8S0orKNCoRYXcEFAKoJ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "5d8273a432e9be85e6668e33f069485a604a4fb2bc8cc927a3a22b75955db986",
+        "shape": [
+          19,
+          19,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0226218398344378,
+          -0.03502129588474099,
+          2.1249171278066608
+        ],
+        [
+          -0.05395731919231569,
+          0.9412554570215075,
+          1.1795669501209014
+        ],
+        [
+          0.003017549550666693,
+          -0.005519878586069985,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -2.125,
+          -1.375
+        ],
+        [
+          17.5,
+          -0.25
+        ],
+        [
+          16.125,
+          18.75
+        ],
+        [
+          -1.5,
+          16.875
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 19,
+        "width": 19
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A skewed medium source stresses a bounded non-affine lower edge with mixed interior and replicated cubic coordinates.",
+      "fixture_id": "classic-v1-crop-scalar-grid-34-bgr-13x17",
+      "input": {
+        "base64": "Bl3b2VMtAJ0WCsoejLZI+rfQCkhVq8jcQtj7l1C4qNa/u5MxxzmCIfECUUMlB/1Bs8f0q7VcMjecWBM3tMLhRgDyc222E3hJNog67lWJ7Zc3nexcOOFgdoMsO9phipIiYJ+jGNTlLl5i2tzyhZXgnkdSFJWd5Da1HzUDRAwrXR/MpMKhbFyk0MX6goY0jNKfNigFeDiVTzZqFu+hfccal4El4Fhcq4wxgq9qRvXO9IavpsoK8Kf6XTA4d3yQgtOIFIuDdRWHUTiTgccwb8Ss4q2X4jFCUjezFscJxzeEyJRrg6UTnCgMwMPAvqlc1pPnhAtAvD1RvOSQsgXXdftrAML/si6LTo7Hsn1rd4p0dG3WVE1ZheX0wuquvmZlFWS2pzOMqhE4XHDVjtvG3hFS758J451Q0P1BQDN+kTEJjEX+mYlN7q6sA3SOEiVMImGOKgZRAWxbqHqGfYHYHA/z3f7scsB4+GvpqtoEh+AjCQ0aalzgN098qYGL9iN5Yt1VMjCFk5njOrNplJ5EuZHp1GKWO3ym/rExzCMEuLJEvyZ6qHI4z8NqEXOivRYI8NDvTTSY90A7N5TUy8FHQvpEbwjdYAUrawXcYq80HhbGxA54LJRbIF2vfd3QO+C7y03wY53nNFM1xw6iKcnePJ3+hNOwwpT2QG64/EJy+cIE6xBn+RXjgQAfxnJBNz3pBepIpDEpcwZCgDUa9VprDvZl2UNFbBWBLDJG5+0riJ+PKfiEZ0WqKEmhCviB23Jt9jf4ehvhsLef1vXp6Elt99KR02BMBdPGu0RvJkPTsb9bD7/kWN1/F8OZXzSvJv+ZaCq8eiDMa+KEjsEKWREt+YLQI6scPS8rhboyWYVOtkXxMTtlZnLQDhNa",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f8833f4484014300f63ccbf7890778d95245ab4c67d524f90af06c96d9272ef9",
+        "shape": [
+          17,
+          13,
+          3
+        ]
+      },
+      "output": {
+        "base64": "oWoRALcUM8gl07yHooaoMm17i/H8W6Lhq4XFpMZuumNT+DqK+kWF014YAKIMDMwOsLdlv46/NEJTtL/5RiP4XnWTC3k8bW9TgnGcTnyYnUAmANosmc/hrLVcLjuBXT9WTtL3MDl63uD8i3/YfTpZAOaqDuikd5kzK/9beqNFP89dg5krk7bDVaSQccaHOzsNcTSDXnWCBrOJBJqDpo1SJmIdRg6Ok5C8bJepvbH31KU44c64jkp4cHBfkpZJj5+LrsS5hm4+i0IdzU9Rmp48eceNm32pW3pWcJcu3VOMnbdWiV4agGyjeGvoaW1HbGBgitlChr+4+ZyJvw+FM/CQH5fbpUCUh2+Y1pk4ybpZ0f9BolZ+tGvRfw01wjxPf8GeuhK8qVxEWIHkiMm2qSQ83Y1RkYjGFgrtjYRDl9r/uvG4yn5pVGu1VG+iLRU4I2GOMgdTPFFncrBwQjuUkJjnJxlgbj00kD+3jXSJ6ddSKWZFIjirO1ClkICD+y9x0M9MGpGemiQkp6vXm8GZqIaw7JSTj8soY4ZH51QUvWcat1hrkUdfWXxfhAWidWBjfOOhXsRppp5ryXvTgXC0n8VQZctmbwC4Rh12V37gfcOwhm7wdmCUq8qy08vSUC2N11tEZ4b2g7arOmQowCCoPrbKSV+gjWs63IB3KethbYTmM2LPeM/OTdDUtx6btmh1QjjUAOdafmMpsilA8CG9hBvdrL6ioqQ22s4J7UM7/xu1tD9TXcdXW3ujSiyoAOCudNGMTMSfVzmxKeOgpFlHgjBvPBNpmqUqntJ2Rb2ibi6laYWEb6+ASsBzfH2uaDWeVV6tvC5z3Txo7nZ96tN8fXY6a0d/yperC4YAU0Ekgbsmf2aUijbHP1iL",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a24e55b284a10ad6646e4dee579a121a4d440ea63373ff9627f567b8424ec254",
+        "shape": [
+          17,
+          13,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9707673694604456,
+          0.1828982000432724,
+          -1.0375955579377953
+        ],
+        [
+          -0.17925202423070116,
+          0.9500357284227161,
+          1.790279592004128
+        ],
+        [
+          0.001677207688910845,
+          9.090405317898568e-05,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          1.375,
+          -1.625
+        ],
+        [
+          14.625,
+          0.875
+        ],
+        [
+          11.25,
+          18.5
+        ],
+        [
+          -1.875,
+          15.625
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 17,
+        "width": 13
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "An exact five-by-seven pre-rotation crop stays just below the height-to-width 1.5 counter-clockwise rotation threshold.",
+      "fixture_id": "classic-v1-crop-scalar-grid-35-bgr-12x12",
+      "input": {
+        "base64": "MGRkM4WVfsZFzN22VtBFhEpHs+unGwFiOKygyqtHZs34k3bLXfa9Z+4LnQUGvqjQC6WaHV+c7Tpw0agFObVb06eGXYq8aLj3YT1nszSzxTnSPFTtauRIOo4yaA2VmjVOBR2FHdQc1/V/iij6OvUUHLoab8Ns7b46BmEuF81I8TX/EB4lOlaGE89sEYhXXpSIAh08+GzH+0nvRI7J0KANMKbpHTTmcDc5ebSXfa1cxUIO+tLc1ZSzpgUSYD9yG42fLwU51TfWXIJLhXNvQu+uwmI6C7B2ip3GqVq9CG3E+ZLyl+6C7ghwPLhVoWgBr9czqzeErIP1clPc/AUoWzxb0W2kfK4wm+/r1e9k5bfET3W4JKH5lDPyKUkv2xa+tUXUPwjou4U4WUVbcz/XGOunHHoDhrWitt9aOXomvfr4yMkvcfkD3ZsyNapU/aS5ePRwCa0e9A4G/ymeuxJ+V2B+kyRfPNKHlgTbwlmpJRVP0G6fzhe7m70dEQojDCsB3YDIKysAaTkMWohJnpaoiupZxJzm4wVxiQi+tjfICwnyb7F2/Vr7DPfGxImRWO1aVzDX",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "6589c841e415f07e4699f76a485d11dbb2bea922d697f0329a08ac4250062e1d",
+        "shape": [
+          12,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "nQUGvqjQC6WaHV+c7TpwxTnSPFTtauRIOo4yaA2Vb8Ns7b46BmEuF81I8TX/+0nvRI7J0KANMKbpHTTmYD9yG42fLwU51TfWXIJL+ZLyl+6C7ghwPLhVoWgBfK4wm+/r1e9k5bfET3W4",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "627afa90ce0380781d5f920274c871ec7220d34a26e87dcf386e58afb3dc0312",
+        "shape": [
+          7,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          0.9999999999999998,
+          -4.111937128241319e-18,
+          -1.9999999999999993
+        ],
+        [
+          0.0,
+          1.0,
+          -1.0
+        ],
+        [
+          -1.9032394707859827e-17,
+          -9.659521288420552e-34,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          2.0,
+          1.0
+        ],
+        [
+          7.0,
+          1.0
+        ],
+        [
+          7.0,
+          8.0
+        ],
+        [
+          2.0,
+          8.0
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 7,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
     }
   ],
   "environment": {

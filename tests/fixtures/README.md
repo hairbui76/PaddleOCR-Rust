@@ -34,7 +34,7 @@ values for direct fixture files.
 For `classic-v1-crop-oracle`, the gate also verifies the full capture document,
 its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
 metadata's concatenated input/output digests across all fifteen reviewed cases.
-For `classic-v1-crop-scalar-grid`, it verifies the separate 24-case capture,
+For `classic-v1-crop-scalar-grid`, it verifies the separate 36-case capture,
 its explicit disabled-OpenCV-optimization setting, ordered case IDs, every BGR
 payload, and aggregate digests. The gate proves repository fixture integrity
 and metadata consistency only; it does not replace source review, artifact-term

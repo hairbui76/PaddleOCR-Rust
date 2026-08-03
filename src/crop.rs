@@ -954,7 +954,7 @@ mod tests {
         execute_captured_opencv_crop_oracle(
             CAPTURED_OPENCV_CROP_SCALAR_GRID,
             "crop scalar-grid capture fixture",
-            24,
+            36,
             Some(false),
         );
     }

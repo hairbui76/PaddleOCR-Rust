@@ -394,11 +394,23 @@ fn verify_crop_scalar_grid_oracle(metadata: &Value, fixture_directory: &Path, co
         "classic-v1-crop-scalar-grid-21-bgr-10x4",
         "classic-v1-crop-scalar-grid-22-bgr-11x13",
         "classic-v1-crop-scalar-grid-23-bgr-12x6",
+        "classic-v1-crop-scalar-grid-24-bgr-1x1",
+        "classic-v1-crop-scalar-grid-25-bgr-1x7",
+        "classic-v1-crop-scalar-grid-26-bgr-7x1",
+        "classic-v1-crop-scalar-grid-27-bgr-2x2",
+        "classic-v1-crop-scalar-grid-28-bgr-2x9",
+        "classic-v1-crop-scalar-grid-29-bgr-9x2",
+        "classic-v1-crop-scalar-grid-30-bgr-17x19",
+        "classic-v1-crop-scalar-grid-31-bgr-31x3",
+        "classic-v1-crop-scalar-grid-32-bgr-3x31",
+        "classic-v1-crop-scalar-grid-33-bgr-16x16",
+        "classic-v1-crop-scalar-grid-34-bgr-13x17",
+        "classic-v1-crop-scalar-grid-35-bgr-12x12",
     ];
     assert_eq!(
         cases.len(),
         expected_case_ids.len(),
-        "{context} expected twenty-four reviewed crop scalar-grid cases"
+        "{context} expected thirty-six reviewed crop scalar-grid cases"
     );
 
     let mut input_bytes = Vec::new();

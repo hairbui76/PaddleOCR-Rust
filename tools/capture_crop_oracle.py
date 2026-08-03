@@ -341,7 +341,133 @@ def scalar_grid_cases() -> tuple[CropCase, ...]:
             )
         )
 
-    return tuple(cases)
+    return tuple(cases) + scalar_edge_cases()
+
+
+def scalar_edge_cases() -> tuple[CropCase, ...]:
+    """Return targeted scalar cases outside the regular 3--16 pixel grid.
+
+    These cases keep the same self-authored BGR/strictly-convex constraints as
+    the grid while covering one- and two-pixel source dimensions, far replicated
+    borders, low binary phases, larger extents, and an output aspect ratio just
+    below the classic counter-clockwise rotation boundary.
+    """
+
+    return (
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-24-bgr-1x1",
+            description=(
+                "A one-pixel source with a far exterior quadrilateral exercises "
+                "replicated cubic taps when every sample resolves to one pixel."
+            ),
+            rows=lcg_bgr_rows(1, 1, 0x1020_3040),
+            points=((-2.75, -1.25), (3.375, -1.0), (3.125, 2.875), (-3.0, 2.625)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-25-bgr-1x7",
+            description=(
+                "A one-column source crosses both horizontal borders before a "
+                "tall scalar crop rotates counter-clockwise."
+            ),
+            rows=lcg_bgr_rows(1, 7, 0x5566_7788),
+            points=((-0.625, -1.25), (0.875, -1.0), (0.625, 8.75), (-0.875, 8.5)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-26-bgr-7x1",
+            description=(
+                "A one-row source crosses both vertical borders in a wide scalar "
+                "crop without post-warp rotation."
+            ),
+            rows=lcg_bgr_rows(7, 1, 0x99AA_BBCC),
+            points=((-1.25, -0.625), (8.75, -0.875), (9.0, 0.625), (-1.0, 0.875)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-27-bgr-2x2",
+            description=(
+                "A two-pixel source uses phases immediately around integral "
+                "coordinates to exercise scalar f32 cubic phase construction."
+            ),
+            rows=lcg_bgr_rows(2, 2, 0xDDEEFF00),
+            points=(
+                (-0.00000011920928955078125, 0.00000011920928955078125),
+                (1.9999998807907104, -0.00000011920928955078125),
+                (2.000000238418579, 2.000000238418579),
+                (-0.0000002384185791015625, 1.9999998807907104),
+            ),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-28-bgr-2x9",
+            description=(
+                "A narrow two-column source combines far replicated borders, "
+                "perspective skew, and tall-result rotation."
+            ),
+            rows=lcg_bgr_rows(2, 9, 0x1357_9BDF),
+            points=((-2.375, 0.25), (3.75, -0.5), (3.25, 10.875), (-2.0, 9.75)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-29-bgr-9x2",
+            description=(
+                "A short nine-column source combines far replicated borders and "
+                "a wide projective crop."
+            ),
+            rows=lcg_bgr_rows(9, 2, 0x2468_ACED),
+            points=((0.25, -2.125), (10.75, -1.875), (10.125, 3.25), (-0.5, 2.75)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-30-bgr-17x19",
+            description=(
+                "A larger interior scalar crop uses thirty-second phases and a "
+                "non-affine lower edge without relying on replicated borders."
+            ),
+            rows=lcg_bgr_rows(17, 19, 0x3141_5926),
+            points=((0.03125, 0.96875), (15.96875, 0.65625), (16.34375, 18.21875), (-0.3125, 18.6875)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-31-bgr-31x3",
+            description=(
+                "A wide larger source exercises a high horizontal output extent "
+                "with cubic samples beyond every source edge."
+            ),
+            rows=lcg_bgr_rows(31, 3, 0x2718_2818),
+            points=((-2.5, -0.75), (33.875, -0.125), (32.625, 3.875), (-1.75, 3.25)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-32-bgr-3x31",
+            description=(
+                "A tall larger source exercises a high vertical output extent, "
+                "replicated borders, and post-warp rotation."
+            ),
+            rows=lcg_bgr_rows(3, 31, 0x1618_0339),
+            points=((-0.75, -2.5), (3.875, -1.75), (3.25, 33.625), (-0.125, 32.875)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-33-bgr-16x16",
+            description=(
+                "A balanced all-side exterior crop carries strong but bounded "
+                "projective skew across a square high-variation source."
+            ),
+            rows=lcg_bgr_rows(16, 16, 0x0BAD_C0DE),
+            points=((-2.125, -1.375), (17.5, -0.25), (16.125, 18.75), (-1.5, 16.875)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-34-bgr-13x17",
+            description=(
+                "A skewed medium source stresses a bounded non-affine lower edge "
+                "with mixed interior and replicated cubic coordinates."
+            ),
+            rows=lcg_bgr_rows(13, 17, 0xC001_D00D),
+            points=((1.375, -1.625), (14.625, 0.875), (11.25, 18.5), (-1.875, 15.625)),
+        ),
+        CropCase(
+            identifier="classic-v1-crop-scalar-grid-35-bgr-12x12",
+            description=(
+                "An exact five-by-seven pre-rotation crop stays just below the "
+                "height-to-width 1.5 counter-clockwise rotation threshold."
+            ),
+            rows=lcg_bgr_rows(12, 12, 0xFACE_CAFE),
+            points=((2.0, 1.0), (7.0, 1.0), (7.0, 8.0), (2.0, 8.0)),
+        ),
+    )
 
 
 SCALAR_GRID_CASES = scalar_grid_cases()
