@@ -354,6 +354,85 @@ resource policy, concurrency proof, numerical-repeat/equivalence result,
 network-isolation result, portable CPU proof, distribution result, or backend
 selection.
 
+## Bounded Rust wrapper cancellation and recovery probe
+
+On 2026-08-03, a fifth disposable external harness exercised the exact same
+Rust wrapper family through `RunOptions` termination and reuse. It was a
+separate Rust 1.94.0 package outside both repositories, using `ort`
+`2.0.0-rc.13` with only `std`, `load-dynamic`, and `api-28`, plus scalar
+`sha2` `0.10.9` with `force-soft` for pre-load SHA-256 checks. Its 29-package
+lock was generated and built with `CARGO_NET_OFFLINE=true`; the harness passed
+`cargo fmt --all --check` and locked Clippy with `-D warnings`. The binary has
+no direct ELF `libonnxruntime` dependency. No package, lock entry, binary,
+model, feature, adapter, public API, or CI requirement was added to
+PaddleOCR-Rust.
+
+| Temporary input | SHA-256 |
+|---|---|
+| Harness `Cargo.toml` | `6b0b11ee827648b611976b68e5cf07b500c6092d6397e6bfc184c36626020801` |
+| Harness `Cargo.lock` | `d195f5ce09940f6a2eb29882722f49ef4f4b68095afc23222dd235441111a53e` |
+| Harness Rust source | `e90aa86092059dffb1705bfb536390f0cc865b71a89e2e4657ba6869b661d80a` |
+| Release harness binary | `de25f88f11086545dc98c77c10c5cd83d0fb520bce62016262e380f32cf954e8` |
+| Source-built library | `1c04ac4162d45e9cdf3a7f979770f1e1d96fcbc1ea4a09379fa63e75672742fa` |
+| Detector ONNX | `eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` |
+| Recognizer ONNX | `9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` |
+
+Before `ort::init_from`, the harness used `symlink_metadata`, fixed byte
+counts, and streamed SHA-256 checks for the source-built native library and
+both exact ONNX files. It then committed a new process-global wrapper
+environment with the explicit name `paddleocr-rust-rt002-cancel` and telemetry
+disabled. A fresh external process was required for each invocation because
+this wrapper configuration is process-global; that fact is a future adapter
+constraint, not a public runtime policy.
+
+The harness created one detector CPU `Session` with one intra-op thread, one
+inter-op thread, and memory-pattern optimization disabled. Its pre-terminated
+control set a new `RunOptions` object to terminated before a zero-filled
+minimum-shape (`[1, 3, 32, 32]`) call; the call returned an error as expected.
+After `unterminate`, the same session and options completed a minimum-shape
+recovery call whose output was checked only for the pinned
+`fetch_name_0`/`float32` ABI, exact `[1, 1, 32, 32]` shape and 1,024 elements,
+and finiteness.
+
+For each in-flight cycle, the main thread made one zero-filled maximum-shape
+(`[1, 3, 960, 960]`) call while a helper thread slept 50 ms and invoked only
+`RunOptions::terminate`. The harness required that call to return an error,
+then called `unterminate` and reused the same session and options for the same
+minimum-shape recovery check. The helper never called `Session`, so this does
+not test simultaneous `Run` calls or define a thread-safety contract for a
+future adapter.
+
+| Positive invocation | Pre-terminated failures | In-flight cancellations | Recovery runs | Sum of cancellation-call latency | Wall time | Peak RSS | Exit |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| 1 | 1 | 3 | 4 | 237 ms | 1.50 s | 293,860 KiB | 0 |
+| 2 | 1 | 3 | 4 | 163 ms | 1.49 s | 236,968 KiB | 0 |
+| 3 | 1 | 3 | 4 | 234 ms | 1.41 s | 294,572 KiB | 0 |
+| 4 | 1 | 3 | 4 | 266 ms | 1.42 s | 294,512 KiB | 0 |
+
+All four invocations used a 1,600,000 KiB virtual-memory limit,
+`OMP_NUM_THREADS=1`, `ORT_LOG_SEVERITY_LEVEL=4`, and a 90-second outer
+watchdog that sends `TERM` then escalates after 15 seconds. The harness printed
+only aggregate call counts, delay/latency, and
+`output_values_retained=0`; it did not retain, print, hash, or write any tensor
+values or model-derived fixtures.
+
+Two negative controls returned exit status two before the harness's loader
+call according to the source order: a detector symlink in the detector position
+was rejected as non-regular, and a detector file in the recognizer position was
+rejected by its pinned-length check. These are source-order control-flow checks
+only; no syscall trace or loader instrumentation establishes broader loader or
+network isolation.
+
+This is a finite Linux-host signal that the exact external wrapper can observe
+one pre-terminated failure and three delayed in-flight failures, reset each
+`RunOptions`, and recover with the same detector session. It does not establish
+an application cancellation contract, cancellation latency bound, long soak or
+leak freedom, race freedom, recognizer cancellation, malformed/oversized model
+handling, request-level memory/work limits, raw-output equivalence,
+preprocessing/postprocessing, physical CPU portability, network isolation,
+native distribution approval, model terms, a project adapter, or backend
+selection.
+
 ## Pre-adoption Rust wrapper and FFI source review
 
 On 2026-08-03, a read-only, source-level pre-adoption review inspected the
@@ -687,6 +766,33 @@ CARGO_NET_OFFLINE=true \
 zsh -c 'ulimit -Sv 1600000; ulimit -St 600; ulimit -c 0; exec env -u ORT_DYLIB_PATH LD_LIBRARY_PATH=/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release OMP_NUM_THREADS=1 MALLOC_ARENA_MAX=1 timeout --signal=TERM --kill-after=30s 600s /tmp/paddleocr-rust-ort-rust-reuse.4iSRSn/target/release/paddleocr-rust-ort-rust-reuse /tmp/paddleocr-rust-ort-source.89EQ5V/build/Release/libonnxruntime.so.1.28.0 /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium/inference.onnx /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium/inference.onnx'
 ```
 
+The later cancellation/recovery harness used these external build commands:
+
+```sh
+cd /tmp/paddleocr-rust-ort-cancel.MbE11S
+CARGO_NET_OFFLINE=true cargo generate-lockfile
+CARGO_NET_OFFLINE=true \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc \
+  cargo build --release --locked
+cargo fmt --all --check
+CARGO_NET_OFFLINE=true \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc \
+  cargo clippy --locked --all-targets -- -D warnings
+```
+
+Its fourth positive invocation, whose measurements are in the preceding table,
+used this exact bounded command:
+
+```sh
+zsh -c 'ulimit -Sv 1600000; ulimit -c 0; exec env -u ORT_DYLIB_PATH LD_LIBRARY_PATH=/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release OMP_NUM_THREADS=1 ORT_LOG_SEVERITY_LEVEL=4 timeout --signal=TERM --kill-after=15s 90s /usr/bin/time -f "CANCEL_DOCUMENT_TIME elapsed_s=%e max_rss_kib=%M exit=%x" /tmp/paddleocr-rust-ort-cancel.MbE11S/target/release/paddleocr-rust-ort-cancel /tmp/paddleocr-rust-ort-source.89EQ5V/build/Release/libonnxruntime.so.1.28.0 /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium/inference.onnx /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium/inference.onnx'
+```
+
+The two pre-loader negative controls used the same binary and native-library
+path, with respectively
+`/tmp/paddleocr-rust-ort-cancel.MbE11S/detector-link.onnx` in the detector
+position, and the exact detector file in both model positions. They returned
+the documented non-regular and wrong-length errors with exit status two.
+
 These paths are temporary developer evidence, not a supported installation or
 distribution recipe.
 
@@ -722,7 +828,7 @@ This source build is not hermetic or approved for distribution:
 | Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates also differ. A later same-runtime elementwise diagnosis at only two minimum shapes found no difference above `1e-4`, no fixed detector `> 0.3` crossing, and no final-axis recognizer argmax change for zero and one synthetic input, but it establishes no general tolerance, preprocessing, postprocessing, or static-reference equivalence. |
 | End-to-end semantics | Not run. |
 | CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
-| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. A separate four-worker shared-session probe also completed 32 zero-input calls twice for each minimum-shape model, with type/shape/count/finite checks and a pre-load swapped-hash rejection. The external Rust-wrapper reuse probe completed 24 sequential calls twice for each minimum-shape model and rejected swapped-length/symlink paths before its loader call. No project Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, broad concurrency contract, or public-error review exists. |
+| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. A separate four-worker shared-session probe also completed 32 zero-input calls twice for each minimum-shape model, with type/shape/count/finite checks and a pre-load swapped-hash rejection. The external Rust-wrapper reuse probe completed 24 sequential calls twice for each minimum-shape model and rejected swapped-length/symlink paths before its loader call. A separate external Rust cancellation harness observed one pre-terminated failure plus three delayed maximum-shape cancellations and four minimum-shape recoveries per invocation across four bounded detector-only runs. No project Rust adapter, request-level bound, long-soak/leak analysis, malformed-input coverage, broad concurrency contract, cancellation API/policy, or public-error review exists. |
 | Supply chain/license | Incomplete and blocked for acceptance; see the preceding limits. |
 | Unsafe/FFI boundary | Partial pre-adoption source review: the exact external `ort`/`ort-sys` configuration was inspected for its dynamic-loader, global-environment, raw-pointer, error, and same-session concurrency constraints. It identifies manual `Send`/`Sync` assertions and a wrapper-documented non-concurrent `Run` contract, but no project adapter, complete unsafe audit, native-library review, panic/exception containment proof, or targeted project tests exist. |
 
@@ -743,9 +849,11 @@ This source build is not hermetic or approved for distribution:
    reviewed distribution policy.
 5. Expand the bounded C API and external Rust-wrapper evidence to
    malicious/external-data and oversized inputs, long-soak/leak analysis,
-   cancellation, broader concurrency, and request-level limits; then implement
-   and review the project Rust adapter's ownership, explicit loader/process-init
-   policy, serialized/session-per-worker concurrency policy, and sanitized
-   public errors.
+   recognizer and policy-level cancellation, broader concurrency, and
+   request-level limits; then implement and review the project Rust adapter's
+   ownership, explicit loader/process-init policy,
+   serialized/session-per-worker concurrency policy, and sanitized public
+   errors. The finite detector-only cancellation signal above is not a
+   substitute for those requirements.
 6. Run end-to-end offline golden and RT-003 scorecard experiments before
    RT-004 considers a backend decision.

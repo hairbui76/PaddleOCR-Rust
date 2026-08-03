@@ -146,6 +146,20 @@ evidence, not a repository adapter, bounded public resource policy,
 concurrency/cancellation proof, numerical-equivalence result, or backend
 selection.
 
+A later disposable Rust wrapper probe exercised `RunOptions` cancellation and
+post-cancellation reuse against the detector only. One pre-terminated
+minimum-shape run failed as expected and recovered after `unterminate`; three
+maximum-shape runs were each terminated after 50 ms from a helper thread, then
+the same session and options successfully completed a minimum-shape recovery
+run. Four bounded positive invocations returned zero under the same 1,600,000
+KiB address-space limit and a 90-second watchdog; output checks were limited to
+the pinned ABI and finiteness, with no values retained. The session itself was
+called only from the main thread. This is a finite external wrapper signal, not
+a project cancellation API, long-soak, leak/race proof, request-level resource
+policy, recognizer test, numerical-equivalence result, or backend selection.
+The exact sources, hashes, replay command, measurements, negative controls,
+and non-claims are in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
+
 A later read-only pre-adoption review of that exact `ort`/`ort-sys` source and
 feature closure found process-global dynamic-loader/environment state, native
 pointer ownership behind manual `Send`/`Sync` assertions, and a wrapper
@@ -165,7 +179,8 @@ still needs:
    behavior; the QEMU shape probes are only partial portability evidence;
 2. a legal static-oracle capture and raw tensor comparison under m2-tensor-v1;
 3. deterministic repeat, latency, memory, binary, malformed-model,
-   resource-limit, long-soak, and adapter-level concurrency evidence;
+   resource-limit, long-soak, cancellation-policy, and adapter-level
+   concurrency evidence;
 4. dependency/native-library license, maintenance, vulnerability, and notice
    review, including a locked adoption closure rather than the external spike;
 5. scorecard and rejected-alternative evidence in RUNTIME_RUBRIC.md;
