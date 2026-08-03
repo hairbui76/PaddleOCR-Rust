@@ -1,7 +1,9 @@
 # OpenCV Crop Oracle Capture
 
 Roadmap items: `CROP-001`, `GEO-002`, `FIX-001`, `TOL-001`
-Status: Two reviewed component captures are committed; the baseline capture has an inverse-mapping sidecar, and no model-backed capture exists
+Status: Two reviewed component captures are committed; the baseline capture has
+an inverse-mapping sidecar. A separate narrow model-backed no-text capture is
+recorded in `ORACLE_CAPTURE.md`, not in this component-crop record.
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and boundary

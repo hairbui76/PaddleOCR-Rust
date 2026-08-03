@@ -1,0 +1,62 @@
+{
+  "fixture_id": "classic-v1-e2e-no-text",
+  "kind": "end_to_end",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.png",
+    "sha256": "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd",
+    "sha256_scope": "Exact 81-byte PNG file.",
+    "provenance": "Byte-identical copy of the self-authored classic-v1-image-input-png-rgb-3x2 input recorded in ../classic-v1-image-inputs/capture.json.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/utility.py"
+    ]
+  },
+  "artifacts": {
+    "representation": "onnx",
+    "terms_review": "LIC-001",
+    "local_only_candidate": true,
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "oracle": {
+    "capture_path": "capture.json",
+    "capture_sha256": "28df5acdb8f9c06493d947eb2df3a85194af0efe37213ea5d55de524e7c4c299",
+    "capture_schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1"
+  },
+  "expected": {
+    "path": "expected.json",
+    "sha256": "386596c7e38f5b67e7cdb8d2d77aaa5fa6305edf8d46170336bda0b781c9fe81",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/ocr-result/v1",
+    "comparison_profile": "m2-e2e-v1"
+  },
+  "tests": [
+    "fixture_integrity::tests::classic_v1_e2e_no_text_fixture_is_well_formed"
+  ],
+  "limitations": [
+    "The fixture is a one-image no-text result only; it has no text, geometry, confidence, reading-order, threshold, malformed-input, or resource-limit coverage.",
+    "The isolated source capture consumed the pre-recorded BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, or inspect PaddleOCR."
+  ]
+}

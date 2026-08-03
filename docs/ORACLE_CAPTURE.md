@@ -1,7 +1,8 @@
 # Isolated Oracle Capture Procedure
 
 Roadmap item: ORACLE-001
-Status: Procedure complete; one narrow component crop capture is committed, but no model-backed or end-to-end capture exists
+Status: Procedure complete; one narrow component crop capture and one narrow
+model-backed classic no-text capture are committed
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
 ## Purpose
@@ -82,6 +83,32 @@ The reviewed component capture at
 is intentionally limited to four self-authored BGR crop cases. It does not
 meet the model, input-image, or end-to-end metadata requirements above.
 
+## Model-backed no-text oracle
+
+The reviewed
+[`classic-v1-e2e-no-text`](../tests/fixtures/classic-v1-e2e-no-text/) fixture
+is a deliberately small exception to the previous absence of model-backed
+captures. It uses the exact revision-pinned ONNX detector and recognizer whose
+terms evidence is recorded in [`LICENSE_REVIEW.md`](LICENSE_REVIEW.md), checks
+their SHA-256 values before loading, and records the matching dictionary hash.
+
+The capture ran in a separate clean checkout of the pinned classic source on
+CPU with ONNX Runtime, one intra/inter-op thread, no GPU, no automatic model
+fetch, and two fresh processes whose compact stdout digests match. The source
+was passed the 3-by-2 BGR byte array already recorded by
+`classic-v1-image-inputs`; it did not decode the committed `input.png` during
+this capture. The final classic result is exactly `lines: []`. The capture
+document records package versions, option values, thread/cache environment,
+temporary-harness hash, candidate revisions/hashes, and its source-result
+digest.
+
+This is fixture evidence only. It does not select an image decoder, native
+Rust inference backend, public OCR API, CLI behavior, model manifest, cache or
+download policy. It also provides no text, quadrilateral, score, reading-order,
+threshold, malformed-input, or resource-limit evidence. No model bytes,
+dictionary entries, raw tensors, virtual environment, external checkout, cache,
+or capture harness were committed.
+
 ## Prohibited shortcuts
 
 - Do not invoke the `PaddleOCR/` symlink as a test oracle.
@@ -95,5 +122,6 @@ meet the model, input-image, or end-to-end metadata requirements above.
 ## Completion condition
 
 `ORACLE-001` is complete as a procedure. `FIX-001` and `TOL-001` remain
-incomplete until legal M2 fixtures, exact local artifacts, capture records, and
-offline Rust comparisons exist.
+incomplete: the narrow no-text fixture exists, but the required text,
+geometry/order, tall-crop, Unicode, decoder, raw-tensor, and actual Rust
+differential coverage has not been completed.

@@ -1,4 +1,4 @@
-//! Offline integrity checks for the committed self-authored fixture corpus.
+//! Offline integrity checks for the committed fixture corpus.
 
 use std::{
     collections::BTreeSet,
@@ -12,6 +12,27 @@ use sha2::{Digest, Sha256};
 
 const FIXTURE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 const UPSTREAM_BASELINE: &str = "2661c7c0ef5c613e8f93c6e93b2e052399f0f854";
+const E2E_NO_TEXT_FIXTURE_ID: &str = "classic-v1-e2e-no-text";
+const E2E_NO_TEXT_INPUT_SHA256: &str =
+    "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd";
+const E2E_NO_TEXT_BGR_SHA256: &str =
+    "0c2a426327d6cf918e1547312404a9151f9f486bf006c3f77665ae997b33cf3d";
+const E2E_NO_TEXT_DETECTOR_SHA256: &str =
+    "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1";
+const E2E_NO_TEXT_RECOGNIZER_SHA256: &str =
+    "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba";
+const E2E_NO_TEXT_DICTIONARY_SHA256: &str =
+    "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d";
+const E2E_NO_TEXT_DETECTOR_REVISION: &str = "61323801669c338b7891481ec7bac61ce31b576a";
+const E2E_NO_TEXT_RECOGNIZER_REVISION: &str = "50c7eacafc52fa7bcf4194e8cd08e46f8558504b";
+const E2E_NO_TEXT_CAPTURE_SHA256: &str =
+    "28df5acdb8f9c06493d947eb2df3a85194af0efe37213ea5d55de524e7c4c299";
+const E2E_NO_TEXT_EXPECTED_SHA256: &str =
+    "386596c7e38f5b67e7cdb8d2d77aaa5fa6305edf8d46170336bda0b781c9fe81";
+const E2E_NO_TEXT_FRESH_OUTPUT_SHA256: &str =
+    "c6a0c1a835356437be001f438f636d83c1c7b53135ace79917f7f9134d594306";
+const E2E_NO_TEXT_SOURCE_RECORD_SHA256: &str =
+    "d73f50c93bf0760ecb958526e423f0b229578865c39c8ee3232a4eb9f0b430c6";
 
 #[test]
 fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
@@ -44,17 +65,20 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
             false,
             &context,
         );
-        if fixture_id != "classic-v1-image-inputs" {
-            assert_eq!(
-                string_field(
-                    object_field(&metadata, "expected", &context),
-                    "comparison_profile",
-                    &context
-                ),
-                "m2-unit-v1",
-                "{context} non-image fixture must use the frozen unit comparison profile"
-            );
-        }
+        let expected_profile = match fixture_id {
+            "classic-v1-image-inputs" => "m2-image-input-oracle-v1",
+            "classic-v1-e2e-no-text" => "m2-e2e-v1",
+            _ => "m2-unit-v1",
+        };
+        assert_eq!(
+            string_field(
+                object_field(&metadata, "expected", &context),
+                "comparison_profile",
+                &context
+            ),
+            expected_profile,
+            "{context} fixture comparison profile changed without an integrity-gate update"
+        );
 
         if fixture_id == "classic-v1-crop-oracle" {
             verify_crop_oracle(&metadata, &directory, &context);
@@ -65,6 +89,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == "classic-v1-image-inputs" {
             verify_image_input_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == "classic-v1-e2e-no-text" {
+            verify_e2e_no_text_oracle(&metadata, &directory, &context);
+        }
     }
 
     let expected_ids = BTreeSet::from([
@@ -73,6 +100,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
+        "classic-v1-e2e-no-text".to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
     ]);
@@ -136,10 +164,17 @@ fn verify_common_metadata(metadata: &Value, directory: &Path, context: &str) {
             .is_some(),
         "{context} contains_personal_data must be a boolean"
     );
-    assert!(
-        value_field(metadata, "artifacts", context).is_null(),
-        "{context} must not introduce a model-backed fixture before artifact review"
-    );
+    if string_field(metadata, "fixture_id", context) == "classic-v1-e2e-no-text" {
+        assert!(
+            value_field(metadata, "artifacts", context).is_object(),
+            "{context} reviewed no-text fixture must declare its exact candidate artifacts"
+        );
+    } else {
+        assert!(
+            value_field(metadata, "artifacts", context).is_null(),
+            "{context} must not introduce a model-backed fixture before artifact review"
+        );
+    }
 
     let upstream = object_field(metadata, "upstream", context);
     assert_eq!(
@@ -215,7 +250,7 @@ fn verify_asset_descriptor(
         assert!(
             matches!(
                 comparison_profile,
-                "m2-unit-v1" | "m2-image-input-oracle-v1"
+                "m2-unit-v1" | "m2-image-input-oracle-v1" | "m2-e2e-v1"
             ),
             "{context} expected fixture has unsupported comparison profile {comparison_profile:?}"
         );
@@ -644,6 +679,441 @@ fn verify_image_input_oracle(metadata: &Value, fixture_directory: &Path, context
     );
 }
 
+fn verify_e2e_no_text_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "input.png",
+        "{context} no-text fixture input path changed without review"
+    );
+    assert_eq!(
+        string_field(input, "sha256", context),
+        E2E_NO_TEXT_INPUT_SHA256,
+        "{context} no-text fixture input hash changed without review"
+    );
+
+    let artifacts = object_field(metadata, "artifacts", context);
+    assert_eq!(
+        string_field(artifacts, "representation", context),
+        "onnx",
+        "{context} no-text fixture must retain the reviewed ONNX representation"
+    );
+    assert_eq!(
+        string_field(artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} no-text fixture must identify its terms review"
+    );
+    assert_eq!(
+        value_field(artifacts, "local_only_candidate", context).as_bool(),
+        Some(true),
+        "{context} no-text fixture must remain a local-only candidate"
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    let dictionary = object_field(artifacts, "dictionary", context);
+    assert_eq!(
+        string_field(dictionary, "source_path", context),
+        "ppocr/utils/dict/ppocrv6_dict.txt",
+        "{context} no-text fixture dictionary source changed without review"
+    );
+    assert_eq!(
+        string_field(dictionary, "sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} no-text fixture dictionary hash changed without review"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "capture_path", context),
+        "capture.json",
+        "{context} no-text fixture capture path changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_schema_version", context),
+        "paddleocr-rust/classic-onnx-oracle-capture/v1",
+        "{context} no-text fixture capture schema changed without review"
+    );
+    let capture_path = string_field(oracle, "capture_path", context);
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        E2E_NO_TEXT_CAPTURE_SHA256,
+        "{context} no-text fixture capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(fixture_directory, capture_path, context);
+    assert_digest(
+        &capture_bytes,
+        string_field(oracle, "capture_sha256", context),
+        &format!("{context} no-text fixture capture document"),
+    );
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} no-text fixture capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        string_field(oracle, "capture_schema_version", context),
+        "{context} no-text fixture capture schema disagrees with metadata"
+    );
+    assert_eq!(
+        string_field(&capture, "fixture_id", context),
+        E2E_NO_TEXT_FIXTURE_ID,
+        "{context} no-text capture fixture identifier changed without review"
+    );
+
+    let capture_input = object_field(&capture, "input", context);
+    assert_eq!(
+        string_field(capture_input, "source_fixture", context),
+        "classic-v1-image-inputs",
+        "{context} no-text capture input source changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "source_fixture_id", context),
+        "classic-v1-image-input-png-rgb-3x2",
+        "{context} no-text capture input identifier changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "png_sha256", context),
+        E2E_NO_TEXT_INPUT_SHA256,
+        "{context} no-text capture PNG hash changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_sha256", context),
+        E2E_NO_TEXT_BGR_SHA256,
+        "{context} no-text capture BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "bgr_shape", context),
+        &serde_json::json!([2, 3, 3]),
+        "{context} no-text capture BGR shape changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_channel_order", context),
+        "BGR",
+        "{context} no-text capture BGR channel order changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_dtype", context),
+        "uint8",
+        "{context} no-text capture BGR dtype changed without review"
+    );
+
+    let capture_upstream = object_field(&capture, "upstream", context);
+    assert_eq!(
+        string_field(capture_upstream, "repository", context),
+        "https://github.com/PaddlePaddle/PaddleOCR.git",
+        "{context} no-text capture upstream repository changed without review"
+    );
+    assert_eq!(
+        string_field(capture_upstream, "commit", context),
+        UPSTREAM_BASELINE,
+        "{context} no-text capture upstream baseline changed without review"
+    );
+    for field in ["status_before", "status_after"] {
+        assert_eq!(
+            string_field(capture_upstream, field, context),
+            "clean",
+            "{context} no-text capture upstream {field} must be clean"
+        );
+    }
+
+    let capture_artifacts = object_field(&capture, "artifacts", context);
+    assert_eq!(
+        string_field(capture_artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} no-text capture must identify its terms review"
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    let capture_dictionary = object_field(capture_artifacts, "dictionary", context);
+    assert_eq!(
+        string_field(capture_dictionary, "sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} no-text capture dictionary hash changed without review"
+    );
+
+    let execution = object_field(&capture, "execution", context);
+    for (field, expected) in [
+        ("python", "3.12.3"),
+        ("paddlepaddle", "3.3.1"),
+        (
+            "paddle_inference",
+            "not invoked; use_onnx=true selected ONNX Runtime",
+        ),
+        ("onnxruntime", "1.28.0"),
+        ("selected_execution_provider", "CPUExecutionProvider"),
+        ("numpy", "1.26.4"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("gpu", "disabled"),
+    ] {
+        assert_eq!(
+            string_field(execution, field, context),
+            expected,
+            "{context} no-text capture execution field {field} changed without review"
+        );
+    }
+    let session_options = object_field(execution, "onnx_session_options", context);
+    assert_eq!(
+        unsigned_field(session_options, "intra_op_num_threads", context),
+        1,
+        "{context} no-text capture must pin one intra-op thread"
+    );
+    assert_eq!(
+        unsigned_field(session_options, "inter_op_num_threads", context),
+        1,
+        "{context} no-text capture must pin one inter-op thread"
+    );
+    assert_eq!(
+        value_field(session_options, "enable_mem_pattern", context).as_bool(),
+        Some(false),
+        "{context} no-text capture must disable ONNX Runtime memory patterns"
+    );
+    let classic_options = object_field(execution, "classic_options", context);
+    for field in [
+        "use_gpu",
+        "use_onnx",
+        "use_angle_cls",
+        "benchmark",
+        "show_log",
+        "cls_argument",
+    ] {
+        let expected = field == "use_onnx";
+        assert_eq!(
+            value_field(classic_options, field, context).as_bool(),
+            Some(expected),
+            "{context} no-text capture classic option {field} changed without review"
+        );
+    }
+
+    let reproducibility = object_field(&capture, "reproducibility", context);
+    assert_eq!(
+        value_field(reproducibility, "harness_retained_in_repository", context).as_bool(),
+        Some(false),
+        "{context} must not retain the external no-text capture harness"
+    );
+    assert_eq!(
+        value_field(reproducibility, "fresh_process_stdout_identical", context).as_bool(),
+        Some(true),
+        "{context} no-text capture fresh-process outputs must agree"
+    );
+    let fresh_runs = array_field(reproducibility, "fresh_process_runs", context);
+    assert_eq!(
+        fresh_runs.len(),
+        2,
+        "{context} no-text capture must retain exactly two fresh-process digests"
+    );
+    let first_run = value_as_object(&fresh_runs[0], "first fresh process run", context);
+    let second_run = value_as_object(&fresh_runs[1], "second fresh process run", context);
+    assert_eq!(
+        string_field(first_run, "id", context),
+        "run-1",
+        "{context} no-text capture first fresh run changed without review"
+    );
+    assert_eq!(
+        string_field(second_run, "id", context),
+        "run-2",
+        "{context} no-text capture second fresh run changed without review"
+    );
+    assert_eq!(
+        string_field(first_run, "stdout_sha256", context),
+        E2E_NO_TEXT_FRESH_OUTPUT_SHA256,
+        "{context} no-text capture first fresh-run stdout hash changed without review"
+    );
+    assert_eq!(
+        string_field(second_run, "stdout_sha256", context),
+        E2E_NO_TEXT_FRESH_OUTPUT_SHA256,
+        "{context} no-text capture second fresh-run stdout hash changed without review"
+    );
+    assert_sha256_format(
+        string_field(first_run, "stdout_sha256", context),
+        "fresh_process_runs.stdout_sha256",
+        context,
+    );
+
+    let source_result = object_field(&capture, "source_result", context);
+    let source_record = object_field(source_result, "record", context);
+    let source_record_bytes = must_ok(
+        serde_json::to_vec(source_record),
+        &format!("serialize {context} no-text source record"),
+    );
+    assert_digest(
+        &source_record_bytes,
+        string_field(source_result, "canonical_json_sha256", context),
+        &format!("{context} no-text source record"),
+    );
+    assert_eq!(
+        string_field(source_result, "canonical_json_sha256", context),
+        E2E_NO_TEXT_SOURCE_RECORD_SHA256,
+        "{context} no-text source record digest changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "fixture_id", context),
+        E2E_NO_TEXT_FIXTURE_ID,
+        "{context} no-text source-result identifier changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_png_sha256", context),
+        E2E_NO_TEXT_INPUT_SHA256,
+        "{context} no-text source-result PNG hash changed without review"
+    );
+    assert_eq!(
+        string_field(source_record, "input_bgr_sha256", context),
+        E2E_NO_TEXT_BGR_SHA256,
+        "{context} no-text source-result BGR hash changed without review"
+    );
+    for (field, expected) in [
+        ("detector_sha256", E2E_NO_TEXT_DETECTOR_SHA256),
+        ("recognizer_sha256", E2E_NO_TEXT_RECOGNIZER_SHA256),
+        ("dictionary_sha256", E2E_NO_TEXT_DICTIONARY_SHA256),
+    ] {
+        assert_eq!(
+            string_field(source_record, field, context),
+            expected,
+            "{context} no-text source-result field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        value_field(source_result, "raw_detector_tensors_retained", context).as_bool(),
+        Some(false),
+        "{context} must not retain raw detector tensors"
+    );
+    assert_eq!(
+        value_field(source_result, "raw_recognizer_tensors_retained", context).as_bool(),
+        Some(false),
+        "{context} must not retain raw recognizer tensors"
+    );
+
+    let expected_bytes = read_fixture_file(fixture_directory, "expected.json", context);
+    assert_digest(
+        &expected_bytes,
+        E2E_NO_TEXT_EXPECTED_SHA256,
+        &format!("{context} no-text expected result"),
+    );
+    let expected = parse_json_bytes(
+        &expected_bytes,
+        &format!("{context} no-text expected result"),
+    );
+    assert_eq!(
+        string_field(&expected, "schema_version", context),
+        "paddleocr-rust/ocr-result/v1",
+        "{context} no-text expected result schema changed without review"
+    );
+    let expected_input = object_field(&expected, "input", context);
+    assert!(
+        value_field(expected_input, "id", context).is_null(),
+        "{context} no-text expected input identifier must remain null"
+    );
+    assert!(
+        value_field(expected_input, "page_index", context).is_null(),
+        "{context} no-text expected page index must remain null"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "width", context),
+        3,
+        "{context} no-text expected width changed without review"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "height", context),
+        2,
+        "{context} no-text expected height changed without review"
+    );
+    let expected_models = object_field(&expected, "models", context);
+    let expected_detector = object_field(expected_models, "detector", context);
+    let expected_recognizer = object_field(expected_models, "recognizer", context);
+    assert_eq!(
+        string_field(expected_detector, "family", context),
+        "PP-OCRv6_medium_det",
+        "{context} no-text expected detector family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "version", context),
+        format!("m2-onnx-det-v6-medium@{E2E_NO_TEXT_DETECTOR_REVISION}"),
+        "{context} no-text expected detector provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "artifact_sha256", context),
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        "{context} no-text expected detector hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "family", context),
+        "PP-OCRv6_medium_rec",
+        "{context} no-text expected recognizer family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "version", context),
+        format!("m2-onnx-rec-v6-medium@{E2E_NO_TEXT_RECOGNIZER_REVISION}"),
+        "{context} no-text expected recognizer provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "artifact_sha256", context),
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        "{context} no-text expected recognizer hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "dictionary_sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} no-text expected dictionary hash changed without review"
+    );
+    assert!(
+        array_field(&expected, "lines", context).is_empty(),
+        "{context} no-text expected result must contain no lines"
+    );
+    assert_eq!(
+        value_field(source_record, "lines", context),
+        value_field(&expected, "lines", context),
+        "{context} no-text source result and expected result differ"
+    );
+}
+
+fn verify_e2e_candidate(
+    candidate: &Value,
+    expected_key: &str,
+    expected_revision: &str,
+    expected_sha256: &str,
+    context: &str,
+) {
+    assert_eq!(
+        string_field(candidate, "candidate_key", context),
+        expected_key,
+        "{context} no-text candidate key changed without review"
+    );
+    assert_eq!(
+        string_field(candidate, "revision", context),
+        expected_revision,
+        "{context} no-text candidate revision changed without review"
+    );
+    assert_eq!(
+        string_field(candidate, "sha256", context),
+        expected_sha256,
+        "{context} no-text candidate hash changed without review"
+    );
+}
+
 fn verify_image_capture_environment(oracle: &Value, captured: &Value, context: &str) {
     for field in ["numpy", "opencv", "opencv_build_information_sha256"] {
         assert_eq!(
@@ -840,6 +1310,10 @@ fn value_field<'a>(value: &'a Value, field: &str, context: &str) -> &'a Value {
 
 fn object_field<'a>(value: &'a Value, field: &str, context: &str) -> &'a Value {
     let value = value_field(value, field, context);
+    value_as_object(value, field, context)
+}
+
+fn value_as_object<'a>(value: &'a Value, field: &str, context: &str) -> &'a Value {
     assert!(
         value.is_object(),
         "{context} field {field:?} must be an object"
@@ -856,6 +1330,13 @@ fn array_field<'a>(value: &'a Value, field: &str, context: &str) -> &'a [Value] 
 
 fn string_field<'a>(value: &'a Value, field: &str, context: &str) -> &'a str {
     value_as_str(value_field(value, field, context), field, context)
+}
+
+fn unsigned_field(value: &Value, field: &str, context: &str) -> u64 {
+    match value_field(value, field, context).as_u64() {
+        Some(value) => value,
+        None => panic!("{context} field {field:?} must be an unsigned integer"),
+    }
 }
 
 fn value_as_str<'a>(value: &'a Value, field: &str, context: &str) -> &'a str {
@@ -905,5 +1386,20 @@ fn must_ok<T, E: std::fmt::Display>(result: Result<T, E>, context: &str) -> T {
     match result {
         Ok(value) => value,
         Err(error) => panic!("{context} failed: {error}"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn classic_v1_e2e_no_text_fixture_is_well_formed() {
+        let directory = Path::new(FIXTURE_ROOT).join(E2E_NO_TEXT_FIXTURE_ID);
+        let context = format!("fixture directory {}", directory.display());
+        let metadata = read_json_file(&directory.join("metadata.json"));
+
+        verify_common_metadata(&metadata, &directory, &context);
+        verify_e2e_no_text_oracle(&metadata, &directory, &context);
     }
 }

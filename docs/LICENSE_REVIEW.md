@@ -31,9 +31,11 @@ The initial review used two read-only evidence sources:
 - remote model-card metadata and top-level file listings for the four
   revision-pinned candidates in `MODEL_CANDIDATES.md`.
 
-No model binary, archive, dictionary, font, fixture, conversion output, or
-third-party runtime was downloaded or stored in this repository. The linked
-`PaddleOCR/` checkout was not executed or modified.
+The initial review stored no model binary, archive, dictionary, font, fixture,
+conversion output, or third-party runtime in this repository. The linked
+`PaddleOCR/` checkout was not executed or modified. The later reviewed
+`classic-v1-e2e-no-text` record contains only a self-authored input, hashes,
+provenance, and the empty final result; it contains none of those assets.
 
 On 2026-08-02, the project user separately authorized a one-time external
 download of the two exact ONNX candidates. This added a local package
@@ -43,8 +45,8 @@ did not add an asset to this repository or change any approval/distribution
 status.
 
 The separately planned, user-local `RT-002` runtime diagnostics later executed
-the verified external ONNX bytes without retaining raw outputs or a fixture in
-this repository. Their results are recorded in
+the verified external ONNX bytes without retaining raw outputs. Their results
+are recorded in
 [RUNTIME_TRACT_EVIDENCE.md](RUNTIME_TRACT_EVIDENCE.md),
 [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md), and
 [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). These narrow
@@ -63,8 +65,8 @@ distribution, provenance, and fixture controls.
 |---|---|---|---|---|
 | Static detector, `PP-OCRv6_medium_det` | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
 | Static recognizer, `PP-OCRv6_medium_rec` | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. The configuration embeds a character dictionary. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
-| ONNX detector, `PP-OCRv6_medium_det_onnx` | `61323801669c338b7891481ec7bac61ce31b576a` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted; runtime, adoption, conversion, distribution, bundling, and retained-fixture decisions remain open. |
-| ONNX recognizer, `PP-OCRv6_medium_rec_onnx` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted; runtime, adoption, conversion, distribution, bundling, and retained-fixture decisions remain open. |
+| ONNX detector, `PP-OCRv6_medium_det_onnx` | `61323801669c338b7891481ec7bac61ce31b576a` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted. A reviewed minimal non-asset oracle result may be retained; runtime, adoption, conversion, distribution, bundling, and artifact retention remain open. |
+| ONNX recognizer, `PP-OCRv6_medium_rec_onnx` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted. A reviewed minimal non-asset oracle result may be retained; runtime, adoption, conversion, distribution, bundling, and artifact retention remain open. |
 
 The exact source URLs, file sizes, SHA-256 values, and observed tensor metadata
 are maintained in [MODEL_CANDIDATES.md](MODEL_CANDIDATES.md). The companion
@@ -318,7 +320,7 @@ does not satisfy this condition.
 | Static model parameters and graph/config files | Candidate revisions, checksums, sizes, preliminary card metadata, and an immutable PaddleX publisher path are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
 | Official ONNX exports | Separate pinned repository revisions/checksums, immutable LFS storage commits, and the PaddleX ONNX naming/hoster path are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
 | Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a 18,708-entry `character_dict`; its canonical entry stream matches the pinned upstream `ppocrv6_dict.txt` SHA-256. The exact-local source-level record maps it to blank at index `0`, ordered entries at `1..=18,708`, and appended space at `18,709`; this is not runtime-output validation. The source-tree Apache-2.0 license is a terms lead, while the dictionary README gives no file-specific provenance/terms. | Verify applicable terms, runtime index/blank/space behavior, decoder error handling, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
-| Oracle and test fixtures | No model-backed input or expected-output fixture has been added. | Record original-author/source provenance, terms, privacy review, hashes, goldens, and applicable model evidence per [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | Unapproved. |
+| Oracle and test fixtures | `classic-v1-e2e-no-text` now records one self-authored input, minimal empty result, exact candidate/dictionary hashes, provenance, privacy review, and source-capture evidence. | Review every additional input, golden, dictionary fragment, font, or other asset against its exact artifact terms and [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | The one non-asset no-text result is reviewed; all broader fixture/artifact retention remains unapproved. |
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |
 
@@ -407,6 +409,10 @@ This decision has deliberately narrow effects:
 - It permits the roadmap's local, hash-verified runtime qualification and
   model-backed evidence work to proceed. It does not select a runtime, claim
   model support, or make static and ONNX packages interchangeable.
+- It permits the reviewed `classic-v1-e2e-no-text` fixture to retain its
+  self-authored input, hashes, provenance, and minimal empty final result. It
+  does not permit retaining model bytes, dictionary entries, raw tensors,
+  unreviewed derived output, or a general fixture-distribution policy.
 - It does not permit an artifact in Git, tests, normal builds, or a package;
   `MODEL-DEC-001`, `MOD-002` through `MOD-004`, and `D-007` still decide the
   final local-path, cache, conversion, and download policy.

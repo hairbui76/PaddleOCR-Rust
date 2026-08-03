@@ -1,7 +1,9 @@
 # M2 Fixture and Tolerance Plan
 
 Roadmap items: `FIX-001`, `TOL-001`
-Status: In progress; seven offline fixture sets are present, including self-authored image-input and scalar crop oracles, but no end-to-end model fixture or capture has been added
+Status: In progress; eight offline fixture sets are present, including a narrow
+reviewed classic-ONNX no-text oracle; other end-to-end, decoder, and tensor
+coverage remains pending
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 Applies to: the planned M2 classic DB + CTC OCR slice only
 
@@ -26,7 +28,7 @@ normal tests to read or execute the `PaddleOCR/` symlink.
 | DB map kernel unit data | `classic-v1-db-map-*` | Self-authored row-major `f32` map vectors and zero/one bitmap vectors; Apache-2.0 repository contribution. | Exact strict-threshold boundary, map shape/value validation, row-order, mask allocation/error behavior, and bounded component-scan behavior. | In progress; `tests/fixtures/classic-v1-db-map-boundaries/` records one exact `m2-unit-v1` representative for `0.3`, adjacent `f32` values, row order, and expected bitmap bytes. `tests/fixtures/classic-v1-db-components/` records one exact 8-connected, diagonal, row-major-seed bounds/pixel-count representative. `src/db.rs` also covers wrong lengths, NaN/infinity, empty masks, independent exhaustive 3×3 and 4×4 component references, 4,096 deterministic 6×6 sparse/dense/checkerboard reference patterns, and excess isolated-component rejection. Neither fixture is a captured model tensor, OpenCV contour, score, or detector golden. |
 | CTC unit data | `classic-v1-ctc-*` | Self-authored numeric score matrices and indexes; Apache-2.0 repository contribution. | Independent review of argmax, duplicate removal, blank handling, tie behavior, score mean, dictionary bounds, and filtering. | In progress; `tests/fixtures/classic-v1-ctc-greedy-path/` records one exact `m2-unit-v1` numeric representative for raw repeats, blank reset, lowest-index ties, retained indexes, and mean score. `src/ctc.rs` also covers bounded finite matrices, empty score, and malformed/boundary shapes. Dictionary/text fixtures remain blocked on the verified artifact ABI. |
 | Decoder/resource negatives | `classic-v1-input-*` | Self-authored PNG/JPEG streams and malformed/minimal bytes; no copied font/image/model data. | Reproducible generator, byte-level provenance, and a decoder decision before promoting any Rust decoder behavior. | In progress; `tests/fixtures/classic-v1-image-inputs/` records fifteen valid PNG/JPEG streams (including palette/tRNS, 16-bit, progressive JPEG, and Exif orientations 1–8), five bounded negatives, and an isolated OpenCV 5.0.0 `IMREAD_COLOR` BGR capture. The `m2-image-input-oracle-v1` record is decision evidence, not a selected decoder contract. |
-| End-to-end image goldens | `classic-v1-e2e-*` | Original contributor material or an explicitly redistributable source only. | Fixture hash/provenance review, exact model/dictionary hashes, isolated oracle capture, and output review. | Blocked on P3 artifacts and approval. |
+| End-to-end image goldens | `classic-v1-e2e-*` | Original contributor material or an explicitly redistributable source only. | Fixture hash/provenance review, exact model/dictionary hashes, isolated oracle capture, and output review. | In progress; `classic-v1-e2e-no-text/` records one 3-by-2 self-authored PNG and its previously captured BGR bytes, with a two-fresh-process CPU classic `TextSystem` ONNX oracle result of `lines: []`. It retains no weights, dictionary entries, tensors, or source checkout. It does not choose a Rust decoder/runtime or prove text, geometry, score, ordering, or error behavior. |
 | Raw tensor/backend qualifications | `classic-v1-tensor-*` | Captured only when artifact terms permit retaining the output; otherwise use an approved derived comparison method. | P3 model/runtime selection and legal review. | Blocked on P3. |
 
 No generated visualization, virtual environment, model binary, cache, upstream
@@ -43,14 +45,16 @@ does the same for the separately recorded scalar OpenCV grid. Focused source
 tests retain the individual numerical regressions. Neither fixture broadens
 the component evidence into a general OpenCV or decoded-image oracle.
 
-The current seven committed offline fixture directories are also covered by
+The current eight committed offline fixture directories are also covered by
 the offline `tests/fixture_integrity.rs` integration gate. It parses each
 metadata record, validates baseline/provenance/profile requirements and direct
 file SHA-256 values, and verifies every crop capture/base64 payload/aggregate
 digest plus the scalar-grid setting/ordered cases and the image-input capture's
-valid/negative encoded bytes and BGR output aggregates. This protects
-fixture-record consistency only; it neither approves a model artifact nor
-upgrades the component fixtures to end-to-end evidence.
+valid/negative encoded bytes and BGR output aggregates. The no-text gate also
+pins the exact candidate revisions/hashes and terms-review reference, source
+record digest, two matching fresh-process output digests, and fixture-only
+native-result projection. This protects fixture-record consistency only; it
+does not select a Rust backend/decoder or establish Rust model support.
 
 The source-level geometry tests are intentionally not presented as end-to-end
 goldens. They validate deterministic contract arithmetic only and do not
@@ -74,7 +78,7 @@ intentions, not evidence that a file or behavior exists today.
 | `classic-v1-ctc-unicode` | CTC | Exact UTF-8 preservation for non-ASCII characters; no Arabic reversal in M2. | Exact UTF-8 bytes/text. | `REC-003`, verified dictionary ABI. |
 | `classic-v1-ctc-score-boundary` | CTC/pipeline | Recognition score exactly equal to `0.5` is retained; a lower score is filtered. | Exact retained line set. | `REC-003`, `OCR-001`. |
 | `classic-v1-input-invalid` | Input | Empty, malformed, oversized, dimension-overflow, and wrong-format input behavior. | Typed error category; no panic or allocation beyond limit. | `IMG-001`, `E2E-001`. |
-| `classic-v1-e2e-no-text` | End-to-end | A legal image with no retained text has no detector/recognizer line result. | `lines: []` exactly. | P3 artifact + oracle capture. |
+| `classic-v1-e2e-no-text` | End-to-end | A legal image with no retained text has no detector/recognizer line result. | `lines: []` exactly. | Exact legal candidate and isolated classic oracle capture are recorded for fixture evidence; Rust decoder/runtime/pipeline implementation remains separately gated. |
 | `classic-v1-e2e-reading-order` | End-to-end | Multiple lines/columns produce the frozen reading order and matching quadrilaterals. | Text/order exact; points within geometry tolerance. | P3 artifact + oracle capture. |
 | `classic-v1-e2e-tall-crop` | End-to-end | Vertically oriented text exercises the crop rotation rule. | Text/order exact; crop diagnostic and result checks. | P3 artifact + oracle capture. |
 | `classic-v1-e2e-unicode` | End-to-end | A reviewed image and artifact dictionary exercise verified non-ASCII text. | Text bytes/order exact; score tolerance. | P3 artifact + oracle capture. |
@@ -132,7 +136,7 @@ uses pixels with origin at top-left and the point order in
 |---|---|---|---|---|---|---|
 | `m2-unit-v1` | Self-authored geometry, crop, DB, and CTC unit fixtures | Exact | Exact where the operation is integer-defined | Exact deterministic arithmetic result | Not applicable | Exact error variant/category and boundary condition. |
 | `m2-image-input-oracle-v1` | The self-authored `classic-v1-image-inputs` byte corpus | Not applicable | Exact dimensions/byte arrays only for the recorded OpenCV capture; a selected Rust decoder must classify every case as exact, tolerated, or intentionally unsupported before using it as a compatibility assertion. | Not applicable | Not applicable | The five negative records name required policy outcomes but do not freeze final Rust error variants until `D-008` closes. |
-| `m2-e2e-v1` | Captured classic end-to-end fixture with the same verified artifact | Exact UTF-8 and final order | Each corresponding quad coordinate absolute error `<= 1.0` px | Absolute error `<= 0.001` | Not applicable | Exact success/error classification; no partial result. |
+| `m2-e2e-v1` | Captured classic end-to-end fixture with the same verified artifact | Exact UTF-8 and final order | Each corresponding quad coordinate absolute error `<= 1.0` px | Absolute error `<= 0.001` | Not applicable | Exact success/error classification; no partial result. The initial no-text fixture exercises only the exact empty `lines` case, so its geometry and score budgets are intentionally unused. |
 | `m2-tensor-v1` | P3 backend/model qualification captures | Not applicable | Not applicable | Not applicable | Maximum absolute and relative element error `<= 1e-4`, unless a documented operator-specific exception is approved before acceptance. | Tensor shape/dtype/name mismatch is a model contract error. |
 | `m2-determinism-v1` | Same-build, same-artifact single-thread repeat run | Exact | Exact serialized values | Exact serialized values | Exact serialized values where emitted to a qualification test | Byte-identical compact JSONL; no volatile output. |
 
@@ -146,8 +150,10 @@ the fixture is accepted.
 1. Add or propose an original/reviewed input without a model or upstream
    checkout in normal test execution.
 2. Add the complete metadata record and confirm its license/provenance.
-3. Resolve the exact model/dictionary artifact and runtime in P3; record their
-   hashes and applicable terms.
+3. Resolve the exact legal model/dictionary artifact and record their hashes
+   and applicable terms. An isolated classic oracle may use a temporary CPU
+   runtime for capture; that does not select the project's Rust runtime, which
+   remains a P3 decision.
 4. Follow [`ORACLE_CAPTURE.md`](ORACLE_CAPTURE.md) in an isolated checkout to
    obtain candidate expected output.
 5. Review the raw diff, expected JSON, model metadata, and selected tolerance.

@@ -1,0 +1,126 @@
+{
+  "schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1",
+  "fixture_id": "classic-v1-e2e-no-text",
+  "capture_scope": "Classic TextSystem CPU/ONNX no-text result from an already captured BGR image.",
+  "input": {
+    "source_fixture": "classic-v1-image-inputs",
+    "source_fixture_id": "classic-v1-image-input-png-rgb-3x2",
+    "png_sha256": "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd",
+    "bgr_sha256": "0c2a426327d6cf918e1547312404a9151f9f486bf006c3f77665ae997b33cf3d",
+    "bgr_shape": [2, 3, 3],
+    "bgr_channel_order": "BGR",
+    "bgr_dtype": "uint8",
+    "decoder_boundary": "The oracle passed this pre-recorded BGR byte array directly to classic TextSystem; it did not decode input.png."
+  },
+  "upstream": {
+    "repository": "https://github.com/PaddlePaddle/PaddleOCR.git",
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "checkout_location": "separate external clone outside this repository",
+    "status_before": "clean",
+    "status_after": "clean",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "tools/infer/utility.py"
+    ]
+  },
+  "artifacts": {
+    "terms_review": "LIC-001",
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_det_onnx",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "file_name": "inference.onnx",
+      "byte_length": 62032837,
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_rec_onnx",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "file_name": "inference.onnx",
+      "byte_length": 76554979,
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "byte_length": 74947,
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "execution": {
+    "python": "3.12.3",
+    "paddlepaddle": "3.3.1",
+    "paddle_inference": "not invoked; use_onnx=true selected ONNX Runtime",
+    "onnxruntime": "1.28.0",
+    "selected_execution_provider": "CPUExecutionProvider",
+    "numpy": "1.26.4",
+    "opencv_python": "4.11.0.86",
+    "opencv": "4.11.0",
+    "os": "Linux 7.0.0-28-generic x86_64",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2696 v3 @ 2.30GHz",
+    "logical_cpu_count": 72,
+    "gpu": "disabled",
+    "process_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "XDG_CACHE_HOME": "$ORACLE_ROOT/cache",
+      "PADDLE_HOME": "$ORACLE_ROOT/paddle-home",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "onnx_session_options": {
+      "intra_op_num_threads": 1,
+      "inter_op_num_threads": 1,
+      "enable_mem_pattern": false
+    },
+    "classic_options": {
+      "use_gpu": false,
+      "use_onnx": true,
+      "use_angle_cls": false,
+      "benchmark": false,
+      "show_log": false,
+      "cls_argument": false
+    }
+  },
+  "reproducibility": {
+    "harness_sha256": "33486c561ded0bd07396e7e2d248452be8200c1f0c5aac466cdf34ad79a2d0d8",
+    "harness_retained_in_repository": false,
+    "command_template": "env PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 XDG_CACHE_HOME=\"$ORACLE_ROOT/cache\" PADDLE_HOME=\"$ORACLE_ROOT/paddle-home\" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=\"$ORACLE_ROOT/upstream\" \"$ORACLE_ROOT/venv/bin/python\" \"$ORACLE_ROOT/capture_no_text.py\"",
+    "fresh_process_runs": [
+      {
+        "id": "run-1",
+        "stdout_sha256": "c6a0c1a835356437be001f438f636d83c1c7b53135ace79917f7f9134d594306"
+      },
+      {
+        "id": "run-2",
+        "stdout_sha256": "c6a0c1a835356437be001f438f636d83c1c7b53135ace79917f7f9134d594306"
+      }
+    ],
+    "fresh_process_stdout_identical": true
+  },
+  "source_result": {
+    "record": {
+      "detector_sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1",
+      "dictionary_sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d",
+      "fixture_id": "classic-v1-e2e-no-text",
+      "input_bgr_sha256": "0c2a426327d6cf918e1547312404a9151f9f486bf006c3f77665ae997b33cf3d",
+      "input_fixture_id": "classic-v1-image-input-png-rgb-3x2",
+      "input_png_sha256": "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd",
+      "lines": [],
+      "recognizer_sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "canonical_json_sha256": "d73f50c93bf0760ecb958526e423f0b229578865c39c8ee3232a4eb9f0b430c6",
+    "raw_detector_tensors_retained": false,
+    "raw_recognizer_tensors_retained": false,
+    "timing_values_retained": false
+  },
+  "limitations": [
+    "The only observed final result is lines: []; it has no text, geometry, confidence, ordering, threshold-boundary, or error-path coverage.",
+    "The source invocation used an already captured BGR array, so it does not select or validate a Rust image decoder, color conversion, or orientation policy.",
+    "No Rust inference adapter, public OCR API, CLI OCR path, backend decision, model manifest, model download, cache, or model-support claim exists.",
+    "The committed fixture contains no model bytes, dictionary entries, raw tensor values, external virtual environment, cache, upstream checkout, host name, or capture harness."
+  ]
+}
