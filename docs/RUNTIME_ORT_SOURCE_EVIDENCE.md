@@ -19,7 +19,8 @@ dependency-free. Python was used only as an external build-driver environment;
 under the user-authorized evidence-tooling exception it did not execute
 PaddleOCR or model inference. The host spikes, QEMU guest probe, separate C API
 error probe, separate C API lifecycle probe, separate C API shared-session
-concurrency probe, and Rust session-reuse probe did not execute Python,
+concurrency probe, separate C API single-session reuse extension, and Rust
+session-reuse probe did not execute Python,
 PaddleOCR, or the upstream checkout. Network isolation was not measured for
 the host spikes or QEMU guest.
 
@@ -298,6 +299,77 @@ request-level resource policy, numerical repeatability/equivalence, a physical
 no-AVX host, network isolation, a distributable binary, or an `ort` backend
 selection. A future Rust adapter must independently define and test its
 concurrency contract rather than relying on this diagnostic.
+
+## Bounded single-session reuse extension
+
+On 2026-08-03, a fourth disposable C harness extended the narrow reuse signal
+without exercising concurrent `Run` calls. It used one POSIX caller worker and
+256 sequential zero-filled minimum-shape calls per model in one session. Two
+independent positive invocations therefore completed 512 detector calls and
+512 recognizer calls in total. The harness verified the known library and ONNX
+SHA-256 values before `dlopen`, disabled telemetry, selected sequential CPU
+execution with one intra-op and one inter-op thread, disabled memory-pattern
+optimization, and checked every returned output only for the expected
+`float32` name/type/shape/count and finite values before release. It retained,
+printed, hashed, and wrote no tensor values or model-derived fixture.
+
+| Temporary artifact | SHA-256 |
+|---|---|
+| C harness source | `4c129685df32bfca99d5f3c1159d961c7485d6a4c1ffd705ddc5a71021e7a817` |
+| C harness binary | `0f27c343d5f200fc509c0e9306b3d17430b981d8b95e358b9b9364095b5c0f72` |
+| Positive-run log 1 | `637ae14f701112ab70e12498ed1d23c8135fa8904851f0c175d4d76e404d833b` |
+| Positive-run log 2 | `5da1643a00ab5611c489bc61db3ae5b7067ab9e4a6620567f53d174d535fedd6` |
+| Swapped-model negative log | `44aaa6602c552cf5e160503c9c804c120b26b098b4f9af6a42927b5f90740304` |
+| Source-built library | `1c04ac4162d45e9cdf3a7f979770f1e1d96fcbc1ea4a09379fa63e75672742fa` |
+| Detector ONNX | `eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` |
+| Recognizer ONNX | `9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` |
+
+The external source was compiled with GCC 13.3.0 and `-Werror`. Its direct
+ELF dependencies were only `libcrypto`, `libc`, and the loader; ONNX Runtime
+was loaded explicitly through `dlopen` after the hash checks.
+
+```sh
+/usr/bin/gcc -std=c11 -D_POSIX_C_SOURCE=200809L -O2 -Wall -Wextra -Werror -pthread \
+  -I"/tmp/paddleocr-rust-ort-source.89EQ5V/onnxruntime/include/onnxruntime/core/session" \
+  "/tmp/paddleocr-rust-ort-reuse-soak.0QZ5SI/reuse_soak_probe.c" \
+  -o "/tmp/paddleocr-rust-ort-reuse-soak.0QZ5SI/reuse_soak_probe" \
+  -ldl -lcrypto -lm
+
+ulimit -Sv 1600000
+ulimit -St 600
+ulimit -c 0
+LD_LIBRARY_PATH="/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release" \
+  OMP_NUM_THREADS=1 MALLOC_ARENA_MAX=1 \
+  /usr/bin/timeout --signal=TERM --kill-after=30s 600s \
+  "/tmp/paddleocr-rust-ort-reuse-soak.0QZ5SI/reuse_soak_probe" \
+  "/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release/libonnxruntime.so.1.28.0" \
+  "/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium/inference.onnx" \
+  "/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium/inference.onnx"
+```
+
+Both positive invocations exited zero. The timings and memory values below are
+external host observations, not benchmarks. `max_rss_kib` is process
+high-water RSS from `getrusage`; the two `VmRSS` values bracket only the
+per-model call loop after session creation and before session release.
+
+| Task | Calls per invocation | First / second setup | First / second call loop | First / second process high-water RSS | First / second RSS before → after loop | Maximum observed threads |
+|---|---:|---:|---:|---:|---:|---:|
+| Detector minimum `[1, 3, 32, 32]` → `[1, 1, 32, 32]` | 256 | 220.062 / 233.119 ms | 2,026.184 / 2,140.315 ms | 187,628 / 187,628 KiB | 182,004 → 182,836 / 182,004 → 182,836 KiB | 2 |
+| Recognizer minimum `[1, 3, 48, 160]` → `[1, 20, 18,710]` | 256 | 279.382 / 238.708 ms | 23,223.809 / 23,282.337 ms | 189,848 / 191,084 KiB | 176,984 → 176,984 / 178,156 → 178,156 KiB | 2 |
+
+Both invocations reported `ENVIRONMENT_RELEASE_OK`, `DLCLOSE_RESULT status=0`,
+and `SINGLE_SESSION_REUSE_SOAK_PROBE_OK`. A negative invocation supplied the
+detector file in the recognizer position. Its recognizer SHA-256 check failed
+with exit status two and the log contains no `DLOPEN_API_OK`, so this harness
+did not silently substitute that model path.
+
+This is a finite, zero-input Linux-host reuse observation, not a long-soak or
+leak-freedom result. The source's `stat`-based file check follows symlinks and
+is not a production-safe path-resolution policy. The probe did not use ASan,
+LSan, Valgrind, `strace`, network isolation, malformed/external-data models,
+request-level limits, cancellation, concurrent same-session calls, raw-output
+comparison, a physical no-AVX host, a Rust adapter, or a distribution build.
+It does not resolve any of those requirements or select a backend.
 
 ## Bounded Rust wrapper session-reuse probe
 

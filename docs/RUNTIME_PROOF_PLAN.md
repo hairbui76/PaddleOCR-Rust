@@ -134,6 +134,17 @@ network, resource, numerical-equivalence, portability, distribution, or
 backend result. The source/binary hashes, commands, measurements, and limits
 are recorded in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
 
+A separate C API extension then held one session at a time and made 256
+sequential zero-input minimum-shape calls per model, twice independently. It
+verified the same pinned hashes before `dlopen`, checked and released each
+output, and reported only timing, finite ABI checks, process RSS snapshots,
+and thread counts. The swapped-model negative again failed before the loader.
+This adds a bounded 512-call-per-model reuse observation, not a long-soak or
+leak-freedom result: it has no sanitizer, network, malformed-model,
+request-limit, cancellation, concurrency, physical-no-AVX, raw-tensor, Rust
+adapter, distribution, or backend claim. The exact source/binary/log hashes
+and limitations are in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
+
 A separate temporary Rust wrapper probe used the same source-built library and
 exact hashes. It verifies all three regular files before calling
 `ort::init_from`, then uses one CPU `Session` per minimum-shape model for 24
