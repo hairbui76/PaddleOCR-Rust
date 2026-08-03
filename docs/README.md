@@ -43,7 +43,7 @@ candidate facts without making a model or Python a normal build dependency.
 
 ## Inputs, fixtures, and oracle work
 
-- [Image decoder evidence](IMAGE_DECODER_EVIDENCE.md)
+- [Image decoder evidence](IMAGE_DECODER_EVIDENCE.md) and [hybrid candidate source review](IMAGE_DECODER_SOURCE_REVIEW.md)
 - [Bounded primitive fuzzing](FUZZING.md)
 - [Fixture and tolerance plan](FIXTURE_AND_TOLERANCE_PLAN.md)
 - [Oracle capture procedure](ORACLE_CAPTURE.md)

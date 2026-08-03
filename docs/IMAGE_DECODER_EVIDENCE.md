@@ -1115,6 +1115,12 @@ investigating whether one decoder can satisfy the actual image and
 model-preprocessing contract. That is not `D-008` resolution: exact behaviour
 and resource safety are more important than the library name.
 
+The exact minimal hybrid source and feature closure has a separate pre-adoption
+review in [`IMAGE_DECODER_SOURCE_REVIEW.md`](IMAGE_DECODER_SOURCE_REVIEW.md).
+It records the no-native-linkage result and the material third-party
+unsafe/runtime-dispatch caveats. It neither selects the hybrid route nor
+relaxes any required decision proof.
+
 ## Required decision and implementation proof
 
 Before `D-008` can close for M2, `IMG-DEC-001` must record all of the
