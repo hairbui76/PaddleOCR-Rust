@@ -2,8 +2,9 @@
 
 Roadmap item: `MOD-001`  
 Status: In progress — candidate-only local verification workflow; two
-user-authorized external ONNX directories were inventoried, but no artifact,
-format, runtime, or distribution policy is accepted  
+user-authorized external ONNX directories were inventoried and their exact
+package terms review is complete, but no artifact, format, runtime, or
+distribution policy is accepted
 Prepared: 2026-08-02  
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
@@ -16,10 +17,11 @@ can prove exactly what was inspected without making normal development depend
 on an upstream checkout, network access, a cache, or an unpinned URL.
 
 It is not a model manifest, downloader specification, local-path API, runtime
-selection, or permission to use, convert, redistribute, or bundle an artifact.
+selection, or permission to convert, redistribute, or bundle an artifact.
 Those decisions remain with `MODEL-DEC-001`, `MOD-002` through `MOD-004`,
-`RT-002` through `RT-004`, and `LIC-001`/`LIC-002`. No current Rust code reads
-these candidate artifacts.
+`RT-002` through `RT-004`, and `LIC-002`. The exact ONNX pair's terms evidence
+is complete under `LIC-001`; no current Rust code reads these candidate
+artifacts.
 
 The 2026-08-02 user-authorized external inventory of the ONNX detector and
 recognizer is summarized in
@@ -85,9 +87,10 @@ all of the following:
    local byte count, SHA-256, inspection date, acquisition authority, and
    retained terms/notices in an external evidence record. That record is not
    committed here until the asset and disclosure review permits it.
-5. The selected candidate passes the separate provenance/terms review in
-   `LIC-001` before it is executed, converted, used to create model-backed
-   goldens, or described as supported.
+5. An ONNX experiment matches the exact candidate/revision and package terms
+   decision recorded in `LIC-001`; any other representation needs its own
+   review before it is executed, converted, or used to create model-backed
+   goldens. No candidate is described as supported before its later gates.
 
 Illustrative read-only verification commands may calculate a byte count and
 SHA-256 for a previously approved local path, for example:
@@ -122,7 +125,7 @@ evidence remains required in its owning roadmap items:
 
 | Required evidence | Owning work |
 |---|---|
-| Revision-specific model/config/dictionary/notice provenance and terms, plus a disposition for static versus ONNX | `LIC-001`, `MODEL-DEC-001` |
+| Revision-specific model/config/dictionary/notice provenance and terms, plus a disposition for static versus ONNX | Exact ONNX terms: `LIC-001` Done; representation/distribution: `MODEL-DEC-001` |
 | Bounded local graph inspection: format, operators, tensor names, dtype, layout, dynamic shapes, output order, and errors | `MOD-001`, `RT-002` |
 | Source-level recognizer index construction is recorded for the exact local ONNX configuration: no duplicate/literal-space entries, blank at `0`, ordered dictionary entries at `1..=18,708`, appended space at `18,709`, and a matching 18,710-class output. Runtime output semantics, safe Rust decoder bounds/errors, and language behavior remain required. | `MOD-001`, `REC-001`, `REC-002` |
 | Raw tensor and end-to-end differential evidence against approved legal fixtures | `TOL-001`, `RT-003`, P4–P5 |

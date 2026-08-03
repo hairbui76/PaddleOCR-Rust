@@ -2,8 +2,8 @@
 
 Roadmap item: `MOD-001`
 Status: In progress; remote and user-authorized local provenance/ABI discovery
-plus bounded external runtime diagnostic evidence only, no artifact or runtime
-accepted
+plus bounded external runtime diagnostic evidence. `LIC-001` is complete for
+the exact ONNX pair, but no artifact or runtime is selected or supported
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 Evidence captured: 2026-08-02
 
@@ -29,12 +29,12 @@ any URL below.
 The upstream documentation links the PaddleX BOS inference archives. The
 official PaddlePaddle Hugging Face repositories below expose static-package
 candidates and separately published ONNX exports. Their byte-for-byte
-relationship to the BOS archives is unverified. The Hugging Face model cards
-displayed `apache-2.0` at the recorded revisions, but that label is preliminary
-license evidence only. [LICENSE_REVIEW.md](LICENSE_REVIEW.md) records the
-candidate-specific listing evidence and remaining gaps; P3/P13 still require a
-revision-specific license/provenance review before accepting any artifact or
-bundling any file.
+relationship to the BOS archives is unverified. For the exact ONNX detector and
+recognizer revisions, the publisher-hosted model-card `license: apache-2.0`
+declarations close `LIC-001`; see [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
+That decision does not cover the static candidates, select an artifact/runtime,
+or approve bundling any file. P3/P13 still require the remaining provenance,
+runtime, release-policy, and final audit work.
 
 | Role | Static Paddle candidate (pinned revision) | `inference.pdiparams` SHA-256 / bytes | Official ONNX candidate (pinned revision) | `inference.onnx` SHA-256 / bytes |
 |---|---|---|---|---|
@@ -76,10 +76,10 @@ unescaping and one-entry-per-LF normalization; the shared SHA-256 is
 This is dictionary-content provenance evidence only. A separate, exact-local
 source-level CTC index-construction inspection now records how the 18,708
 ordered entries, one blank, and one appended space structurally correspond to
-the 18,710-class ONNX output. It does not establish runtime output semantics,
-package/weight terms, or permission to retain or distribute a dictionary; see
-[LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md) and
-[LICENSE_REVIEW.md](LICENSE_REVIEW.md).
+the 18,710-class ONNX output. It does not establish runtime output semantics
+or permission to retain or distribute a dictionary independently of the
+selected ONNX package. The package-level terms decision and its narrow scope
+are in [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
 
 ## Captured package metadata
 

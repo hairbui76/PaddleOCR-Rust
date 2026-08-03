@@ -1,16 +1,20 @@
 # M2 Artifact License and Provenance Review
 
 Roadmap item: `LIC-001`  
-Status: Blocked — preliminary remote and local package evidence is recorded, but no durable artifact-specific terms source has been located; no artifact is approved
+Status: Done — the exact official PaddlePaddle ONNX detector and recognizer
+model cards carry an immutable, revision-pinned `apache-2.0` declaration;
+the conclusion is limited to those two named ONNX package revisions
 Prepared: 2026-08-02  
+Last reviewed: 2026-08-03
 PaddleOCR baseline: `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and decision boundary
 
 This record tracks the artifact-specific evidence needed before the planned M2
 model pair can be used, redistributed, converted, bundled, or advertised as
-supported. It is a provenance and release-control record, not legal advice and
-not a grant of rights.
+supported. It is a provenance and release-control record, not legal advice.
+On 2026-08-03, the exact ONNX pair met this item's terms-evidence requirement;
+the current decision and its limits are recorded at the end of this file.
 
 `DEC-003` remains in force: normal builds and tests do not download, cache,
 convert, bundle, or require model artifacts. `MODEL-DEC-001` is the only later
@@ -48,9 +52,10 @@ diagnostics do not close a license gate or approve project adoption, conversion,
 distribution, bundling, or model-derived fixture retention.
 
 The remote card metadata displayed `license: apache-2.0` for each candidate
-below. That is useful preliminary provenance evidence, but a hosting-platform
-metadata field alone does not establish all rights needed to distribute weights,
-their embedded data, a converted representation, or derivative fixtures.
+below. The historical review initially treated that as preliminary evidence.
+The later current decision distinguishes the exact ONNX pair's immutable model
+card declaration from unrelated candidates and preserves the downstream
+distribution, provenance, and fixture controls.
 
 ## Candidate evidence matrix
 
@@ -58,8 +63,8 @@ their embedded data, a converted representation, or derivative fixtures.
 |---|---|---|---|---|
 | Static detector, `PP-OCRv6_medium_det` | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
 | Static recognizer, `PP-OCRv6_medium_rec` | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.json`, `inference.pdiparams`, and `inference.yml`; no top-level file named `LICENSE` was observed. The configuration embeds a character dictionary. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
-| ONNX detector, `PP-OCRv6_medium_det_onnx` | `61323801669c338b7891481ec7bac61ce31b576a` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
-| ONNX recognizer, `PP-OCRv6_medium_rec_onnx` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Not approved for project adoption, conversion, distribution, bundling, or retained fixtures. |
+| ONNX detector, `PP-OCRv6_medium_det_onnx` | `61323801669c338b7891481ec7bac61ce31b576a` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted; runtime, adoption, conversion, distribution, bundling, and retained-fixture decisions remain open. |
+| ONNX recognizer, `PP-OCRv6_medium_rec_onnx` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | The official model card displayed `apache-2.0`. | The recorded top-level listing contains `.gitattributes`, `README.md`, `inference.onnx`, and `inference.yml`; no top-level file named `LICENSE` was observed. | Exact-pair terms evidence accepted; runtime, adoption, conversion, distribution, bundling, and retained-fixture decisions remain open. |
 
 The exact source URLs, file sizes, SHA-256 values, and observed tensor metadata
 are maintained in [MODEL_CANDIDATES.md](MODEL_CANDIDATES.md). The companion
@@ -73,9 +78,10 @@ The two downloaded ONNX packages were checked as ordinary non-symlink files,
 and every runtime-relevant byte count and SHA-256 matched the pinned candidate
 record. The local README.md files begin with the model-card field
 `license: apache-2.0` and display a link to `./LICENSE`; neither package
-contains a top-level `LICENSE` file. This confirms, rather than closes, the
-previously recorded terms evidence gap. The complete local file inventory and
-parse-only graph inspection are in
+contains a top-level `LICENSE` file. This confirmed the then-recorded terms
+evidence gap; the current decision below now evaluates the publisher's
+revision-pinned declaration under the documented model-card license semantics.
+The complete local file inventory and parse-only graph inspection are in
 [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md).
 
 On 2026-08-02, a second direct read-only immutable-revision audit confirmed
@@ -101,11 +107,11 @@ Both README files declare `license: apache-2.0` in front matter and link a
 badge to `./LICENSE`, but that link is dangling at the immutable revision.
 They contain no other copyright, notice, terms, dataset/training-data,
 third-party, or attribution text. The recognizer `inference.yml` embeds a
-`character_dict` with 18,708 entries and no legal/provenance text, so it is an
-additional asset-specific terms gap. Hugging Face documents the model-card
-fields as display/filtering metadata and expects authors to describe details
-such as datasets and training information; it does not supply the absent
-package-level terms here.
+`character_dict` with 18,708 entries and no legal/provenance text. The initial
+review treated that package layout as an unresolved gap. The current decision
+uses the same-revision, publisher-hosted license declaration together with
+Hugging Face's documented model-card license semantics; it does not infer
+terms for a different package representation.
 
 - Detector revision API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_det_onnx/revision/61323801669c338b7891481ec7bac61ce31b576a
 - Recognizer revision API: https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_onnx/revision/50c7eacafc52fa7bcf4194e8cd08e46f8558504b
@@ -181,9 +187,10 @@ to copy/ship it.
 The source-tree Apache-2.0 license is a concrete terms lead for the dictionary
 source file, but `ppocr/utils/dict/README.md` gives only a general corpus
 copyright caution and no dictionary-specific provenance or terms. The exact
-ONNX package still lacks a revision-specific `LICENSE`/`NOTICE`, so neither the
-dictionary trace nor the publisher path closes the terms gap for weights,
-export, configuration, or distribution.
+ONNX package still lacks a revision-specific `LICENSE`/`NOTICE`; that remains a
+package-layout fact. The current exact-ONNX terms decision instead relies on
+the publisher's revision-pinned Apache-2.0 model-card declaration and does not
+extend to unrelated source or package representations.
 
 - v6 introduction commit: https://github.com/PaddlePaddle/PaddleOCR/commit/b03f46425e8ff4442b268ce449e3eef758146cd4
 - Pinned recognizer configuration: https://github.com/PaddlePaddle/PaddleOCR/blob/2661c7c0ef5c613e8f93c6e93b2e052399f0f854/configs/rec/PP-OCRv6/PP-OCRv6_medium_rec.yml#L14-L21
@@ -227,7 +234,9 @@ this review.
 
 ### Live publisher-status recheck (2026-08-03)
 
-A subsequent live, read-only check did not locate a new terms source. The
+A historical live, read-only check did not locate a separate terms document.
+It predates and is superseded for the exact ONNX pair by the current decision
+below. The
 official [`PaddleX#5102`](https://github.com/PaddlePaddle/PaddleX/issues/5102)
 question remains open with its original request for artifact and commercial-use
 terms; it still has no maintainer response. It concerns different named
@@ -247,8 +256,9 @@ The current official [PaddleOCR repository page](https://github.com/PaddlePaddle
 announces PP-OCRv6 availability and identifies the source project as
 Apache-2.0, but names no exact detector/recognizer artifact, ONNX/static
 export, embedded dictionary, or distribution terms. It is therefore source
-and availability context only, not a model-weight grant. No result from this
-recheck meets either resumption condition below; `LIC-001` remains `Blocked`.
+and availability context only, not a model-weight grant. At the time, no
+result from this recheck met the historical resumption condition and
+`LIC-001` remained `Blocked`.
 
 ### Official safetensors cross-representation check (2026-08-03)
 
@@ -268,13 +278,13 @@ check.
 - Recognizer [card](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_safetensors) and [API](https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_safetensors)
 
 This is further metadata/absence evidence only. It does not make safetensors a
-selected representation, does not establish its terms, and cannot supply the
-artifact-specific grant missing for the distinct M2 static/ONNX candidates.
-`LIC-001` remains `Blocked`.
+selected representation or establish its terms. It does not alter the current
+exact-ONNX `LIC-001` resolution, and safetensors remains unapproved.
 
-## Current blocker and resumption condition
+## Historical blocker and resumption condition (superseded on 2026-08-03)
 
-`LIC-001` is blocked on a durable, publisher/rightsholder-issued terms source
+Before the current decision, `LIC-001` was blocked on a durable,
+publisher/rightsholder-issued terms source
 that applies to each exact M2 artifact file. The review has checked the
 revision-pinned Hugging Face metadata and trees, the corresponding ModelScope
 mirror metadata, the immutable PaddleX publisher path, the pinned PaddleOCR
@@ -300,7 +310,7 @@ It must be reviewed before accepting an artifact, producing a model-backed
 fixture, or resolving `MODEL-DEC-001`. A user-provisioned local copy alone
 does not satisfy this condition.
 
-## Material-specific status
+## Historical material-specific status (superseded where noted below)
 
 | Material | Evidence currently held | What remains required | Release status |
 |---|---|---|---|
@@ -312,7 +322,7 @@ does not satisfy this condition.
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |
 
-## Explicit non-findings
+## Historical non-findings
 
 This review does **not** establish any of the following:
 
@@ -333,9 +343,10 @@ This review does **not** establish any of the following:
 The absence of a top-level `LICENSE` file in the observed package listings is
 an evidence gap, not proof that no terms apply.
 
-## Required closure evidence
+## Historical closure criteria
 
-`LIC-001` remains incomplete until the selected M2 representation has all of
+Before the current resolution, this review required that the selected M2
+representation have all of
 the following, reviewed at its immutable revision:
 
 1. A durable source for the exact applicable license/terms and a recorded
@@ -355,5 +366,53 @@ the following, reviewed at its immutable revision:
 6. Required attribution and notices prepared for the chosen release form, with
    a final cross-check by `LIC-002` before a broad release.
 
-Until those conditions close, unclear material is excluded rather than replaced
-with an undocumented substitute or a fabricated compatibility claim.
+Until those conditions close, unclear material was excluded rather than
+replaced with an undocumented substitute or a fabricated compatibility claim.
+
+## Current decision (2026-08-03)
+
+`LIC-001` is **Done** for the following exact, official ONNX package pair:
+
+| Role | Repository | Pinned revision | Package terms declaration |
+|---|---|---|---|
+| Detector | [`PaddlePaddle/PP-OCRv6_medium_det_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx) | `61323801669c338b7891481ec7bac61ce31b576a` | `README.md` declares `license: apache-2.0` and the official model page renders `License: apache-2.0`. |
+| Recognizer | [`PaddlePaddle/PP-OCRv6_medium_rec_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx) | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` | `README.md` declares `license: apache-2.0` and the official model page renders `License: apache-2.0`. |
+
+The exact README bytes were already independently recorded and matched at the
+immutable revisions: detector SHA-256
+`3046e3aab0194a2291bb3941c93b980c2b3a938a24a5be88354968f6d6187ac8` and
+recognizer SHA-256
+`ebce8d28436623ecab4952e24935aed86b3f8ecaf8f8736b92d5544f60fae1e9`.
+The official PaddleX source maps the selected v6 names to those exact
+`PaddlePaddle/<model>_onnx` repositories, which supplies the publisher-path
+link recorded above. Hugging Face documents that a repository creator can set
+the permissions they attribute to repository code or data through the
+`license` field in the repository's model-card `README.md`, and identifies
+`apache-2.0` as the Apache License 2.0 identifier.
+
+- Hugging Face model-card license guidance: https://huggingface.co/docs/hub/repositories-licenses
+- Hugging Face model-card metadata guidance: https://huggingface.co/docs/hub/model-cards
+
+For this project's evidence policy, that publisher-hosted, revision-pinned
+Apache-2.0 declaration is sufficient terms evidence for the graph,
+configuration, and embedded dictionary held in each selected package. The
+absent top-level `LICENSE` and `NOTICE` files remain a recorded package-layout
+fact, not a reason to disregard the explicit Apache-2.0 declaration. It does
+not mean the material is public domain or free of Apache-2.0 obligations.
+
+This decision has deliberately narrow effects:
+
+- It covers only the two ONNX package revisions above. It does not approve the
+  static, safetensors, future, converted, or differently revised artifacts.
+- It permits the roadmap's local, hash-verified runtime qualification and
+  model-backed evidence work to proceed. It does not select a runtime, claim
+  model support, or make static and ONNX packages interchangeable.
+- It does not permit an artifact in Git, tests, normal builds, or a package;
+  `MODEL-DEC-001`, `MOD-002` through `MOD-004`, and `D-007` still decide the
+  final local-path, cache, conversion, and download policy.
+- Any later distribution must include the Apache-2.0 terms, preserve any
+  applicable notices, identify these upstream repository/revision sources, and
+  receive the broader release audit under `LIC-002`. No package-provided
+  `NOTICE` was observed at the pinned revisions.
+- A changed license declaration, a newly discovered notice, or use of another
+  artifact representation reopens the applicable evidence review.

@@ -3,8 +3,9 @@
 Roadmap items: MOD-001, LIC-001  
 Status: User-authorized external ONNX candidates were inventoried, parsed, and
 given source-level recognizer CTC index-construction and Unicode-structure
-inspections backed by an aggregate-only replay tool; neither candidate is
-accepted, supported, converted, redistributed, or bundled
+inspections backed by an aggregate-only replay tool. `LIC-001` now records
+terms evidence for this exact pair, but neither candidate is selected,
+supported, converted, redistributed, or bundled
 
 Initial inspection date: 2026-08-02
 
@@ -254,10 +255,10 @@ compatibility, terms for the embedded data, nor support for the candidate.
 This does **not** prove that a selected runtime emits semantically correct
 scores for every class, that the ONNX export is behaviorally identical to the
 PaddleX source path, that out-of-range/malformed runtime outputs are handled
-safely, or that every language-specific decode behavior is compatible. It also
-does not establish terms for the configuration, dictionary, weights, export, or
-distribution. Those remain `RT-003`, `REC-001`/`REC-002`, `LIC-001`, and later
-model-decision work.
+safely, or that every language-specific decode behavior is compatible. The
+exact-pair package terms decision is recorded separately under `LIC-001`, but
+runtime/output/decoder safety and distribution policy remain `RT-003`,
+`REC-001`/`REC-002`, and later model-decision work.
 
 ## Local package license observation
 
@@ -277,22 +278,20 @@ notice; each immutable `resolve/<revision>/LICENSE` URL returns HTTP `404`.
 The README badge is therefore dangling. Neither README has another copyright,
 notice, terms, dataset/training-data, third-party, or attribution statement.
 The recognizer `inference.yml` embeds a `character_dict` with 18,708 entries
-but no legal/provenance text. This strengthens the revision-specific evidence
-gap; it does not resolve applicable terms for weights, embedded dictionary
-data, or redistribution. See [LICENSE_REVIEW.md](LICENSE_REVIEW.md) for the
-immutable API/tree URLs and remaining closure conditions.
+but no separate legal/provenance text. The publisher-hosted, same-revision
+`license: apache-2.0` declaration is nevertheless the accepted `LIC-001`
+terms record for this exact ONNX pair; its scope and downstream distribution
+conditions are in [LICENSE_REVIEW.md](LICENSE_REVIEW.md).
 
 ## Remaining gates
 
-1. Review durable revision-specific terms and publisher/rightsholder evidence
-   for the selected representation under LIC-001.
-2. Validate the source-level recognizer index construction against selected
+1. Validate the source-level recognizer index construction against selected
    runtime outputs, safe Rust decoder bounds/errors, and any required
    language-specific behavior. The structural blank/space/count evidence above
    is necessary but not sufficient.
-3. Run bounded runtime candidate proofs and raw tensor comparisons before
+2. Run bounded runtime candidate proofs and raw tensor comparisons before
    selecting a backend under RT-002 through RT-004.
-4. Resolve the artifact lifecycle and local-path policy under MODEL-DEC-001
+3. Resolve the artifact lifecycle and local-path policy under MODEL-DEC-001
    and MOD-002 through MOD-004.
-5. Obtain legal offline input fixtures and differential results before making
+4. Obtain legal offline input fixtures and differential results before making
    a detector, recognizer, pipeline, API, CLI, model, or compatibility claim.
