@@ -29,6 +29,7 @@ pub const MAX_INPUT_BYTES: usize = 16 * 1024;
 
 const MAX_DRIVER_SIDE: u32 = 32;
 const MAX_CROP_SIDE: u32 = 16;
+const MAX_FUZZ_POLYGON_VERTICES: usize = 10;
 
 /// Exercises current bounded pure processing surfaces with one arbitrary byte input.
 ///
@@ -138,11 +139,9 @@ fn exercise_geometry_and_crop_kernels(reader: &mut ByteReader<'_>) {
     classic_sort_quadrilaterals(&mut reading_order);
 
     if let Ok(polygon) = Polygon::new(points.to_vec()) {
-        let _ = polygon_signed_area(&polygon);
-        let _ = polygon_area(&polygon);
-        let _ = polygon_perimeter(&polygon);
-        let _ = minimum_area_quad_candidate(&polygon);
+        exercise_polygon_measurements(&polygon);
     }
+    exercise_polygon_kernels(reader);
 
     if let Ok(plan) = classic_perspective_crop_plan(quadrilateral) {
         let _ = plan.map_source_to_warp(points[0]);
@@ -152,6 +151,104 @@ fn exercise_geometry_and_crop_kernels(reader: &mut ByteReader<'_>) {
     }
 
     exercise_crop_kernel(reader, quadrilateral);
+}
+
+fn exercise_polygon_kernels(reader: &mut ByteReader<'_>) {
+    // Keep every candidate bounded independently of the fuzzer input length.
+    // These shapes deliberately cover construction rejection as well as the
+    // convex-hull/minimum-area path on non-convex and repeated vertices.
+    let short_count = usize::from(reader.next_byte() % 3);
+    let Some(short_points) = bounded_polygon_points(reader, short_count) else {
+        return;
+    };
+    let _ = Polygon::new(short_points);
+
+    let collinear_count = 3 + usize::from(reader.next_byte() % 8);
+    let Some(collinear_points) = horizontal_polygon_points(reader, collinear_count) else {
+        return;
+    };
+    exercise_polygon_candidate(collinear_points);
+
+    let Some(concave_points) = concave_polygon_points(reader) else {
+        return;
+    };
+    exercise_polygon_candidate(concave_points.clone());
+
+    let mut repeated_points = concave_points;
+    repeated_points[2] = repeated_points[1];
+    exercise_polygon_candidate(repeated_points);
+
+    let arbitrary_count = 3 + usize::from(reader.next_byte() % 8);
+    let Some(arbitrary_points) = bounded_polygon_points(reader, arbitrary_count) else {
+        return;
+    };
+    exercise_polygon_candidate(arbitrary_points);
+}
+
+fn exercise_polygon_candidate(points: Vec<Point>) {
+    if let Ok(polygon) = Polygon::new(points) {
+        exercise_polygon_measurements(&polygon);
+    }
+}
+
+fn exercise_polygon_measurements(polygon: &Polygon) {
+    let _ = polygon_signed_area(polygon);
+    let _ = polygon_area(polygon);
+    let _ = polygon_perimeter(polygon);
+    let _ = minimum_area_quad_candidate(polygon);
+}
+
+fn bounded_polygon_points(reader: &mut ByteReader<'_>, count: usize) -> Option<Vec<Point>> {
+    debug_assert!(count <= MAX_FUZZ_POLYGON_VERTICES);
+    let mut points = Vec::with_capacity(count);
+    for _ in 0..count {
+        points.push(bounded_polygon_point(reader)?);
+    }
+    Some(points)
+}
+
+fn horizontal_polygon_points(reader: &mut ByteReader<'_>, count: usize) -> Option<Vec<Point>> {
+    debug_assert!((3..=MAX_FUZZ_POLYGON_VERTICES).contains(&count));
+    let left = bounded_polygon_coordinate(reader);
+    let y = bounded_polygon_coordinate(reader);
+    let mut points = Vec::with_capacity(count);
+    for offset in 0..count {
+        points.push(Point::new(left + offset as f32, y).ok()?);
+    }
+    Some(points)
+}
+
+fn concave_polygon_points(reader: &mut ByteReader<'_>) -> Option<Vec<Point>> {
+    let left = bounded_polygon_coordinate(reader);
+    let top = bounded_polygon_coordinate(reader);
+    let width = f32::from(reader.next_byte() % 64) / 8.0 + 1.0;
+    let height = f32::from(reader.next_byte() % 64) / 8.0 + 1.0;
+    let right = left + width;
+    let bottom = top + height;
+    let notch_x = left + width * 0.5;
+    let notch_y = top + height * 0.45;
+
+    [
+        Point::new(left, top).ok(),
+        Point::new(right, top).ok(),
+        Point::new(right, bottom).ok(),
+        Point::new(notch_x, notch_y).ok(),
+        Point::new(left, bottom).ok(),
+    ]
+    .into_iter()
+    .collect()
+}
+
+fn bounded_polygon_point(reader: &mut ByteReader<'_>) -> Option<Point> {
+    Point::new(
+        bounded_polygon_coordinate(reader),
+        bounded_polygon_coordinate(reader),
+    )
+    .ok()
+}
+
+fn bounded_polygon_coordinate(reader: &mut ByteReader<'_>) -> f32 {
+    f32::from(reader.next_byte()) / 8.0 - 16.0
 }
 
 fn exercise_crop_kernel(reader: &mut ByteReader<'_>, quadrilateral: Quadrilateral) {
@@ -319,6 +416,19 @@ mod tests {
                 );
             }
 
+            exercise(&input);
+        }
+    }
+
+    #[test]
+    fn byte_driven_fuzz_driver_handles_bounded_polygon_variants() {
+        for selector in 0_u8..=u8::MAX {
+            let mut input = [0_u8; 97];
+            for (index, value) in input.iter_mut().enumerate() {
+                *value = selector
+                    .wrapping_add((index as u8).wrapping_mul(29))
+                    .rotate_left((index % 8) as u32);
+            }
             exercise(&input);
         }
     }

@@ -38,7 +38,10 @@ The target exercises the currently implemented pure surfaces:
 - DB thresholding and bounded connected-component scanning;
 - CTC matrix validation and greedy-index decoding;
 - resize, quadrilateral ordering/clipping/rescaling, polygon metrics,
-  minimum-area candidates, and crop-coordinate transforms;
+  minimum-area candidates, and crop-coordinate transforms. In addition to the
+  valid quadrilateral-derived polygon, each invocation builds bounded
+  zero-to-two-vertex, horizontal-collinear, five-vertex concave,
+  repeated-vertex, and three-to-ten-vertex arbitrary polygon candidates;
 - bounded perspective crops over generated interleaved pixel buffers, using
   both rectangles and bounded projective trapezoids.
 
@@ -51,6 +54,11 @@ deterministic structural edits per case. The edits cover bit flips, byte-boundar
 overwrites, insertion, deletion, duplication, IEEE-754 boundary-byte injection,
 and truncation. The mutation helper asserts that each derived input remains at
 or below the target limit before it is exercised.
+
+A separate 256-selector regression drives the bounded polygon variants across
+the full byte selector range. It is a no-panic structural check for the
+existing private polygon/hull/minimum-area code; it does not establish contour
+or OpenCV equivalence.
 
 ## Running it
 
