@@ -34,9 +34,10 @@ The initial review used two read-only evidence sources:
 The initial review stored no model binary, archive, dictionary, font, fixture,
 conversion output, or third-party runtime in this repository. The linked
 `PaddleOCR/` checkout was not executed or modified. The later reviewed
-`classic-v1-e2e-no-text`, `classic-v1-e2e-reading-order`, and
-`classic-v1-e2e-tall-crop` records contain only self-authored inputs, hashes,
-provenance, and minimal final results; they contain none of those assets.
+`classic-v1-e2e-no-text`, `classic-v1-e2e-reading-order`,
+`classic-v1-e2e-tall-crop`, and `classic-v1-e2e-unicode` records contain only
+self-authored inputs, hashes, provenance, and minimal final results; they
+contain none of those assets.
 
 The reading-order and tall-crop inputs were rendered in a separate maintainer
 environment with external `cv2.putText` calls and `FONT_HERSHEY_SIMPLEX`; the
@@ -48,6 +49,21 @@ Cargo dependency nor a build/test/runtime requirement. Its local package
 notices were reviewed only to record the generation boundary; that review does
 not create a general approval for third-party fonts, renderers, or generated
 assets.
+
+The Unicode input was rendered in a separate maintainer environment with
+external Pillow 12.3.0 using
+`/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc` collection index `0`.
+The font SHA-256 is
+`b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a`.
+The local Debian `fonts-noto-cjk` package copyright record at
+`/usr/share/doc/fonts-noto-cjk/copyright` has SHA-256
+`849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b`,
+identifies the font files as `SIL-1.1` / OFL-1.1 material, and states that the
+font-license requirement does not apply to a document created using the font.
+The project commits only its small self-authored raster and no font, license
+record, Pillow code, or other third-party asset. This supports the one reviewed
+raster fixture only; it does not establish a general font, renderer, or
+generated-asset policy.
 
 On 2026-08-02, the project user separately authorized a one-time external
 download of the two exact ONNX candidates. This added a local package
@@ -332,7 +348,7 @@ does not satisfy this condition.
 | Static model parameters and graph/config files | Candidate revisions, checksums, sizes, preliminary card metadata, and an immutable PaddleX publisher path are recorded. | Obtain and preserve a revision-specific license/terms source; verify the publisher/rightsholder and terms for every selected file. | Unapproved. |
 | Official ONNX exports | Separate pinned repository revisions/checksums, immutable LFS storage commits, and the PaddleX ONNX naming/hoster path are recorded. | Establish whether each export has its own applicable terms and its relationship to the static package; do not infer numerical or legal equivalence from a shared model name. | Unapproved. |
 | Recognizer character dictionary and tokenizer behavior | The ONNX recognizer `inference.yml` embeds a 18,708-entry `character_dict`; its canonical entry stream matches the pinned upstream `ppocrv6_dict.txt` SHA-256. The exact-local source-level record maps it to blank at index `0`, ordered entries at `1..=18,708`, and appended space at `18,709`; this is not runtime-output validation. The source-tree Apache-2.0 license is a terms lead, while the dictionary README gives no file-specific provenance/terms. | Verify applicable terms, runtime index/blank/space behavior, decoder error handling, and any notice obligation before copying, extracting, or shipping it. | Unapproved. |
-| Oracle and test fixtures | `classic-v1-e2e-no-text` records one self-authored empty-result input; `classic-v1-e2e-reading-order` records one self-authored four-word raster/result generated externally with `cv2.putText`; and `classic-v1-e2e-tall-crop` records one self-authored clockwise-rotated word/raster and minimal crop diagnostic. All have exact candidate/dictionary hashes, provenance, privacy review, and source-capture evidence. None retains a model, dictionary content, raw tensor, crop pixels, font binary, OpenCV binary/source, or upstream image. | Review every additional input, golden, dictionary fragment, font, renderer, or other asset against its exact artifact terms and [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | The three narrow non-asset result records are reviewed; all broader fixture/artifact retention remains unapproved. |
+| Oracle and test fixtures | `classic-v1-e2e-no-text` records one self-authored empty-result input; `classic-v1-e2e-reading-order` records one self-authored four-word raster/result generated externally with `cv2.putText`; `classic-v1-e2e-tall-crop` records one self-authored clockwise-rotated word/raster and minimal crop diagnostic; and `classic-v1-e2e-unicode` records one self-authored CJK raster/result generated externally with a reviewed, non-bundled Noto Sans CJK font. All have exact candidate/dictionary hashes, provenance, privacy review, and source-capture evidence. None retains a model, dictionary content, raw tensor, crop pixels, font binary, Pillow/OpenCV binary/source, or upstream image. | Review every additional input, golden, dictionary fragment, font, renderer, or other asset against its exact artifact terms and [FIXTURE_AND_TOLERANCE_PLAN.md](FIXTURE_AND_TOLERANCE_PLAN.md). | The four narrow non-asset result records are reviewed; all broader fixture/artifact retention remains unapproved. |
 | Conversion tools and generated outputs | No converter, conversion recipe, or converted output has been selected or run. | Record tool version/license, exact inputs and command, output hashes, notices, reproducibility, and tensor-differential evidence before any conversion is accepted. | Unapproved. |
 | Rust/native dependencies | The bootstrap workspace has no third-party Cargo dependency. External-only `ort` spikes used `ort` 2.0.0-rc.13 with a temporary Python-wheel library and a separately source-built ONNX Runtime 1.28.0 library; see [RUNTIME_ORT_EVIDENCE.md](RUNTIME_ORT_EVIDENCE.md) and [RUNTIME_ORT_SOURCE_EVIDENCE.md](RUNTIME_ORT_SOURCE_EVIDENCE.md). Neither is a repository dependency or a distribution route. | Review the wrapper and complete native/transitive terms, notices, vulnerabilities, acquisition/build provenance, dynamic-loader behavior, `unsafe` boundary, and supported CPU/platform distribution targets under `RT-002` and `LIC-002`. | Unapproved; no runtime has been adopted for M2. |
 
@@ -422,12 +438,14 @@ This decision has deliberately narrow effects:
   model-backed evidence work to proceed. It does not select a runtime, claim
   model support, or make static and ONNX packages interchangeable.
 - It permits the reviewed `classic-v1-e2e-no-text`,
-  `classic-v1-e2e-reading-order`, and `classic-v1-e2e-tall-crop` fixtures to
-  retain their self-authored inputs, hashes, provenance, and minimal
-  final-result projections. The latter two's external OpenCV rendering process
-  contributes no copied code, binary, or font asset. This does not permit
-  retaining model bytes, dictionary entries, crop pixels, raw tensors,
-  unreviewed derived output, or a general fixture-distribution policy.
+  `classic-v1-e2e-reading-order`, `classic-v1-e2e-tall-crop`, and
+  `classic-v1-e2e-unicode` fixtures to retain their self-authored inputs,
+  hashes, provenance, and minimal final-result projections. The first three
+  rendering processes contribute no copied code, binary, or font asset; the
+  Unicode raster is limited by its separately recorded Noto CJK OFL-1.1
+  provenance. This does not permit retaining model bytes, dictionary entries,
+  crop pixels, raw tensors, font files, unreviewed derived output, or a general
+  fixture-distribution policy.
 - It does not permit an artifact in Git, tests, normal builds, or a package;
   `MODEL-DEC-001`, `MOD-002` through `MOD-004`, and `D-007` still decide the
   final local-path, cache, conversion, and download policy.

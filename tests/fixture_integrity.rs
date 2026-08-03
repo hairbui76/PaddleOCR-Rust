@@ -59,6 +59,19 @@ const E2E_TALL_CROP_FRESH_OUTPUT_SHA256: &str =
     "263ab6e86d0a863452dab7869249c2b898859e4e2fc9f983c868b07408462d07";
 const E2E_TALL_CROP_SOURCE_RECORD_SHA256: &str =
     "44f6b2d0257290784efc7023c7f95d2bd49b7b149b8f26630fd42ef0cb86acdc";
+const E2E_UNICODE_FIXTURE_ID: &str = "classic-v1-e2e-unicode";
+const E2E_UNICODE_INPUT_SHA256: &str =
+    "17ce44aad0a8ce5a3db571fc6d7ca57fa22e1dec979326ce02ff37d77157c94c";
+const E2E_UNICODE_BGR_SHA256: &str =
+    "37c63cdf220706ab8c9808e9f257399a6ce32d6a1eb9d72f9457b761cd9a2d0c";
+const E2E_UNICODE_CAPTURE_SHA256: &str =
+    "26ab4d089c2597ab9b0780143963e727191c4364373b88adfca89ba21a63b88a";
+const E2E_UNICODE_EXPECTED_SHA256: &str =
+    "6835e967d31683380d41aeb7921ce1b4bf7f13f3afaab9e70eeb0fd3493332a5";
+const E2E_UNICODE_FRESH_OUTPUT_SHA256: &str =
+    "143f6bb51f2fe9bd3aed4e73dc210ceaafd2a8ff6397deeec9720f9df0c83c35";
+const E2E_UNICODE_SOURCE_RECORD_SHA256: &str =
+    "a201b8eb2ef306d753d62f76f7f76986a35c5f2414a8528f5079b72e01a7c617";
 
 #[test]
 fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
@@ -95,7 +108,8 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
             "classic-v1-image-inputs" => "m2-image-input-oracle-v1",
             "classic-v1-e2e-no-text"
             | "classic-v1-e2e-reading-order"
-            | E2E_TALL_CROP_FIXTURE_ID => "m2-e2e-v1",
+            | E2E_TALL_CROP_FIXTURE_ID
+            | E2E_UNICODE_FIXTURE_ID => "m2-e2e-v1",
             _ => "m2-unit-v1",
         };
         assert_eq!(
@@ -126,6 +140,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == E2E_TALL_CROP_FIXTURE_ID {
             verify_e2e_tall_crop_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == E2E_UNICODE_FIXTURE_ID {
+            verify_e2e_unicode_oracle(&metadata, &directory, &context);
+        }
     }
 
     let expected_ids = BTreeSet::from([
@@ -137,6 +154,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-e2e-no-text".to_owned(),
         E2E_READING_ORDER_FIXTURE_ID.to_owned(),
         E2E_TALL_CROP_FIXTURE_ID.to_owned(),
+        E2E_UNICODE_FIXTURE_ID.to_owned(),
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
     ]);
@@ -202,7 +220,10 @@ fn verify_common_metadata(metadata: &Value, directory: &Path, context: &str) {
     );
     if matches!(
         string_field(metadata, "fixture_id", context),
-        "classic-v1-e2e-no-text" | E2E_READING_ORDER_FIXTURE_ID | E2E_TALL_CROP_FIXTURE_ID
+        "classic-v1-e2e-no-text"
+            | E2E_READING_ORDER_FIXTURE_ID
+            | E2E_TALL_CROP_FIXTURE_ID
+            | E2E_UNICODE_FIXTURE_ID
     ) {
         assert!(
             value_field(metadata, "artifacts", context).is_object(),
@@ -2205,6 +2226,542 @@ fn verify_e2e_tall_crop_oracle(metadata: &Value, fixture_directory: &Path, conte
     );
 }
 
+fn verify_e2e_unicode_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "input.png",
+        "{context} Unicode fixture input path changed without review"
+    );
+    assert_eq!(
+        string_field(input, "sha256", context),
+        E2E_UNICODE_INPUT_SHA256,
+        "{context} Unicode fixture input hash changed without review"
+    );
+
+    let artifacts = object_field(metadata, "artifacts", context);
+    assert_eq!(
+        string_field(artifacts, "representation", context),
+        "onnx",
+        "{context} Unicode fixture must retain the reviewed ONNX representation"
+    );
+    assert_eq!(
+        string_field(artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} Unicode fixture must identify its terms review"
+    );
+    assert_eq!(
+        value_field(artifacts, "local_only_candidate", context).as_bool(),
+        Some(true),
+        "{context} Unicode fixture must remain a local-only candidate"
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    let dictionary = object_field(artifacts, "dictionary", context);
+    assert_eq!(
+        string_field(dictionary, "source_path", context),
+        "ppocr/utils/dict/ppocrv6_dict.txt",
+        "{context} Unicode fixture dictionary source changed without review"
+    );
+    assert_eq!(
+        string_field(dictionary, "sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} Unicode fixture dictionary hash changed without review"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "capture_path", context),
+        "capture.json",
+        "{context} Unicode fixture capture path changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_schema_version", context),
+        "paddleocr-rust/classic-onnx-oracle-capture/v1",
+        "{context} Unicode fixture capture schema changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        E2E_UNICODE_CAPTURE_SHA256,
+        "{context} Unicode fixture capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(
+        fixture_directory,
+        string_field(oracle, "capture_path", context),
+        context,
+    );
+    assert_digest(
+        &capture_bytes,
+        E2E_UNICODE_CAPTURE_SHA256,
+        &format!("{context} Unicode fixture capture document"),
+    );
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} Unicode fixture capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        string_field(oracle, "capture_schema_version", context),
+        "{context} Unicode fixture capture schema disagrees with metadata"
+    );
+    assert_eq!(
+        string_field(&capture, "fixture_id", context),
+        E2E_UNICODE_FIXTURE_ID,
+        "{context} Unicode capture fixture identifier changed without review"
+    );
+
+    let capture_input = object_field(&capture, "input", context);
+    assert_eq!(
+        string_field(capture_input, "png_sha256", context),
+        E2E_UNICODE_INPUT_SHA256,
+        "{context} Unicode capture PNG hash changed without review"
+    );
+    assert_eq!(
+        unsigned_field(capture_input, "png_byte_length", context),
+        9_151,
+        "{context} Unicode capture PNG byte length changed without review"
+    );
+    assert_eq!(
+        string_field(capture_input, "bgr_sha256", context),
+        E2E_UNICODE_BGR_SHA256,
+        "{context} Unicode capture BGR hash changed without review"
+    );
+    assert_eq!(
+        value_field(capture_input, "bgr_shape", context),
+        &serde_json::json!([320, 800, 3]),
+        "{context} Unicode capture BGR shape changed without review"
+    );
+    for (field, expected) in [("bgr_channel_order", "BGR"), ("bgr_dtype", "uint8")] {
+        assert_eq!(
+            string_field(capture_input, field, context),
+            expected,
+            "{context} Unicode capture input field {field} changed without review"
+        );
+    }
+
+    let renderer = object_field(capture_input, "renderer", context);
+    for (field, expected) in [
+        ("kind", "PIL.ImageDraw.text+cv2.cvtColor"),
+        ("pillow", "12.3.0"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("text", "你好"),
+        ("text_utf8_hex", "e4bda0e5a5bd"),
+        (
+            "rgb_to_bgr_operation",
+            "cv2.cvtColor(numpy.asarray(image), cv2.COLOR_RGB2BGR)",
+        ),
+    ] {
+        assert_eq!(
+            string_field(renderer, field, context),
+            expected,
+            "{context} Unicode renderer field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        string_field(renderer, "text", context).as_bytes(),
+        &[0xe4_u8, 0xbd, 0xa0, 0xe5, 0xa5, 0xbd],
+        "{context} Unicode renderer text must retain its reviewed UTF-8 bytes"
+    );
+    assert_eq!(
+        value_field(renderer, "text_codepoints", context),
+        &serde_json::json!(["U+4F60", "U+597D"]),
+        "{context} Unicode renderer code points changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "canvas_rgb_shape", context),
+        &serde_json::json!([320, 800, 3]),
+        "{context} Unicode renderer canvas shape changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "canvas_rgb", context),
+        &serde_json::json!([255, 255, 255]),
+        "{context} Unicode renderer canvas color changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "text_origin", context),
+        &serde_json::json!([40, 45]),
+        "{context} Unicode renderer text origin changed without review"
+    );
+    assert_eq!(
+        unsigned_field(renderer, "font_size", context),
+        128,
+        "{context} Unicode renderer font size changed without review"
+    );
+    assert_eq!(
+        value_field(renderer, "foreground_rgb", context),
+        &serde_json::json!([0, 0, 0]),
+        "{context} Unicode renderer foreground color changed without review"
+    );
+    let font = object_field(renderer, "font", context);
+    for (field, expected) in [
+        ("name", "Noto Sans CJK"),
+        (
+            "external_path",
+            "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        ),
+        (
+            "sha256",
+            "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+        ),
+        ("license", "OFL-1.1"),
+        (
+            "external_license_record_path",
+            "/usr/share/doc/fonts-noto-cjk/copyright",
+        ),
+        (
+            "external_license_record_sha256",
+            "849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b",
+        ),
+    ] {
+        assert_eq!(
+            string_field(font, field, context),
+            expected,
+            "{context} Unicode renderer font field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        unsigned_field(font, "collection_index", context),
+        0,
+        "{context} Unicode renderer font collection index changed without review"
+    );
+    assert_eq!(
+        value_field(font, "bundled", context).as_bool(),
+        Some(false),
+        "{context} Unicode fixture must not bundle a font asset"
+    );
+    let encoding = object_field(capture_input, "encoding", context);
+    assert_eq!(
+        string_field(encoding, "operation", context),
+        "cv2.imencode('.png', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])",
+        "{context} Unicode PNG encoder changed without review"
+    );
+    assert_eq!(
+        string_field(encoding, "round_trip_operation", context),
+        "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+        "{context} Unicode PNG round-trip operation changed without review"
+    );
+    assert_eq!(
+        value_field(encoding, "bgr_round_trip_equal", context).as_bool(),
+        Some(true),
+        "{context} Unicode PNG must round-trip to the rendered BGR input"
+    );
+
+    let capture_upstream = object_field(&capture, "upstream", context);
+    assert_eq!(
+        string_field(capture_upstream, "repository", context),
+        "https://github.com/PaddlePaddle/PaddleOCR.git",
+        "{context} Unicode capture upstream repository changed without review"
+    );
+    assert_eq!(
+        string_field(capture_upstream, "commit", context),
+        UPSTREAM_BASELINE,
+        "{context} Unicode capture upstream baseline changed without review"
+    );
+    for field in ["status_before", "status_after"] {
+        assert_eq!(
+            string_field(capture_upstream, field, context),
+            "clean",
+            "{context} Unicode capture upstream {field} must be clean"
+        );
+    }
+    assert!(
+        array_field(capture_upstream, "reference_paths", context)
+            .iter()
+            .any(|value| {
+                value_as_str(value, "Unicode upstream reference path", context)
+                    == "ppocr/postprocess/rec_postprocess.py"
+            }),
+        "{context} Unicode capture must name the classic recognition postprocessor"
+    );
+
+    let capture_artifacts = object_field(&capture, "artifacts", context);
+    assert_eq!(
+        string_field(capture_artifacts, "terms_review", context),
+        "LIC-001",
+        "{context} Unicode capture must identify its terms review"
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "detector", context),
+        "m2-onnx-det-v6-medium",
+        E2E_NO_TEXT_DETECTOR_REVISION,
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        context,
+    );
+    verify_e2e_candidate(
+        object_field(capture_artifacts, "recognizer", context),
+        "m2-onnx-rec-v6-medium",
+        E2E_NO_TEXT_RECOGNIZER_REVISION,
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        context,
+    );
+    assert_eq!(
+        string_field(
+            object_field(capture_artifacts, "dictionary", context),
+            "sha256",
+            context
+        ),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} Unicode capture dictionary hash changed without review"
+    );
+
+    let execution = object_field(&capture, "execution", context);
+    for (field, expected) in [
+        ("python", "3.12.3"),
+        ("pillow", "12.3.0"),
+        ("paddlepaddle", "3.3.1"),
+        (
+            "paddle_inference",
+            "not invoked; use_onnx=true selected ONNX Runtime",
+        ),
+        ("onnxruntime", "1.28.0"),
+        ("selected_execution_provider", "CPUExecutionProvider"),
+        ("numpy", "1.26.4"),
+        ("opencv_python", "4.11.0.86"),
+        ("opencv", "4.11.0"),
+        ("gpu", "disabled"),
+    ] {
+        assert_eq!(
+            string_field(execution, field, context),
+            expected,
+            "{context} Unicode execution field {field} changed without review"
+        );
+    }
+    let session_options = object_field(execution, "onnx_session_options", context);
+    for field in ["intra_op_num_threads", "inter_op_num_threads"] {
+        assert_eq!(
+            unsigned_field(session_options, field, context),
+            1,
+            "{context} Unicode capture must pin one {field}"
+        );
+    }
+    assert_eq!(
+        value_field(session_options, "enable_mem_pattern", context).as_bool(),
+        Some(false),
+        "{context} Unicode capture must disable ONNX Runtime memory patterns"
+    );
+    let classic_options = object_field(execution, "classic_options", context);
+    for field in [
+        "use_gpu",
+        "use_onnx",
+        "use_angle_cls",
+        "benchmark",
+        "show_log",
+        "cls_argument",
+    ] {
+        assert_eq!(
+            value_field(classic_options, field, context).as_bool(),
+            Some(field == "use_onnx"),
+            "{context} Unicode classic option {field} changed without review"
+        );
+    }
+
+    let reproducibility = object_field(&capture, "reproducibility", context);
+    assert_eq!(
+        value_field(reproducibility, "harness_retained_in_repository", context).as_bool(),
+        Some(false),
+        "{context} must not retain the external Unicode capture harness"
+    );
+    assert_eq!(
+        value_field(reproducibility, "fresh_process_stdout_identical", context).as_bool(),
+        Some(true),
+        "{context} Unicode capture fresh-process outputs must agree"
+    );
+    let fresh_runs = array_field(reproducibility, "fresh_process_runs", context);
+    assert_eq!(
+        fresh_runs.len(),
+        2,
+        "{context} Unicode capture must retain exactly two fresh-process digests"
+    );
+    for (index, run) in fresh_runs.iter().enumerate() {
+        assert_eq!(
+            string_field(run, "id", context),
+            format!("run-{}", index + 1),
+            "{context} Unicode fresh run identifier changed without review"
+        );
+        assert_eq!(
+            string_field(run, "stdout_sha256", context),
+            E2E_UNICODE_FRESH_OUTPUT_SHA256,
+            "{context} Unicode fresh-run stdout hash changed without review"
+        );
+    }
+
+    let source_result = object_field(&capture, "source_result", context);
+    assert_eq!(
+        string_field(source_result, "canonical_json_sha256", context),
+        E2E_UNICODE_SOURCE_RECORD_SHA256,
+        "{context} Unicode source record digest changed without review"
+    );
+    let source_record = object_field(source_result, "record", context);
+    assert_eq!(
+        string_field(source_record, "fixture_id", context),
+        E2E_UNICODE_FIXTURE_ID,
+        "{context} Unicode source-result identifier changed without review"
+    );
+    for (field, expected) in [
+        ("detector_sha256", E2E_NO_TEXT_DETECTOR_SHA256),
+        ("recognizer_sha256", E2E_NO_TEXT_RECOGNIZER_SHA256),
+        ("dictionary_sha256", E2E_NO_TEXT_DICTIONARY_SHA256),
+        (
+            "font_sha256",
+            "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+        ),
+        (
+            "font_license_record_sha256",
+            "849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b",
+        ),
+        ("input_png_sha256", E2E_UNICODE_INPUT_SHA256),
+        ("input_bgr_sha256", E2E_UNICODE_BGR_SHA256),
+    ] {
+        assert_eq!(
+            string_field(source_record, field, context),
+            expected,
+            "{context} Unicode source-result field {field} changed without review"
+        );
+    }
+    assert_eq!(
+        unsigned_field(source_record, "input_png_byte_length", context),
+        9_151,
+        "{context} Unicode source-result PNG byte length changed without review"
+    );
+    assert_eq!(
+        value_field(source_record, "input_bgr_shape", context),
+        &serde_json::json!([320, 800, 3]),
+        "{context} Unicode source-result BGR shape changed without review"
+    );
+    for field in [
+        "raw_detector_tensors_retained",
+        "raw_recognizer_tensors_retained",
+        "timing_values_retained",
+    ] {
+        assert_eq!(
+            value_field(source_result, field, context).as_bool(),
+            Some(false),
+            "{context} Unicode source result must not retain {field}"
+        );
+    }
+
+    let expected_bytes = read_fixture_file(fixture_directory, "expected.json", context);
+    assert_digest(
+        &expected_bytes,
+        E2E_UNICODE_EXPECTED_SHA256,
+        &format!("{context} Unicode expected result"),
+    );
+    let expected = parse_json_bytes(
+        &expected_bytes,
+        &format!("{context} Unicode expected result"),
+    );
+    assert_eq!(
+        string_field(&expected, "schema_version", context),
+        "paddleocr-rust/ocr-result/v1",
+        "{context} Unicode expected result schema changed without review"
+    );
+    let expected_input = object_field(&expected, "input", context);
+    assert!(
+        value_field(expected_input, "id", context).is_null(),
+        "{context} Unicode expected input identifier must remain null"
+    );
+    assert!(
+        value_field(expected_input, "page_index", context).is_null(),
+        "{context} Unicode expected page index must remain null"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "width", context),
+        800,
+        "{context} Unicode expected width changed without review"
+    );
+    assert_eq!(
+        unsigned_field(expected_input, "height", context),
+        320,
+        "{context} Unicode expected height changed without review"
+    );
+    let expected_models = object_field(&expected, "models", context);
+    let expected_detector = object_field(expected_models, "detector", context);
+    let expected_recognizer = object_field(expected_models, "recognizer", context);
+    assert_eq!(
+        string_field(expected_detector, "family", context),
+        "PP-OCRv6_medium_det",
+        "{context} Unicode expected detector family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "version", context),
+        format!("m2-onnx-det-v6-medium@{E2E_NO_TEXT_DETECTOR_REVISION}"),
+        "{context} Unicode expected detector provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_detector, "artifact_sha256", context),
+        E2E_NO_TEXT_DETECTOR_SHA256,
+        "{context} Unicode expected detector hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "family", context),
+        "PP-OCRv6_medium_rec",
+        "{context} Unicode expected recognizer family changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "version", context),
+        format!("m2-onnx-rec-v6-medium@{E2E_NO_TEXT_RECOGNIZER_REVISION}"),
+        "{context} Unicode expected recognizer provenance version changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "artifact_sha256", context),
+        E2E_NO_TEXT_RECOGNIZER_SHA256,
+        "{context} Unicode expected recognizer hash changed without review"
+    );
+    assert_eq!(
+        string_field(expected_recognizer, "dictionary_sha256", context),
+        E2E_NO_TEXT_DICTIONARY_SHA256,
+        "{context} Unicode expected dictionary hash changed without review"
+    );
+    let lines = array_field(&expected, "lines", context);
+    assert_eq!(
+        lines.len(),
+        1,
+        "{context} Unicode expected line count changed without review"
+    );
+    let line = &lines[0];
+    assert_eq!(
+        string_field(line, "text", context),
+        "你好",
+        "{context} Unicode recognized text changed without review"
+    );
+    assert_eq!(
+        string_field(line, "text", context).as_bytes(),
+        &[0xe4_u8, 0xbd, 0xa0, 0xe5, 0xa5, 0xbd],
+        "{context} Unicode recognized text must retain its reviewed UTF-8 bytes"
+    );
+    assert_eq!(
+        value_field(line, "quad", context),
+        &serde_json::json!([[17, 59], [315, 59], [315, 233], [17, 233]]),
+        "{context} Unicode quadrilateral changed without review"
+    );
+    let confidence = match value_field(line, "confidence", context).as_f64() {
+        Some(value) => value,
+        None => panic!("{context} Unicode confidence must be a JSON number"),
+    };
+    assert!(
+        (0.0..=1.0).contains(&confidence),
+        "{context} Unicode confidence must remain in the closed unit interval"
+    );
+    assert_eq!(
+        value_field(source_record, "lines", context),
+        value_field(&expected, "lines", context),
+        "{context} Unicode source result and expected result differ"
+    );
+}
+
 fn verify_e2e_candidate(
     candidate: &Value,
     expected_key: &str,
@@ -2536,5 +3093,15 @@ mod tests {
 
         verify_common_metadata(&metadata, &directory, &context);
         verify_e2e_tall_crop_oracle(&metadata, &directory, &context);
+    }
+
+    #[test]
+    fn classic_v1_e2e_unicode_fixture_is_well_formed() {
+        let directory = Path::new(FIXTURE_ROOT).join(E2E_UNICODE_FIXTURE_ID);
+        let context = format!("fixture directory {}", directory.display());
+        let metadata = read_json_file(&directory.join("metadata.json"));
+
+        verify_common_metadata(&metadata, &directory, &context);
+        verify_e2e_unicode_oracle(&metadata, &directory, &context);
     }
 }

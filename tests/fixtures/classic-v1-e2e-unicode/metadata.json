@@ -1,0 +1,63 @@
+{
+  "fixture_id": "classic-v1-e2e-unicode",
+  "kind": "end_to_end",
+  "reviewed_on": "2026-08-03",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.png",
+    "sha256": "17ce44aad0a8ce5a3db571fc6d7ca57fa22e1dec979326ce02ff37d77157c94c",
+    "sha256_scope": "Exact 9,151-byte PNG file.",
+    "provenance": "Self-authored CJK phrase and layout rendered externally with Pillow 12.3.0 using the non-bundled Noto Sans CJK Regular TTC SHA-256 b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a; the reviewed local package record identifies the font as OFL-1.1 and states that its requirement does not apply to documents created using the font. No font binary, Pillow/OpenCV code, upstream image, or model asset is copied into this fixture.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "ppocr/postprocess/rec_postprocess.py"
+    ]
+  },
+  "artifacts": {
+    "representation": "onnx",
+    "terms_review": "LIC-001",
+    "local_only_candidate": true,
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "oracle": {
+    "capture_path": "capture.json",
+    "capture_sha256": "26ab4d089c2597ab9b0780143963e727191c4364373b88adfca89ba21a63b88a",
+    "capture_schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1"
+  },
+  "expected": {
+    "path": "expected.json",
+    "sha256": "6835e967d31683380d41aeb7921ce1b4bf7f13f3afaab9e70eeb0fd3493332a5",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/ocr-result/v1",
+    "comparison_profile": "m2-e2e-v1"
+  },
+  "tests": [
+    "fixture_integrity::tests::classic_v1_e2e_unicode_fixture_is_well_formed"
+  ],
+  "limitations": [
+    "The fixture covers one self-authored two-character CJK phrase rendered by one external font only; it has no additional script, font-substitution, bidirectional-text, normalization-boundary, threshold-boundary, malformed-input, or resource-limit coverage.",
+    "The external Noto Sans CJK font is not committed. The recorded local Debian font-package copyright file identifies it as SIL Open Font License 1.1 material and states that the font-license requirement does not apply to documents created using the font.",
+    "The isolated source capture consumed rendered BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, inspect PaddleOCR, or require the external font."
+  ]
+}

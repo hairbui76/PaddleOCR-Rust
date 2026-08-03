@@ -1,0 +1,166 @@
+{
+  "schema_version": "paddleocr-rust/classic-onnx-oracle-capture/v1",
+  "fixture_id": "classic-v1-e2e-unicode",
+  "capture_scope": "Classic TextSystem CPU/ONNX Unicode result from a self-authored Noto CJK OFL-1.1-rendered BGR image.",
+  "input": {
+    "png_sha256": "17ce44aad0a8ce5a3db571fc6d7ca57fa22e1dec979326ce02ff37d77157c94c",
+    "png_byte_length": 9151,
+    "bgr_sha256": "37c63cdf220706ab8c9808e9f257399a6ce32d6a1eb9d72f9457b761cd9a2d0c",
+    "bgr_shape": [320, 800, 3],
+    "bgr_channel_order": "BGR",
+    "bgr_dtype": "uint8",
+    "renderer": {
+      "kind": "PIL.ImageDraw.text+cv2.cvtColor",
+      "pillow": "12.3.0",
+      "opencv_python": "4.11.0.86",
+      "opencv": "4.11.0",
+      "font": {
+        "name": "Noto Sans CJK",
+        "external_path": "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "collection_index": 0,
+        "sha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+        "license": "OFL-1.1",
+        "external_license_record_path": "/usr/share/doc/fonts-noto-cjk/copyright",
+        "external_license_record_sha256": "849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b",
+        "bundled": false
+      },
+      "canvas_rgb_shape": [320, 800, 3],
+      "canvas_rgb": [255, 255, 255],
+      "text": "你好",
+      "text_utf8_hex": "e4bda0e5a5bd",
+      "text_codepoints": ["U+4F60", "U+597D"],
+      "text_origin": [40, 45],
+      "font_size": 128,
+      "foreground_rgb": [0, 0, 0],
+      "rgb_to_bgr_operation": "cv2.cvtColor(numpy.asarray(image), cv2.COLOR_RGB2BGR)"
+    },
+    "encoding": {
+      "operation": "cv2.imencode('.png', image, [cv2.IMWRITE_PNG_COMPRESSION, 9])",
+      "round_trip_operation": "cv2.imdecode(encoded, cv2.IMREAD_COLOR)",
+      "bgr_round_trip_equal": true
+    },
+    "decoder_boundary": "The oracle passed the rendered BGR byte array directly to classic TextSystem; it did not decode input.png."
+  },
+  "upstream": {
+    "repository": "https://github.com/PaddlePaddle/PaddleOCR.git",
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "checkout_location": "separate external clone outside this repository",
+    "status_before": "clean",
+    "status_after": "clean",
+    "reference_paths": [
+      "tools/infer/predict_system.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/predict_rec.py",
+      "ppocr/postprocess/rec_postprocess.py"
+    ]
+  },
+  "artifacts": {
+    "terms_review": "LIC-001",
+    "detector": {
+      "candidate_key": "m2-onnx-det-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_det_onnx",
+      "revision": "61323801669c338b7891481ec7bac61ce31b576a",
+      "file_name": "inference.onnx",
+      "byte_length": 62032837,
+      "sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1"
+    },
+    "recognizer": {
+      "candidate_key": "m2-onnx-rec-v6-medium",
+      "repository": "PaddlePaddle/PP-OCRv6_medium_rec_onnx",
+      "revision": "50c7eacafc52fa7bcf4194e8cd08e46f8558504b",
+      "file_name": "inference.onnx",
+      "byte_length": 76554979,
+      "sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "dictionary": {
+      "source_path": "ppocr/utils/dict/ppocrv6_dict.txt",
+      "byte_length": 74947,
+      "sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d"
+    }
+  },
+  "execution": {
+    "python": "3.12.3",
+    "pillow": "12.3.0",
+    "paddlepaddle": "3.3.1",
+    "paddle_inference": "not invoked; use_onnx=true selected ONNX Runtime",
+    "onnxruntime": "1.28.0",
+    "selected_execution_provider": "CPUExecutionProvider",
+    "numpy": "1.26.4",
+    "opencv_python": "4.11.0.86",
+    "opencv": "4.11.0",
+    "os": "Linux 7.0.0-28-generic x86_64",
+    "cpu_model": "Intel(R) Xeon(R) CPU E5-2696 v3 @ 2.30GHz",
+    "logical_cpu_count": 72,
+    "gpu": "disabled",
+    "process_environment": {
+      "PYTHONDONTWRITEBYTECODE": "1",
+      "PYTHONNOUSERSITE": "1",
+      "XDG_CACHE_HOME": "$ORACLE_ROOT/cache",
+      "PADDLE_HOME": "$ORACLE_ROOT/paddle-home",
+      "OMP_NUM_THREADS": "1",
+      "MKL_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "onnx_session_options": {
+      "intra_op_num_threads": 1,
+      "inter_op_num_threads": 1,
+      "enable_mem_pattern": false
+    },
+    "classic_options": {
+      "use_gpu": false,
+      "use_onnx": true,
+      "use_angle_cls": false,
+      "benchmark": false,
+      "show_log": false,
+      "cls_argument": false
+    }
+  },
+  "reproducibility": {
+    "harness_sha256": "361e9f9500d44a97178d692f5309e954c5056ad823951df5e5316f3f6f10556b",
+    "harness_retained_in_repository": false,
+    "command_template": "env PYTHONDONTWRITEBYTECODE=1 PYTHONNOUSERSITE=1 XDG_CACHE_HOME=\"$ORACLE_ROOT/cache\" PADDLE_HOME=\"$ORACLE_ROOT/paddle-home\" OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 PYTHONPATH=\"$ORACLE_ROOT/upstream\" \"$ORACLE_ROOT/venv/bin/python\" \"$ORACLE_ROOT/capture_unicode.py\"",
+    "fresh_process_runs": [
+      {
+        "id": "run-1",
+        "stdout_sha256": "143f6bb51f2fe9bd3aed4e73dc210ceaafd2a8ff6397deeec9720f9df0c83c35"
+      },
+      {
+        "id": "run-2",
+        "stdout_sha256": "143f6bb51f2fe9bd3aed4e73dc210ceaafd2a8ff6397deeec9720f9df0c83c35"
+      }
+    ],
+    "fresh_process_stdout_identical": true
+  },
+  "source_result": {
+    "record": {
+      "detector_sha256": "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1",
+      "dictionary_sha256": "b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d",
+      "fixture_id": "classic-v1-e2e-unicode",
+      "font_license_record_sha256": "849f4ea9c214fa4ac3593b770c699f387534b11ce671264c1b10d85bdcb5997b",
+      "font_sha256": "b76b0433203017ca80401b2ee0dd69350349871c4b19d504c34dbdd80541690a",
+      "input_bgr_sha256": "37c63cdf220706ab8c9808e9f257399a6ce32d6a1eb9d72f9457b761cd9a2d0c",
+      "input_bgr_shape": [320, 800, 3],
+      "input_png_byte_length": 9151,
+      "input_png_sha256": "17ce44aad0a8ce5a3db571fc6d7ca57fa22e1dec979326ce02ff37d77157c94c",
+      "lines": [
+        {
+          "confidence": 0.9999827146530151,
+          "quad": [[17, 59], [315, 59], [315, 233], [17, 233]],
+          "text": "你好"
+        }
+      ],
+      "recognizer_sha256": "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba"
+    },
+    "canonical_json_sha256": "a201b8eb2ef306d753d62f76f7f76986a35c5f2414a8528f5079b72e01a7c617",
+    "raw_detector_tensors_retained": false,
+    "raw_recognizer_tensors_retained": false,
+    "timing_values_retained": false
+  },
+  "limitations": [
+    "The fixture covers one self-authored two-character CJK phrase rendered by one external font only; it has no additional script, font-substitution, bidirectional-text, normalization-boundary, threshold-boundary, malformed-input, or resource-limit coverage.",
+    "The external Noto Sans CJK font is not committed. The recorded local Debian font-package copyright file identifies it as SIL Open Font License 1.1 material and states that the font-license requirement does not apply to documents created using the font.",
+    "The isolated source capture consumed rendered BGR bytes, not a Rust-decoded input.png; this does not select or validate decoder behavior.",
+    "The version fields in expected.json are immutable candidate-provenance identifiers, not an approved runtime manifest or a supported-model declaration.",
+    "Normal Rust tests only parse and hash repository files. They do not load a model, run Python, access a network, use a GPU, inspect PaddleOCR, or require the external font."
+  ]
+}

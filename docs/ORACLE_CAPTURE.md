@@ -1,7 +1,7 @@
 # Isolated Oracle Capture Procedure
 
 Roadmap item: ORACLE-001
-Status: Procedure complete; one narrow component crop capture and three narrow
+Status: Procedure complete; one narrow component crop capture and four narrow
 model-backed classic ONNX captures are committed
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
@@ -145,6 +145,27 @@ environment, or capture harness is committed. It does not validate a Rust
 decoder, backend, crop implementation, model support, API, CLI, Unicode,
 threshold, error, or resource-limit behavior.
 
+The separate
+[`classic-v1-e2e-unicode`](../tests/fixtures/classic-v1-e2e-unicode/)
+fixture uses the same exact candidate pair, isolated CPU settings, and
+two-fresh-process reproducibility rule. It renders the self-authored CJK phrase
+`你好` with external Pillow 12.3.0 and the non-bundled
+`NotoSansCJK-Regular.ttc` collection index `0`, then passes the resulting
+`800×320` BGR bytes directly to classic `TextSystem`. The capture records the
+font and local Debian package copyright-record SHA-256 values; that record
+identifies the external font as OFL-1.1 and says its font-license requirement
+does not apply to a document created using the font. The source result is one
+line with exact UTF-8 bytes `e4bda0e5a5bd`, a fixed quadrilateral, and a fixed
+confidence value.
+
+This is one font, one phrase, and one source result only. No font binary,
+Pillow/OpenCV source or binary, model bytes, dictionary entry, crop pixels, raw
+tensors, external checkout, cache, virtual environment, or capture harness is
+committed. It does not validate general Unicode, script shaping, font fallback,
+bidirectional text, normalization, a Rust decoder, runtime/backend, model
+support, API, CLI, threshold, error, resource-limit, or functional Rust OCR
+behavior.
+
 ## Prohibited shortcuts
 
 - Do not invoke the `PaddleOCR/` symlink as a test oracle.
@@ -158,7 +179,7 @@ threshold, error, or resource-limit behavior.
 ## Completion condition
 
 `ORACLE-001` is complete as a procedure. `FIX-001` and `TOL-001` remain
-incomplete: narrow no-text, synthetic reading-order, and one tall-crop branch
-fixtures exist, but Unicode, threshold, malformed-input, resource-limit,
-decoder, raw-tensor, and actual Rust differential coverage has not been
-completed.
+incomplete: narrow no-text, synthetic reading-order, one tall-crop branch, and
+one Unicode phrase fixtures exist, but threshold, malformed-input,
+resource-limit, decoder, raw-tensor, and actual Rust differential coverage has
+not been completed.
