@@ -555,6 +555,23 @@ mod tests {
     }
 
     #[test]
+    fn classic_db_components_match_a_deterministic_six_by_six_reference() {
+        const WIDTH: u32 = 6;
+        const HEIGHT: u32 = 6;
+        const CASE_COUNT: u32 = 4_096;
+
+        for case_index in 0..CASE_COUNT {
+            let values = deterministic_binary_values(WIDTH, HEIGHT, case_index);
+            let bitmap = binary_bitmap(WIDTH, HEIGHT, &values);
+
+            let actual = must_ok(classic_db_connected_components(&bitmap));
+            let expected = reference_components(WIDTH, HEIGHT, &values);
+
+            assert_eq!(actual, expected, "six-by-six case {case_index}");
+        }
+    }
+
+    #[test]
     fn classic_db_components_reject_an_excess_of_isolated_regions() {
         let mut values = vec![0_u8; 2_001];
         for value in values.iter_mut().step_by(2) {
@@ -602,5 +619,25 @@ mod tests {
                 })
             ));
         }
+    }
+
+    fn deterministic_binary_values(width: u32, height: u32, case_index: u32) -> Vec<u8> {
+        let mut state = 0xA5A5_5A5A_u32 ^ case_index;
+        (0..width * height)
+            .map(|index| {
+                state = state.wrapping_mul(1_664_525).wrapping_add(1_013_904_223);
+                let random = (state >> 24) as u8;
+                match case_index % 4 {
+                    0 => random & 1,
+                    1 => u8::from(random & 0b11 == 0),
+                    2 => u8::from(random & 0b11 != 0),
+                    _ => {
+                        let x = index % width;
+                        let y = index / width;
+                        u8::from((x + y + u32::from(random & 1)).is_multiple_of(2))
+                    }
+                }
+            })
+            .collect()
     }
 }
