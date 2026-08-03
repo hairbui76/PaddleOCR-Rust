@@ -41,7 +41,10 @@ The target exercises the currently implemented pure surfaces:
   minimum-area candidates, and crop-coordinate transforms. In addition to the
   valid quadrilateral-derived polygon, each invocation builds bounded
   zero-to-two-vertex, horizontal-collinear, five-vertex concave,
-  repeated-vertex, and three-to-ten-vertex arbitrary polygon candidates;
+  repeated-vertex, and three-to-ten-vertex arbitrary polygon candidates. An
+  accepted finite convex arbitrary quadrilateral also reaches the checked
+  ordering, rescaling, crop-plan, and both inverse-mapping paths without
+  requesting a crop-pixel allocation from its derived dimensions;
 - bounded perspective crops over generated interleaved pixel buffers, using
   both rectangles and bounded projective trapezoids.
 
@@ -59,6 +62,13 @@ A separate 256-selector regression drives the bounded polygon variants across
 the full byte selector range. It is a no-panic structural check for the
 existing private polygon/hull/minimum-area code; it does not establish contour
 or OpenCV equivalence.
+
+A focused finite-coordinate regression drives the arbitrary-quadrilateral path
+with a sub-pixel side, ordinary and 1,024-pixel sides, and a
+`f32::MAX / 2.0` side. It supplies infinity, NaN, and finite-extreme mapping
+bytes to the checked mapping calls. The underlying checked calls either report
+a typed geometry error or complete without allocating a crop buffer; it does
+not establish pixel, OpenCV, decoder, or OCR behavior.
 
 At commit `986ea76cfbbda450970d3f8536bc4eac3f7ff125`, the static
 `--all-features` release suite also ran under one disposable QEMU `9.0.2` TCG

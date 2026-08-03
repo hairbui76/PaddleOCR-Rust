@@ -125,7 +125,7 @@ fn exercise_geometry_and_crop_kernels(reader: &mut ByteReader<'_>) {
     let arbitrary_points =
         core::array::from_fn(|_| Point::new(reader.next_f32(), reader.next_f32()));
     if let [Ok(first), Ok(second), Ok(third), Ok(fourth)] = arbitrary_points {
-        let _ = Quadrilateral::new([first, second, third, fourth]);
+        exercise_arbitrary_quadrilateral([first, second, third, fourth], dimensions, reader);
     }
 
     let Some(quadrilateral) = bounded_quadrilateral(reader) else {
@@ -151,6 +151,34 @@ fn exercise_geometry_and_crop_kernels(reader: &mut ByteReader<'_>) {
     }
 
     exercise_crop_kernel(reader, quadrilateral);
+}
+
+fn exercise_arbitrary_quadrilateral(
+    points: [Point; 4],
+    dimensions: ImageDimensions,
+    reader: &mut ByteReader<'_>,
+) {
+    let Ok(quadrilateral) = Quadrilateral::new(points) else {
+        return;
+    };
+    let points = quadrilateral.points();
+
+    let _ = classic_order_clip_filter_quad(points, dimensions);
+    let _ = classic_rescale_detector_quad(points, dimensions, dimensions);
+
+    let mut reading_order = [quadrilateral, quadrilateral];
+    classic_sort_quadrilaterals(&mut reading_order);
+
+    let Ok(plan) = classic_perspective_crop_plan(quadrilateral) else {
+        return;
+    };
+    for point in points {
+        let _ = plan.map_source_to_warp(point);
+        let _ = plan.map_warp_to_source(point);
+    }
+    let _ = plan
+        .map_warp_coordinates_to_source(f64::from(reader.next_f32()), f64::from(reader.next_f32()));
+    let _ = plan.map_warp_pixel_to_source_for_sampling(reader.next_u32(), reader.next_u32());
 }
 
 fn exercise_polygon_kernels(reader: &mut ByteReader<'_>) {
@@ -342,7 +370,8 @@ impl<'a> ByteReader<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{MAX_INPUT_BYTES, exercise};
+    use super::{ByteReader, MAX_INPUT_BYTES, exercise, exercise_arbitrary_quadrilateral};
+    use crate::types::{ImageDimensions, Point, Quadrilateral};
 
     const GENERATED_STRESS_CASES: usize = 4_096;
     const MUTATION_CAMPAIGN_CASES: usize = 2_048;
@@ -430,6 +459,49 @@ mod tests {
                     .rotate_left((index % 8) as u32);
             }
             exercise(&input);
+        }
+    }
+
+    #[test]
+    fn arbitrary_quadrilateral_route_handles_small_and_large_finite_coordinates() {
+        let dimensions = must_dimensions(32, 32);
+        let reader_bytes = [
+            0x00, 0x00, 0x80, 0x7f, // Positive infinity: checked mapping error.
+            0x00, 0x00, 0xc0, 0x7f, // Quiet NaN: checked mapping error.
+            0xff, 0xff, 0x7f, 0x7f, // Largest finite positive f32.
+            0xff, 0xff, 0x7f, 0xff, // Largest finite negative f32.
+        ];
+
+        for side in [1.0e-7_f32, 1.0_f32, 1_024.0_f32, f32::MAX / 2.0] {
+            let quadrilateral = must_quadrilateral([
+                must_point(-side, -side),
+                must_point(side, -side),
+                must_point(side, side),
+                must_point(-side, side),
+            ]);
+            let mut reader = ByteReader::new(&reader_bytes);
+            exercise_arbitrary_quadrilateral(quadrilateral.points(), dimensions, &mut reader);
+        }
+    }
+
+    fn must_dimensions(width: u32, height: u32) -> ImageDimensions {
+        match ImageDimensions::new(width, height) {
+            Ok(dimensions) => dimensions,
+            Err(error) => panic!("expected valid dimensions, got {error}"),
+        }
+    }
+
+    fn must_point(x: f32, y: f32) -> Point {
+        match Point::new(x, y) {
+            Ok(point) => point,
+            Err(error) => panic!("expected finite point, got {error}"),
+        }
+    }
+
+    fn must_quadrilateral(points: [Point; 4]) -> Quadrilateral {
+        match Quadrilateral::new(points) {
+            Ok(quadrilateral) => quadrilateral,
+            Err(error) => panic!("expected valid quadrilateral, got {error}"),
         }
     }
 
