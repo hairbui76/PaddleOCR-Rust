@@ -1057,6 +1057,48 @@ useful finite comparison route, not a decision. It adds no dependency, image
 implementation, supported-format policy, or OCR claim, and `D-008` and
 `IMG-DEC-001` remain open.
 
+### Hybrid PNG in-place/fallible output extension (2026-08-03)
+
+A follow-up changed only the disposable harness source (SHA-256
+`059b16138ba680801dc8e383f0e7d8b919a19abad7f10f649bda1833eb3270d0`),
+retaining the same manifest and 34-package lock (SHA-256
+`92fe78da653962bf2b9477f563ac3bd1e6857b0d154187f5504c2140c0603ea9`).
+It was rebuilt offline with Rust `1.94.0`, `/usr/bin/gcc`, and the portable
+`x86-64` compiler profile with AVX, AVX2, and FMA disabled. The resulting
+release executable SHA-256 was
+`8ed6cdeb136f9b76d66492817967b73f0b691457f2c22d46b812a407c7c6c71c`.
+No repository Cargo manifest, lockfile, dependency, decoder implementation,
+or input policy changed.
+
+The external PNG path now obtains its initial output vector with
+`Vec::try_reserve_exact` before zeroing it, mapping an allocation failure to
+`ProbeError::Resource`. It converts that owned vector to BGR in place: RGB
+swaps its first and third component, RGBA compacts forward after discarding
+alpha, and grayscale/grayscale-alpha reserve and expand backwards. This
+removes the observed second 96,000,000-byte `Vec::with_capacity` BGR vector
+from this path. The unchanged finite portable release control again produced
+14/14 exact 8-bit PNG/JPEG results, one labelled 16-bit diagnostic, five
+passing negative controls, 1,440 JPEG mutations (733 successes, 707 errors,
+zero caught panics), 720 PNG mutations (164 successes, 556 errors, zero
+caught panics), and both JPEG header-limit rejections. External Clippy also
+passed with `-D warnings`.
+
+For the same 8,000-by-4,000 PNG, GNU `time` measured 95,676 KiB maximum RSS
+without a virtual-memory limit. Under `ulimit -v 180000` KiB, it completed
+with 95,756 KiB maximum RSS and exit zero, rather than the earlier SIGABRT.
+Under `ulimit -v 80000` KiB, it exited one after returning the typed message
+`large PNG decode failed: Resource("PNG output allocation of 96000000 bytes failed")`;
+GNU `time` recorded 1,876 KiB maximum RSS. These Linux/allocator-specific
+controls show that the external path avoids the previously observed two-output
+buffer abort and can surface this project-owned allocation failure.
+
+They do not establish a total process/request allocation envelope: the
+per-buffer `128 MiB` check remains only a per-buffer check, encoded-input and
+codec-internal allocations are outside this small experiment, and no general
+work, concurrency, malformed-input, or physical-platform bound follows. This
+is still external-harness evidence, not a decoder decision or a public
+resource policy. `D-008` remains open and `IMG-DEC-001` remains In progress.
+
 ## Decision options and current recommendation
 
 | Option | Potential benefit | Evidence still required | Current disposition |
