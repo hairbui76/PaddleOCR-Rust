@@ -60,6 +60,11 @@ The result must remain **partial**, for two independent reasons:
    relative values therefore fail the literal provisional computation. Do not
    redefine the tolerance after seeing the output.
 
+A read-only diagnostic calculation over the same temporary bytes found zero
+violations under the illustrative conventional rule
+`abs(static - onnx) <= 1e-4 + 1e-4 * abs(static)`; its largest error-to-bound
+ratio was `0.5591462`. This does not choose that rule or make the capture pass.
+
 Before resuming this experiment, amend the tolerance contract and roadmap
 evidence with a reviewed, predeclared numerical rule. Then rebuild a disposable
 external harness, verify every model package file before loading it, run the

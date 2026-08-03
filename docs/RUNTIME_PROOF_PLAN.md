@@ -95,6 +95,14 @@ or an `atol + rtol * |reference|` rule, and the required second fresh process
 was deliberately not run. Do not relabel this as passing by changing the
 metric after seeing the data.
 
+A later read-only arithmetic check over the same recoverable temporary bytes
+found zero violations for the illustrative conventional rule
+`abs(static - onnx) <= 1e-4 + 1e-4 * abs(static)`. Its per-probe maximum
+error-to-bound ratios were `0.0017513`, `0.0809331`, `0.2761421`, `0.1134321`,
+`0.2584989`, and `0.5591462` in the declared order. This is diagnostic
+evidence only. It neither amends `m2-tensor-v1` nor converts the first capture
+into a pass: the rule must be approved before the two fresh captures are run.
+
 The temporary raw input/output tree and harness are not repository assets and
 must be disposed of after handoff. A successor must first amend the tolerance
 contract with a reviewable, predeclared relative-error rule if one is needed,
