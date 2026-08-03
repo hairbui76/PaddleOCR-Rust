@@ -225,6 +225,31 @@ and is not negative evidence about PP-OCRv6; it is recorded only because it
 does not supply a general PaddlePaddle weight-license policy that could close
 this review.
 
+### Live publisher-status recheck (2026-08-03)
+
+A subsequent live, read-only check did not locate a new terms source. The
+official [`PaddleX#5102`](https://github.com/PaddlePaddle/PaddleX/issues/5102)
+question remains open with its original request for artifact and commercial-use
+terms; it still has no maintainer response. It concerns different named
+artifacts, so it neither establishes nor disproves terms for PP-OCRv6, but it
+continues not to supply a general publisher weight-license policy.
+
+The public community pages for the exact
+[`PP-OCRv6_medium_det_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx/discussions)
+and
+[`PP-OCRv6_medium_rec_onnx`](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx/discussions)
+repositories showed no open or closed discussion containing a publisher terms
+statement. They still display the `apache-2.0` card metadata already recorded
+above. These live, mutable repository pages are not an immutable
+revision-specific license or notice for the candidate package files.
+
+The current official [PaddleOCR repository page](https://github.com/PaddlePaddle/PaddleOCR)
+announces PP-OCRv6 availability and identifies the source project as
+Apache-2.0, but names no exact detector/recognizer artifact, ONNX/static
+export, embedded dictionary, or distribution terms. It is therefore source
+and availability context only, not a model-weight grant. No result from this
+recheck meets either resumption condition below; `LIC-001` remains `Blocked`.
+
 ## Current blocker and resumption condition
 
 `LIC-001` is blocked on a durable, publisher/rightsholder-issued terms source
