@@ -906,7 +906,10 @@ dependencies or a deployment guarantee.
 
 The control used content signatures rather than a filename hint and applied
 the following experimental bounds: 64 MiB encoded input, 16,384-pixel sides,
-40,000,000 pixels, 128 MiB decoder/project BGR buffers, and 100 JPEG scans.
+40,000,000 pixels, independent 128 MiB PNG-decoder and projected-BGR buffer
+checks, and 100 JPEG scans. Those two 128 MiB checks were not a total
+in-process allocation cap; the later resource control records the resulting
+two-buffer peak.
 All fourteen normal 8-bit controls were byte-exact to the frozen OpenCV BGR
 capture: four PNGs (RGB, RGBA with discarded alpha, grayscale, and indexed
 `tRNS`) plus the baseline, progressive, and eight Exif-oriented JPEGs. JPEG
@@ -1001,6 +1004,40 @@ portable host build. This establishes one bounded emulated no-AVX route for
 the exact finite control. It does not prove physical CPU support, all x86-64
 systems, scalar-only dispatch, decoder safety, allocation/work bounds,
 concurrency, supported input policy, or decoder selection.
+
+### Hybrid PNG total-allocation control (2026-08-03)
+
+A separate disposable extension retained the same manifest and 34-package lock
+but added a large self-authored PNG generator and decode-only mode; its source
+SHA-256 was `a8c290790e1d42e3087c56c15ff2b7b6551257d9b9683c9c5c9fa39cadf1bb39`.
+It generated a valid solid 8-bit RGB 8,000-by-4,000 PNG: 32,000,000 pixels,
+96,000,000 decoded RGB bytes, 96,000,000 expected BGR bytes, and only 101,363
+encoded bytes (SHA-256
+`0dee05b67ca532566a42294dcd7171636954fa45b56a92aa1314fcb0ea73b8da`).
+The dimensions/pixels and each individual 96,000,000-byte PNG-output/BGR check
+are within this control's experimental limits.
+
+The portable release build (SHA-256
+`aeb9813c7fd8e975709dcee20ded8db50e0585e6cc5414eeff021d60d2cb3b1b`)
+decoded that file successfully twice. GNU `time` recorded maximum resident
+sets of 189,584 KiB and 189,652 KiB. That is consistent with the harness
+holding the 96,000,000-byte PNG output while `png_to_bgr` reserves another
+96,000,000-byte BGR vector, so a per-buffer 128 MiB check does not bound
+total process allocation.
+
+Under a controlled `ulimit -v 180000` KiB, the same decode printed
+`memory allocation of 96000000 bytes failed` and terminated with the outer
+shell reporting exit status 134 / SIGABRT. The allocation was the BGR
+`Vec::with_capacity` path, which is not fallible and cannot be converted by
+the harness's `catch_unwind` into its `ProbeError::Resource` category. The
+normal finite controls still replayed exactly after this extension.
+
+This is an external-harness resource finding, not project decoder behavior or
+a project memory-policy decision. It establishes that this candidate control
+needs checked total-allocation accounting and fallible output allocation before
+it can satisfy a typed resource-limit contract. It does not prove a crate flaw
+outside the observed path, an allocation/work bound, general hostile-input
+safety, decoder selection, model support, or OCR support.
 
 `cargo-audit` scanned the exact 34-package lockfile against RustSec revision
 `d91a8fc9492378f23cba86b81770c6d16de6ebba`, loaded 1,186 advisories, and
