@@ -250,6 +250,28 @@ export, embedded dictionary, or distribution terms. It is therefore source
 and availability context only, not a model-weight grant. No result from this
 recheck meets either resumption condition below; `LIC-001` remains `Blocked`.
 
+### Official safetensors cross-representation check (2026-08-03)
+
+As an additional read-only check, the official `PaddlePaddle` safetensors
+repositories were inspected without adding them as model candidates. The
+current API records detector revision
+`4236c2b61741a259c091fd879dcc4edc339e916c` and recognizer revision
+`024cad6a831de75c2c3c26e711ba8c4a82ccd24b`; both cards display
+`license: apache-2.0`. Each revision's reported file list contains only
+`.gitattributes`, `README.md`, `config.json`, `inference.yml`,
+`model.safetensors`, and `preprocessor_config.json`, with no `LICENSE` or
+`NOTICE` file. Their `README.md` license badges link to `./LICENSE`, while the
+corresponding revision-pinned `LICENSE` resolution returned HTTP 404 in this
+check.
+
+- Detector [card](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_safetensors) and [API](https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_det_safetensors)
+- Recognizer [card](https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_safetensors) and [API](https://huggingface.co/api/models/PaddlePaddle/PP-OCRv6_medium_rec_safetensors)
+
+This is further metadata/absence evidence only. It does not make safetensors a
+selected representation, does not establish its terms, and cannot supply the
+artifact-specific grant missing for the distinct M2 static/ONNX candidates.
+`LIC-001` remains `Blocked`.
+
 ## Current blocker and resumption condition
 
 `LIC-001` is blocked on a durable, publisher/rightsholder-issued terms source

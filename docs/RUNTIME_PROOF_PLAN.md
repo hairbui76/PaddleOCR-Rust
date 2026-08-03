@@ -134,6 +134,18 @@ network, resource, numerical-equivalence, portability, distribution, or
 backend result. The source/binary hashes, commands, measurements, and limits
 are recorded in `RUNTIME_ORT_SOURCE_EVIDENCE.md`.
 
+A separate temporary Rust wrapper probe used the same source-built library and
+exact hashes. It verifies all three regular files before calling
+`ort::init_from`, then uses one CPU `Session` per minimum-shape model for 24
+sequential calls; two positive invocations checked only output name/type/shape/
+count/finiteness and retained no output values. A swapped detector and a
+recognizer symlink each rejected before the harness loader call. The lock,
+source, binary, build checks, and limits are recorded in
+`RUNTIME_ORT_SOURCE_EVIDENCE.md`. This is narrow external Rust-wrapper reuse
+evidence, not a repository adapter, bounded public resource policy,
+concurrency/cancellation proof, numerical-equivalence result, or backend
+selection.
+
 ## Required evidence after any candidate smoke result
 
 Smoke results are insufficient for RT-002 completion. Every viable candidate

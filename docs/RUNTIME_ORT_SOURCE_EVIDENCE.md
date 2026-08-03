@@ -12,15 +12,16 @@ It does not add an ort dependency, ONNX Runtime binary, model artifact, adapter,
 feature flag, API, CLI behavior, or CI requirement to PaddleOCR-Rust. It does
 not resolve D-006 or D-007.
 
-The temporary Rust spike used ort 2.0.0-rc.13 with std, load-dynamic, and
-api-28. It explicitly loaded the library recorded below and has no direct
+The temporary Rust spikes used ort 2.0.0-rc.13 with std, load-dynamic, and
+api-28. They explicitly loaded the library recorded below and have no direct
 libonnxruntime dynamic-link dependency. The public project workspace remains
 dependency-free. Python was used only as an external build-driver environment;
 under the user-authorized evidence-tooling exception it did not execute
-PaddleOCR or model inference. The host spike, QEMU guest probe, separate C API
-error probe, separate C API lifecycle probe, and separate C API shared-session
-concurrency probe did not execute Python, PaddleOCR, or the upstream checkout.
-Network isolation was not measured for the host spike or QEMU guest.
+PaddleOCR or model inference. The host spikes, QEMU guest probe, separate C API
+error probe, separate C API lifecycle probe, separate C API shared-session
+concurrency probe, and Rust session-reuse probe did not execute Python,
+PaddleOCR, or the upstream checkout. Network isolation was not measured for
+the host spikes or QEMU guest.
 
 ## Source, build, and artifact identity
 
@@ -298,6 +299,61 @@ no-AVX host, network isolation, a distributable binary, or an `ort` backend
 selection. A future Rust adapter must independently define and test its
 concurrency contract rather than relying on this diagnostic.
 
+## Bounded Rust wrapper session-reuse probe
+
+On 2026-08-03, a fourth disposable external harness exercised the Rust
+`ort` wrapper against the same source-built ONNX Runtime library. It was a
+separate Rust 1.94.0 package outside both repositories, with `ort`
+`2.0.0-rc.13` configured only with `std`, `load-dynamic`, and `api-28`, plus
+the scalar `sha2` `0.10.9` `force-soft` feature for pre-load SHA-256 checks.
+Its 29-package lock was generated and built with `CARGO_NET_OFFLINE=true`.
+No package, lock entry, binary, model, feature, adapter, public API, or CI
+requirement was added to PaddleOCR-Rust.
+
+| Temporary input | SHA-256 |
+|---|---|
+| Harness `Cargo.toml` | `c2b0e8a6f70669d731d9f746f2e127122999885482d361ab45a86f21e46ccea6` |
+| Harness `Cargo.lock` | `f721705e986ca588454df80a2a8f1b8096475bae373debc48709c41eec24a435` |
+| Harness Rust source | `8ff6867e6e0e0368c598bb4ec7fdd0e3dedd7a9bd55a86253aee992b3f6b6503` |
+| Release harness binary | `456aaa14a14b19ece13b604ec5f0c4a357daafefb3075b4aba441038d1530d24` |
+| Source-built library | `1c04ac4162d45e9cdf3a7f979770f1e1d96fcbc1ea4a09379fa63e75672742fa` |
+| Detector ONNX | `eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1` |
+| Recognizer ONNX | `9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba` |
+
+The harness first uses `symlink_metadata`, fixed byte counts, and streamed
+SHA-256 validation for the library, detector, and recognizer. Only after all
+three validations does it call `ort::init_from`; it then creates one CPU
+`Session` per model with one intra-op and one inter-op thread. The release
+binary's direct ELF `NEEDED` entries are only `libgcc_s.so.1`, `libc.so.6`, and
+the loader; `ldd` reported no direct `libonnxruntime` dependency.
+
+Each of two independent positive invocations ran 24 sequential zero-filled
+minimum-shape calls through the one detector session and 24 through the one
+recognizer session. Every returned tensor was checked only for the named
+`fetch_name_0` output, `float32` extraction, exact output shape and count
+(`detector`: `[1, 1, 32, 32]`, 1,024; `recognizer`: `[1, 20, 18,710]`,
+374,200), and finite values before scope-end release. The harness emitted only
+the two call counts and `output_values_retained=0`; it did not retain, print,
+hash, or write tensor values or model-derived fixtures. Both invocations exited
+zero under a 1,600,000 KiB virtual-memory limit, a 600-second CPU/wall
+watchdog, `OMP_NUM_THREADS=1`, and `MALLOC_ARENA_MAX=1`.
+
+A detector file supplied in the recognizer position was rejected with exit
+status two at the expected-file-length guard, and a recognizer symlink was
+rejected with exit status two by the symlink pre-check. Since both checks occur
+before `ort::init_from` in the temporary source, neither negative follows the
+harness's dynamic-loader path. The metadata/open sequence is a one-process test
+control, not race-safe production path resolution. This is control-flow
+evidence only; no syscall trace was used to claim network or loader isolation.
+
+The temporary package passed `cargo fmt --all --check` and offline release
+Clippy with `-D warnings`. This is a narrow Linux-host Rust-wrapper ownership
+and sequential-session-reuse signal, not a project adapter implementation,
+long-soak/leak analysis, cancellation, malformed-model test, request-level
+resource policy, concurrency proof, numerical-repeat/equivalence result,
+network-isolation result, portable CPU proof, distribution result, or backend
+selection.
+
 ## No-AVX execution evidence
 
 The first source-built artifact arrangement was copied into a temporary QEMU
@@ -512,6 +568,21 @@ The recorded QEMU command did not include `-nic none`, so it is not evidence
 of network isolation. A future replay that needs such a claim must disable the
 guest NIC explicitly and record the host/guest isolation conditions.
 
+The additional Rust-wrapper reuse probe used these external commands:
+
+```sh
+cd /tmp/paddleocr-rust-ort-rust-reuse.4iSRSn
+CARGO_NET_OFFLINE=true cargo generate-lockfile
+CARGO_NET_OFFLINE=true \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc \
+  cargo build --release --locked
+cargo fmt --all --check
+CARGO_NET_OFFLINE=true \
+  CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc \
+  cargo clippy --release --locked --all-targets -- -D warnings
+zsh -c 'ulimit -Sv 1600000; ulimit -St 600; ulimit -c 0; exec env -u ORT_DYLIB_PATH LD_LIBRARY_PATH=/tmp/paddleocr-rust-ort-source.89EQ5V/build/Release OMP_NUM_THREADS=1 MALLOC_ARENA_MAX=1 timeout --signal=TERM --kill-after=30s 600s /tmp/paddleocr-rust-ort-rust-reuse.4iSRSn/target/release/paddleocr-rust-ort-rust-reuse /tmp/paddleocr-rust-ort-source.89EQ5V/build/Release/libonnxruntime.so.1.28.0 /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium/inference.onnx /mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium/inference.onnx'
+```
+
 These paths are temporary developer evidence, not a supported installation or
 distribution recipe.
 
@@ -541,11 +612,11 @@ This source build is not hermetic or approved for distribution:
 |---|---|
 | Exact local artifact | Partial pass: the verified detector and recognizer ONNX bytes ran through the host spike. The QEMU arrangements independently verified their respective exact model/library hashes before session creation. |
 | Graph/operator/shape | Partial pass: all six declared shapes ran on the host source-built library and on at least one no-AVX QEMU TCG route. This is not arbitrary-shape or physical-host coverage. |
-| Tensor ABI | Partial pass: the external Rust spike and QEMU C probes checked observed x/fetch_name_0 float32 NCHW shapes, including batch-six recognition. No project adapter exists. |
+| Tensor ABI | Partial pass: the external Rust spikes and QEMU C probes checked observed x/fetch_name_0 float32 NCHW shapes, including batch-six recognition. The separate Rust session-reuse probe rechecked only the two minimum shapes. No project adapter exists. |
 | Numerical equivalence | Not passed: no approved static Paddle oracle or m2-tensor-v1 element comparison exists. Calibrated C/Rust probes observed different host versus no-AVX QEMU bit-pattern signatures for detector minimum and every recognizer shape; detector typical/maximum aggregates also differ. A later same-runtime elementwise diagnosis at only two minimum shapes found no difference above `1e-4`, no fixed detector `> 0.3` crossing, and no final-axis recognizer argmax change for zero and one synthetic input, but it establishes no general tolerance, preprocessing, postprocessing, or static-reference equivalence. |
 | End-to-end semantics | Not run. |
 | CPU support | Partial pass: every declared detector/recognizer shape produced a finite, correctly shaped output under no-AVX QEMU TCG routes with one-thread controls. System- and user-mode emulation, numerical mismatches, no physical baseline host, no platform matrix, and no distribution binary remain material limits. |
-| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. A separate four-worker shared-session probe also completed 32 zero-input calls twice for each minimum-shape model, with type/shape/count/finite checks and a pre-load swapped-hash rejection. No Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, broad concurrency contract, or public-error review exists. |
+| Resources and errors | Partial pass: one-thread settings, two host all-shape runs, first-run RSS, QEMU watchdog observations, one missing-library error, and five bounded C API failures were observed. A separate 1,600,000 KiB / 600-second lifecycle probe completed twelve sequential create/run/release cycles for each minimum-shape exact model, with finite outputs, one observed post-release thread, short-window bounded RSS, `ReleaseEnv`, and `dlclose` status zero. A separate four-worker shared-session probe also completed 32 zero-input calls twice for each minimum-shape model, with type/shape/count/finite checks and a pre-load swapped-hash rejection. The external Rust-wrapper reuse probe completed 24 sequential calls twice for each minimum-shape model and rejected swapped-length/symlink paths before its loader call. No project Rust adapter, request-level bound, cancellation, long-soak/leak analysis, malicious-input, broad concurrency contract, or public-error review exists. |
 | Supply chain/license | Incomplete and blocked for acceptance; see the preceding limits. |
 | Unsafe/FFI boundary | Incomplete: the external ort/ort-sys native boundary has no project adapter review. |
 
@@ -564,9 +635,9 @@ This source build is not hermetic or approved for distribution:
 4. Produce a reproducible, verified source/binary provenance route with a
    build-specific SBOM, complete notices, enforced strong hashes, and a
    reviewed distribution policy.
-5. Expand the bounded C API evidence to malicious/external-data and oversized
-   inputs, long-soak/leak analysis, cancellation, broader concurrency, and
-   request-level limits; then review the Rust adapter's ownership and sanitized
-   public errors.
+5. Expand the bounded C API and external Rust-wrapper evidence to
+   malicious/external-data and oversized inputs, long-soak/leak analysis,
+   cancellation, broader concurrency, and request-level limits; then implement
+   and review the project Rust adapter's ownership and sanitized public errors.
 6. Run end-to-end offline golden and RT-003 scorecard experiments before
    RT-004 considers a backend decision.
