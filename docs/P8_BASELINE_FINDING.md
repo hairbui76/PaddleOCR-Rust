@@ -96,6 +96,26 @@ P8 cannot proceed under the current baseline. Three options, with their costs:
 3. **Declare P8 out of scope** and close its rows as user-approved exclusions,
    the way office formats were closed in `DOCIO-DEC-001`.
 
+### Option 1 was checked, not assumed
+
+The recommendation below would be worth little if PaddleX turned out to be
+another layer of wrappers. It is not. `paddlex` `3.7.2` — the version the
+declared range `>=3.7.0,<3.8.0` currently resolves to — contains
+`paddlex/inference/models/object_detection/processors.py`, whose classes are
+exactly what a contract needs to freeze:
+
+```
+ReadImage   Resize   Normalize   ToCHWImage   ToBatch
+DetPad      PadStride           WarpAffine   DetPostProcess
+```
+
+That is the same shape of source the classic path was frozen from: operators with
+their rounding, padding, and ordering written out. Pinning it restores the method
+in full rather than approximating it.
+
+The version must be **chosen and recorded**, not inherited: upstream declares a
+range, and a range is not a baseline. `3.7.2` is what it resolves to today.
+
 **Recommendation: option 1**, because it preserves the only method that has
 actually caught this project's mistakes. Option 2 is available as a fallback for
 any single module whose PaddleX source turns out to be unreadable or absent.
