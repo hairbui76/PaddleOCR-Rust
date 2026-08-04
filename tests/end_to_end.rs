@@ -1038,3 +1038,214 @@ mod jpeg_delta_gate {
         );
     }
 }
+
+/// `DOC-E2E-001`, the slice that is not blocked on PDF.
+///
+/// The row lists rotated, warped, multipage, empty, corrupt, password, and
+/// oversized cases. Multipage and password belong to `PDF-001`, which has no
+/// approved renderer. The rest go through document preprocessing, which is
+/// implemented and `Done` — so they are verifiable now, and this covers them.
+#[cfg(feature = "onnxruntime")]
+mod document_boundary {
+    use paddleocr_rust::Error;
+    use paddleocr_rust::api::{Artifacts, OcrEngine, OcrOptions, parse_dictionary};
+    use paddleocr_rust::document_pipeline::{CoordinateSpace, DocumentPreprocessOptions};
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) if !value.is_empty() => value,
+            _ => panic!("set {name} to run this test"),
+        }
+    }
+
+    fn engine() -> OcrEngine {
+        let text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        match OcrEngine::load(
+            &Artifacts::new(
+                &env("PADDLEOCR_RUST_ORT_DYLIB"),
+                &env("PADDLEOCR_RUST_DETECTOR_ONNX"),
+                &env("PADDLEOCR_RUST_RECOGNIZER_ONNX"),
+            ),
+            &dictionary,
+        ) {
+            Ok(value) => value,
+            Err(error) => panic!("load: {error}"),
+        }
+    }
+
+    /// A blank page, a corrupt file, and an oversized declaration.
+    ///
+    /// These need no model to be interesting, but they are run through the
+    /// loaded engine anyway: the question is what the **whole path** does, and a
+    /// unit test on the decoder cannot answer that.
+    #[test]
+    #[ignore = "DOC-E2E-001: needs explicitly provisioned models"]
+    fn empty_corrupt_and_oversized_pages_answer_without_panicking() {
+        let engine = engine();
+        let options = OcrOptions::default();
+
+        // A blank white page: a valid image with nothing to detect.
+        let mut blank = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut blank, 320, 240);
+            encoder.set_color(png::ColorType::Rgb);
+            encoder.set_depth(png::BitDepth::Eight);
+            let mut writer = match encoder.write_header() {
+                Ok(value) => value,
+                Err(error) => panic!("header: {error}"),
+            };
+            if let Err(error) = writer.write_image_data(&vec![255_u8; 320 * 240 * 3]) {
+                panic!("write: {error}");
+            }
+        }
+        match engine.recognize_png(&blank, &options) {
+            Ok(lines) => assert!(lines.is_empty(), "a blank page found {} lines", lines.len()),
+            Err(error) => panic!("a blank page must succeed with no lines, got {error}"),
+        }
+
+        // Corrupt inputs, each with the **kind** of refusal it should get.
+        //
+        // The distinction is the point, and there are **three** kinds, not two.
+        // No bytes at all is `Empty`. A byte string that is not a PNG is
+        // `Unsupported` -- "this is not a format I handle" -- because `IMG-001`
+        // selects format from the eight-byte signature alone. A byte string that
+        // claims to be a PNG and then is not is `InvalidInput`. Collapsing them
+        // would lose the only thing that tells a caller whether to send
+        // something, convert it, or re-fetch it.
+        enum Kind {
+            /// No input at all.
+            Empty,
+            /// Not a format this port handles.
+            Unsupported,
+            /// A handled format, malformed or out of bounds.
+            Malformed,
+        }
+        let corrupt: Vec<(&str, Vec<u8>, Kind)> = vec![
+            ("empty", Vec::new(), Kind::Empty),
+            (
+                "not_an_image",
+                b"this is not a png at all".to_vec(),
+                Kind::Unsupported,
+            ),
+            (
+                "truncated",
+                blank[..blank.len() / 3].to_vec(),
+                Kind::Malformed,
+            ),
+            ("header_only", blank[..8].to_vec(), Kind::Malformed),
+            (
+                "declared_huge",
+                {
+                    let mut bytes = blank.clone();
+                    // Overwrite IHDR's width with 0xFFFFFFFF, after the signature
+                    // and the length/type fields.
+                    bytes[16..20].copy_from_slice(&u32::MAX.to_be_bytes());
+                    bytes
+                },
+                Kind::Malformed,
+            ),
+        ];
+        for (name, bytes, kind) in corrupt {
+            let outcome = engine.recognize_png(&bytes, &options);
+            match (&outcome, kind) {
+                (Ok(lines), _) => panic!("{name}: expected a refusal, got {} lines", lines.len()),
+                (
+                    Err(Error::InvalidInput {
+                        violation: paddleocr_rust::InputViolation::Empty,
+                        ..
+                    }),
+                    Kind::Empty,
+                ) => {}
+                (Err(Error::Unsupported { .. }), Kind::Unsupported) => {}
+                (
+                    Err(
+                        Error::InvalidInput { .. }
+                        | Error::ResourceLimit { .. }
+                        | Error::Model { .. },
+                    ),
+                    Kind::Malformed,
+                ) => {}
+                (Err(other), _) => {
+                    panic!("{name}: refused with the wrong kind: {other:?}")
+                }
+            }
+        }
+    }
+
+    /// Rotation preserves content and returns coordinates in the caller's page.
+    ///
+    /// The point is not that rotation works — `DOCORI-001` established that
+    /// against a capture. It is that the **coordinates come back**: a rotated
+    /// page's boxes must be usable against the image the caller supplied, which
+    /// is the property `DocumentRotation::inverse` exists for.
+    #[test]
+    #[ignore = "DOC-E2E-001: needs the document orientation artifact"]
+    fn a_rotated_page_returns_source_coordinates() {
+        let engine = engine();
+        let options =
+            OcrOptions::default().with_document_preprocessing(DocumentPreprocessOptions::default());
+
+        const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
+        let result = match engine.recognize_document(PAGE, &options) {
+            Ok(value) => value,
+            Err(error) => panic!("document: {error}"),
+        };
+        assert_eq!(
+            result.coordinate_space,
+            CoordinateSpace::Source,
+            "without unwarping the coordinates must describe the caller's page"
+        );
+        for line in &result.lines {
+            for point in line.quadrilateral.points() {
+                assert!(
+                    point.x() >= -1.0 && point.x() <= 1281.0,
+                    "x outside the page: {}",
+                    point.x()
+                );
+                assert!(
+                    point.y() >= -1.0 && point.y() <= 721.0,
+                    "y outside the page: {}",
+                    point.y()
+                );
+            }
+        }
+        println!(
+            "document: {} lines in {:?}",
+            result.lines.len(),
+            result.coordinate_space
+        );
+    }
+
+    /// Unwarping through `recognize_png` is refused, not silently mapped.
+    ///
+    /// This is the boundary `docs/UNWARPING_CONTRACT.md` section 3 names: an
+    /// unwarped page's coordinates cannot return to the caller, and a signature
+    /// with nowhere to say so must refuse rather than answer.
+    #[test]
+    #[ignore = "DOC-E2E-001: needs explicitly provisioned models"]
+    fn warping_is_refused_where_it_cannot_be_reported() {
+        let engine = engine();
+        let options = OcrOptions::default()
+            .with_document_preprocessing(DocumentPreprocessOptions::default().with_unwarping(true));
+        const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
+
+        match engine.recognize_png(PAGE, &options) {
+            Err(Error::Unsupported { capability }) => {
+                assert!(capability.contains("unwarping"), "{capability}");
+            }
+            other => panic!("expected an unsupported refusal, got {other:?}"),
+        }
+        // And `detect_png` refuses it for the same reason.
+        match engine.detect_png(PAGE, &options) {
+            Err(Error::Unsupported { .. }) => {}
+            other => panic!("detect_png must refuse unwarping too, got {other:?}"),
+        }
+    }
+}
