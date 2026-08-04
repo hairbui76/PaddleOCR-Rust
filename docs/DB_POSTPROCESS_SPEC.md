@@ -274,6 +274,20 @@ normalise both sides before comparing: deduplicate, drop collinear vertices,
 and rotate to a canonical start. Which of those is acceptable is a contract
 decision, because the emitted order reaches `get_mini_boxes` unchanged.
 
+**Confirmed: normalisation closes it, 16 of 16.** Applying that normalisation
+to both the prototype output and the recorded Clipper output makes every one of
+the eight boxes match at both unclip ratios. The offset arithmetic is therefore
+correct as implemented; only the union's vertex reduction and starting point
+differ.
+
+That makes the contract decision concrete and cheap. Because `get_mini_boxes`
+immediately reduces the path to a rotated rectangle, and `minAreaRect` is
+invariant to vertex order, to duplicate vertices, and to collinear vertices, the
+union's two effects are **not observable** through the rest of the pipeline. A
+Rust implementation may therefore emit the un-unioned path, provided the
+difference is recorded as an intentional deviation and re-checked if any later
+consumer ever reads the polygon directly.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
