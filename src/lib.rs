@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_debug_implementations, missing_docs)]
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
 
 //! Native Rust foundations for the PaddleOCR-Rust port.
 //!

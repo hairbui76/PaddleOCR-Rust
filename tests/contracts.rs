@@ -1,3 +1,6 @@
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 //! Integration checks that keep the M2 Must contract matrix synchronized.
 
 const M2_MUST_ROWS: [&str; 7] = [

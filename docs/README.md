@@ -18,6 +18,8 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [First-slice evidence](FIRST_SLICE_EVIDENCE.md)
 - [Identity and license evidence](IDENTITY_LICENSE_EVIDENCE.md)
 - [Quality profile](QUALITY_PROFILE.md) and [risk register](RISK_REGISTER.md)
+- [LIC-002 licensing audit](LIC_002_AUDIT.md) — every asset resolved, and the
+  two gaps it found
 - [SAFE-001 unsafe and native boundary audit](SAFE_001_AUDIT.md) — what the
   memory-safety argument actually rests on
 - [Gate P6 evidence](GATE_P6_EVIDENCE.md) — the M2 milestone gate, clause by

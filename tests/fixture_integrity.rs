@@ -1,3 +1,6 @@
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 //! Offline integrity checks for the committed fixture corpus.
 
 use std::{

@@ -17,17 +17,37 @@ are included in this repository at the time of this notice.
 Third-party behavioural references
 ----------------------------------
 
-`src/contour.rs` is an independent Rust implementation whose observable
-behaviour was derived by reading OpenCV's
-`modules/imgproc/src/contours.cpp` (`icvFetchContour` and the
-`cvFindNextContour` raster scan). That file carries the Intel License
-Agreement / BSD 3-clause notice:
+Several modules are independent Rust implementations whose observable behaviour
+was derived by reading a third-party implementation. No third-party source is
+copied into this repository. The attributions below are recorded because the
+algorithms, their constants, and their edge-case behaviour were taken from those
+implementations rather than independently invented.
+
+OpenCV (Intel License Agreement / BSD 3-clause):
 
     Copyright (C) 2000, Intel Corporation, all rights reserved.
     Third party copyrights are property of their respective owners.
 
-No OpenCV source is copied into this repository. The attribution is recorded
-because the algorithm, its direction table, its marking rule, and its contour
-ordering were taken from that implementation rather than independently
-invented.
+  src/contour.rs    modules/imgproc/src/contours.cpp
+                    (icvFetchContour and the cvFindNextContour raster scan,
+                    its direction table, marking rule, and contour ordering)
+  src/min_area.rs   minAreaRect and boxPoints, including the corner order and
+                    the non-strict tie comparison
+  src/resize.rs     the INTER_LINEAR fixed-point resize, its coefficient bit
+                    count, and its tap clamping
+  src/crop.rs       warpPerspective with cubic sampling
+  src/geometry.rs   the perspective transform setup and inverse mapping
+  src/score.rs      the box-score edge walk and row fill
+  src/image.rs      the imdecode colour, alpha, and bit-depth conventions
 
+Clipper, via pyclipper (Boost Software License 1.0):
+
+  src/unclip.rs     the polygon offset: JT_ROUND joins, ET_CLOSEDPOLYGON ends,
+                    the miter limit, arc tolerance, and the truncation-toward-
+                    zero coordinate ingest
+
+PaddleOCR (Apache License 2.0) is the behavioural reference for the pipeline
+itself: preprocessing order and constants, DB postprocessing sequence, batching
+policy, CTC decoding, reading order, and result semantics. The pinned baseline
+revision is recorded in ROADMAP.md and in every fixture's metadata. No PaddleOCR
+source is copied into this repository.

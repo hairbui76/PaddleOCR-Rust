@@ -1,3 +1,6 @@
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 //! `E2E-001`: end-to-end behaviour through the public surface only.
 //!
 //! This file may use nothing that is not public. That restriction is the point:

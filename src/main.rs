@@ -1,4 +1,6 @@
 #![forbid(unsafe_code)]
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
 
 //! Command-line entrypoint for the classic OCR path.
 //!

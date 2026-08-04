@@ -1,3 +1,6 @@
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 //! Integration tests for the public foundation API and fixture helpers.
 
 mod support;

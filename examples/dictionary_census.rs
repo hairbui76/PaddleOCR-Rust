@@ -1,3 +1,6 @@
+// Copyright 2026 PaddleOCR-Rust Contributors
+// SPDX-License-Identifier: Apache-2.0
+
 //! Reports which Unicode scripts a recognizer dictionary can spell.
 //!
 //! Roadmap item: `LANG-001`.
