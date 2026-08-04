@@ -199,3 +199,167 @@ mod tests {
         ));
     }
 }
+
+/// One detected text region: a rescaled quadrilateral and its score.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) struct DetectedBox {
+    /// Four corners in source-image coordinates, in `get_mini_boxes` order.
+    pub(crate) corners: Vec<(i32, i32)>,
+    /// The mean probability inside the pre-unclip box.
+    pub(crate) score: f64,
+}
+
+/// Maximum candidate contours considered, matching upstream `max_candidates`.
+const MAX_CANDIDATES: usize = 1_000;
+
+/// Runs the complete classic DB postprocessing sequence.
+///
+/// The order is the upstream one and each step is deliberate:
+/// threshold, contours, minimum-area box, short-side check, **score on the
+/// pre-unclip box**, threshold check, unclip, minimum-area box again, second
+/// short-side check, then rescale. Scoring before unclipping is not an
+/// optimisation; scoring the expanded box would change which regions survive.
+pub(crate) fn classic_db_boxes(
+    probability: &[f32],
+    map_width: u32,
+    map_height: u32,
+    box_threshold: f64,
+    unclip_ratio: f64,
+    dest_width: u32,
+    dest_height: u32,
+) -> Result<Vec<DetectedBox>> {
+    use crate::contour::classic_find_contours;
+    use crate::db::{DetectorProbabilityMap, classic_db_binary_segmentation};
+    use crate::min_area::classic_min_area_rect;
+    use crate::score::classic_box_score;
+    use crate::types::ImageDimensions;
+    use crate::unclip::{classic_unclip, classic_unclip_distance};
+
+    let dimensions = ImageDimensions::new(map_width, map_height)?;
+    let map = DetectorProbabilityMap::new(dimensions, probability)?;
+    let bitmap = classic_db_binary_segmentation(map)?;
+    let contours = classic_find_contours(&bitmap)?;
+
+    let mut detected = Vec::new();
+    for contour in contours.iter().take(MAX_CANDIDATES) {
+        let points: Vec<(f64, f64)> = contour
+            .points()
+            .iter()
+            .map(|(x, y)| (f64::from(*x), f64::from(*y)))
+            .collect();
+        let rect = classic_min_area_rect(&points)?;
+        if !passes_initial_short_side(rect.short_side()) {
+            continue;
+        }
+
+        let corners = rect.ordered_box();
+        let score = classic_box_score(probability, map_width, map_height, &corners)?;
+        if !passes_score(box_threshold, score) {
+            continue;
+        }
+
+        let distance = classic_unclip_distance(&corners, unclip_ratio)?;
+        let expanded = classic_unclip(&corners, distance)?;
+        let expanded: Vec<(f64, f64)> = expanded
+            .iter()
+            .map(|(x, y)| (*x as f64, *y as f64))
+            .collect();
+        let rect = classic_min_area_rect(&expanded)?;
+        if !passes_unclipped_short_side(rect.short_side()) {
+            continue;
+        }
+
+        let rescaled = rescale_box(
+            &rect.ordered_box(),
+            map_width,
+            map_height,
+            dest_width,
+            dest_height,
+        )?;
+        detected.push(DetectedBox {
+            corners: rescaled,
+            score,
+        });
+    }
+    Ok(detected)
+}
+
+#[cfg(test)]
+mod pipeline_tests {
+    use super::*;
+
+    /// A probability map with one solid block produces one detected box.
+    #[test]
+    fn a_single_region_produces_one_rescaled_box() {
+        let (width, height) = (20_u32, 16_u32);
+        let mut map = vec![0.0_f32; (width * height) as usize];
+        for y in 3..12 {
+            for x in 4..16 {
+                map[(y * width + x) as usize] = 0.9;
+            }
+        }
+
+        let boxes = match classic_db_boxes(&map, width, height, 0.5, 1.5, 40, 32) {
+            Ok(boxes) => boxes,
+            Err(error) => panic!("expected a detected box, got {error}"),
+        };
+        assert_eq!(boxes.len(), 1, "one solid region must yield one box");
+        assert_eq!(boxes[0].corners.len(), 4);
+        assert!(
+            boxes[0].score > 0.8,
+            "a solid 0.9 region must score high, got {}",
+            boxes[0].score
+        );
+        // The destination is exactly twice the map, so every corner doubles.
+        for (x, y) in &boxes[0].corners {
+            assert!((0..=40).contains(x), "x {x} outside the destination");
+            assert!((0..=32).contains(y), "y {y} outside the destination");
+        }
+    }
+
+    #[test]
+    fn an_empty_map_produces_no_boxes() {
+        let map = vec![0.0_f32; 8 * 8];
+        let boxes = match classic_db_boxes(&map, 8, 8, 0.5, 1.5, 8, 8) {
+            Ok(boxes) => boxes,
+            Err(error) => panic!("expected an empty result, got {error}"),
+        };
+        assert!(boxes.is_empty());
+    }
+
+    /// A region below the score threshold is dropped.
+    #[test]
+    fn a_low_scoring_region_is_filtered_out() {
+        let (width, height) = (20_u32, 16_u32);
+        let mut map = vec![0.0_f32; (width * height) as usize];
+        for y in 3..12 {
+            for x in 4..16 {
+                // Above the 0.3 segmentation threshold but below box_thresh.
+                map[(y * width + x) as usize] = 0.35;
+            }
+        }
+        let boxes = match classic_db_boxes(&map, width, height, 0.6, 1.5, 20, 16) {
+            Ok(boxes) => boxes,
+            Err(error) => panic!("expected an empty result, got {error}"),
+        };
+        assert!(boxes.is_empty(), "a 0.35 region must not survive 0.6");
+    }
+
+    /// A region too small in its short side never reaches scoring.
+    #[test]
+    fn a_tiny_region_is_dropped_by_the_short_side_check() {
+        let (width, height) = (12_u32, 12_u32);
+        let mut map = vec![0.0_f32; (width * height) as usize];
+        // A 2-pixel-tall stripe: its short side is below min_size.
+        for y in 5..7 {
+            for x in 2..10 {
+                map[(y * width + x) as usize] = 0.95;
+            }
+        }
+        let boxes = match classic_db_boxes(&map, width, height, 0.5, 1.5, 12, 12) {
+            Ok(boxes) => boxes,
+            Err(error) => panic!("expected an empty result, got {error}"),
+        };
+        assert!(boxes.is_empty(), "a 2-pixel short side must be rejected");
+    }
+}
