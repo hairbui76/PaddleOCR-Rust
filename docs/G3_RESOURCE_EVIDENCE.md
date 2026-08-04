@@ -185,9 +185,10 @@ explicitly supplied path.
 - **No concurrency measurement.** The budgets are single-threaded by
   construction, and `ort`'s session is not concurrently usable in this adapter.
   Throughput under parallel requests is unmeasured.
-- **No cancellation or timeout policy.** `RT-005` still owes an explicit
-  thread/cancellation policy; this gate measured resources, not the ability to
-  bound a runaway request.
+- **The time policy is not a hard bound.** `OCR-003` since added a wall-clock
+  budget and a cancellation flag, checked at stage boundaries, so overshoot is
+  bounded by one backend call rather than being immediate. Nothing here measured
+  that policy; it bounds a runaway request, it does not tighten these figures.
 - **Not a supply-chain result.** Gate `G2` — hermetic rebuild and SBOM for the
   ONNX Runtime library — remains open and is independent of everything here.
 - **Cold latency is dominated by session creation, not by OCR.** Cold `4.2 s`

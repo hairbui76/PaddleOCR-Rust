@@ -74,6 +74,25 @@ streaming it **before** the model is loaded. A mismatch fails with a typed
 error and the runtime never sees the file. Omitting them skips the check, which
 is a choice you make rather than a silent default.
 
+### Bounding a run
+
+`--time-budget-ms <n>` gives the whole request a wall-clock budget. The Rust API
+exposes the same policy plus a cancellation flag through `OcrOptions::control`.
+
+A run is abandoned only at a stage boundary. A backend call, once started, runs
+to completion, so a one-millisecond budget on a real page does not return in one
+millisecond — it returns after the detector finishes:
+
+```
+paddleocr-rust: time budget exhausted before crop
+```
+
+Overshoot is bounded by one backend call: one detector run, or one recognition
+batch of at most six crops. A caller needing a hard wall-clock bound must
+enforce it out of process. Cancelling or running out of time is a typed error
+and never a partial line list, because nothing in the result document marks a
+result as truncated.
+
 ### Exit codes
 
 | Code | Meaning |

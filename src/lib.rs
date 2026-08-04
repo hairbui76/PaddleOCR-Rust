@@ -32,6 +32,9 @@ mod backend;
 mod backend_ort;
 #[allow(dead_code)]
 mod contour;
+
+/// Cancellation and the wall-clock time policy.
+pub mod control;
 #[allow(dead_code)]
 mod crop;
 #[allow(dead_code)]

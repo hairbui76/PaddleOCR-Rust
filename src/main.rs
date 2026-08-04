@@ -12,7 +12,7 @@ use std::process::ExitCode;
 fn usage() -> &'static str {
     "usage: paddleocr-rust --ort-dylib <libonnxruntime.so> \\\n\
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
-     \x20                 --dictionary <dict.txt> [--json] \\\n\
+     \x20                 --dictionary <dict.txt> [--json] [--time-budget-ms <n>] \\\n\
      \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
@@ -60,6 +60,7 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut dictionary = None;
     let mut image = None;
     let mut json = false;
+    let mut time_budget_ms = None;
     let mut detector_sha256 = None;
     let mut recognizer_sha256 = None;
 
@@ -98,6 +99,10 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
                 take(&mut recognizer_sha256)?;
                 index += 2;
             }
+            "--time-budget-ms" => {
+                take(&mut time_budget_ms)?;
+                index += 2;
+            }
             "--json" => {
                 json = true;
                 index += 1;
@@ -121,6 +126,17 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             _ => return Err(format!("missing required arguments\n\n{}", usage())),
         };
 
+    // The budget is checked at stage boundaries, so it bounds a run rather than
+    // interrupting one; see the `control` module for what that guarantees.
+    let mut options = paddleocr_rust::api::OcrOptions::default();
+    if let Some(value) = time_budget_ms {
+        let milliseconds: u64 = value
+            .parse()
+            .map_err(|_| format!("--time-budget-ms needs a whole number, got {value:?}"))?;
+        options.control = paddleocr_rust::control::RunControl::unbounded()
+            .with_time_budget(std::time::Duration::from_millis(milliseconds));
+    }
+
     let bytes = std::fs::read(&image).map_err(|error| format!("cannot read the image: {error}"))?;
     let (width, height) =
         paddleocr_rust::api::decode_png(&bytes).map_err(|error| format!("{error}"))?;
@@ -143,7 +159,7 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
         },
         &parsed,
         &bytes,
-        paddleocr_rust::api::OcrOptions::default(),
+        options,
     )
     .map_err(|error| format!("{error}"))?;
 

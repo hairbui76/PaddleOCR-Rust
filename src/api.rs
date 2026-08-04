@@ -20,6 +20,7 @@
 //!   `docs/ADR_RT004_RUNTIME_SELECTION.md`, and until it passes this API must
 //!   not be described as PaddleOCR-compatible.
 
+use crate::control::RunControl;
 use crate::dictionary::CtcDictionary;
 use crate::error::{Error, InputViolation, Result};
 use crate::types::{EncodedImage, Quadrilateral};
@@ -35,8 +36,8 @@ pub struct TextLine {
     pub score: f64,
 }
 
-/// Thresholds applied by the classic pipeline.
-#[derive(Clone, Copy, Debug)]
+/// Thresholds and run control applied by the classic pipeline.
+#[derive(Clone, Debug)]
 pub struct OcrOptions {
     /// Minimum mean probability for a detected region.
     pub box_threshold: f64,
@@ -44,6 +45,13 @@ pub struct OcrOptions {
     pub unclip_ratio: f64,
     /// Minimum recognition confidence; a score exactly equal is retained.
     pub drop_score: f64,
+    /// How the caller may abandon a run in progress.
+    ///
+    /// The default imposes no budget and no cancellation. See
+    /// [`crate::control`] for what "cancellation" guarantees here: a run stops
+    /// at a stage boundary, so overshoot is bounded by one backend call rather
+    /// than being immediate.
+    pub control: RunControl,
 }
 
 impl Default for OcrOptions {
@@ -53,6 +61,7 @@ impl Default for OcrOptions {
             box_threshold: 0.6,
             unclip_ratio: 1.5,
             drop_score: 0.5,
+            control: RunControl::unbounded(),
         }
     }
 }
@@ -277,6 +286,7 @@ pub fn recognize_png(
             unclip_ratio: options.unclip_ratio,
             drop_score: options.drop_score,
         },
+        &options.control.begin(),
     )?;
 
     Ok(lines

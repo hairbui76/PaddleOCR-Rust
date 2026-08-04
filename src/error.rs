@@ -108,6 +108,11 @@ pub enum Error {
     },
     /// Work was cancelled before a result was produced.
     Cancelled,
+    /// A wall-clock budget was exhausted before a result was produced.
+    TimedOut {
+        /// The stage the run stopped before entering.
+        stage: &'static str,
+    },
 }
 
 impl fmt::Display for Error {
@@ -133,6 +138,9 @@ impl fmt::Display for Error {
                 write!(formatter, "unsupported capability: {capability}")
             }
             Self::Cancelled => formatter.write_str("operation cancelled"),
+            Self::TimedOut { stage } => {
+                write!(formatter, "time budget exhausted before {stage}")
+            }
         }
     }
 }

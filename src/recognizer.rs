@@ -22,6 +22,7 @@
 //! caller's lines.
 
 use crate::backend::{BackendTensor, InferenceBackend, ModelContract, run_validated};
+use crate::control::RunSchedule;
 use crate::crop::InterleavedImage;
 use crate::ctc::{CtcScoreMatrix, classic_ctc_greedy_indices};
 use crate::dictionary::CtcDictionary;
@@ -46,6 +47,7 @@ pub(crate) fn recognize(
     contract: &ModelContract,
     dictionary: &CtcDictionary,
     crops: &[&InterleavedImage],
+    schedule: &RunSchedule<'_>,
 ) -> Result<Vec<RecognizedLine>> {
     if crops.is_empty() {
         return Ok(Vec::new());
@@ -62,6 +64,10 @@ pub(crate) fn recognize(
 
     let mut decoded = Vec::with_capacity(crops.len());
     for plan in &plans {
+        // The per-batch boundary is where a cancelled or timed-out run actually
+        // stops: everything after this point in the iteration is one model call
+        // that cannot be interrupted.
+        schedule.check("recognizer.batch")?;
         // Resize in aspect-sorted order so the batch rows match the plan.
         let mut resized = Vec::with_capacity(plan.crops.len());
         for entry in &plan.crops {
@@ -227,6 +233,7 @@ mod tests {
             &contract(3, dictionary.class_count()),
             &dictionary,
             &crops,
+            &crate::control::unbounded_schedule(),
         ) {
             Ok(lines) => lines,
             Err(error) => panic!("expected recognized lines, got {error}"),
@@ -253,6 +260,7 @@ mod tests {
             &contract(1, dictionary.class_count()),
             &dictionary,
             &[],
+            &crate::control::unbounded_schedule(),
         ) {
             Ok(lines) => lines,
             Err(error) => panic!("expected an empty result, got {error}"),
@@ -275,6 +283,7 @@ mod tests {
             &contract(1, dictionary.class_count() - 1),
             &dictionary,
             &[&single],
+            &crate::control::unbounded_schedule(),
         );
         assert!(
             outcome.is_err(),
@@ -367,6 +376,7 @@ mod tests {
             &free_batch_contract(dictionary.class_count()),
             dictionary,
             crops,
+            &crate::control::unbounded_schedule(),
         ) {
             Ok(lines) => lines,
             Err(error) => panic!("expected recognized lines, got {error}"),
@@ -498,6 +508,7 @@ mod tests {
             &free_batch_contract(dictionary.class_count()),
             &dictionary,
             &[&extreme],
+            &crate::control::unbounded_schedule(),
         );
         assert!(
             matches!(outcome, Err(Error::ResourceLimit { .. })),
@@ -517,6 +528,7 @@ mod tests {
             &free_batch_contract(dictionary.class_count()),
             &dictionary,
             &crops,
+            &crate::control::unbounded_schedule(),
         );
         assert!(
             matches!(outcome, Err(Error::ResourceLimit { .. })),
@@ -544,6 +556,7 @@ mod tests {
             &free_batch_contract(dictionary.class_count()),
             &dictionary,
             &[&single],
+            &crate::control::unbounded_schedule(),
         );
         assert!(outcome.is_err(), "an extra output row must not be accepted");
     }

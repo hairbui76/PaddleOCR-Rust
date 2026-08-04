@@ -19,6 +19,7 @@
 //! which rotates a crop whose height/width ratio reaches 1.5.
 
 use crate::backend::{InferenceBackend, ModelContract};
+use crate::control::RunSchedule;
 use crate::crop::{InterleavedImage, classic_perspective_crop};
 use crate::detector::detect_boxes;
 use crate::dictionary::CtcDictionary;
@@ -61,10 +62,23 @@ pub(crate) struct ClassicThresholds {
 }
 
 /// Runs the complete classic pipeline over one decoded BGR image.
+///
+/// # Failure semantics
+///
+/// This path fails whole-input. Any error from any stage — a rejected tensor, a
+/// backend failure, an exhausted time budget, a cancellation — abandons the
+/// entire request and returns that error. No partial line list is ever returned.
+///
+/// That is a deliberate choice, not a limitation of the implementation. The
+/// result document has no field that marks a result as incomplete, so a caller
+/// receiving four lines from a nine-line page could not tell it apart from a
+/// four-line page. Per-item recovery would have to be visible in the output type
+/// to be safe, and that is an `API-001` decision this item does not preempt.
 pub(crate) fn run_classic_ocr(
     models: &ClassicModels<'_>,
     image: &InterleavedImage,
     thresholds: ClassicThresholds,
+    schedule: &RunSchedule<'_>,
 ) -> Result<Vec<OcrLine>> {
     let (detector, detector_contract) = models.detector;
     let (recognizer, recognizer_contract) = models.recognizer;
@@ -75,6 +89,7 @@ pub(crate) fn run_classic_ocr(
         drop_score,
     } = thresholds;
 
+    schedule.check("detector")?;
     let detected = detect_boxes(
         detector,
         detector_contract,
@@ -97,13 +112,22 @@ pub(crate) fn run_classic_ocr(
     // Establish reading order once; every later step preserves it.
     classic_sort_quadrilaterals(&mut quadrilaterals);
 
+    // Cropping is bounded by the region count, which the detector already caps,
+    // but it is the last cheap place to stop before recognition dominates.
+    schedule.check("crop")?;
     let mut crops = Vec::with_capacity(quadrilaterals.len());
     for quadrilateral in &quadrilaterals {
         let plan = classic_perspective_crop_plan(*quadrilateral)?;
         crops.push(classic_perspective_crop(image, plan)?);
     }
     let borrowed: Vec<&InterleavedImage> = crops.iter().collect();
-    let recognized = recognize(recognizer, recognizer_contract, dictionary, &borrowed)?;
+    let recognized = recognize(
+        recognizer,
+        recognizer_contract,
+        dictionary,
+        &borrowed,
+        schedule,
+    )?;
 
     let paired: Vec<(OcrLine, f64)> = quadrilaterals
         .into_iter()
@@ -211,6 +235,17 @@ mod tests {
 
     /// Runs the pipeline over one centred region with the given confidence.
     fn run_with_confidence(confidence: f32) -> Vec<OcrLine> {
+        match run_with_schedule(confidence, &crate::control::unbounded_schedule()) {
+            Ok(lines) => lines,
+            Err(error) => panic!("pipeline failed: {error}"),
+        }
+    }
+
+    /// Runs the same pipeline under a caller-supplied schedule.
+    fn run_with_schedule(
+        confidence: f32,
+        schedule: &crate::control::RunSchedule<'_>,
+    ) -> Result<Vec<OcrLine>> {
         let source = image(64, 48);
         let plan = crate::geometry::classic_detector_resize_plan(source.dimensions());
         let resized = plan.resized();
@@ -253,7 +288,7 @@ mod tests {
             vec![AxisExtent::Fixed(1), free(), AxisExtent::Fixed(classes)],
         );
 
-        match run_classic_ocr(
+        run_classic_ocr(
             &ClassicModels {
                 detector: (&detector, &detector_contract),
                 recognizer: (&recognizer, &recognizer_contract),
@@ -265,10 +300,52 @@ mod tests {
                 unclip_ratio: 1.5,
                 drop_score: 0.5,
             },
-        ) {
+            schedule,
+        )
+    }
+
+    /// A cancelled run returns a typed error and no lines at all.
+    ///
+    /// The point is the *and no lines*: a partial result would be
+    /// indistinguishable from a complete one, since nothing in the result
+    /// document marks it as truncated.
+    #[test]
+    fn a_cancelled_run_returns_no_partial_result() {
+        use std::sync::Arc;
+        use std::sync::atomic::AtomicBool;
+
+        let control = crate::control::RunControl::unbounded()
+            .with_cancel_flag(Arc::new(AtomicBool::new(true)));
+        let outcome = run_with_schedule(0.9, &control.begin());
+        assert!(
+            matches!(outcome, Err(crate::error::Error::Cancelled)),
+            "expected a cancellation, got {outcome:?}"
+        );
+    }
+
+    /// An exhausted budget stops at the first stage boundary, before the
+    /// detector ever runs.
+    #[test]
+    fn an_exhausted_budget_stops_before_the_detector() {
+        let control =
+            crate::control::RunControl::unbounded().with_time_budget(std::time::Duration::ZERO);
+        match run_with_schedule(0.9, &control.begin()) {
+            Err(crate::error::Error::TimedOut { stage }) => {
+                assert_eq!(stage, "detector", "the first checkpoint is the detector");
+            }
+            other => panic!("expected a timeout, got {other:?}"),
+        }
+    }
+
+    /// An unbounded control is exactly the previous behaviour.
+    #[test]
+    fn an_unbounded_control_changes_nothing() {
+        let control = crate::control::RunControl::unbounded();
+        let with_control = match run_with_schedule(0.9, &control.begin()) {
             Ok(lines) => lines,
             Err(error) => panic!("pipeline failed: {error}"),
-        }
+        };
+        assert_eq!(with_control, run_with_confidence(0.9));
     }
 
     #[test]
@@ -527,6 +604,7 @@ mod g1 {
                     &provisioned.models(),
                     &image,
                     super::gate_support::THRESHOLDS,
+                    &crate::control::unbounded_schedule(),
                 ),
                 "run the pipeline",
             );
@@ -634,8 +712,9 @@ mod g3 {
 
         // One discarded run performs the runtime's own first-call allocation and
         // any lazy kernel setup. Counting it would report cold cost as warm.
+        let schedule = crate::control::unbounded_schedule();
         let warmup = must(
-            run_classic_ocr(&models, &decode(), THRESHOLDS),
+            run_classic_ocr(&models, &decode(), THRESHOLDS, &schedule),
             "warmup run",
         );
         println!("[g3] warmup detected {} lines", warmup.len());
@@ -645,7 +724,10 @@ mod g3 {
         for index in 0..RUNS {
             let image = decode();
             let started = Instant::now();
-            let lines = must(run_classic_ocr(&models, &image, THRESHOLDS), "measured run");
+            let lines = must(
+                run_classic_ocr(&models, &image, THRESHOLDS, &schedule),
+                "measured run",
+            );
             let elapsed = started.elapsed().as_secs_f64();
             println!("[g3] run {index}: {elapsed:.3} s, {} lines", lines.len());
             samples.push(elapsed);
