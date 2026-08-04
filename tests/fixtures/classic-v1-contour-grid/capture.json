@@ -1,0 +1,1094 @@
+{
+  "algorithm": {
+    "call": "cv2.findContours((bitmap * 255).astype(uint8), RETR_LIST, CHAIN_APPROX_SIMPLE)",
+    "order": "recorded in returned order; upstream truncates by index to max_candidates"
+  },
+  "cases": [
+    {
+      "bitmap": {
+        "base64": "AAAAAAEAAAAA",
+        "rows": [
+          "000",
+          "010",
+          "000"
+        ],
+        "sha256": "cdb032de4c6cb506da0606e0934e69ad1ae64773ffaa76f9d6e28192067c43cf",
+        "shape": [
+          3,
+          3
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "description": "One isolated foreground pixel.",
+      "fixture_id": "single-pixel"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAEBAQEAAAEBAQEAAAEBAQEAAAAAAAAA",
+        "rows": [
+          "000000",
+          "011110",
+          "011110",
+          "011110",
+          "000000"
+        ],
+        "sha256": "045b4f7bb56082c1aa577c99e9066f2d06ac4a06c6efee226c8c0e26f6e71ebf",
+        "shape": [
+          5,
+          6
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            4,
+            1
+          ]
+        ]
+      ],
+      "description": "One solid rectangle away from the border.",
+      "fixture_id": "single-rect"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAABAQABAQAAAQEAAQEAAAAAAAAAAA==",
+        "rows": [
+          "0000000",
+          "0110110",
+          "0110110",
+          "0000000"
+        ],
+        "sha256": "a3de11af028ebd8d385dbbff87a79cc9745cb37350e699d66f9707c733a6f530",
+        "shape": [
+          4,
+          7
+        ]
+      },
+      "contour_count": 2,
+      "contours": [
+        [
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            1
+          ]
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "description": "Two separate blobs; contour order is part of the contract.",
+      "fixture_id": "two-blobs"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAQEAAAAAAQEAAAAAAAA=",
+        "rows": [
+          "00000",
+          "01100",
+          "00110",
+          "00000"
+        ],
+        "sha256": "233e760a3a7e118f83464d2d0260656c1af302cd74c765b3c2bda75b9cf353d2",
+        "shape": [
+          4,
+          5
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "description": "Two blobs touching only diagonally.",
+      "fixture_id": "diagonal-touch"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAABAQEBAQAAAQAAAAEAAAEAAAABAAABAQEBAQAAAAAAAAAA",
+        "rows": [
+          "0000000",
+          "0111110",
+          "0100010",
+          "0100010",
+          "0111110",
+          "0000000"
+        ],
+        "sha256": "8b4a6ef8e2984ae334cf8ed30037674f749347e9e68c7a39791c4cfcdb09c60f",
+        "shape": [
+          6,
+          7
+        ]
+      },
+      "contour_count": 2,
+      "contours": [
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            5,
+            1
+          ]
+        ]
+      ],
+      "description": "A hollow ring, which yields an outer and an inner contour.",
+      "fixture_id": "ring"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAAAAAEBAQEBAQEAAAEAAAAAAAEAAAEAAQEBAAEAAAEAAQABAAEAAAEAAQEBAAEAAAEAAAAAAAEAAAEBAQEBAQEAAAAAAAAAAAAA",
+        "rows": [
+          "000000000",
+          "011111110",
+          "010000010",
+          "010111010",
+          "010101010",
+          "010111010",
+          "010000010",
+          "011111110",
+          "000000000"
+        ],
+        "sha256": "f2c08a7b4f6a161c2a4e7aeb22baa9f0ae5a7817071bb2b5032bdf02f8f061dc",
+        "shape": [
+          9,
+          9
+        ]
+      },
+      "contour_count": 4,
+      "contours": [
+        [
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            4
+          ],
+          [
+            4,
+            5
+          ]
+        ],
+        [
+          [
+            3,
+            3
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            5,
+            5
+          ],
+          [
+            5,
+            3
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            6,
+            1
+          ],
+          [
+            7,
+            2
+          ],
+          [
+            7,
+            6
+          ],
+          [
+            6,
+            7
+          ],
+          [
+            2,
+            7
+          ],
+          [
+            1,
+            6
+          ]
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            7
+          ],
+          [
+            7,
+            7
+          ],
+          [
+            7,
+            1
+          ]
+        ]
+      ],
+      "description": "A ring inside a ring.",
+      "fixture_id": "nested-rings"
+    },
+    {
+      "bitmap": {
+        "base64": "AQEBAQEAAAEBAAABAQEBAQ==",
+        "rows": [
+          "1111",
+          "1001",
+          "1001",
+          "1111"
+        ],
+        "sha256": "9bf80f2eee4d59cea2219e01c8b667fb941cec91eb3210be9f794bdd12690200",
+        "shape": [
+          4,
+          4
+        ]
+      },
+      "contour_count": 2,
+      "contours": [
+        [
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0,
+            2
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            3,
+            0
+          ]
+        ]
+      ],
+      "description": "A blob flush against every image border.",
+      "fixture_id": "border-touching"
+    },
+    {
+      "bitmap": {
+        "base64": "AQEBAQEBAQEB",
+        "rows": [
+          "111",
+          "111",
+          "111"
+        ],
+        "sha256": "040a5a009f9b9d5e4771742174142e74fa2d3e0aaa3df5717f01ade338d75d0e",
+        "shape": [
+          3,
+          3
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            0,
+            0
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            0
+          ]
+        ]
+      ],
+      "description": "A fully foreground bitmap.",
+      "fixture_id": "full"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAQEBAAAAAAAA",
+        "rows": [
+          "00000",
+          "01110",
+          "00000"
+        ],
+        "sha256": "634e01d34de1955c5f887c2d7f3861c1200fd029fd93099b32721b67c28c0822",
+        "shape": [
+          3,
+          5
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            3,
+            1
+          ]
+        ]
+      ],
+      "description": "A one-pixel-tall horizontal run.",
+      "fixture_id": "horizontal-line"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAEAAAEAAAEAAAAA",
+        "rows": [
+          "000",
+          "010",
+          "010",
+          "010",
+          "000"
+        ],
+        "sha256": "9772555913df41f2eaf14561b1ce9533c4785005fd44bca24caa41c91eee9ffe",
+        "shape": [
+          5,
+          3
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            3
+          ]
+        ]
+      ],
+      "description": "A one-pixel-wide vertical run.",
+      "fixture_id": "vertical-line"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAEBAAAAAAEBAAAAAAEBAQEAAAEBAQEAAAAAAAAA",
+        "rows": [
+          "000000",
+          "011000",
+          "011000",
+          "011110",
+          "011110",
+          "000000"
+        ],
+        "sha256": "84d29aea1e63b56b0632d6cab09d00d764f5253baf49949278f39f08cd79f6c6",
+        "shape": [
+          6,
+          6
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            4
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "description": "A concave L-shaped blob.",
+      "fixture_id": "l-shape"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAABAQAAAAAAAQEBAAAAAAABAQEAAAAAAAEBAAAAAAAAAAAA",
+        "rows": [
+          "0000000",
+          "0110000",
+          "0111000",
+          "0011100",
+          "0001100",
+          "0000000"
+        ],
+        "sha256": "933a776e8048019ac6bcd5c2be9fd02fc34b9d04b5fe3723bd07de8ffa4de2b2",
+        "shape": [
+          6,
+          7
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "description": "A stepped diagonal blob.",
+      "fixture_id": "staircase"
+    },
+    {
+      "bitmap": {
+        "base64": "AQABAAEAAQABAAEAAQABAAEAAQABAAEAAQ==",
+        "rows": [
+          "10101",
+          "01010",
+          "10101",
+          "01010",
+          "10101"
+        ],
+        "sha256": "2654dc4cbf349c13b6c6e183398d9b161a65c749e70c8179fd5eb9bcf306995e",
+        "shape": [
+          5,
+          5
+        ]
+      },
+      "contour_count": 5,
+      "contours": [
+        [
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            2,
+            4
+          ]
+        ],
+        [
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            3,
+            3
+          ]
+        ],
+        [
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1,
+            3
+          ]
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            2,
+            2
+          ]
+        ],
+        [
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0,
+            4
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            4
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            4
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            1,
+            1
+          ]
+        ]
+      ],
+      "description": "Alternating pixels: many single-pixel contours.",
+      "fixture_id": "checkerboard"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAAAAAAA",
+        "rows": [
+          "0000",
+          "0000",
+          "0000"
+        ],
+        "sha256": "15ec7bf0b50732b49f8228e07d24365338f9e3ab994b00af08e5a3bffe55fd8b",
+        "shape": [
+          3,
+          4
+        ]
+      },
+      "contour_count": 0,
+      "contours": [],
+      "description": "No foreground at all.",
+      "fixture_id": "empty"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAAAAAEAAAAAAAABAAAAAAEBAQEBAAAAAAEAAAAAAAABAAAAAAAAAAAAAA==",
+        "rows": [
+          "0000000",
+          "0001000",
+          "0001000",
+          "0111110",
+          "0001000",
+          "0001000",
+          "0000000"
+        ],
+        "sha256": "10515c5b00747fb882a47dca5f7fd2b63a04856353aaa383a7156153b868ec35",
+        "shape": [
+          7,
+          7
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            3,
+            1
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            3,
+            5
+          ],
+          [
+            3,
+            4
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            3,
+            2
+          ]
+        ]
+      ],
+      "description": "A plus sign with four concave corners.",
+      "fixture_id": "plus"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAABAQABAQAAAQEAAQEAAAEBAQEBAAAAAAAAAAA=",
+        "rows": [
+          "0000000",
+          "0110110",
+          "0110110",
+          "0111110",
+          "0000000"
+        ],
+        "sha256": "53bdc3acd3f9b0aa5f822fd5bb832232ce338d2c81272b40f824d06114fb0c93",
+        "shape": [
+          5,
+          7
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            5,
+            3
+          ],
+          [
+            5,
+            1
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            3,
+            3
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      ],
+      "description": "A U-shaped blob whose opening reaches the border.",
+      "fixture_id": "u-shape"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAEAAAAAAAABAAAAAAAAAQAAAAAAAAEAAAAAAAAA",
+        "rows": [
+          "000000",
+          "010000",
+          "001000",
+          "000100",
+          "000010",
+          "000000"
+        ],
+        "sha256": "d57e908e658f70518b6b2885a43d486224e36b32779a1773e8e5c34474f97e50",
+        "shape": [
+          6,
+          6
+        ]
+      },
+      "contour_count": 1,
+      "contours": [
+        [
+          [
+            1,
+            1
+          ],
+          [
+            4,
+            4
+          ]
+        ]
+      ],
+      "description": "A one-pixel diagonal stroke.",
+      "fixture_id": "thin-diagonal"
+    },
+    {
+      "bitmap": {
+        "base64": "AAAAAAAAAAAAAAEBAQEBAQEAAAEAAQABAAEAAAEBAQEBAQEAAAAAAAAAAAAA",
+        "rows": [
+          "000000000",
+          "011111110",
+          "010101010",
+          "011111110",
+          "000000000"
+        ],
+        "sha256": "b2d67fee820f4fa465dcc7c8ae6886ddeda4547bc627381687b1733d3ddfb327",
+        "shape": [
+          5,
+          9
+        ]
+      },
+      "contour_count": 4,
+      "contours": [
+        [
+          [
+            5,
+            2
+          ],
+          [
+            6,
+            1
+          ],
+          [
+            7,
+            2
+          ],
+          [
+            6,
+            3
+          ]
+        ],
+        [
+          [
+            3,
+            2
+          ],
+          [
+            4,
+            1
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            4,
+            3
+          ]
+        ],
+        [
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            2,
+            3
+          ]
+        ],
+        [
+          [
+            1,
+            1
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            7,
+            3
+          ],
+          [
+            7,
+            1
+          ]
+        ]
+      ],
+      "description": "One blob containing two separate holes.",
+      "fixture_id": "two-holes"
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "opencv_optimized": false,
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "purpose": "developer-only OpenCV findContours oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/contour-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:boxes_from_bitmap"
+    ]
+  }
+}

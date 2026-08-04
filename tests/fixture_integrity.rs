@@ -176,6 +176,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-crop-scalar-grid".to_owned(),
         CROP_CHANNEL_GRID_FIXTURE_ID.to_owned(),
         RESIZE_LINEAR_GRID_FIXTURE_ID.to_owned(),
+        "classic-v1-contour-grid".to_owned(),
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),

@@ -1,0 +1,49 @@
+{
+  "fixture_id": "classic-v1-contour-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/bitmap",
+    "sha256": "387a63ea90176cf10ed3967fefd8c4ac20c7030063aaa156c3c22beec545935f",
+    "sha256_scope": "Concatenation of the eighteen raw row-major zero/one bitmap byte arrays in capture document order.",
+    "provenance": "Self-authored binary bitmaps written as row strings in tools/capture_contour_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:boxes_from_bitmap"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_contour_oracle.py",
+    "suite": "contour-grid",
+    "capture_sha256": "5db51575a37b04535834c8a4ca9afe1aee56208cc530574f2a4f58ee8f283ac9",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+      "opencv_optimized": false
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/contours",
+    "schema_version": "paddleocr-rust/contour-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "7d7e5ec973eec27ddfd8d015ab9268444e742b7a5c6530a20121a66e326cf4e4",
+    "sha256_scope": "Concatenation of each case's contour list serialised as compact JSON, in capture document order."
+  },
+  "tests": [
+    "contour::tests::classic_find_contours_executes_every_captured_opencv_case"
+  ],
+  "limitations": [
+    "src/contour.rs reproduces every recorded case exactly, including contour order, in the recorded scalar OpenCV 5.0.0 environment.",
+    "It covers cv2.findContours with RETR_LIST and CHAIN_APPROX_SIMPLE on eighteen self-authored bitmaps in the recorded scalar OpenCV 5.0.0 environment, and nothing else.",
+    "Contour order is recorded because upstream truncates by index to max_candidates; a later implementation must reproduce the order, not only the point sets.",
+    "It does not establish minimum-area boxes, unclipping, scoring, rescaling, detector output, model behaviour, or OCR compatibility."
+  ]
+}

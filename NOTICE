@@ -13,3 +13,21 @@ References to PaddleOCR and PaddlePaddle identify the read-only upstream
 behavioral reference used for compatibility research. No PaddleOCR source,
 model weights, datasets, fonts, dictionaries, or third-party runtime artifacts
 are included in this repository at the time of this notice.
+
+Third-party behavioural references
+----------------------------------
+
+`src/contour.rs` is an independent Rust implementation whose observable
+behaviour was derived by reading OpenCV's
+`modules/imgproc/src/contours.cpp` (`icvFetchContour` and the
+`cvFindNextContour` raster scan). That file carries the Intel License
+Agreement / BSD 3-clause notice:
+
+    Copyright (C) 2000, Intel Corporation, all rights reserved.
+    Third party copyrights are property of their respective owners.
+
+No OpenCV source is copied into this repository. The attribution is recorded
+because the algorithm, its direction table, its marking rule, and its contour
+ordering were taken from that implementation rather than independently
+invented.
+

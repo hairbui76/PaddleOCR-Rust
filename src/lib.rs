@@ -25,6 +25,8 @@ mod backend;
 #[allow(dead_code)]
 mod backend_ort;
 #[allow(dead_code)]
+mod contour;
+#[allow(dead_code)]
 mod crop;
 #[allow(dead_code)]
 mod ctc;
