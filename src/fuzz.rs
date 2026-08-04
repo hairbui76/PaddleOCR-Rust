@@ -45,7 +45,114 @@ pub fn exercise(input: &[u8]) {
     exercise_db_kernels(&mut reader);
     exercise_ctc_kernel(&mut reader);
     exercise_geometry_and_crop_kernels(&mut reader);
+    exercise_structured_kernels(&mut reader);
     exercise_parsers(input);
+}
+
+/// Drives the structured-document kernels: reading order, Markdown, and table
+/// composition.
+///
+/// These take **caller-supplied numbers and strings** rather than a decoded
+/// image, which makes them a different shape of risk: `reading_order` allocates
+/// a histogram sized from box coordinates, and the table matcher indexes text
+/// by positions the caller chose. Both must answer with a typed error rather
+/// than a panic or an allocation proportional to a declared coordinate.
+///
+/// The JSON writers are driven too, and their output is compared against a
+/// second call: `SPECAPI-001` claims determinism, and a claim that is only in a
+/// document is not a claim this project makes.
+fn exercise_structured_kernels(reader: &mut ByteReader<'_>) {
+    // Reading order, over boxes built from arbitrary bytes. The coordinates are
+    // deliberately allowed to be absurd: refusing them is the behaviour under
+    // test, not an obstacle to it.
+    let count = usize::from(reader.next_byte() % 8);
+    let mut boxes = Vec::with_capacity(count);
+    for _ in 0..count {
+        boxes.push([
+            i64::from(reader.next_u32() as i32),
+            i64::from(reader.next_u32() as i32),
+            i64::from(reader.next_u32() as i32),
+            i64::from(reader.next_u32() as i32),
+        ]);
+    }
+    let indices: Vec<usize> = (0..boxes.len()).collect();
+    let mut order = Vec::new();
+    if crate::reading_order::recursive_yx_cut(&boxes, &indices, &mut order).is_ok() {
+        // A **subset without duplicates**, not a permutation. Boxes whose edges
+        // are inverted are dropped from the ordering -- by upstream as well as
+        // here -- so requiring a permutation would assert something neither
+        // implementation provides. Duplication is still forbidden: an index
+        // emitted twice would duplicate content in a reconstructed document.
+        let mut seen = order.clone();
+        seen.sort_unstable();
+        seen.dedup();
+        assert_eq!(seen.len(), order.len(), "no index may be emitted twice");
+        assert!(
+            order.iter().all(|index| *index < boxes.len()),
+            "every emitted index must be one that was supplied"
+        );
+    }
+    let mut mirrored = Vec::new();
+    let _ = crate::reading_order::recursive_xy_cut(&boxes, &indices, &mut mirrored);
+
+    // Table composition, over the same arbitrary boxes reinterpreted as floats.
+    let cells: Vec<crate::table_pipeline::Box> = boxes
+        .iter()
+        .map(|entry| {
+            [
+                entry[0] as f64,
+                entry[1] as f64,
+                entry[2] as f64,
+                entry[3] as f64,
+            ]
+        })
+        .collect();
+    let (sorted, flags) = crate::table_pipeline::sort_cell_boxes(&cells);
+    assert_eq!(sorted.len(), cells.len(), "the sort must not lose a cell");
+    if let Ok(matched) = crate::table_pipeline::match_cells_to_ocr(&sorted, &cells, &flags) {
+        let texts: Vec<String> = (0..cells.len()).map(|index| index.to_string()).collect();
+        let tokens: Vec<String> = [
+            "<html>",
+            "<body>",
+            "<table>",
+            "<td></td>",
+            "</table>",
+            "</body>",
+            "</html>",
+        ]
+        .iter()
+        .map(|token| (*token).to_owned())
+        .collect();
+        let _ = crate::table_pipeline::table_html(&matched, &texts, &tokens, &flags);
+    }
+    let _ = crate::table_pipeline::suppress_overlapping_cells(
+        &cells,
+        &vec![0.5_f32; cells.len()],
+        f64::from(reader.next_byte()) / 255.0,
+    );
+
+    // The Markdown formatters, over arbitrary text. They cannot fail, so what
+    // is under test is that they neither panic on a UTF-8 boundary nor loop.
+    let text = String::from_utf8_lossy(&[
+        reader.next_byte(),
+        reader.next_byte(),
+        reader.next_byte(),
+        reader.next_byte(),
+        reader.next_byte(),
+        reader.next_byte(),
+    ])
+    .into_owned();
+    let _ = crate::markdown::format_title(&text);
+    let _ = crate::markdown::format_paragraph_title(&text, Some(usize::from(reader.next_byte())));
+    let _ = crate::markdown::normalize_newlines(&text);
+    let _ = crate::markdown::simplify_table(&text);
+    let _ = crate::markdown::format_first_line(&text, &["abstract"], "## ", "", " ");
+
+    // Determinism, asserted rather than documented.
+    let regions: Vec<crate::layout::LayoutRegion> = Vec::new();
+    let first = crate::structure_json::layout_to_json(&regions, 1, 1, Some(&text));
+    let second = crate::structure_json::layout_to_json(&regions, 1, 1, Some(&text));
+    assert_eq!(first, second, "the layout writer must be deterministic");
 }
 
 /// Drives the parsers that consume caller-supplied bytes directly.

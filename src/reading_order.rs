@@ -120,10 +120,12 @@ pub(crate) fn projection(boxes: &[OrderBox], axis: Axis) -> Result<Vec<u32>> {
     for entry in boxes {
         let start = entry[low].unsigned_abs() as usize;
         let end = entry[high].unsigned_abs() as usize;
-        // Python slicing clamps rather than panicking, which is what an
-        // out-of-range end has to do here too.
+        // Python slicing clamps rather than panicking, and `a[5:2]` is empty
+        // rather than an error. Rust's range panics on both, so both are
+        // handled: an inverted box -- right edge left of the left edge -- is
+        // exactly what a fuzz campaign found here.
         let start = start.min(length);
-        let end = end.min(length);
+        let end = end.min(length).max(start);
         for slot in &mut histogram[start..end] {
             *slot += 1;
         }
@@ -533,6 +535,67 @@ mod tests {
             }
             other => panic!("expected a refusal, got {other:?}"),
         }
+    }
+
+    /// An inverted box contributes nothing rather than panicking.
+    ///
+    /// Python's `a[5:2]` is an empty slice; Rust's `a[5..2]` panics. A fuzz
+    /// campaign found this on the first run after the module was committed, so
+    /// the regression is pinned here as well as bounded there.
+    #[test]
+    fn an_inverted_box_contributes_nothing() {
+        // Right edge left of the left edge, and bottom above the top.
+        let boxes = [[30_i64, 30, 10, 10], [0, 0, 20, 20]];
+        let histogram = match projection(&boxes, Axis::Horizontal) {
+            Ok(value) => value,
+            Err(error) => panic!("{error}"),
+        };
+        // Only the well-formed box contributes.
+        assert_eq!(histogram.len(), 30);
+        assert!(histogram[0..20].iter().all(|value| *value == 1));
+        assert!(histogram[20..30].iter().all(|value| *value == 0));
+
+        // And the inverted box is **dropped from the ordering**, not merely
+        // absent from the histogram: the band filter selects on a top edge that
+        // no band covers. Checked against upstream, which returns `[1]` for
+        // exactly this input.
+        let mut order = Vec::new();
+        match recursive_yx_cut(&boxes, &[0, 1], &mut order) {
+            Ok(()) => {}
+            Err(error) => panic!("{error}"),
+        }
+        assert_eq!(order, vec![1], "upstream drops the inverted box too");
+    }
+
+    /// The permutation property holds for well-formed boxes, and not otherwise.
+    ///
+    /// `every_ordering_is_a_permutation` asserts it across the corpus, which
+    /// contains only well-formed boxes. That is a property of the input, not an
+    /// invariant of the algorithm — an inverted box is dropped, by upstream as
+    /// well as here — and stating the difference is the point of this test.
+    #[test]
+    fn an_ordering_is_always_a_subset_without_duplicates() {
+        let boxes = [
+            [30_i64, 30, 10, 10],
+            [0, 0, 20, 20],
+            [5, 5, 5, 5],
+            [40, 0, 60, 20],
+        ];
+        let indices: Vec<usize> = (0..boxes.len()).collect();
+        let mut order = Vec::new();
+        match recursive_yx_cut(&boxes, &indices, &mut order) {
+            Ok(()) => {}
+            Err(error) => panic!("{error}"),
+        }
+        let mut seen = order.clone();
+        seen.sort_unstable();
+        seen.dedup();
+        assert_eq!(seen.len(), order.len(), "no index may appear twice");
+        assert!(
+            order.iter().all(|index| *index < boxes.len()),
+            "every emitted index must be one that was supplied"
+        );
+        assert!(order.len() < boxes.len(), "the inverted box is dropped");
     }
 
     /// Mismatched box and index counts are refused.

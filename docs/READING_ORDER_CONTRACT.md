@@ -76,15 +76,36 @@ numbers**:
 
 Both are the same treatment `docs/THREAT_MODEL.md` gives image dimensions.
 
-## 5. A permutation guard on every case
+## 5. What is guaranteed, and what only holds for well-formed input
 
-Every captured ordering is asserted to be a **permutation** of the input
-indices — each block appearing exactly once.
+Every captured ordering is a **permutation** of the input indices. That is
+asserted across the corpus in both cut directions.
 
-An ordering that drops or duplicates a block is worse than one that is merely in
-the wrong order: a wrong order is visible in the output, while a dropped block
-means content silently disappears from a structured document. The guard runs on
-every case in the corpus, in both cut directions.
+It is **not an invariant of the algorithm**, and an earlier revision of this
+document implied that it was. A box whose right edge is left of its left edge
+contributes nothing to the projection, so no band covers its top edge and it is
+**dropped from the ordering entirely**. Upstream does the same — checked, not
+assumed: `[[30,30,10,10],[0,0,20,20]]` returns `[1]` from both implementations.
+
+So the guarantee this port makes is narrower and exact:
+
+| Property | Holds |
+|---|---|
+| Every emitted index was supplied | always |
+| No index is emitted twice | always |
+| Every supplied index is emitted | **only for well-formed boxes** |
+
+Duplication is the one that must never happen: a duplicated index duplicates
+content in a reconstructed document. Dropping is upstream's behaviour on
+malformed input and is reproduced.
+
+### A panic the fuzz campaign found
+
+The clamp behind all of this was wrong when the module was first committed.
+Python's `a[5:2]` is an empty slice; Rust's `a[5..2]` **panics**, and an
+inverted box produces exactly that range. The fuzz driver found it on its first
+run over `reading_order`, which is why the driver was extended to these modules
+in the first place.
 
 ## 6. A limit on what is claimed
 
