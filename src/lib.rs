@@ -39,6 +39,8 @@ mod geometry;
 #[allow(dead_code)]
 mod image;
 #[allow(dead_code)]
+mod min_area;
+#[allow(dead_code)]
 mod resize;
 #[allow(dead_code)]
 mod tensor;

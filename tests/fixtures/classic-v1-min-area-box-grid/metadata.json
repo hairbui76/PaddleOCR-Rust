@@ -1,0 +1,44 @@
+{
+  "fixture_id": "classic-v1-min-area-box-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/points",
+    "sha256": "a0bb62bcbfd5bdda17698d5a540df69351feb9a0c43e2998a45a64b1d2668926",
+    "sha256_scope": "Compact JSON of the sixteen self-authored point lists in capture document order.",
+    "provenance": "Self-authored integer point sets in tools/capture_min_area_box_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": ["ppocr/postprocess/db_postprocess.py:get_mini_boxes"]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_min_area_box_oracle.py",
+    "suite": "min-area-box",
+    "capture_sha256": "0e4abfe238ac23069b33515894e67c2f81ca0aacfa3777bba16e1f1f678d4c25",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+      "opencv_optimized": false
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/ordered_box",
+    "schema_version": "paddleocr-rust/min-area-box-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "8eda5000c3dd5c5998aa1b918238942e67c70f86779af453a676f15de3be1320",
+    "sha256_scope": "Compact JSON of the sixteen ordered corner lists in capture document order."
+  },
+  "tests": ["min_area::tests::classic_min_area_rect_executes_every_captured_opencv_case"],
+  "limitations": [
+    "Corner coordinates are compared within 2e-3 because OpenCV evaluates the rectangle in float32 while this implementation uses float64; the recorded values carry only single-precision significance.",
+    "It covers cv2.minAreaRect and cv2.boxPoints on sixteen self-authored point sets in the recorded scalar OpenCV 5.0.0 environment, and nothing else.",
+    "It does not establish unclipping, scoring, rescaling, detector output, model behaviour, or OCR compatibility."
+  ]
+}
