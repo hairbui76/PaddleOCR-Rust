@@ -23,6 +23,7 @@ pub mod manifest;
 /// The versioned model manifest.
 mod markdown;
 /// The versioned JSON result document.
+pub mod resolve;
 pub mod result_json;
 
 /// Unicode script classification for dictionary contents.
