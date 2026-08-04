@@ -193,6 +193,23 @@ clockwise hull fails `diamond`. Nothing about `minAreaRect` is unresolved now:
 the geometry, the degenerate branches, the corner derivation, and the
 tie-break rule are all pinned by the recorded oracle.
 
+
+## `box_score_fast` prototype findings
+
+An external prototype reached 7 of the 8 recorded score cases. The scanline
+rule that works is **inclusive on both ends**: for each row, gather edge
+intersections with `min(y0, y1) <= y <= max(y0, y1)`, take the leftmost and
+rightmost, and fill `ceil(left) ..= floor(right)`. A half-open rule
+(`y0 <= y < y1`) drops the last row and fails every axis-aligned case: it
+produced 36 pixels where OpenCV produced 45 for `axis-small`.
+
+The one remaining failure is `slanted`, which fills 70 pixels where OpenCV
+fills 84. All seven axis-aligned and degenerate cases match exactly, so the gap
+is specific to non-axis-aligned edges: OpenCV's `fillPoly` rasterises edges in
+fixed point with `XY_SHIFT` and includes boundary pixels a float scanline with
+`ceil`/`floor` excludes. Reproducing it requires that fixed-point edge walk,
+not a tighter tolerance.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
