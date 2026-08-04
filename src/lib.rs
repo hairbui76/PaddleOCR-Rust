@@ -28,6 +28,8 @@ mod db;
 mod geometry;
 #[allow(dead_code)]
 mod image;
+#[allow(dead_code)]
+mod tensor;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};
 pub use types::{
