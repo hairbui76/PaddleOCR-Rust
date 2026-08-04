@@ -42,7 +42,7 @@ All inventory rows outside this table remain M7 work under
 | Difference | Reason | Public wording required |
 |---|---|---|
 | No modern PaddleX wrapper/pipeline API | The exact PaddleX resolver is not pinned for the inspected upstream checkout. | "Classic native OCR slice"; never "PaddleX wrapper compatible." |
-| No orientation classifier or document unwarping | They are later capabilities and the M2 contract must be explicit. | "Orientation/unwarping are not supported in M2." |
+| No orientation classifier or document unwarping | They are later capabilities and the M2 contract must be explicit. **Superseded after M2**: both are now implemented and verified - see `DOCORI-001`, `UNWARP-001`, and `DOCPIPE-001`. This row records what M2 shipped, not the current position. | "Orientation/unwarping are not supported in M2." |
 | No automatic model acquisition or bundled weights | Asset provenance and terms are not yet approved. | "Models must be explicitly provisioned locally." |
 | Idiomatic Rust API rather than Python API reproduction | The roadmap permits typed Rust design with explicit schema differences. | Describe the exact Rust API/schema rather than claiming Python API parity. |
 
