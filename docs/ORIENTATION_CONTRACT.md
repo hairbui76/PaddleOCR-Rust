@@ -263,15 +263,48 @@ One useful by-product: the rotated case's source digest is the one the capture
 recorded *after* calling `cv2.rotate(img, cv2.ROTATE_180)`, so matching it proves
 `rotate_180` agrees with OpenCV rather than merely looking plausible.
 
-## 13. Status
+## 13. Document orientation oracle results
+
+`tools/capture_document_orientation_oracle.py` ran the provisioned
+`PP-LCNet_x1_0_doc_ori` over eight cases: four deterministic synthetic pages and
+the committed benchmark page at each right angle.
+
+| Case | Label | Score |
+|---|---|---|
+| `benchmark-page` | `0` | `0.927196` |
+| `benchmark-page-90` | `90` | `0.926185` |
+| `benchmark-page-180` | `180` | `0.924321` |
+| `benchmark-page-270` | `270` | `0.925406` |
+
+**All four right angles identified**, each above `0.92`. The four synthetic pages
+are text-free noise and the model is unconfident about them, which is the shape
+that answer should have.
+
+`tests/fixtures/classic-v1-document-orientation` records the input tensors and
+outputs; `src/document_orientation.rs` reproduces every captured tensor
+**bit-identically**, which is the only evidence that both new roundings — the
+resize's round-half-away and the crop origin's integer division — are right.
+
+## 14. Status
 
 Contract frozen for both models. Artifacts provisioned and hashed. The text-line
 classifier is implemented in `src/orientation.rs`, compared against a captured
 oracle, and available as an optional pipeline stage that defaults to off.
 
-`DOCORI-001` stays open for: the public API surface, and document-level
-orientation, whose `resize_short` plus centre-crop preprocessing this project has
-never implemented and which needs its own capture.
+Text-line orientation is delivered end to end: implemented, oracle-matched,
+gate-verified against the real model, and exposed through the API and CLI with
+the default off.
+
+Document orientation is **half** delivered. Its preprocessing and decision are
+implemented and verified bit-identically against a capture, and all four right
+angles are identified. Nothing calls it, deliberately: acting on an angle means
+rotating the page before detection and mapping every returned coordinate back
+through the inverse transform, and that geometry is not written. Wiring it in
+without the inverse would return polygons that are internally consistent and
+silently wrong against the image the caller supplied, which is worse than not
+wiring it in.
+
+`DOCORI-001` stays open for exactly that: the rotation and its inverse geometry.
 
 Two corrections are recorded above rather than silently fixed, because both were
 wrong in ways that would have produced working code against the wrong contract:

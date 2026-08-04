@@ -55,6 +55,7 @@ mod detector;
 mod detector_boxes;
 #[allow(dead_code)]
 mod dictionary;
+mod document_orientation;
 #[allow(dead_code)]
 mod geometry;
 #[allow(dead_code)]

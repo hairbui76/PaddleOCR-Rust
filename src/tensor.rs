@@ -142,18 +142,7 @@ pub(crate) fn classic_detector_input(image: &InterleavedImage) -> Result<NchwTen
 /// resize is unconditional — no aspect ratio, no padding — so unlike recognition
 /// there is nothing to plan and no per-batch width.
 pub(crate) fn classic_orientation_batch(crops: &[&InterleavedImage]) -> Result<NchwTensor> {
-    if crops.is_empty() {
-        return Err(Error::InvalidInput {
-            field: "orientation.batch",
-            violation: InputViolation::Empty,
-        });
-    }
-    let (width, height) = (
-        ORIENTATION_INPUT_WIDTH as usize,
-        ORIENTATION_INPUT_HEIGHT as usize,
-    );
     for crop in crops {
-        require_classic_channels(crop)?;
         let dimensions = crop.dimensions();
         if dimensions.width() != ORIENTATION_INPUT_WIDTH
             || dimensions.height() != ORIENTATION_INPUT_HEIGHT
@@ -164,10 +153,39 @@ pub(crate) fn classic_orientation_batch(crops: &[&InterleavedImage]) -> Result<N
             });
         }
     }
+    classic_normalized_batch(crops)
+}
 
-    let mut values = bounded_tensor_buffer(crops.len(), CLASSIC_CHANNELS as usize, height, width)?;
-    for crop in crops {
-        let pixels = crop.pixels();
+/// Stacks equally sized images into one ImageNet-normalized `NCHW` batch.
+///
+/// Both orientation classifiers declare the same `scale 1/255`, ImageNet mean,
+/// and ImageNet standard deviation the detector uses, so all three share this
+/// arithmetic — which `PRE-001` verified bit-identical against a captured
+/// upstream tensor. They differ only in the fixed size their preprocessing
+/// produces, which is why that check lives with each caller instead of here.
+pub(crate) fn classic_normalized_batch(images: &[&InterleavedImage]) -> Result<NchwTensor> {
+    if images.is_empty() {
+        return Err(Error::InvalidInput {
+            field: "orientation.batch",
+            violation: InputViolation::Empty,
+        });
+    }
+    let first = images[0].dimensions();
+    let (width, height) = (first.width() as usize, first.height() as usize);
+    for image in images {
+        require_classic_channels(image)?;
+        let dimensions = image.dimensions();
+        if dimensions.width() as usize != width || dimensions.height() as usize != height {
+            return Err(Error::InvalidInput {
+                field: "orientation.batch_dimensions",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+    }
+
+    let mut values = bounded_tensor_buffer(images.len(), CLASSIC_CHANNELS as usize, height, width)?;
+    for image in images {
+        let pixels = image.pixels();
         for channel in 0..CLASSIC_CHANNELS as usize {
             let mean = DETECTOR_MEAN[channel];
             let deviation = DETECTOR_STD[channel];
@@ -182,7 +200,7 @@ pub(crate) fn classic_orientation_batch(crops: &[&InterleavedImage]) -> Result<N
     }
 
     Ok(NchwTensor {
-        batch: crops.len(),
+        batch: images.len(),
         channels: CLASSIC_CHANNELS as usize,
         height,
         width,
