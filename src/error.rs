@@ -22,6 +22,8 @@ pub enum InputViolation {
     DegenerateGeometry,
     /// An identifier contained unsupported or control characters.
     InvalidIdentifier,
+    /// Encoded data was truncated, corrupt, or violated its container format.
+    Malformed,
 }
 
 impl fmt::Display for InputViolation {
@@ -32,6 +34,7 @@ impl fmt::Display for InputViolation {
             Self::OutOfRange => "is outside the supported range",
             Self::DegenerateGeometry => "does not describe non-degenerate geometry",
             Self::InvalidIdentifier => "contains an invalid identifier value",
+            Self::Malformed => "is truncated, corrupt, or violates its container format",
         };
         formatter.write_str(message)
     }

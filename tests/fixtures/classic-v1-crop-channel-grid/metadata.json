@@ -1,0 +1,49 @@
+{
+  "fixture_id": "classic-v1-crop-channel-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/input",
+    "sha256": "620c602f327282198c8b657e67b2846251a4b99930aa6f57cfbce287e14b4f2c",
+    "sha256_scope": "Concatenation of the twenty-one raw C-order input byte arrays in capture document order.",
+    "provenance": "Self-authored in-memory interleaved uint8 values emitted by tools/capture_crop_oracle.py --suite channel-grid.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/utility.py:get_rotate_crop_image"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_crop_oracle.py",
+    "suite": "channel-grid",
+    "capture_sha256": "3b0ee3e3b231d272ac6b7751812c5af5f6390d7bd38a57d6fe5e9a89f4c620fb",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+      "opencv_optimized": false
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/output",
+    "schema_version": "paddleocr-rust/crop-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "d6d24164de9b03c28bf4089f791235853abd8aa482636db8bfb8de69ba400c3d",
+    "sha256_scope": "Concatenation of the twenty-one raw C-order output byte arrays in capture document order."
+  },
+  "tests": [
+    "crop::tests::classic_crop_executes_every_captured_opencv_channel_grid_case"
+  ],
+  "limitations": [
+    "This is an exact regression fixture only for its twenty-one self-authored interleaved cases and the recorded scalar OpenCV 5.0.0 environment.",
+    "The one-, two-, and four-channel cases carry no colour meaning; this project has frozen no such semantics, and the label opaque-N records that deliberately.",
+    "It does not establish image-decoder, RGB/BGR conversion, alpha, orientation, detector, recognizer, model, or end-to-end OCR compatibility.",
+    "It does not establish universal OpenCV INTER_CUBIC bit equivalence or a portable SIMD/FMA policy."
+  ]
+}

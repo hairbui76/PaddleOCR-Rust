@@ -36,14 +36,15 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [Runtime rubric](RUNTIME_RUBRIC.md) and [runtime proof plan](RUNTIME_PROOF_PLAN.md)
 - [Tract evidence](RUNTIME_TRACT_EVIDENCE.md), [ORT evidence](RUNTIME_ORT_EVIDENCE.md), and [source-built ORT evidence](RUNTIME_ORT_SOURCE_EVIDENCE.md)
 
-The reusable [parse-only ONNX ABI inspection](ONNX_ABI_INSPECTION.md) and the
-aggregate-only recognizer dictionary replay described in
+The reusable [parse-only ONNX ABI inspection](ONNX_ABI_INSPECTION.md), the
+matching [parse-only static program ABI inspection](STATIC_ABI_INSPECTION.md),
+and the aggregate-only recognizer dictionary replay described in
 [Local ONNX inspection](LOCAL_ONNX_CANDIDATE_INSPECTION.md) record bounded
 candidate facts without making a model or Python a normal build dependency.
 
 ## Inputs, fixtures, and oracle work
 
-- [Image decoder evidence](IMAGE_DECODER_EVIDENCE.md) and [hybrid candidate source review](IMAGE_DECODER_SOURCE_REVIEW.md)
+- [Image decoder decision](IMAGE_DECODER_DECISION.md), [image decoder evidence](IMAGE_DECODER_EVIDENCE.md), and [hybrid candidate source review](IMAGE_DECODER_SOURCE_REVIEW.md)
 - [Bounded primitive fuzzing](FUZZING.md)
 - [Fixture and tolerance plan](FIXTURE_AND_TOLERANCE_PLAN.md)
 - [Oracle capture procedure](ORACLE_CAPTURE.md)

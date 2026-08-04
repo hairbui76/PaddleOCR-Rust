@@ -39,6 +39,9 @@ its inverse-mapping CSV, every base64 `uint8` BGR payload and shape, and the
 metadata's concatenated input/output digests across all fifteen reviewed cases.
 For `classic-v1-crop-scalar-grid`, it verifies the separate 36-case capture,
 its explicit disabled-OpenCV-optimization setting, ordered case IDs, every BGR
+payload, and aggregate digests. For `classic-v1-crop-channel-grid`, it verifies
+the 21-case capture digest, the same disabled-optimization setting, ordered case
+IDs, the required per-case `BGR` or `opaque-<n>` channel-order label, every
 payload, and aggregate digests. The gate proves repository fixture integrity
 and metadata consistency only; it does not replace source review, artifact-term
 review, or oracle/model equivalence. Its dev-only SHA-256 implementation uses

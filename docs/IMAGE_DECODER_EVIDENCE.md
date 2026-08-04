@@ -399,6 +399,13 @@ and `20c70ac200f8cd784daa90e204bae6b9e03c30e665b69a9d5bab219125b48699`.
 The capture records every fixture's byte SHA-256 and comparison result; it is
 not a repository fixture or an accepted decoder test corpus.
 
+The JPEG delta values in the table below belong to this probe's own non-identical
+input set. They were **not** reproduced by the later replay on the committed
+`classic-v1-image-inputs` corpus, which observed a maximum JPEG component delta
+of `36` for the same `image` route. Do not quote the `2` and `1` values below as
+this project's JPEG or CMYK difference; use the committed-corpus records later in
+this document.
+
 | Input class | Observed candidate BGR result compared with OpenCV | Decision-relevant finding |
 |---|---|---|
 | 8-bit truecolor, BGRA, grayscale, and indexed/tRNS PNG | Exact bytes and dimensions after explicit RGB-to-BGR reversal. | The fixed probe shows that alpha was discarded rather than composited and the selected PNG forms can be made BGR-equivalent through an explicit conversion. It does not establish all PNG semantics. |
@@ -853,7 +860,11 @@ For malformed-input signal, the ten JPEG streams each underwent 144 bounded
 deterministic mutations (truncation, bit flip, overwrite, insertion,
 duplication, and appended bytes), for 1,440 decode attempts. The scalar and
 SIMD host runs both reported 733 successful decodes, 707 typed errors, and
-zero caught Rust panics. The successful mutations are intentionally not
+zero caught Rust panics. A `catch_unwind` count only observes unwinding
+panics: it cannot observe an abort, and the separately recorded 180,000 KiB
+address-space probe did abort with SIGABRT. A zero panic count is therefore
+evidence about unwinding behaviour for this corpus only, not a crash-free
+claim. The successful mutations are intentionally not
 treated as accepted project inputs. Debug scalar, debug SIMD, and a release
 scalar host build with `-C target-cpu=x86-64 -C target-feature=-avx,-avx2,-fma`
 all produced the exact control outputs and the same mutation totals. No QEMU

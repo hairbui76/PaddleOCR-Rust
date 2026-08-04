@@ -114,8 +114,23 @@ input named `x` and one fetched output named `fetch_name_0`:
 
 | Role | Input ABI observed in static graph | Output ABI observed in static graph | Status |
 |---|---|---|---|
-| Detector | `x`: `float32`, NCHW, `[-1, 3, -1, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, 1, -1, -1]` | Candidate evidence; needs local artifact verification. |
-| Recognizer | `x`: `float32`, NCHW, `[-1, 3, 48, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, -1, 18710]` | Candidate evidence; needs dictionary/index verification. |
+| Detector | `x`: `float32`, NCHW, `[-1, 3, -1, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, 1, -1, -1]` | Verified locally by a parse-only replayable inspection; runtime behaviour still unverified. |
+| Recognizer | `x`: `float32`, NCHW, `[-1, 3, 48, -1]` | `fetch_name_0`: `float32`, NCHW, `[-1, -1, 18710]` | Verified locally by the same inspection; dictionary/index correspondence is recorded separately. |
+
+The exact local static programs were re-parsed with the standard-library tool
+[`tools/inspect_static_candidate.py`](../tools/inspect_static_candidate.py)
+without importing Paddle or executing a graph. That record adds the declared
+PIR version, the full operator histogram, a parameter inventory whose declared
+`float32` bytes agree with each `inference.pdiparams` size to within a small
+serialization container, the direct terminal operators `1.sigmoid` and
+`1.softmax(axis=2)`, and their `/DBHead/Head/` and `/MultiHead/CTCHead/`
+`struct_name` values. It also records that each ONNX package ships a
+byte-identical copy of the corresponding static program, that several operator
+families correspond exactly across the two representations, and that the
+detector's four `1.batch_norm_` operations have no ONNX counterpart while the
+recognizer's three do. See
+[STATIC_ABI_INSPECTION.md](STATIC_ABI_INSPECTION.md); no weight value was
+decoded and no representation was selected.
 
 The recognizer metadata declares BGR decode semantics and `RecResizeImg` base
 shape `[3, 48, 320]`. Its HPI metadata records static-engine dynamic shapes
@@ -214,8 +229,9 @@ equivalence result, or support claim.
    SHA-256, format, and location policy, with no automatic acquisition.
 3. A safe, bounded local inspection that confirms the actual file hashes,
    tensor names/dtypes/layouts/shapes, required operators, and output order.
-   The format/hash/signature/operator portion is recorded in
-   [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md);
+   The ONNX format/hash/signature/operator portion is recorded in
+   [LOCAL_ONNX_CANDIDATE_INSPECTION.md](LOCAL_ONNX_CANDIDATE_INSPECTION.md) and
+   the static portion in [STATIC_ABI_INSPECTION.md](STATIC_ABI_INSPECTION.md);
    backend-visible graph semantics still require runtime candidate validation.
 4. A verified recognizer dictionary ABI, including CTC blank/space behavior
    and the 18,710-class output correspondence. The source-level index
@@ -225,9 +241,16 @@ equivalence result, or support claim.
    The evidence includes the requirement to preserve exact scalars without
    default normalization, case folding, or whitespace cleanup. Runtime
    semantics and safe Rust decoder validation remain required.
-5. A recorded disposition of the static-vs-ONNX choice. Any conversion or
-   exported-format comparison must meet `m2-tensor-v1` in
-   [`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md).
+5. A recorded disposition of the static-vs-ONNX choice. The structural half is
+   recorded in [STATIC_ABI_INSPECTION.md](STATIC_ABI_INSPECTION.md): the two
+   packages ship byte-identical program documents and the same declared terminal
+   ABI, but their operator graphs are not node-for-node identical. The numerical
+   half is recorded in [RUNTIME_PROOF_PLAN.md](RUNTIME_PROOF_PLAN.md): a
+   completed two-process external capture found zero `m2-tensor-v1` violations
+   across 7,057,864 elements for the six declared shapes, with nearly every
+   element still differing in its `f32` bit pattern. Remaining for this item are
+   the runtime dictionary behaviour and the written selection itself; the
+   backend choice is `RT-004` and the artifact policy is `MODEL-DEC-001`.
 6. Offline golden capture and runtime qualification before any compatibility
    ledger row is marked `Verified`.
 

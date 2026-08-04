@@ -12,6 +12,9 @@ use sha2::{Digest, Sha256};
 
 const FIXTURE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 const UPSTREAM_BASELINE: &str = "2661c7c0ef5c613e8f93c6e93b2e052399f0f854";
+const CROP_CHANNEL_GRID_FIXTURE_ID: &str = "classic-v1-crop-channel-grid";
+const CROP_CHANNEL_GRID_CAPTURE_SHA256: &str =
+    "3b0ee3e3b231d272ac6b7751812c5af5f6390d7bd38a57d6fe5e9a89f4c620fb";
 const E2E_NO_TEXT_FIXTURE_ID: &str = "classic-v1-e2e-no-text";
 const E2E_NO_TEXT_INPUT_SHA256: &str =
     "c422c83b3b20d3b206d47643e3f5e6aa3d87ece61e6433ddd5be5bda8906bccd";
@@ -139,6 +142,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == "classic-v1-crop-scalar-grid" {
             verify_crop_scalar_grid_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == CROP_CHANNEL_GRID_FIXTURE_ID {
+            verify_crop_channel_grid_oracle(&metadata, &directory, &context);
+        }
         if fixture_id == "classic-v1-image-inputs" {
             verify_image_input_oracle(&metadata, &directory, &context);
         }
@@ -162,6 +168,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
     let expected_ids = BTreeSet::from([
         "classic-v1-crop-oracle".to_owned(),
         "classic-v1-crop-scalar-grid".to_owned(),
+        CROP_CHANNEL_GRID_FIXTURE_ID.to_owned(),
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
@@ -579,6 +586,186 @@ fn verify_scalar_grid_capture_environment(oracle: &Value, captured: &Value, cont
         value_field(oracle, "opencv_optimized", context).as_bool(),
         Some(false),
         "{context} crop scalar-grid metadata must record disabled OpenCV optimized paths"
+    );
+}
+
+/// Checks the interleaved-channel and cubic-saturation crop oracle record.
+///
+/// This is the only committed crop capture whose sources are not all
+/// three-channel BGR, so it additionally pins the declared channel-order label
+/// of every case instead of assuming one colour convention.
+fn verify_crop_channel_grid_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    let expected = object_field(metadata, "expected", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "capture.json#/cases/*/input",
+        "{context} crop channel-grid input path changed without a payload-integrity update"
+    );
+    assert_eq!(
+        string_field(expected, "path", context),
+        "capture.json#/cases/*/output",
+        "{context} crop channel-grid expected path changed without a payload-integrity update"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "generator", context),
+        "tools/capture_crop_oracle.py",
+        "{context} crop channel-grid generator changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "suite", context),
+        "channel-grid",
+        "{context} crop channel-grid suite changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        CROP_CHANNEL_GRID_CAPTURE_SHA256,
+        "{context} crop channel-grid capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(fixture_directory, "capture.json", context);
+    assert_digest(
+        &capture_bytes,
+        CROP_CHANNEL_GRID_CAPTURE_SHA256,
+        &format!("{context} crop channel-grid capture document"),
+    );
+
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} crop channel-grid capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        "paddleocr-rust/crop-oracle/v1",
+        "{context} crop channel-grid capture schema changed without review"
+    );
+    verify_scalar_grid_capture_environment(
+        object_field(oracle, "environment", context),
+        object_field(&capture, "environment", context),
+        context,
+    );
+
+    // Each reviewed case is pinned with the channel count its payloads must
+    // declare, so a silently re-generated capture cannot change the covered
+    // channel range.
+    let expected_cases = [
+        ("classic-v1-crop-channel-grid-1ch-step-edge-half-phase", 1),
+        ("classic-v1-crop-channel-grid-1ch-step-edge-projective", 1),
+        (
+            "classic-v1-crop-channel-grid-1ch-checkerboard-half-phase",
+            1,
+        ),
+        (
+            "classic-v1-crop-channel-grid-1ch-checkerboard-projective",
+            1,
+        ),
+        (
+            "classic-v1-crop-channel-grid-1ch-isolated-spike-half-phase",
+            1,
+        ),
+        (
+            "classic-v1-crop-channel-grid-1ch-isolated-spike-projective",
+            1,
+        ),
+        ("classic-v1-crop-channel-grid-2ch-step-edge-half-phase", 2),
+        ("classic-v1-crop-channel-grid-2ch-step-edge-projective", 2),
+        (
+            "classic-v1-crop-channel-grid-2ch-checkerboard-half-phase",
+            2,
+        ),
+        (
+            "classic-v1-crop-channel-grid-2ch-checkerboard-projective",
+            2,
+        ),
+        (
+            "classic-v1-crop-channel-grid-2ch-isolated-spike-half-phase",
+            2,
+        ),
+        (
+            "classic-v1-crop-channel-grid-2ch-isolated-spike-projective",
+            2,
+        ),
+        ("classic-v1-crop-channel-grid-4ch-step-edge-half-phase", 4),
+        ("classic-v1-crop-channel-grid-4ch-step-edge-projective", 4),
+        (
+            "classic-v1-crop-channel-grid-4ch-checkerboard-half-phase",
+            4,
+        ),
+        (
+            "classic-v1-crop-channel-grid-4ch-checkerboard-projective",
+            4,
+        ),
+        (
+            "classic-v1-crop-channel-grid-4ch-isolated-spike-half-phase",
+            4,
+        ),
+        (
+            "classic-v1-crop-channel-grid-4ch-isolated-spike-projective",
+            4,
+        ),
+        (
+            "classic-v1-crop-channel-grid-3ch-step-edge-quarter-phase",
+            3,
+        ),
+        (
+            "classic-v1-crop-channel-grid-3ch-checkerboard-quarter-phase",
+            3,
+        ),
+        (
+            "classic-v1-crop-channel-grid-3ch-isolated-spike-quarter-phase",
+            3,
+        ),
+    ];
+    let cases = array_field(&capture, "cases", context);
+    assert_eq!(
+        cases.len(),
+        expected_cases.len(),
+        "{context} expected twenty-one reviewed crop channel-grid cases"
+    );
+
+    let mut input_bytes = Vec::new();
+    let mut output_bytes = Vec::new();
+    let mut observed_channels = BTreeSet::new();
+    for (case, (expected_fixture_id, channels)) in cases.iter().zip(expected_cases) {
+        assert_eq!(
+            string_field(case, "fixture_id", context),
+            expected_fixture_id,
+            "{context} crop channel-grid case order or identifier changed without an integrity-gate update"
+        );
+        let channel_order = if channels == 3 {
+            "BGR".to_owned()
+        } else {
+            format!("opaque-{channels}")
+        };
+        observed_channels.insert(channels);
+        input_bytes.extend(decode_crop_payload_with_channel_order(
+            case,
+            "input",
+            &channel_order,
+            context,
+        ));
+        output_bytes.extend(decode_crop_payload_with_channel_order(
+            case,
+            "output",
+            &channel_order,
+            context,
+        ));
+    }
+    assert_eq!(
+        observed_channels,
+        BTreeSet::from([1, 2, 3, 4]),
+        "{context} crop channel-grid must keep covering one through four channels"
+    );
+    assert_digest(
+        &input_bytes,
+        string_field(input, "sha256", context),
+        &format!("{context} concatenated crop channel-grid inputs"),
+    );
+    assert_digest(
+        &output_bytes,
+        string_field(expected, "sha256", context),
+        &format!("{context} concatenated crop channel-grid outputs"),
     );
 }
 
@@ -3284,11 +3471,25 @@ fn decode_image_payload(case: &Value, role: &str, is_bgr_output: bool, context: 
 }
 
 fn decode_crop_payload(case: &Value, role: &str, context: &str) -> Vec<u8> {
+    decode_crop_payload_with_channel_order(case, role, "BGR", context)
+}
+
+/// Decodes one captured crop payload that declares an explicit channel order.
+///
+/// Only a three-channel payload may claim `BGR`. Every other supported channel
+/// count must use the deliberately colourless `opaque-<n>` label, because this
+/// project has frozen no colour meaning for those counts.
+fn decode_crop_payload_with_channel_order(
+    case: &Value,
+    role: &str,
+    expected_channel_order: &str,
+    context: &str,
+) -> Vec<u8> {
     let payload = object_field(case, role, context);
     assert_eq!(
         string_field(payload, "channel_order", context),
-        "BGR",
-        "{context} crop payload must remain BGR"
+        expected_channel_order,
+        "{context} crop payload channel order changed without review"
     );
     assert_eq!(
         string_field(payload, "dtype", context),

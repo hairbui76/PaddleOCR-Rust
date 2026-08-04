@@ -26,6 +26,8 @@ mod ctc;
 mod db;
 #[allow(dead_code)]
 mod geometry;
+#[allow(dead_code)]
+mod image;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};
 pub use types::{

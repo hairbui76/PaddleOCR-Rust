@@ -287,6 +287,8 @@ mod tests {
         include_str!("../tests/fixtures/classic-v1-crop-oracle/capture.json");
     const CAPTURED_OPENCV_CROP_SCALAR_GRID: &str =
         include_str!("../tests/fixtures/classic-v1-crop-scalar-grid/capture.json");
+    const CAPTURED_OPENCV_CROP_CHANNEL_GRID: &str =
+        include_str!("../tests/fixtures/classic-v1-crop-channel-grid/capture.json");
 
     fn dimensions(width: u32, height: u32) -> ImageDimensions {
         match ImageDimensions::new(width, height) {
@@ -390,13 +392,26 @@ mod tests {
         role: &str,
         fixture_id: &str,
     ) -> (ImageDimensions, Vec<u8>) {
+        let (dimensions, channels, pixels) = capture_interleaved_pixels(case, role, fixture_id);
+        assert_eq!(
+            channels, 3,
+            "{fixture_id} {role} must retain three BGR channels"
+        );
+        (dimensions, pixels)
+    }
+
+    /// Reads one captured interleaved payload and its recorded channel count.
+    ///
+    /// A three-channel payload must declare `BGR`; any other supported count
+    /// must declare the deliberately colourless `opaque-<n>` label, because
+    /// this project has frozen no colour meaning for those channel counts.
+    fn capture_interleaved_pixels(
+        case: &Value,
+        role: &str,
+        fixture_id: &str,
+    ) -> (ImageDimensions, u8, Vec<u8>) {
         let context = format!("{fixture_id} {role}");
         let payload = capture_object(case, role, &context);
-        assert_eq!(
-            capture_string(payload, "channel_order", &context),
-            "BGR",
-            "{context} channel order"
-        );
         assert_eq!(
             capture_string(payload, "dtype", &context),
             "uint8",
@@ -407,21 +422,38 @@ mod tests {
         let height = capture_u32(&shape[0], &format!("{context} shape height"));
         let width = capture_u32(&shape[1], &format!("{context} shape width"));
         let channels = capture_u32(&shape[2], &format!("{context} shape channels"));
-        assert_eq!(channels, 3, "{context} must retain three BGR channels");
+        assert!(
+            (1..=u32::from(MAX_INTERLEAVED_CHANNELS)).contains(&channels),
+            "{context} channel count {channels} is outside the supported range"
+        );
+        let expected_order = if channels == 3 {
+            "BGR".to_owned()
+        } else {
+            format!("opaque-{channels}")
+        };
+        assert_eq!(
+            capture_string(payload, "channel_order", &context),
+            expected_order,
+            "{context} channel order"
+        );
         let dimensions = dimensions(width, height);
         let pixels = match STANDARD.decode(capture_string(payload, "base64", &context)) {
             Ok(value) => value,
             Err(error) => panic!("{context} base64 is invalid: {error}"),
         };
+        let channels = match u8::try_from(channels) {
+            Ok(value) => value,
+            Err(_) => panic!("{context} channel count does not fit u8"),
+        };
         let expected_length = match usize::try_from(dimensions.pixels()) {
-            Ok(value) => match value.checked_mul(3) {
+            Ok(value) => match value.checked_mul(usize::from(channels)) {
                 Some(value) => value,
                 None => panic!("{context} byte length overflows usize"),
             },
             Err(_) => panic!("{context} pixel count does not fit usize"),
         };
         assert_eq!(pixels.len(), expected_length, "{context} byte length");
-        (dimensions, pixels)
+        (dimensions, channels, pixels)
     }
 
     fn capture_points(case: &Value, fixture_id: &str) -> [Point; 4] {
@@ -446,6 +478,7 @@ mod tests {
         context: &str,
         expected_case_count: usize,
         expected_opencv_optimized: Option<bool>,
+        expected_channel_counts: BTreeSet<u8>,
     ) {
         let capture: Value = match serde_json::from_str(capture_json) {
             Ok(value) => value,
@@ -470,6 +503,7 @@ mod tests {
         let cases = capture_array(&capture, "cases", context);
         assert_eq!(cases.len(), expected_case_count, "{context} case count");
         let mut fixture_ids = BTreeSet::new();
+        let mut observed_channels = BTreeSet::new();
 
         for case in cases {
             let fixture_id = capture_string(case, "fixture_id", context);
@@ -477,8 +511,14 @@ mod tests {
                 fixture_ids.insert(fixture_id),
                 "duplicate crop capture fixture {fixture_id:?}"
             );
-            let (source_dimensions, source_pixels) = capture_bgr_pixels(case, "input", fixture_id);
-            let source = must_ok(InterleavedImage::new(source_dimensions, 3, source_pixels));
+            let (source_dimensions, source_channels, source_pixels) =
+                capture_interleaved_pixels(case, "input", fixture_id);
+            observed_channels.insert(source_channels);
+            let source = must_ok(InterleavedImage::new(
+                source_dimensions,
+                source_channels,
+                source_pixels,
+            ));
             let plan = must_ok(classic_perspective_crop_plan(must_ok(Quadrilateral::new(
                 capture_points(case, fixture_id),
             ))));
@@ -523,17 +563,26 @@ mod tests {
                 "{fixture_id} rotation decision"
             );
 
-            let (expected_dimensions, expected_pixels) =
-                capture_bgr_pixels(case, "output", fixture_id);
+            let (expected_dimensions, expected_channels, expected_pixels) =
+                capture_interleaved_pixels(case, "output", fixture_id);
             let crop = must_ok(classic_perspective_crop(&source, plan));
             assert_eq!(
                 crop.dimensions(),
                 expected_dimensions,
                 "{fixture_id} dimensions"
             );
-            assert_eq!(crop.channels(), 3, "{fixture_id} channels");
+            assert_eq!(
+                expected_channels, source_channels,
+                "{fixture_id} output channel count must match its source"
+            );
+            assert_eq!(crop.channels(), expected_channels, "{fixture_id} channels");
             assert_eq!(crop.pixels(), expected_pixels, "{fixture_id} pixels");
         }
+
+        assert_eq!(
+            observed_channels, expected_channel_counts,
+            "{context} captured channel-count coverage changed without review"
+        );
     }
 
     fn patterned_bgr_pixels(width: u32, height: u32, seed: u8) -> Vec<u8> {
@@ -946,6 +995,7 @@ mod tests {
             "crop capture fixture",
             15,
             None,
+            BTreeSet::from([3]),
         );
     }
 
@@ -956,6 +1006,24 @@ mod tests {
             "crop scalar-grid capture fixture",
             36,
             Some(false),
+            BTreeSet::from([3]),
+        );
+    }
+
+    /// Executes the captured interleaved-channel and cubic-saturation grid.
+    ///
+    /// This is the only crop oracle that covers the private one-, two-, and
+    /// four-channel paths against OpenCV, and its full-range `0`/`255` sources
+    /// deliberately drive the cubic kernel past both ends of the `uint8` range
+    /// so that saturation is exercised rather than incidental.
+    #[test]
+    fn classic_crop_executes_every_captured_opencv_channel_grid_case() {
+        execute_captured_opencv_crop_oracle(
+            CAPTURED_OPENCV_CROP_CHANNEL_GRID,
+            "crop channel-grid capture fixture",
+            21,
+            Some(false),
+            BTreeSet::from([1, 2, 3, 4]),
         );
     }
 

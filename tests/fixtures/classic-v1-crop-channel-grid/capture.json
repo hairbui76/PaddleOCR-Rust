@@ -1,0 +1,1413 @@
+{
+  "algorithm": {
+    "border_mode": "BORDER_REPLICATE",
+    "interpolation": "INTER_CUBIC",
+    "post_warp_rotation": "numpy.rot90 when height / width >= 1.5"
+  },
+  "cases": [
+    {
+      "description": "A 1-channel interleaved step-edge source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-step-edge-half-phase",
+      "input": {
+        "base64": "AAAA////AAAA////AAAA////AAAA////AAAA////AAAA////",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "70b4ddc45edd231dbac43272d23a3a25226c1131eb2d6e03c4988793011d6586",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "AACA//8AAID//wAAgP//AACA//8AAID//w==",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "bd8440172609394d23401851f3413aed3491ec8bc94e4f5159f6241fb1e50b0c",
+        "shape": [
+          5,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 1-channel interleaved step-edge source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-step-edge-projective",
+      "input": {
+        "base64": "AAAA////AAAA////AAAA////AAAA////AAAA////AAAA////",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "70b4ddc45edd231dbac43272d23a3a25226c1131eb2d6e03c4988793011d6586",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "AAAAqf8AAAC0/wAAAL7/AAAAx/8AAADO/wAAANX/",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "0e97aab0900a8d23d8c35f4d9e7148107c34fe8f3bac52eee2b34c6ae194d8fb",
+        "shape": [
+          6,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 1-channel interleaved checkerboard source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-checkerboard-half-phase",
+      "input": {
+        "base64": "/wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD/",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "02525526468249725d1f79c083da32bb041bf19553783d244a3f30478805d901",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "hICAgHuAgICAgICAgICAgICAgIB7gICAhA==",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "b7a195f27bca5dc54946be5415fc743fb846c415256ccead453ebbe7d5e197bf",
+        "shape": [
+          5,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 1-channel interleaved checkerboard source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-checkerboard-projective",
+      "input": {
+        "base64": "/wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD/",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "02525526468249725d1f79c083da32bb041bf19553783d244a3f30478805d901",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "yHeDQ/8crVzCDvUwvjbpA/Mj1xrMD+ci4oSHZqVO",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "8d2c5571bee519c33999443f05fa14b1898b647e86df46742b37c0b0617ca3ad",
+        "shape": [
+          6,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 1-channel interleaved isolated-spike source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-isolated-spike-half-phase",
+      "input": {
+        "base64": "AAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAA",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "2eabfa0457b4b011a44d757028b74ac51ab5fc7910fc9dda58b384fe4843fbdc",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "AJeXAAAAl5cAAACXlwAAAJeXAAAAl5cAAA==",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "92398e0a59f139aa81629709aeb72e3a8b547c10e9ca5213c1e4459b01824f97",
+        "shape": [
+          5,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 1-channel interleaved isolated-spike source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-1ch-isolated-spike-projective",
+      "input": {
+        "base64": "AAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAAAAD/AAAA",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "2eabfa0457b4b011a44d757028b74ac51ab5fc7910fc9dda58b384fe4843fbdc",
+        "shape": [
+          6,
+          6,
+          1
+        ]
+      },
+      "output": {
+        "base64": "AACaZgAAALlYAAAA0kwAAADlQQAAAPM3AAAP+y8A",
+        "channel_order": "opaque-1",
+        "dtype": "uint8",
+        "sha256": "82aee8abcd575d75cb8f918616f0932f44337bcbf2d4890f6bde5a81aa1df937",
+        "shape": [
+          6,
+          5,
+          1
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved step-edge source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-step-edge-half-phase",
+      "input": {
+        "base64": "AP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8A",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "4035b6110e8a29c80413224085cdc3bb4facf17826466a1f99e688d569c43be1",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "AP8A/4CA/wD/AAD/AP+AgP8A/wAA/wD/gID/AP8AAP8A/4CA/wD/AAD/AP+AgP8A/wA=",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "4961a5d27e099c0535e505886c1a01e34919ee26792e1e3447cf78d76fcdf014",
+        "shape": [
+          5,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved step-edge source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-step-edge-projective",
+      "input": {
+        "base64": "AP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8AAP8A/wD//wD/AP8A",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "4035b6110e8a29c80413224085cdc3bb4facf17826466a1f99e688d569c43be1",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "AP8A/wD/qVb/AAD/AP8A/7RL/wAA/wD/AP++Qf8AAP8A/wD/xzj/AAD/AP8A/84x/wAA/wD/AP/VKv8A",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "8e16f9857b3900cbbb80c4e59647fdb9b6dcfc1975e775a57c08cf5ac48d89b0",
+        "shape": [
+          6,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved checkerboard source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-checkerboard-half-phase",
+      "input": {
+        "base64": "/wAA//8AAP//AAD/AP//AAD//wAA//8A/wAA//8AAP//AAD/AP//AAD//wAA//8A/wAA//8AAP//AAD/AP//AAD//wAA//8A",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "e4aff7487ed7948b9234ef704b45ce3146232465cd32d3a5f6028471c100a6b4",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "hHuAgICAgIB7hICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgHuEgICAgICAhHs=",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "e09ab458e3564095e1803e3832501530924861cb79b24866e8b0daf250fc5500",
+        "shape": [
+          5,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved checkerboard source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-checkerboard-projective",
+      "input": {
+        "base64": "/wAA//8AAP//AAD/AP//AAD//wAA//8A/wAA//8AAP//AAD/AP//AAD//wAA//8A/wAA//8AAP//AAD/AP//AAD//wAA//8A",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "e4aff7487ed7948b9234ef704b45ce3146232465cd32d3a5f6028471c100a6b4",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "yDd3iIN8Q7z/ABzjrVJco8I9DvH1CjDPvkE2yekWA/zzDCPc1yga5cwzD/DnGCLd4h2Ee4d4ZpmlWk6x",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "ab47e32010886417e4bd51663642a1d80c50363987cb4f42e4173f445d0b0655",
+        "shape": [
+          6,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved isolated-spike source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-isolated-spike-half-phase",
+      "input": {
+        "base64": "AAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAA",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "c28464ece10c479f9676e69f771603ff19625761ff1bc796422a6f9c3085c593",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "AACXAJeXAJcAAAAAlwCXlwCXAAAAAJcAl5cAlwAAAACXAJeXAJcAAAAAlwCXlwCXAAA=",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "058d44b3eaca1dc1d769ebeec395c2cd6b7709a749f172e4e07228491d66adc7",
+        "shape": [
+          5,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 2-channel interleaved isolated-spike source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-2ch-isolated-spike-projective",
+      "input": {
+        "base64": "AAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAAAAAAAP8AAP8AAAAA",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "c28464ece10c479f9676e69f771603ff19625761ff1bc796422a6f9c3085c593",
+        "shape": [
+          6,
+          6,
+          2
+        ]
+      },
+      "output": {
+        "base64": "AAAAAJoAZsUAGgAAAAC5AFjQACEAAAAA0gBM2gAoAAAAAOUAQeEALgAAAADzADfoADQAAA8A+wAv7QA6",
+        "channel_order": "opaque-2",
+        "dtype": "uint8",
+        "sha256": "5235a81004648a5c7ac99c87eb1cf98530065a542b328bbf6e66cce1bdbe356c",
+        "shape": [
+          6,
+          5,
+          2
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved step-edge source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-step-edge-half-phase",
+      "input": {
+        "base64": "AP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8A",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "bd3fb9d82d3438a046efe024d8508d2d44e183d27a1ed1e36ee5a582524eecf7",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "AP8A/wD/AP+AgICA/wD/AP8A/wAA/wD/AP8A/4CAgID/AP8A/wD/AAD/AP8A/wD/gICAgP8A/wD/AP8AAP8A/wD/AP+AgICA/wD/AP8A/wAA/wD/AP8A/4CAgID/AP8A/wD/AA==",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "851ac64ee2adff9247ad3a2b29b585d694835ea76b046361aec4a82a69111b5d",
+        "shape": [
+          5,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved step-edge source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-step-edge-projective",
+      "input": {
+        "base64": "AP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD//wD/AP8A/wD/AP8A",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "bd3fb9d82d3438a046efe024d8508d2d44e183d27a1ed1e36ee5a582524eecf7",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "AP8A/wD/AP8A/wD/qVapVv8A/wAA/wD/AP8A/wD/AP+0S7RL/wD/AAD/AP8A/wD/AP8A/75BvkH/AP8AAP8A/wD/AP8A/wD/xzjHOP8A/wAA/wD/AP8A/wD/AP/OMc4x/wD/AAD/AP8A/wD/AP8A/9Uq1Sr/AP8A",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "048265028a7dbcfc7c3cdc2ad99219df0dfecd74f6fed8538bf150eed38068b1",
+        "shape": [
+          6,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved checkerboard source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-checkerboard-half-phase",
+      "input": {
+        "base64": "/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "9202f5b066fa104b02fdaf63be6887552fea464d4f026084ce135bdd9ee7314e",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "hHuEe4CAgICAgICAgICAgHuEe4SAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIB7hHuEgICAgICAgICAgICAhHuEew==",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "e4c3d65f0010787d11eab5a1a982dc7ccd0b5cbddebeb3e89d4025fb51b74c33",
+        "shape": [
+          5,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved checkerboard source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-checkerboard-projective",
+      "input": {
+        "base64": "/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A/wD/AAD/AP//AP8AAP8A//8A/wAA/wD/AP8A//8A/wAA/wD//wD/AAD/AP//AP8A",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "9202f5b066fa104b02fdaf63be6887552fea464d4f026084ce135bdd9ee7314e",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "yDfIN3eId4iDfIN8Q7xDvP8A/wAc4xzjrVKtUlyjXKPCPcI9DvEO8fUK9QowzzDPvkG+QTbJNsnpFukWA/wD/PMM8wwj3CPc1yjXKBrlGuXMM8wzD/AP8OcY5xgi3SLd4h3iHYR7hHuHeId4ZplmmaVapVpOsU6x",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "72350569274b96f6ba94f00f097f54c69ee77ea5902bd006ebe42b5de50356c9",
+        "shape": [
+          6,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved isolated-spike source warped through a half-phase quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-isolated-spike-half-phase",
+      "input": {
+        "base64": "AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "bca8bb6de536d514474988fdde41a3209718240b08cb231cbbb6cf3c2010c31d",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "AAAAAJcAAACXlwAAAJeXAAAAl4AAAAAAlwAAAJeXAAAAl5cAAACXgAAAAACXAAAAl5cAAACXlwAAAJeAAAAAAJcAAACXlwAAAJeXAAAAl4AAAAAAlwAAAJeXAAAAl5cAAACXgA==",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "a2655a5aa9f8ba5a7134f5fd709aca3ee38d7089c132c36ee8c103816acbaa02",
+        "shape": [
+          5,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0000000000000002,
+          -3.0531133177191836e-18,
+          -0.5000000000000001
+        ],
+        [
+          0.0,
+          1.0000000000000002,
+          -0.5000000000000001
+        ],
+        [
+          2.886579864025408e-17,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.5,
+          0.5
+        ],
+        [
+          5.5,
+          0.5
+        ],
+        [
+          5.5,
+          5.5
+        ],
+        [
+          0.5,
+          5.5
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 5,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A 4-channel interleaved isolated-spike source warped through a projective quadrilateral exercises cubic overshoot and uint8 saturation.",
+      "fixture_id": "classic-v1-crop-channel-grid-4ch-isolated-spike-projective",
+      "input": {
+        "base64": "AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/AAAAAAAAAAD/AAAAAP8AAAAA/wAAAAD/",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "bca8bb6de536d514474988fdde41a3209718240b08cb231cbbb6cf3c2010c31d",
+        "shape": [
+          6,
+          6,
+          4
+        ]
+      },
+      "output": {
+        "base64": "AAAAAAAAAACaAAAAZsUAAAAa+AAAAAAAAAAAALkAAABY0AAAACH1AAAAAAAAAAAA0gAAAEzaAAAAKPEAAAAAAAAAAADlAAAAQeEAAAAu7QAAAAAAAAAAAPMAAAA36AAAADTqAAAAAAAPAAAA+wAAAC/tAAAAOuYA",
+        "channel_order": "opaque-4",
+        "dtype": "uint8",
+        "sha256": "4d2c351a238cc10614664a741fd0d135083e9283b89d5bfe28aa59fb9b0cc3de",
+        "shape": [
+          6,
+          5,
+          4
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0262421720854746,
+          -0.18658949425917754,
+          0.5597684596075316
+        ],
+        [
+          0.10018504413483308,
+          0.8862523053735613,
+          -0.1714705542759738
+        ],
+        [
+          0.03501591538189434,
+          -0.05150394154868887,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          -0.5,
+          0.25
+        ],
+        [
+          5.25,
+          -0.4000000059604645
+        ],
+        [
+          4.75,
+          5.599999904632568
+        ],
+        [
+          0.4000000059604645,
+          5.199999809265137
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 6,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A three-channel BGR step-edge control keeps the saturation corpus comparable with the existing BGR oracles.",
+      "fixture_id": "classic-v1-crop-channel-grid-3ch-step-edge-quarter-phase",
+      "input": {
+        "base64": "AP8AAP8AAP8A/wD//wD//wD/AP8AAP8AAP8A/wD//wD//wD/AP8AAP8AAP8A/wD//wD//wD/AP8AAP8AAP8A/wD//wD//wD/AP8AAP8AAP8A/wD//wD//wD/AP8AAP8AAP8A/wD//wD//wD/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "7ed89f91ddd56a25eac022cc70336da9fb68c4a6a4403d850c62d0f5e1a2291b",
+        "shape": [
+          6,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "AP8AAP8AOsU6/wD//wD/AP8AAP8AOsU6/wD//wD/AP8AAP8AOsU6/wD//wD/AP8AAP8AOsU6/wD//wD/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1325371f87f6ee347a3bf09ce3e56867fead574cd59a0af23c540d10ed52ca3c",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          -1.471886585677291e-18,
+          -0.25
+        ],
+        [
+          0.0,
+          1.0,
+          -0.75
+        ],
+        [
+          5.551115123125783e-18,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          0.75
+        ],
+        [
+          5.25,
+          0.75
+        ],
+        [
+          5.25,
+          4.75
+        ],
+        [
+          0.25,
+          4.75
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A three-channel BGR checkerboard control keeps the saturation corpus comparable with the existing BGR oracles.",
+      "fixture_id": "classic-v1-crop-channel-grid-3ch-checkerboard-quarter-phase",
+      "input": {
+        "base64": "/wD/AP8A/wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD/AP8A/wD//wD/AP8A/wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD/AP8A/wD//wD/AP8A/wD/AP8A/wD/AP8AAP8A/wD/AP8A/wD/AP8A/wD/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "24d80c78211993b0c06e7a84a7b65810913f9d261ee28367c219cb8d40bf46b2",
+        "shape": [
+          6,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "Ua5Rwj3CPcI9wj3CNsk2qVapQ7xDvEO8Q7xDwj3CVqlWvEO8Q7xDvEO8PcI9qVapQ7xDvEO8Q7xDwj3C",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f121ca88b919a59027d8db72d024bfd5db5a4a49d1ecf3d0a5b51d062a6a10e1",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          -1.471886585677291e-18,
+          -0.25
+        ],
+        [
+          0.0,
+          1.0,
+          -0.75
+        ],
+        [
+          5.551115123125783e-18,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          0.75
+        ],
+        [
+          5.25,
+          0.75
+        ],
+        [
+          5.25,
+          4.75
+        ],
+        [
+          0.25,
+          4.75
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    },
+    {
+      "description": "A three-channel BGR isolated-spike control keeps the saturation corpus comparable with the existing BGR oracles.",
+      "fixture_id": "classic-v1-crop-channel-grid-3ch-isolated-spike-quarter-phase",
+      "input": {
+        "base64": "AAAAAAAA/wAAAP8AAAD/AAAAAAAAAAAA/wAAAP8AAAD/AAAAAAAAAAAA/wAAAP8AAAD/AAAAAAAAAAAA/wAAAP8AAAD/AAAAAAAAAAAA/wAAAP8AAAD/AAAAAAAAAAAA/wAAAP8AAAD/AAAA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c1a44dbc0eb8f9ca43a4c3c20d8ebcbdf208610804186bdf9980996841e964bd",
+        "shape": [
+          6,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "AAAAQwAA4EMAAOBDAADgAAAAQwAA4EMAAOBDAADgAAAAQwAA4EMAAOBDAADgAAAAQwAA4EMAAOBDAADg",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e226e365339747513acc86f210b0051c4d38bec2d17dcd23ae7131e06f1504eb",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "perspective_transform": [
+        [
+          1.0,
+          -1.471886585677291e-18,
+          -0.25
+        ],
+        [
+          0.0,
+          1.0,
+          -0.75
+        ],
+        [
+          5.551115123125783e-18,
+          -0.0,
+          1.0
+        ]
+      ],
+      "points": [
+        [
+          0.25,
+          0.75
+        ],
+        [
+          5.25,
+          0.75
+        ],
+        [
+          5.25,
+          4.75
+        ],
+        [
+          0.25,
+          4.75
+        ]
+      ],
+      "pre_rotation_output": {
+        "height": 4,
+        "width": 5
+      },
+      "rotates_counter_clockwise": false
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "opencv_optimized": false,
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "purpose": "developer-only OpenCV crop oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/crop-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_path": "tools/infer/utility.py:get_rotate_crop_image"
+  }
+}

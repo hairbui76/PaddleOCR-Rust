@@ -2,7 +2,7 @@
 
 Status date: 2026-08-04
 Canonical authority: [`ROADMAP.md`](../ROADMAP.md)
-Current delivery state: no functional Rust OCR pipeline, public OCR API, or OCR
+Current delivery state: bounded PNG input decoding exists in Rust; no functional OCR pipeline, public OCR API, or OCR
 CLI exists yet
 
 ## How to use this handoff
@@ -20,9 +20,11 @@ is supported until the corresponding roadmap gate is actually complete.
 ## Exact stop point
 
 P0 and P1 are done. P2, P3, P4, and P13 are in progress. P5 through P12 and
-P14 remain planned. The useful implemented Rust foundations are private,
-bounded geometry/crop, DB thresholding/components, and CTC greedy-index work;
-they are not a detector, recognizer, or end-to-end OCR implementation.
+P14 remain planned. The implemented Rust foundations are private, bounded
+geometry/crop, DB thresholding/components, CTC greedy-index work, and bounded
+PNG decoding into the classic BGR convention; they are not a detector,
+recognizer, or end-to-end OCR implementation, and `src/main.rs` still exits
+with status `2`.
 
 The active critical path is P3 `RT-003`: establish a defensible independent
 static/Paddle raw-tensor reference for the selected PP-OCRv6 medium ONNX pair,
@@ -54,19 +56,19 @@ The result must remain **partial**, for two independent reasons:
 1. Only one fresh process completed. The required second fresh process and
    determinism comparison were deliberately not run.
 2. All absolute errors were below `1e-4`, but the harness used an unapproved
-   relative denominator floor (`1e-12`). The written `m2-tensor-v1` profile
-   says maximum absolute and relative error `<= 1e-4`, but does not define a
-   denominator or combined absolute/relative rule. Its observed near-zero
-   relative values therefore fail the literal provisional computation. Do not
-   redefine the tolerance after seeing the output.
+   relative denominator floor (`1e-12`), so its near-zero relative values failed
+   the then-undefined relative term.
 
-A read-only diagnostic calculation over the same temporary bytes found zero
-violations under the illustrative conventional rule
-`abs(static - onnx) <= 1e-4 + 1e-4 * abs(static)`; its largest error-to-bound
-ratio was `0.5591462`. This does not choose that rule or make the capture pass.
+`m2-tensor-v1` was amended on 2026-08-04 under an explicit user delegation. The
+predeclared rule is now
+`abs(candidate - reference) <= 1e-4 + 1e-4 * abs(reference)`, evaluated
+elementwise on `float64` promotions with the independent reference on the
+reference side; see
+[`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md#m2-tensor-v1-comparison-rule-resolved-2026-08-04).
+The earlier capture is **not** retroactively relabelled as passing: it still has
+only one fresh process and no determinism comparison.
 
-Before resuming this experiment, amend the tolerance contract and roadmap
-evidence with a reviewed, predeclared numerical rule. Then rebuild a disposable
+To resume this experiment, rebuild a disposable
 external harness, verify every model package file before loading it, run the
 six exact shapes twice in fresh processes, retain no raw tensors, and record
 only compact hashes and aggregate comparison data. Never run PaddleOCR or
@@ -76,11 +78,16 @@ PaddleX during this direct static/Paddle reference experiment.
 
 ### 1. Close P3 model/runtime evidence before adding inference code
 
-1. Resolve the `m2-tensor-v1` comparison metric as described above, and finish
-   `RT-003` with two fresh static/Paddle versus ONNX captures.
+1. `RT-003` is **complete**: the predeclared `m2-tensor-v1` rule was fixed
+   first, then two fresh static/Paddle versus ONNX captures produced
+   byte-identical aggregates with zero violations across 7,057,864 elements.
 2. Complete `MOD-001` evidence: static graph/ABI inspection, actual runtime
    dictionary behavior, and a written static-versus-ONNX disposition. Do not
-   treat a matching YAML or model name as equivalence.
+   treat a matching YAML or model name as equivalence. The static graph/ABI
+   half is now recorded in [`STATIC_ABI_INSPECTION.md`](STATIC_ABI_INSPECTION.md)
+   with a standard-library parse-only tool, together with the structural
+   static-versus-ONNX comparison; the runtime dictionary behaviour and the
+   numerical half of the disposition still depend on `RT-003`.
 3. Complete the unresolved `RT-002` evidence: baseline-CPU/no-AVX coverage,
    resource/error behavior, longer reuse/soak, cancellation/concurrency policy,
    native dependency and unsafe-boundary review, and supply-chain evidence.
@@ -100,14 +107,16 @@ must precede that integration.
 ### 2. Finish P2/P4 input and tensor foundations
 
 1. Complete remaining `FIX-001`, `TOL-001`, and `COMP-002` fixture/ledger
-   work: detector thresholds, malformed inputs, resource limits, decoder
-   behavior, and tensor representatives.
-2. Resolve `D-008` and `IMG-DEC-001`; select a legal, bounded image decoder
-   only after its color, EXIF, alpha, format, native/unsafe, and resource-limit
-   evidence is accepted.
-3. Implement `IMG-001`, `IMG-002`, `TEN-001`, and `PRE-001`: safe decode,
-   exact BGR/RGB/alpha/orientation policy, resize/pad/normalization/layout, and
-   reproducible model input tensors.
+   work: detector thresholds and tensor representatives. The `m2-tensor-v1`
+   comparison rule and the `classic-v1-image-inputs` exact/unsupported
+   classification are now resolved.
+2. `D-008` (M2 image portion) and `IMG-DEC-001` are resolved: PNG-only via
+   `png` 0.18.1, recorded in [`IMAGE_DECODER_DECISION.md`](IMAGE_DECODER_DECISION.md).
+   JPEG is deferred to the new `IMG-003` item, whose entry gate is a
+   tensor-level measurement of the recorded component delta `36`.
+3. `IMG-001` is implemented in `src/image.rs`. `IMG-002`, `TEN-001`, and
+   `PRE-001` remain: exact per-model scale/mean/std policy,
+   resize/pad/normalization/layout, and reproducible model input tensors.
 4. Complete `CROP-001` pixel evidence and `SEC-IMG-001` malformed/fuzzing
    coverage. Existing crop/geometry work is only a bounded precursor, not a
    universal OpenCV or decoded-image parity claim.

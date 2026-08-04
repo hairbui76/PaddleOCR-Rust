@@ -5,9 +5,10 @@ Status: In progress — `tract-onnx` 0.23.4 was rejected for the exact-artifact
 configuration; external `ort` 2.0.0-rc.13 dynamic-load proofs passed the six
 fixed exact-artifact shape probes through both a temporary wheel and a
 source-built ONNX Runtime route. A later temporary Python-to-Rust same-runtime
-raw relay is bit-identical for all six LCG shapes. One external static/Paddle
-versus ONNX capture completed all six shapes but is not a `m2-tensor-v1` pass;
-its required repeat and tolerance analysis remain pending. No runtime, format,
+raw relay is bit-identical for all six LCG shapes. The external static/Paddle
+versus ONNX capture is now complete: two fresh processes produced byte-identical
+aggregates and all 7,057,864 elements satisfied the predeclared `m2-tensor-v1`
+rule with zero violations. That closes `RT-003`. No runtime, format,
 or public implementation is selected
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854  
 Applies to: the user-provisioned, hash-verified v6-medium ONNX detector and
@@ -103,12 +104,72 @@ error-to-bound ratios were `0.0017513`, `0.0809331`, `0.2761421`, `0.1134321`,
 evidence only. It neither amends `m2-tensor-v1` nor converts the first capture
 into a pass: the rule must be approved before the two fresh captures are run.
 
-The temporary raw input/output tree and harness are not repository assets and
-must be disposed of after handoff. A successor must first amend the tolerance
-contract with a reviewable, predeclared relative-error rule if one is needed,
-then run two fresh captures and record their compact determinism and comparison
-results. No raw tensor, model byte, dictionary entry, cache, or harness is
-committed here.
+The temporary raw input/output tree and harness of that first attempt are not
+repository assets and were disposed of. It is superseded by the completed
+capture below and remains recorded only as history.
+
+### Completed static/Paddle capture (2026-08-04)
+
+The project user authorized this run explicitly. A second disposable external
+harness was written from scratch outside both repositories, in a throwaway
+virtual environment that was deleted afterwards. Its SHA-256 was
+`790e34b8dcf00c563a7bc70e19063f833a6f762da3700d552980c66e627d2c11`.
+
+The harness verified all eight loaded package files as regular, non-symlinked
+files matching their recorded byte counts and SHA-256 values **before** any
+runtime touched them: `inference.json`, `inference.pdiparams`, and
+`inference.yml` for each static package, and `inference.onnx` for each ONNX
+package. It imported no PaddleOCR or PaddleX code, downloaded nothing, wrote
+into no repository, and retained no raw tensor: only digests and aggregate
+numbers reached stdout.
+
+| Setting | Value |
+|---|---|
+| Runtimes | CPython 3.12.3, NumPy 1.26.4, Paddle 3.3.1 CPU, ONNX Runtime 1.28.0 CPU |
+| Paddle Inference | GPU disabled, MKLDNN disabled, one CPU math-library thread, memory optimization, IR optimization, new IR and new executor, direct feed/fetch handles |
+| ONNX Runtime | `CPUExecutionProvider`, one intra-op and one inter-op thread, memory patterns disabled |
+| Input generator | `lcg-v1`: seed `0x6d2b79f5`, `state = state * 1664525 + 1013904223` mod 2^32, one update per element, mapped as `((state >> 16) & 0xFFFF) / 32768.0 - 1.0` to `float32` |
+| Comparison | The predeclared `m2-tensor-v1` rule `abs(onnx - static) <= 1e-4 + 1e-4 * abs(static)`, elementwise on `float64` promotions, static/Paddle as reference |
+
+**The capture was run twice in fresh processes and the two aggregate records
+were byte-identical**, with SHA-256
+`84c4efdce28c418e0c6a216fba4a6846dc497fd48f4ed343a93a3eae80ea9ddb`.
+
+| Probe | Input shape | Elements | Maximum absolute error | Maximum error-to-bound ratio | Violations | Differing `f32` bit patterns |
+|---|---|---:|---|---|---:|---:|
+| Detector minimum | `[1, 3, 32, 32]` | 1,024 | `1.0464737e-7` | `0.0010465` | 0 | 1,024 |
+| Detector typical | `[1, 3, 960, 544]` | 522,240 | `7.9013407e-6` | `0.0760864` | 0 | 522,125 |
+| Detector maximum | `[1, 3, 960, 960]` | 921,600 | `4.1805208e-5` | `0.3962476` | 0 | 921,591 |
+| Recognizer minimum | `[1, 3, 48, 160]` | 374,200 | `8.8810921e-6` | `0.0501552` | 0 | 373,941 |
+| Recognizer typical | `[1, 3, 48, 320]` | 748,400 | `2.9325485e-5` | `0.1803613` | 0 | 748,007 |
+| Recognizer batch | `[6, 3, 48, 320]` | 4,490,400 | `5.2630901e-5` | `0.3180965` | 0 | 4,489,375 |
+
+All 7,057,864 matched elements were finite in both runtimes, every declared
+input/output name, dtype, rank, and shape matched, and **zero elements violated
+the predeclared rule**. The worst probe consumed `0.3962476` of its permitted
+bound, so the result is not marginal.
+
+Two properties of this result deserve to be stated plainly rather than
+smoothed over:
+
+1. Nearly every output element differs in its `f32` bit pattern. The two
+   representations are numerically close, not identical. Any later claim of
+   bit-exact agreement between the static program and its ONNX export would be
+   false.
+2. The error grows with shape: the largest probe is roughly 400 times the
+   smallest probe's absolute error. That is consistent with accumulated
+   floating-point reassociation across a larger graph evaluation, and it means
+   the margin should be re-measured, not assumed, if a larger shape is ever
+   admitted to the M2 profile.
+
+This is raw-tensor evidence for the exact declared shapes only. It does **not**
+establish preprocessing, postprocessing, decoded-image behaviour, CPU
+portability, physical-baseline coverage, a model manifest, a Rust adapter, text
+or score semantics, or a backend decision. `RT-004` remains blocked on the
+outstanding `RT-002` gates.
+
+No raw tensor, model byte, dictionary entry, cache, virtual environment, or
+harness is committed to this repository.
 
 ## First proof: tract-onnx 0.23.4
 

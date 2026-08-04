@@ -1,9 +1,10 @@
 # OpenCV Crop Oracle Capture
 
 Roadmap items: `CROP-001`, `GEO-002`, `FIX-001`, `TOL-001`
-Status: Two reviewed component captures are committed; the baseline capture has
-an inverse-mapping sidecar. A separate narrow model-backed no-text capture is
-recorded in `ORACLE_CAPTURE.md`, not in this component-crop record.
+Status: Three reviewed component captures are committed; the baseline capture
+has an inverse-mapping sidecar, and the channel grid is the first crop oracle
+that is not three-channel BGR. A separate narrow model-backed no-text capture
+is recorded in `ORACLE_CAPTURE.md`, not in this component-crop record.
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 
 ## Purpose and boundary
@@ -72,6 +73,15 @@ OpenCV optimized paths before capture:
 cd /path/outside/both-repositories
 python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py \
   --suite scalar-grid --disable-optimized > crop-scalar-grid.json
+```
+
+The interleaved-channel and saturation grid uses the same explicit scalar
+configuration:
+
+```sh
+cd /path/outside/both-repositories
+python3 /path/to/PaddleOCR-Rust/tools/capture_crop_oracle.py \
+  --suite channel-grid --disable-optimized > crop-channel-grid.json
 ```
 
 The input corpus currently covers identity bytes, left-border replication, a
@@ -189,6 +199,45 @@ evidence for these 36 self-authored cases and the recorded scalar environment;
 it does not select an OpenCV dispatch policy or establish universal OpenCV,
 decoder, model, or OCR equivalence.
 
+### Channel and saturation grid capture
+
+The reviewed interleaved-channel capture is
+[tests/fixtures/classic-v1-crop-channel-grid/capture.json](../tests/fixtures/classic-v1-crop-channel-grid/capture.json).
+It was captured on 2026-08-04 in the same Python 3.12.3, NumPy 2.5.1,
+OpenCV 5.0.0, and opencv-python-headless 5.0.0.93 environment, after the
+generator called `cv2.setUseOptimized(False)`. Its exact JSON SHA-256 is
+`3b0ee3e3b231d272ac6b7751812c5af5f6390d7bd38a57d6fe5e9a89f4c620fb`, and two
+consecutive captures were byte-identical. It contains 1,836 input bytes, 1,335
+output bytes, and no post-warp rotation.
+
+It closes two gaps that the BGR-only captures leave open:
+
+1. **Channel counts.** Eighteen cases use one-, two-, and four-channel
+   six-by-six sources, and three three-channel BGR controls keep the corpus
+   comparable with the existing oracles. Until now the private one-through-four
+   channel path had only self-authored expectations; this is its first exact
+   OpenCV comparison. A non-three-channel payload is recorded as `opaque-<n>`
+   because this project has frozen no colour meaning for those counts.
+2. **Cubic saturation.** Every source uses only the extreme `0` and `255`
+   byte values in step-edge, checkerboard, and isolated-spike patterns, so the
+   `a = -0.75` kernel's negative lobes must overshoot both ends of the `uint8`
+   range. A separate read-only `float32` recomputation of the same 21 warps
+   found 17 cases with at least one pre-saturation value outside `[0, 255]`:
+   96 elements above `255.5` and 241 below `-0.5`. The saturating conversion is
+   therefore exercised deliberately rather than incidentally.
+
+`crop::tests::classic_crop_executes_every_captured_opencv_channel_grid_case`
+checks every input, quadrilateral, pre-rotation dimensions, rotation decision,
+channel count, and output byte array offline, and asserts that the capture keeps
+covering one through four channels. `tests/fixture_integrity.rs` pins the suite
+name, capture digest, scalar setting, environment, ordered IDs with their
+required channel-order labels, per-payload hashes, and aggregate hashes.
+
+Exact agreement is evidence only for these 21 self-authored cases in the
+recorded scalar environment. It does not assign a colour meaning to one-, two-,
+or four-channel data, select an alpha policy, or establish universal OpenCV,
+decoder, model, or OCR equivalence.
+
 ## Scalar nearest-even rounding regression
 
 A separate deterministic 1,024-case self-authored BGR probe (3–20 pixel
@@ -257,7 +306,8 @@ and CTC regressions are checked against the profile used for distribution.
 This profile preserves the existing scalar operation order rather than trying
 to select an OpenCV SIMD/FMA path. It does not establish universal OpenCV pixel
 equivalence, select an optimization implementation, or relax the fifteen
-baseline or thirty-six scalar-grid fixture expectations. A future optimization
+baseline, thirty-six scalar-grid, or twenty-one channel-grid fixture
+expectations. A future optimization
 proposal must update this policy first, retain a portable baseline regression,
 and provide separately reviewed numerical evidence before it changes the
 sampler.

@@ -29,11 +29,17 @@ UPSTREAM_COMMIT = "2661c7c0ef5c613e8f93c6e93b2e052399f0f854"
 
 @dataclass(frozen=True)
 class CropCase:
-    """One self-authored BGR uint8 crop input and source quadrilateral."""
+    """One self-authored interleaved uint8 crop input and source quadrilateral.
+
+    Every pixel tuple in ``rows`` must have the same length, from one through
+    four channels. A three-channel case is recorded as ``BGR``; any other
+    channel count is recorded as opaque interleaved data because this project
+    has not frozen a colour meaning for it.
+    """
 
     identifier: str
     description: str
-    rows: tuple[tuple[tuple[int, int, int], ...], ...]
+    rows: tuple[tuple[tuple[int, ...], ...], ...]
     points: tuple[tuple[float, float], ...]
 
 
@@ -473,6 +479,89 @@ def scalar_edge_cases() -> tuple[CropCase, ...]:
 SCALAR_GRID_CASES = scalar_grid_cases()
 
 
+def extreme_channel_rows(
+    width: int, height: int, channels: int, pattern: str
+) -> tuple[tuple[tuple[int, ...], ...], ...]:
+    """Build self-authored full-range interleaved values for one channel count.
+
+    Every pattern uses only the extreme `0` and `255` byte values so that a
+    cubic kernel with negative lobes must overshoot past both ends of the
+    `uint8` range. That makes the saturation behaviour observable instead of
+    incidental.
+    """
+
+    def value(x: int, y: int, channel: int) -> int:
+        if pattern == "step-edge":
+            bright = x >= width // 2
+            return 255 if bright != (channel % 2 == 1) else 0
+        if pattern == "checkerboard":
+            return 255 if (x + y + channel) % 2 == 0 else 0
+        if pattern == "isolated-spike":
+            return 255 if x == (2 + channel) % width else 0
+        raise ValueError(f"unknown extreme pattern {pattern!r}")
+
+    return tuple(
+        tuple(tuple(value(x, y, channel) for channel in range(channels)) for x in range(width))
+        for y in range(height)
+    )
+
+
+def channel_grid_cases() -> tuple[CropCase, ...]:
+    """Build a deterministic interleaved-channel and cubic-saturation corpus.
+
+    The existing crop oracles are three-channel BGR only, and their
+    self-authored bytes rarely force the cubic kernel past the `uint8` range.
+    This suite covers the private one-, two-, and four-channel paths together
+    with saturating overshoot in both directions, using six-by-six sources and
+    sub-pixel or projective quadrilaterals.
+    """
+
+    patterns = ("step-edge", "checkerboard", "isolated-spike")
+    quadrilaterals = {
+        "half-phase": ((0.5, 0.5), (5.5, 0.5), (5.5, 5.5), (0.5, 5.5)),
+        "projective": ((-0.5, 0.25), (5.25, -0.4), (4.75, 5.6), (0.4, 5.2)),
+        "quarter-phase": ((0.25, 0.75), (5.25, 0.75), (5.25, 4.75), (0.25, 4.75)),
+    }
+
+    cases: list[CropCase] = []
+    for channels in (1, 2, 4):
+        for pattern in patterns:
+            for quadrilateral_name in ("half-phase", "projective"):
+                cases.append(
+                    CropCase(
+                        identifier=(
+                            f"classic-v1-crop-channel-grid-{channels}ch-"
+                            f"{pattern}-{quadrilateral_name}"
+                        ),
+                        description=(
+                            f"A {channels}-channel interleaved {pattern} source warped "
+                            f"through a {quadrilateral_name} quadrilateral exercises "
+                            "cubic overshoot and uint8 saturation."
+                        ),
+                        rows=extreme_channel_rows(6, 6, channels, pattern),
+                        points=quadrilaterals[quadrilateral_name],
+                    )
+                )
+
+    for pattern in patterns:
+        cases.append(
+            CropCase(
+                identifier=f"classic-v1-crop-channel-grid-3ch-{pattern}-quarter-phase",
+                description=(
+                    f"A three-channel BGR {pattern} control keeps the saturation "
+                    "corpus comparable with the existing BGR oracles."
+                ),
+                rows=extreme_channel_rows(6, 6, 3, pattern),
+                points=quadrilaterals["quarter-phase"],
+            )
+        )
+
+    return tuple(cases)
+
+
+CHANNEL_GRID_CASES = channel_grid_cases()
+
+
 def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespace:
     """Parse command-line arguments without importing optional oracle packages."""
 
@@ -483,7 +572,7 @@ def parse_arguments(arguments: Sequence[str] | None = None) -> argparse.Namespac
     )
     parser.add_argument(
         "--suite",
-        choices=("baseline", "scalar-grid"),
+        choices=("baseline", "scalar-grid", "channel-grid"),
         default="baseline",
         help="select the deterministic case suite (default: baseline)",
     )
@@ -530,6 +619,8 @@ def suite_cases(suite: str) -> tuple[CropCase, ...]:
         return CASES
     if suite == "scalar-grid":
         return SCALAR_GRID_CASES
+    if suite == "channel-grid":
+        return CHANNEL_GRID_CASES
     raise ValueError(f"unknown crop suite {suite!r}")
 
 
@@ -582,10 +673,23 @@ def encoded_bytes(values: Any) -> dict[str, str]:
     }
 
 
+def channel_order_label(channels: int) -> str:
+    """Return the recorded channel meaning for one interleaved channel count."""
+
+    if channels == 3:
+        return "BGR"
+    return f"opaque-{channels}"
+
+
 def capture_case(case: CropCase, cv2: Any, numpy: Any) -> dict[str, Any]:
     """Execute one source-equivalent OpenCV crop and return JSON-safe evidence."""
 
     image = numpy.array(case.rows, dtype=numpy.uint8)
+    if image.ndim != 3:
+        raise ValueError(f"case {case.identifier!r} is not an interleaved HWC array")
+    channels = int(image.shape[2])
+    if not 1 <= channels <= 4:
+        raise ValueError(f"case {case.identifier!r} has {channels} channels")
     points = numpy.array(case.points, dtype=numpy.float32)
     crop_width, crop_height = crop_dimensions(points, numpy)
     destination = numpy.float32(
@@ -604,6 +708,8 @@ def capture_case(case: CropCase, cv2: Any, numpy: Any) -> dict[str, Any]:
         borderMode=cv2.BORDER_REPLICATE,
         flags=cv2.INTER_CUBIC,
     )
+    if output.ndim == 2:
+        output = output.reshape(output.shape[0], output.shape[1], 1)
     rotates_counter_clockwise = output.shape[0] / output.shape[1] >= 1.5
     if rotates_counter_clockwise:
         output = numpy.rot90(output)
@@ -613,7 +719,7 @@ def capture_case(case: CropCase, cv2: Any, numpy: Any) -> dict[str, Any]:
         "description": case.description,
         "input": {
             "shape": list(image.shape),
-            "channel_order": "BGR",
+            "channel_order": channel_order_label(channels),
             "dtype": str(image.dtype),
             **encoded_bytes(image),
         },
@@ -626,7 +732,7 @@ def capture_case(case: CropCase, cv2: Any, numpy: Any) -> dict[str, Any]:
         "rotates_counter_clockwise": rotates_counter_clockwise,
         "output": {
             "shape": list(output.shape),
-            "channel_order": "BGR",
+            "channel_order": channel_order_label(channels),
             "dtype": str(output.dtype),
             **encoded_bytes(output),
         },

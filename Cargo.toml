@@ -22,6 +22,12 @@ required-features = ["fuzzing"]
 test = false
 bench = false
 
+[dependencies]
+# Selected by the recorded D-008 decision in docs/IMAGE_DECODER_DECISION.md.
+# Default features only: no nightly, no benchmark, and no alternative zlib
+# backend, so the dependency stays pure Rust and needs no C toolchain.
+png = "=0.18.1"
+
 [lints.rust]
 unsafe_code = "forbid"
 missing_debug_implementations = "warn"
