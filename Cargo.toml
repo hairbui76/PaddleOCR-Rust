@@ -18,7 +18,29 @@ rust-version = "1.94"
 description = "An independent native-Rust PaddleOCR port"
 license = "Apache-2.0"
 readme = "README.md"
+repository = "https://github.com/hairbui76/PaddleOCR-Rust"
 publish = false
+
+# What a package contains is stated, not inherited from whatever happens to be
+# in the working directory. `cargo package` otherwise picks up untracked files,
+# which is how a developer's scratch image or an editor directory ends up in a
+# release artifact. Everything listed here is text; no model weights, caches,
+# credentials, or build output can match.
+include = [
+    "src/**",
+    "examples/**",
+    "tests/**",
+    "tools/**",
+    "docs/**",
+    "sbom/**",
+    "README.md",
+    "ROADMAP.md",
+    "LICENSE",
+    "NOTICE",
+    "Cargo.toml",
+    "Cargo.lock",
+    "rust-toolchain.toml",
+]
 
 [[bin]]
 name = "fuzz-primitives"

@@ -22,8 +22,9 @@
 //! case where the cost is unbounded rather than merely large.
 //!
 //! Both mechanisms produce a typed error and never a partial result. That is
-//! the second half of the policy: see [`crate::pipeline`] for whole-input
-//! versus per-item failure semantics.
+//! the second half of the policy: a run fails whole-input, because the result
+//! document has no field marking a result as incomplete, so a partial line list
+//! would be indistinguishable from a complete one.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
