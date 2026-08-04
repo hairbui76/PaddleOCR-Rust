@@ -175,12 +175,19 @@ fn roadmap_references_resolve_to_real_documents_and_sections() {
             documents.insert(token.to_owned());
         }
     }
-    assert!(documents.len() > 10, "only {} documents cited", documents.len());
+    assert!(
+        documents.len() > 10,
+        "only {} documents cited",
+        documents.len()
+    );
     let missing: Vec<&String> = documents
         .iter()
         .filter(|name| !root.join(name).exists())
         .collect();
-    assert!(missing.is_empty(), "the roadmap names missing documents: {missing:?}");
+    assert!(
+        missing.is_empty(),
+        "the roadmap names missing documents: {missing:?}"
+    );
 
     // Every `<doc> section N` reference must find a `## N.` heading.
     let mut checked = 0_usize;
