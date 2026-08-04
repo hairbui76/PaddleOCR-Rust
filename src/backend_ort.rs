@@ -189,13 +189,29 @@ pub(crate) mod tests {
         ModelContract::new(artifact, input, output, budget)
     }
 
+    /// Builds a process-unique temporary path for a test artifact.
+    ///
+    /// A fixed name in the shared temporary directory is predictable, and the
+    /// directory is world-writable: another user can pre-create that path as a
+    /// symlink, and `fs::write` would follow it. Including the process id and a
+    /// counter removes both the collision and the symlink target.
+    fn unique_temp_path(stem: &str) -> std::path::PathBuf {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "paddleocr-rust-{stem}-{}-{unique}",
+            std::process::id()
+        ))
+    }
+
     /// A wrong artifact must fail before ONNX Runtime is involved at all.
     ///
     /// This test runs offline with no native library present, which is exactly
     /// the property being asserted: identity verification precedes loading.
     #[test]
     fn a_digest_mismatch_fails_before_any_runtime_call() {
-        let path = std::env::temp_dir().join("paddleocr-rust-ort-identity-test.onnx");
+        let path = unique_temp_path("ort-identity-test");
         if std::fs::write(&path, b"not a real model").is_err() {
             return;
         }

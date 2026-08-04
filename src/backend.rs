@@ -725,9 +725,25 @@ mod tests {
         assert!(digest.seen.is_empty(), "no bytes may be read");
     }
 
+    /// Builds a process-unique temporary path for a test artifact.
+    ///
+    /// A fixed name in the shared temporary directory is predictable, and the
+    /// directory is world-writable: another user can pre-create that path as a
+    /// symlink, and `fs::write` would follow it. Including the process id and a
+    /// counter removes both the collision and the symlink target.
+    fn unique_temp_path(stem: &str) -> std::path::PathBuf {
+        use std::sync::atomic::{AtomicU32, Ordering};
+        static COUNTER: AtomicU32 = AtomicU32::new(0);
+        let unique = COUNTER.fetch_add(1, Ordering::Relaxed);
+        std::env::temp_dir().join(format!(
+            "paddleocr-rust-{stem}-{}-{unique}",
+            std::process::id()
+        ))
+    }
+
     #[test]
     fn artifact_verification_reports_a_digest_mismatch() {
-        let path = std::env::temp_dir().join("paddleocr-rust-backend-artifact-test.bin");
+        let path = unique_temp_path("backend-artifact-test");
         if std::fs::write(&path, b"self-authored bytes").is_err() {
             return;
         }

@@ -18,6 +18,8 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [First-slice evidence](FIRST_SLICE_EVIDENCE.md)
 - [Identity and license evidence](IDENTITY_LICENSE_EVIDENCE.md)
 - [Quality profile](QUALITY_PROFILE.md) and [risk register](RISK_REGISTER.md)
+- [THREAT-001 threat model](THREAT_MODEL.md) — the two trust boundaries, and
+  the surfaces that deliberately do not exist
 - [ROB-001 robustness evidence](ROB_001_EVIDENCE.md) — the fuzz campaign and
   the clause-by-clause verification
 - [CONC-001 concurrency evidence](CONC_001_EVIDENCE.md) — what is enforced by
