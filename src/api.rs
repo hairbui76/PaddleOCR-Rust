@@ -791,6 +791,121 @@ impl OcrEngine {
         }
         Ok(mapped)
     }
+
+    /// Detects text regions without recognizing them.
+    ///
+    /// The detector and the reading-order sort run; cropping, orientation, and
+    /// recognition do not. That makes this **cheaper than
+    /// [`OcrEngine::recognize_png`] by the recognizer's whole cost**, which on
+    /// a dense page is most of the run.
+    ///
+    /// # What this deliberately does not do
+    ///
+    /// It does not apply `drop_score`. That threshold filters on **recognition**
+    /// confidence, and there is no recognition here — applying the detector's
+    /// score to it instead would silently mean something else. `box_threshold`
+    /// and `unclip_ratio` do apply, because they are the detector's own.
+    ///
+    /// It refuses unwarping for the same reason `recognize_png` does: the
+    /// returned coordinates would describe an image the caller never supplied.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`Error::Unsupported`] when unwarping is requested, and the same
+    /// decode and model errors `recognize_png` returns.
+    pub fn detect_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<DetectedRegion>> {
+        if options.document.unwarping {
+            return Err(Error::Unsupported {
+                capability: "unwarping through detect_png; use recognize_document",
+            });
+        }
+        let encoded = EncodedImage::new(png)?;
+        let decoded = crate::image::decode_classic_bgr(encoded)?;
+        let preprocessed = self.preprocess_document(decoded, options)?;
+
+        let schedule = options.control.begin();
+        schedule.check("detector")?;
+        let detected = crate::detector::detect_boxes(
+            &self.detector,
+            &self.detector_contract,
+            preprocessed.image(),
+            options.box_threshold,
+            options.unclip_ratio,
+        )?;
+
+        let mut regions = Vec::with_capacity(detected.len());
+        for entry in &detected {
+            let mut corners = [crate::types::Point::new(0.0, 0.0)?; 4];
+            for (slot, (x, y)) in corners.iter_mut().zip(&entry.corners) {
+                *slot = crate::types::Point::new(*x as f32, *y as f32)?;
+            }
+            regions.push((Quadrilateral::new(corners)?, entry.score));
+        }
+        // The same reading-order sort the full pipeline establishes, so the two
+        // entry points agree about order rather than only about content.
+        let mut quadrilaterals: Vec<Quadrilateral> =
+            regions.iter().map(|(quad, _)| *quad).collect();
+        crate::geometry::classic_sort_quadrilaterals(&mut quadrilaterals);
+
+        let mut sorted = Vec::with_capacity(regions.len());
+        for quadrilateral in quadrilaterals {
+            let score = regions
+                .iter()
+                .find(|(candidate, _)| *candidate == quadrilateral)
+                .map_or(0.0, |(_, score)| *score);
+            let mapped = map_quadrilateral(&preprocessed, quadrilateral)?;
+            sorted.push(DetectedRegion {
+                quadrilateral: mapped,
+                score,
+            });
+        }
+        Ok(sorted)
+    }
+}
+
+/// One detected text region, before any recognition.
+///
+/// Roadmap item `MODAPI-001`: a caller who wants boxes and not text should not
+/// have to pay for recognition, and a caller who has their own boxes should be
+/// able to see what this port's detector would have produced.
+#[cfg(feature = "onnxruntime")]
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub struct DetectedRegion {
+    /// The region's four corners, in the source image's coordinates.
+    pub quadrilateral: Quadrilateral,
+    /// The detector's mean probability inside the pre-unclip box.
+    ///
+    /// This is the **detector's** score, not a recognition confidence. The two
+    /// are different numbers with different ranges of meaning, and a caller
+    /// comparing one against a `TextLine::score` is comparing two things.
+    pub score: f64,
+}
+
+#[cfg(feature = "onnxruntime")]
+impl DetectedRegion {
+    /// Serialises detected regions as `paddleocr-rust/detection-result/v1`.
+    ///
+    /// A free function rather than a method on a slice wrapper, because the
+    /// document describes a **set** of regions and one region alone is not a
+    /// document.
+    #[must_use]
+    pub fn slice_to_json(regions: &[Self], width: u32, height: u32, id: Option<&str>) -> String {
+        let rows: Vec<([(f32, f32); 4], f64)> = regions
+            .iter()
+            .map(|region| {
+                let mut corners = [(0.0_f32, 0.0_f32); 4];
+                for (slot, point) in corners
+                    .iter_mut()
+                    .zip(region.quadrilateral.points().iter().copied())
+                {
+                    *slot = (point.x(), point.y());
+                }
+                (corners, region.score)
+            })
+            .collect();
+        crate::structure_json::detection_to_json(&rows, width, height, id)
+    }
 }
 
 /// Recognized lines together with the image their coordinates describe.
@@ -805,6 +920,34 @@ pub struct DocumentResult {
     /// `Processed` means an unwarping step ran and the coordinates **cannot**
     /// be mapped back to the page the caller supplied.
     pub coordinate_space: crate::document_pipeline::CoordinateSpace,
+}
+
+/// Maps one quadrilateral back to the caller's page.
+///
+/// The same rule `map_line` applies, extracted so the detection-only path does
+/// not duplicate it: a coordinate that cannot be mapped is an error rather than
+/// an approximation.
+#[cfg(feature = "onnxruntime")]
+fn map_quadrilateral(
+    preprocessed: &crate::document_pipeline::DocumentPreprocessing,
+    quadrilateral: Quadrilateral,
+) -> Result<Quadrilateral> {
+    let mut corners = [crate::types::Point::new(0.0, 0.0)?; 4];
+    for (slot, point) in corners
+        .iter_mut()
+        .zip(quadrilateral.points().iter().copied())
+    {
+        match preprocessed.to_source(f64::from(point.x()), f64::from(point.y()))? {
+            Some((x, y)) => *slot = crate::types::Point::new(x as f32, y as f32)?,
+            None => {
+                return Err(Error::InvalidInput {
+                    field: "document.coordinate_space",
+                    violation: InputViolation::OutOfRange,
+                });
+            }
+        }
+    }
+    Quadrilateral::new(corners)
 }
 
 /// Maps one line's quadrilateral back to the caller's page.

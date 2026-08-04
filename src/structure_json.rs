@@ -36,6 +36,13 @@ use crate::table_pipeline::Box as TableBox;
 /// The frozen layout result schema version.
 pub const LAYOUT_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/layout-result/v1";
 
+/// The frozen detection-only result schema version.
+///
+/// Separate from `ocr-result/v1` because a detection has **no text**, and a
+/// document with an always-empty `text` field would invite a consumer to read
+/// "" as "nothing was recognized here" rather than "recognition did not run".
+pub const DETECTION_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/detection-result/v1";
+
 /// The frozen table result schema version.
 pub const TABLE_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/table-result/v1";
 
@@ -151,6 +158,49 @@ pub(crate) fn table_to_json(
             push_f64(&mut out, *value);
         }
         out.push(']');
+    }
+    out.push_str("]}");
+    out
+}
+
+/// Serialises detected regions as one versioned JSON document.
+///
+/// `scores` are the **detector's**, and the field is named for that. A
+/// consumer comparing them against `ocr-result/v1`'s `confidence` would be
+/// comparing two different numbers.
+#[must_use]
+pub(crate) fn detection_to_json(
+    regions: &[([(f32, f32); 4], f64)],
+    width: u32,
+    height: u32,
+    id: Option<&str>,
+) -> String {
+    let mut out = String::new();
+    out.push_str("{\"schema_version\":\"");
+    out.push_str(DETECTION_RESULT_SCHEMA_VERSION);
+    out.push_str("\",\"input\":{\"id\":");
+    push_id(&mut out, id);
+    out.push_str(",\"width\":");
+    out.push_str(&width.to_string());
+    out.push_str(",\"height\":");
+    out.push_str(&height.to_string());
+    out.push_str("},\"regions\":[");
+    for (index, (corners, score)) in regions.iter().enumerate() {
+        if index > 0 {
+            out.push(',');
+        }
+        out.push_str("{\"quad\":[");
+        for (corner, (x, y)) in corners.iter().enumerate() {
+            if corner > 0 {
+                out.push(',');
+            }
+            // Whole pixels, matching `result_json`'s quad formatting so the two
+            // documents place the same box at the same coordinates.
+            out.push_str(&format!("[{x:.0},{y:.0}]"));
+        }
+        out.push_str("],\"detector_score\":");
+        push_f64(&mut out, *score);
+        out.push('}');
     }
     out.push_str("]}");
     out
@@ -277,6 +327,32 @@ mod tests {
         );
     }
 
+    #[test]
+    fn the_detection_document_shape_is_stable_and_deterministic() {
+        let regions = [(
+            [(1.0_f32, 2.0_f32), (3.0, 2.0), (3.0, 4.0), (1.0, 4.0)],
+            0.875_f64,
+        )];
+        let json = detection_to_json(&regions, 640, 480, Some("page"));
+        assert_eq!(
+            json,
+            "{\"schema_version\":\"paddleocr-rust/detection-result/v1\",\
+             \"input\":{\"id\":\"page\",\"width\":640,\"height\":480},\
+             \"regions\":[{\"quad\":[[1,2],[3,2],[3,4],[1,4]],\
+             \"detector_score\":0.8750000000}]}"
+        );
+        assert_eq!(json, detection_to_json(&regions, 640, 480, Some("page")));
+    }
+
+    /// The score field is named for whose score it is.
+    #[test]
+    fn the_detection_document_names_the_score_it_carries() {
+        let json = detection_to_json(&[], 1, 1, None);
+        assert!(!json.contains("confidence"), "{json}");
+        let with_region = detection_to_json(&[([(0.0_f32, 0.0_f32); 4], 0.5_f64)], 1, 1, None);
+        assert!(with_region.contains("\"detector_score\""), "{with_region}");
+    }
+
     /// The two schemas are distinct names, not versions of one.
     #[test]
     fn the_two_schemas_are_separate() {
@@ -292,5 +368,10 @@ mod tests {
             TABLE_RESULT_SCHEMA_VERSION,
             crate::result_json::RESULT_SCHEMA_VERSION
         );
+        assert_ne!(
+            DETECTION_RESULT_SCHEMA_VERSION,
+            crate::result_json::RESULT_SCHEMA_VERSION
+        );
+        assert_ne!(DETECTION_RESULT_SCHEMA_VERSION, TABLE_RESULT_SCHEMA_VERSION);
     }
 }

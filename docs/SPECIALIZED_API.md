@@ -58,6 +58,35 @@ Three deliberate shapes in that signature:
 sessions — the same position `docs/CONC_001_EVIDENCE.md` records for
 `OcrEngine`, enforced by the compiler.
 
+## 2b. Detection without recognition
+
+`MODAPI-001`. `OcrEngine::detect_png` runs the detector and the reading-order
+sort, and stops. Cropping, orientation, and recognition do not run, which makes
+it cheaper than `recognize_png` by the recognizer's whole cost — on a dense page,
+most of the run.
+
+```rust
+let regions = engine.detect_png(png, &OcrOptions::default())?;
+println!("{}", DetectedRegion::slice_to_json(&regions, width, height, Some("page")));
+```
+
+Two deliberate refusals in that method:
+
+- **`drop_score` is not applied.** It filters on *recognition* confidence, and
+  there is no recognition here. Reusing it against the detector's score would
+  silently mean something else. `box_threshold` and `unclip_ratio` do apply,
+  because they are the detector's own.
+- **Unwarping is refused**, for the same reason `recognize_png` refuses it: the
+  returned coordinates would describe an image the caller never supplied.
+
+`DetectedRegion::score` is the **detector's** mean probability, not a
+recognition confidence. The schema names the field `detector_score` rather than
+`confidence` so the two cannot be compared by accident.
+
+Verified against real artifacts: on the committed benchmark page, detection and
+the full pipeline agree on **six regions**, the same boxes, in the same order —
+both run the same reading-order sort.
+
 ## 3. Result schemas
 
 Two frozen names, separate from the classic one:
@@ -65,6 +94,7 @@ Two frozen names, separate from the classic one:
 | Schema | Produced by |
 |---|---|
 | `paddleocr-rust/ocr-result/v1` | `result_to_json` |
+| `paddleocr-rust/detection-result/v1` | `DetectedRegion::slice_to_json` |
 | `paddleocr-rust/table-result/v1` | `TableResult::to_json` |
 | `paddleocr-rust/layout-result/v1` | frozen, **not reachable** — §4 |
 

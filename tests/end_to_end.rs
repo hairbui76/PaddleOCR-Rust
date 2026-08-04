@@ -786,3 +786,96 @@ mod table_orchestration {
         assert_eq!(result.route, route);
     }
 }
+
+/// `MODAPI-001`: detection without recognition, through the same engine.
+#[cfg(feature = "onnxruntime")]
+mod detection_only {
+    use paddleocr_rust::api::{Artifacts, DetectedRegion, OcrEngine, OcrOptions, parse_dictionary};
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) if !value.is_empty() => value,
+            _ => panic!("set {name} to run this test"),
+        }
+    }
+
+    #[test]
+    #[ignore = "MODAPI-001: needs explicitly provisioned models"]
+    fn detection_agrees_with_the_full_pipeline_on_order_and_geometry() {
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let dictionary_path = env("PADDLEOCR_RUST_DICTIONARY");
+
+        let text = match std::fs::read_to_string(&dictionary_path) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let engine = match OcrEngine::load(
+            &Artifacts::new(&library, &detector, &recognizer),
+            &dictionary,
+        ) {
+            Ok(value) => value,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
+        let options = OcrOptions::default();
+
+        let detected = match engine.detect_png(PAGE, &options) {
+            Ok(value) => value,
+            Err(error) => panic!("detect: {error}"),
+        };
+        let recognized = match engine.recognize_png(PAGE, &options) {
+            Ok(value) => value,
+            Err(error) => panic!("recognize: {error}"),
+        };
+
+        println!(
+            "detected {} regions, recognized {} lines",
+            detected.len(),
+            recognized.len()
+        );
+
+        // Recognition can only drop regions -- `drop_score` filters on a
+        // confidence detection never computes -- so it never adds one.
+        assert!(
+            recognized.len() <= detected.len(),
+            "recognition produced more lines than there were regions"
+        );
+
+        // Every recognized line's box is one the detector reported, and in the
+        // same order: both paths run the same reading-order sort.
+        let mut cursor = 0_usize;
+        for line in &recognized {
+            let found = detected[cursor..]
+                .iter()
+                .position(|region| region.quadrilateral == line.quadrilateral);
+            match found {
+                Some(offset) => cursor += offset + 1,
+                None => {
+                    panic!("a recognized line's box is absent from the detection, or out of order")
+                }
+            }
+        }
+
+        for region in &detected {
+            assert!(
+                (0.0..=1.0).contains(&region.score),
+                "detector score out of range: {}",
+                region.score
+            );
+        }
+
+        let json = DetectedRegion::slice_to_json(&detected, 1280, 720, Some("bench"));
+        assert!(json.starts_with("{\"schema_version\":\"paddleocr-rust/detection-result/v1\""));
+        assert_eq!(
+            json,
+            DetectedRegion::slice_to_json(&detected, 1280, 720, Some("bench"))
+        );
+    }
+}
