@@ -316,7 +316,28 @@ The same measurement also rules out reusing a right-angle rotation for the
 pixels: upstream resamples with `INTER_CUBIC` through this offset matrix, so the
 rotated page differs from a transposed one everywhere, not only at the border.
 
-## 15. Status
+## 15. The border mode, and why the crop warp is not reusable
+
+`src/crop.rs` implements cubic sampling verified against `72` captured OpenCV
+cases, and it is **not** reusable for page rotation. It replicates the source
+border, because `get_rotate_crop_image` calls `warpPerspective` with
+`BORDER_REPLICATE`. `RotateImage` calls `warpAffine` with the **default** border,
+which is `BORDER_CONSTANT` at zero.
+
+For a page rotation that difference is not marginal: the expanded canvas samples
+outside the source at every corner, which is exactly where the border rule
+decides the answer. Reusing the crop path would fill those corners with edge
+pixels smeared outward instead of black.
+
+The cubic *weights* are shared, since those are the same OpenCV construction and
+`crop.rs` already preserves its exact evaluation order.
+
+`rotate_page` reproduces all `12` captured cases — three sizes including odd
+`9x7` and `23x11`, at each of the four angles — **byte for byte**. The odd sizes
+matter: they are where the output-size truncation and the half-pixel centre
+offset both bite.
+
+## 16. Status
 
 Contract frozen for both models. Artifacts provisioned and hashed. The text-line
 classifier is implemented in `src/orientation.rs`, compared against a captured
@@ -341,11 +362,15 @@ the obvious implementation would have gone wrong — computes the expanded outpu
 size with upstream's truncation, and provides the inverse map that returns a
 coordinate to the caller's image.
 
-`DOCORI-001` stays open for the remaining piece: resampling the page through that
-matrix with `INTER_CUBIC`. The cubic machinery exists in `src/crop.rs`, verified
-against `72` captured OpenCV cases, but it is written for a projective crop and
-has not been driven by an affine page rotation or compared against a capture of
-one.
+Document orientation is now complete as a capability: preprocessing, decision,
+rotation geometry with its one-pixel offset, the inverse map, and cubic
+resampling with the correct border mode — every part matched against a capture.
+
+What remains is not implementation but **integration**: deciding where a page
+rotation belongs in the pipeline, and mapping detected polygons back through
+`DocumentRotation::inverse` so a caller receives coordinates in the image they
+supplied. `DOCPIPE-001` owns composing the document preprocessing stages, and
+that is where this belongs rather than being bolted onto the classic path.
 
 Two corrections are recorded above rather than silently fixed, because both were
 wrong in ways that would have produced working code against the wrong contract:

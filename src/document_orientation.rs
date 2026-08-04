@@ -235,6 +235,75 @@ impl DocumentRotation {
     }
 }
 
+/// Rotates a page through upstream's affine matrix with cubic resampling.
+///
+/// # Why this cannot reuse the crop warp
+///
+/// `src/crop.rs` implements cubic sampling verified against `72` captured
+/// OpenCV cases, and it is not reusable here. It replicates the source border,
+/// because `get_rotate_crop_image` calls `warpPerspective` with
+/// `BORDER_REPLICATE`; `RotateImage` calls `warpAffine` with the **default**
+/// border, which is `BORDER_CONSTANT` with value zero.
+///
+/// That difference is not marginal for a page rotation. The expanded output
+/// canvas samples outside the source at every corner, which is exactly where
+/// the border rule decides the answer. Reusing the crop path would fill those
+/// corners with edge pixels smeared outward instead of black.
+///
+/// The cubic weights are shared, since those are the same OpenCV construction.
+pub(crate) fn rotate_page(page: &InterleavedImage, degrees: u32) -> Result<InterleavedImage> {
+    let rotation = DocumentRotation::new(page.dimensions(), degrees)?;
+    let (output_width, output_height) = rotation.output_dimensions();
+    let channels = page.channels() as usize;
+    let source = page.dimensions();
+    let (source_width, source_height) = (source.width() as i64, source.height() as i64);
+    let pixels = page.pixels();
+
+    let mut output = vec![0_u8; (output_width as usize) * (output_height as usize) * channels];
+    for y in 0..output_height {
+        for x in 0..output_width {
+            // `warpAffine` maps destination to source through the inverse.
+            let (source_x, source_y) = rotation.inverse(f64::from(x), f64::from(y))?;
+            let base_x = source_x.floor();
+            let base_y = source_y.floor();
+            let weights_x = crate::crop::cubic_weights((source_x - base_x) as f32);
+            let weights_y = crate::crop::cubic_weights((source_y - base_y) as f32);
+
+            for channel in 0..channels {
+                let mut accumulated = 0.0_f32;
+                for (row, weight_y) in weights_y.iter().enumerate() {
+                    let sample_y = base_y as i64 + row as i64 - 1;
+                    for (column, weight_x) in weights_x.iter().enumerate() {
+                        let sample_x = base_x as i64 + column as i64 - 1;
+                        // Constant zero outside the source, which is what the
+                        // default border mode means.
+                        if sample_x < 0
+                            || sample_y < 0
+                            || sample_x >= source_width
+                            || sample_y >= source_height
+                        {
+                            continue;
+                        }
+                        let index =
+                            ((sample_y * source_width + sample_x) as usize) * channels + channel;
+                        accumulated += weight_x * weight_y * f32::from(pixels[index]);
+                    }
+                }
+                let target =
+                    ((y as usize) * (output_width as usize) + x as usize) * channels + channel;
+                // Saturating round to uint8, as OpenCV's cast does.
+                output[target] = accumulated.round().clamp(0.0, 255.0) as u8;
+            }
+        }
+    }
+
+    InterleavedImage::new(
+        ImageDimensions::new(output_width, output_height)?,
+        page.channels(),
+        output,
+    )
+}
+
 /// Runs the artifact's declared preprocessing over one page.
 pub(crate) fn document_orientation_input(page: &InterleavedImage) -> Result<NchwTensor> {
     let resized_dimensions = resize_by_short_dimensions(page.dimensions(), DOCUMENT_RESIZE_SHORT)?;
@@ -688,6 +757,98 @@ mod oracle {
                 record["score"].as_f64().unwrap_or_default() > 0.9,
                 "{case}: the model should be confident"
             );
+        }
+    }
+}
+
+/// Comparison against the captured `warpAffine` page rotation.
+#[cfg(test)]
+mod rotation_oracle {
+    use super::*;
+
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+
+    const FIXTURE: &str = include_str!("../tests/fixtures/classic-v1-page-rotation/expected.json");
+
+    fn synthetic(index: usize, width: u32, height: u32) -> InterleavedImage {
+        let mut pixels = Vec::with_capacity((width * height * 3) as usize);
+        for y in 0..height as usize {
+            for x in 0..width as usize {
+                for channel in 0..3_usize {
+                    pixels.push(((x * 7 + y * 13 + channel * 29 + index * 31) % 256) as u8);
+                }
+            }
+        }
+        let dimensions = match ImageDimensions::new(width, height) {
+            Ok(value) => value,
+            Err(error) => panic!("dimensions: {error}"),
+        };
+        match InterleavedImage::new(dimensions, 3, pixels) {
+            Ok(value) => value,
+            Err(error) => panic!("image: {error}"),
+        }
+    }
+
+    /// Every captured rotation is reproduced, byte for byte.
+    ///
+    /// The outputs are small enough to compare whole rather than by digest and
+    /// sample, so a mismatch names the pixel instead of only the file.
+    #[test]
+    fn every_captured_rotation_is_reproduced() {
+        let document: serde_json::Value = match serde_json::from_str(FIXTURE) {
+            Ok(value) => value,
+            Err(error) => panic!("fixture json: {error}"),
+        };
+        let records = match document["records"].as_array() {
+            Some(records) => records,
+            None => panic!("fixture must hold records"),
+        };
+        assert_eq!(records.len(), 12);
+
+        for record in records {
+            let case = record["case"].as_str().unwrap_or_default();
+            let index: usize = case
+                .split('-')
+                .nth(1)
+                .and_then(|value| value.parse().ok())
+                .unwrap_or_default();
+            let angle = record["angle"].as_u64().unwrap_or_default() as u32;
+            let size = match record["source_wh"].as_array() {
+                Some(values) => (
+                    values[0].as_u64().unwrap_or_default() as u32,
+                    values[1].as_u64().unwrap_or_default() as u32,
+                ),
+                None => panic!("{case}: no source size"),
+            };
+
+            let source = synthetic(index, size.0, size.1);
+            let rotated = match rotate_page(&source, angle) {
+                Ok(value) => value,
+                Err(error) => panic!("{case}: {error}"),
+            };
+
+            let expected_size = match record["output_wh"].as_array() {
+                Some(values) => (
+                    values[0].as_u64().unwrap_or_default() as u32,
+                    values[1].as_u64().unwrap_or_default() as u32,
+                ),
+                None => panic!("{case}: no output size"),
+            };
+            assert_eq!(
+                (rotated.dimensions().width(), rotated.dimensions().height()),
+                expected_size,
+                "{case}: output size"
+            );
+
+            let expected =
+                match STANDARD.decode(record["output_bgr_base64"].as_str().unwrap_or_default()) {
+                    Ok(bytes) => bytes,
+                    Err(error) => panic!("{case}: base64 {error}"),
+                };
+            assert_eq!(rotated.pixels().len(), expected.len(), "{case}: byte count");
+            for (index, (actual, want)) in rotated.pixels().iter().zip(&expected).enumerate() {
+                assert_eq!(actual, want, "{case}: byte {index} of {}", expected.len());
+            }
         }
     }
 }

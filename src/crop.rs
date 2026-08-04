@@ -232,7 +232,9 @@ fn replicated_index(coordinate: f32, length: u32) -> u32 {
     }
 }
 
-fn cubic_weights(alpha: f32) -> [f32; 4] {
+/// Shared with the page rotation, which needs the same weights and a different
+/// border rule; see `document_orientation::rotate_page`.
+pub(crate) fn cubic_weights(alpha: f32) -> [f32; 4] {
     debug_assert!((0.0..=1.0).contains(&alpha));
 
     // Preserve the OpenCV 5.0.0 bicubic weight construction order rather than
