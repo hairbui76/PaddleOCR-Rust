@@ -83,8 +83,34 @@ that is not a technical question.
 `KIE-001` has a second blocker regardless: `PP-DocBee2-3B` is a vision-language
 model, which is `D-010`'s subject and unresolved.
 
-## 5. What this does not affect
+## 5. `SR-001` is blocked differently, and more deeply
 
-`TBLSTRUCT-001` is done. `SR-001` is unaffected by this finding — its row has
-never named a model, so it is blocked on scope rather than on artifacts, and that
-is a different conversation.
+An earlier revision of this section said `SR-001` was "blocked on scope rather
+than on artifacts". That was right about artifacts and wrong about the reason,
+and the difference matters because it decides which decision could unblock it.
+
+Super-resolution has **no inference path in either pinned baseline**:
+
+| Checked | Result |
+|---|---|
+| `paddlex/inference/models/*sr*` | none |
+| `paddlex/inference/pipelines/*sr*` | none |
+| `PaddleOCR/paddleocr/_models/*sr*` | none |
+| `PaddleOCR/configs/sr/` | **two files** |
+| `PaddleOCR/ppocr/metrics/sr_metric.py` | present |
+
+It exists only as **training configuration** — two configs, a loss, and a
+metric — with no predictor, no pipeline, and no artifact published under any
+plausible name.
+
+So `SR-001` does not belong to P8's inference scope at all. It sits inside
+`D-011`'s training scope, and **no artifact appearing would unblock it**, because
+nothing in either baseline would consume one. See
+`docs/TRAIN_DEC_001_EVIDENCE.md`.
+
+That is a stronger block than the four rows above, and "blocked on scope"
+understated it.
+
+## 6. What this does not affect
+
+`TBLSTRUCT-001` is done, and `TBLCLS-001` and `TBLCELL-001` with it.
