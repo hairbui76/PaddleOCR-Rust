@@ -1,0 +1,1050 @@
+{
+  "algorithm": {
+    "dtype": "uint8",
+    "interpolation": "INTER_LINEAR",
+    "note": "cv2.resize with an explicit destination size and no scale factors"
+  },
+  "cases": [
+    {
+      "description": "A 4x3 self-authored BGR source resized to 4x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-00-bgr-4x3-to-4x3",
+      "input": {
+        "base64": "0s1iSTo+3zM05EG61oc7pAeSYuY346z43+zTjZykK2cZKaI0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "24a51b08312958c8301aab95fb8e109981c23a29d293a006d7d867e06e19576e",
+        "shape": [
+          3,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "0s1iSTo+3zM05EG61oc7pAeSYuY346z43+zTjZykK2cZKaI0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "24a51b08312958c8301aab95fb8e109981c23a29d293a006d7d867e06e19576e",
+        "shape": [
+          3,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 5x5 self-authored BGR source resized to 5x5 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-01-bgr-5x5-to-5x5",
+      "input": {
+        "base64": "1+Iy8zjkRG0YeayLy1yBnetB0s1QN9UyKM7LEg1snGJycoS6rhRxS4MJ1ZH3eQfVwsuJs8U1yCsxOSQOZGZVuaUUiW0x68THVGdi",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "84a885bb000c1b25f03700a35fdfe36cd2f0ba9b37c9bef1f789a896910bdc05",
+        "shape": [
+          5,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "1+Iy8zjkRG0YeayLy1yBnetB0s1QN9UyKM7LEg1snGJycoS6rhRxS4MJ1ZH3eQfVwsuJs8U1yCsxOSQOZGZVuaUUiW0x68THVGdi",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "84a885bb000c1b25f03700a35fdfe36cd2f0ba9b37c9bef1f789a896910bdc05",
+        "shape": [
+          5,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 5,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 2x2 self-authored BGR source resized to 5x5 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-02-bgr-2x2-to-5x5",
+      "input": {
+        "base64": "2/YCnjaKqqj9Dxdc",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f7c13d64888f279e0b2bbfa6fb73da58cac5c833cf1f751781b2b0566dd6438e",
+        "shape": [
+          2,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "2/YC1eMPvJZGpEl8njaK1u4bz9sms5BQl0Z7kDOFw8+At75+jXt5YTd0Vydzr7DkoKHXZmWiLCluHRphqqj9mpntXF+sHiVsDxdc",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2e23ab2fd70d55c868e438bd377fa602a45107f35d943f70ed26c72226f8f4fc",
+        "shape": [
+          5,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 5,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 3x2 self-authored BGR source resized to 8x6 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-03-bgr-3x2-to-8x6",
+      "input": {
+        "base64": "4AvRSDMvD+LhpYIttgYOkLSf",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "2a2030feb9469b00cc9df1e301ca0da14c2c756dbbd089320c0af4dc30e509d2",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "4AvR1g3HnRyKZCtNPVRQKJWTEtfWD+Lh4AvR1w7Hnh2KZSxNPVRQKJWTE9fWD+LhzDOaxjKToixmfic6Y0VDUIaCPcjBOtPLuFpjtlZfpzxDmSIniTU2eHdxaLirZcO1pYItpnorrEwfsx0UrycpoWhgkqmWkLSfpYItpnorrEwfsx0UryYpoWhfkqmWkLSf",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "5ba6fa778e21987da79f226fc238d4a888688ea5eb14f42a5afb694d8bf1bc08",
+        "shape": [
+          6,
+          8,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 6,
+        "width": 8
+      }
+    },
+    {
+      "description": "A 4x4 self-authored BGR source resized to 16x16 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-04-bgr-4x4-to-16x16",
+      "input": {
+        "base64": "5CCh8zHVdRzGO+3+rNtUiZhOIYScMlDgAXO0oGLC71N+TylMUQy8EmYiYbR+Wp//",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "28bce5067aebaaff35b8da6ddbe0b7cfaa2bdd9512b65ffad574a40c20b5c1ec",
+        "shape": [
+          4,
+          4,
+          3
+        ]
+      },
+      "output": {
+        "base64": "5CCh5CCh5iKn6ia07SrB8S/O4y7TxCnPpCTMhR7IbjbNX2rbUZ7pQtP3O+3+O+3+5CCh5CCh5iKn6Sa07SvB8S/O4y7TxCnPpCTLhR/IbjbNX2rbUZ/pQtP3O+3+O+3+3TeX3TeX3jid4Dqo4juz5D2+1jvDuDbDmTHCeizBZD/IWGvWTJflQMPzOtn6Otn6z2aEz2aEzmSIzmCPzV2XzFmfvVWln1CqgkuvZEW0UlG+SmzNQ4jcO6TrOLLzOLLzwZVxwZVxv5Bzu4d3t357s3Z+o2+Gh2qRa2SbT1+mP2O0PG7DOnnTN4XjNYvrNYvrs8Res8Rer71eqK5eoaBempJfiYlnboN4VH6IOXmZLHWpLnC6MGvLMmbbM2TkM2Tkl85gl85glcZfk7dfkKhejZldgo9kbYpzWYWCRYCROnefOWusN165NlHHNkvONkvObLR4bLR4ca54eqJ4g5Z5jYp5jYF8hH2CfHiIc3SOaGuUXF+ZT1OgQ0elPUGpPUGpQZqQQZqQTJWRYYySd4OUjXuWmXSVm3CRnmyOoGeLlmCIf1SHZ0mFUD2ERDiERDiEFoCoFoCoJ32pSXesa3GvjGyypGetsmOhwF+UzluIxFR9oUl0fz5sXDNjSy5fSy5fC2a1C2a1G2a0PGWyXWSwfmOvmGKorGGcv2CQ02CEzFp7qFB0hUZtYjxmUDhiUDhiH0y3H0y3KE+xO1WlTluYYWGMdGaFiGuDnHCBsHV/rXOAk2uEeWKIYFmNU1WPU1WPMzO5MzO5NTmtOkWXQFKARV5pUWpiZXVqeX9yjIp6joyGfoWVbn6lXna0VnO8VnO8Rxm7Rxm7QiKqOjaJMUloKFxHLW4/QX5RVY9jaZ91b6WLaZ+mYpnBXJPbWZDpWZDpUQy8UQy8SRepOS6CKURcGls1HHAtL4NEQ5dbV6pyYLGOXqyuXafPW6HvWp//Wp//UQy8UQy8SRepOS6CKkRcGls1HHAtMINEQ5dbV6pyYLGOXqyuXKfOW6LvWp//Wp//",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "576f97de35b9a48fcd0e80ac1c0bf8e4510d6f3fd761482f99a1cb3e7fb7e68b",
+        "shape": [
+          16,
+          16,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 16,
+        "width": 16
+      }
+    },
+    {
+      "description": "A 2x3 self-authored BGR source resized to 9x4 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-05-bgr-2x3-to-9x4",
+      "input": {
+        "base64": "6TVxnS962laq0VjPobCbg3z+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "607815aa40555ccc2052edaef4375fcbf9972301a2846f424d6f0f97933addac",
+        "shape": [
+          3,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "6TVx6TVx5TVx1DNzwzJ1sjF3oS95nS96nS964EqV4EqV3kmW1kmczkmix0mov0iuvUmvvUmvxXikxXikw3eowHO1vG/CuGrQtGbdtGbhtGbhobCbobCbn62gmaG2kpbMi4rihX/4g3z+g3z+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8210d2418d9f8ec542d3de5d49b0e1a3fc4c0fe374a7577c2656767d991c7b4c",
+        "shape": [
+          4,
+          9,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 4,
+        "width": 9
+      }
+    },
+    {
+      "description": "A 8x6 self-authored BGR source resized to 3x2 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-06-bgr-8x6-to-3x2",
+      "input": {
+        "base64": "7UpBSCwgQJCOZsOgl4XhfGGtAFTP2qJUkjalqUVR0kkx4u1YaQeYQlMzvcvZRVnFx3bOKB4TJq1bPuE2+Bs8rK4vCwY52pSqmxoKczUkhuQkZLJyuvd35QDCYzChnJxOqUWR/ugax2oCtF4UXvhKl400QhrgUel6MEXCjCg21gaGDDrkJV7GV8fut53sLQ5P",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e203e4fed5e46fe22f875d59c29470a0e2c37f5d4002cdcb6f775895866e348c",
+        "shape": [
+          6,
+          8,
+          3
+        ]
+      },
+      "output": {
+        "base64": "pUNfpnp4qbjW8M0uiasvRDzP",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "6ffd42de4394e1910b68affa230cb3a80dbacdee7d712f88ac4faa13af9477ab",
+        "shape": [
+          2,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 2,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 16x16 self-authored BGR source resized to 4x4 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-07-bgr-16x16-to-4x4",
+      "input": {
+        "base64": "8l8R8irGpcpz/C5xjFondUVccDzoLsuO2hidLrYZQ0SKLM7f9QUG2kk87NcGOzcoL2V22mNA0y3JpaE/FT83qkrOvlgHCfHYdgv47CSg4Sdw8lvARFKwDE0tMizsaI3lfquuxttgQukCZuUba76ZJnC4F3i9YgqRyz1NwLl6vy4qSkJU3PzrNi/xmxHUsWNfTJR3UfXVmijaC0QKcUTfPwJZ7fNqMO/rbfBUvc112o/SghpcB3IxP0ltu158dJBYcKn8V9q3aThkTaBWOO4q+oiodG8AY7BIGOGsU7OfCT2TLYz4da6DUvCWYVVo4hZipUrOJeM4D7p8hGTDaD4VNDwAkBJ2loByH/3Qdin78xQU1ETap+RXD94chM1crRYL8l3MpA9Us9QzV3e6uMes23fVxrI2v6fG2xAB1Mkr/Q/upt1zYzKGuKUfNWfFub0JIP8Yk22DM2FDayWBWN5UFR5gLwiL3XRkHnM9BXYnOHUXKtMmIVFBZx3ejLwqzjV0JDIFrZRmECB9ExdiZUvDdxlPYtkXqytjoL0ot9HmUAhW6nVzfUP8N9dlno+fQ5ftlo8G3wl5YOM5/j3jVvfpMb55aS48TfL8cHUA4KYTgziwKtItpgZieYo/Zvc0ttjRGfSgdrjBv8LF7sLvbp/nP0GKsH6RAcm9Z76O71m6iFDbk6ynzkBD4YQkuphisrtq1DdbT199QEjZX/gKKoH5miey8uFPz3O3kQsT/V78hqep4WPjm/KEuR2rOct+ab4f2dStCP/ZWKQBPk2DtA1naLRbLEDEPGiypM05+aC4/9J/nOrFlioODSH7OtMqXBCinZzvL0yZ09sUlTaeUJZ5KlrTjoLA88VZbiID2flExc+/vrg/mqzA3kR2wArBD3kjYGdMcR/Kw/acOyHIzgJi7Cv/ZsIHfT5pQYi+0JsU5Tw7aLCFRqlgU5JvZRPLuVN7pcSvzeJ4bi9OiGjH+Hg0ekkKGHe+6wrnaorwdIVwmoGkkho7bmuI5t7VSwlp83Fj",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "427a3d66c00f2ad3b279c2107be10943395e458083bf7d9deef8a39deff5b360",
+        "shape": [
+          16,
+          16,
+          3
+        ]
+      },
+      "output": {
+        "base64": "rZVbaWOT001tRC64Y6BPmV5gz0WKYK5XnZqOYmt0t2KWn6c+jo+Fg3Km1ahVlj2c",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "81533de65f83340c343938a57dc1a84298a12254621ac759276f6332135a47d0",
+        "shape": [
+          4,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 4,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 15x9 self-authored BGR source resized to 4x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-08-bgr-15x9-to-4x3",
+      "input": {
+        "base64": "9nThnChrCwRXkplCgS9ubykL4CMCgfXIIvmVsyjgtD/kdrBlgAJ0ckBEGuI0MRSMllQei6hsf604DWBHM2Myp+VtcqrWOU0GUfvmZhQcPWm7gAQOzq3pMpqXASc2M319VBHMjc6nvWgDGWwjeYXntFM97NebdCqpZTbZ9Eu/qFbNiEnEkpkPFZb0f4W8NLhuXa8Sp7qoYDl5eKxijalpHTFzV5nQDrFdC9ZWCj4n9+sdbZXQW+TL2nnipjseyRgTpuBI6rm7N2Qo/4xFYI+P1hiDejwxdNBcze5RWiIqtcqUV1QnAgdWInegItyI0BArG3GqZHRb+GGiBqGwwgrgKqjQk1fmD+pjR+B6iyKDrjw1KfBa4E/wX+mM60Mp3OBt07kEEyKh8sio2Vsfm3ZCrbcT/cC0uYifU9TmKolHniJL84qJ90OQxHKa8HxnqUZ4Owplz7O4tkFbJrKSFienLYjT6nsqKwugPiXKmPtQ2umZXqFRJR2RNjvAz7wJiS/GSCTQPgZHzXdrcNt+09bDo/LTDKjX",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "ba6d1ebca04fe754a78322a397d8c4878da5863b6ecffbcdc0919715d9ede309",
+        "shape": [
+          9,
+          15,
+          3
+        ]
+      },
+      "output": {
+        "base64": "knQ7QnM5TuXKsW6Xx2KZ1K6pxyeFhW85vkli53VpuU9no4Bp",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "47551503b61876a3da1e3c03e77ecc91b486e89aa8f9fc306031baa98812132c",
+        "shape": [
+          3,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 13x11 self-authored BGR source resized to 5x2 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-09-bgr-13x11-to-5x2",
+      "input": {
+        "base64": "+omxRyYRcT48KAQTdwS0aA66Twsb1R4Ca9uNN5qnJTo9v5LrDADiCjZNSe5hJ/Hv/UPFPO2ZLC6ndCBPUIctpYEMJfukaKozK+zV3wOYmKsGDq5bWAchWegC0CKA/24UKnbpVMHuOecEy/Mrhks2QjbBwjV4hUrBAC5kKNwEkX1xx1A0SDc09f73Y/mluA19b8qt/H57JUkX5RW6qQ/y/GGMwD827XPQqb1YVq/aFEdnWBFFrlZldahXkBfBH6HP3BiVfJfABJDssXkziDDzs6lfgQhihfBxgvv3YZG0YViUgBtWkGEo8v+q42Onvgr0kpiGpAV+4gjJiN+eHNWrHxOglpxWiFRUb8MjoBoMamRVfpzaGbmJr/P8Ubj2C6nPtBQ8gjXuMLsdWz+EfiXYf/hRNM4ys2l5zJjLf0pjPjWoPzefilOZz0AUrJEImM/mVhWyC/nsOCFy4j+k1G/7RvJHpu/JeaHbX9dXK4B6fF4bk299KujhBVmhEb3oRCkXaxab0Hkni89Yzp+aQWHDz8tWtnaWMYQmSeMcRGl9xeS/WR0GMybSP11oWAo6",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "ba03d7be6b68689e59cfbfc01a846df111ee5b96a0ca767c8b661285416012d1",
+        "shape": [
+          11,
+          13,
+          3
+        ]
+      },
+      "output": {
+        "base64": "Jo9VkI09XZjtj9I7VziUdnCAU16vonpCO4LNu2WY",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "80916e89d6f5e4ec029141607e31eb647eef6013efe628a5dbba0528df8663cc",
+        "shape": [
+          2,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 2,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 12x3 self-authored BGR source resized to 4x9 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-10-bgr-12x3-to-4x9",
+      "input": {
+        "base64": "/56A8SO31nggvm7kbNn6YvJpv/M0KUc8s72GvAtvljWWCXRxmP1QoS1Vd/qOHM9SZTJt7TLF2K4W3N9Xbqsooxyr2U1zmAdhBtzDWPMU8+5RnFep4mJafzVtnx7Ly1+rANwHG7Q1tGYFfnoy",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f157e6f5200afd31439c8e4d03ef09d77ae481237bfd6b33b2b15737e0e5ec0b",
+        "shape": [
+          3,
+          12,
+          3
+        ]
+      },
+      "output": {
+        "base64": "8SO3bNn6KUc8ljWW8SO3bNn6KUc8ljWW1iaWaaHLZXpFrD2KvCl2Z2qcoKxOw0V/oS1VZTJt3N9X2U1ziW8/j0Jn1rRzzVVOcLEquFJg0YqPwF0qWPMU4mJay1+rtGYFWPMU4mJay1+rtGYF",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "39c1ae3619312451b5c188eddd58804a4187d1713b60eca4998769e8c2702b7b",
+        "shape": [
+          9,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 9,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 3x12 self-authored BGR source resized to 9x4 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-11-bgr-3x12-to-9x4",
+      "input": {
+        "base64": "A7NQnCFcPLIEU9m1Yq5BW9YYL9pOfXB3/J5+QX02CDDwU1X3JPu+OSNepQW7Eqy1zCEUnnfyhC+FQ59fi9AjoLhKjJ9ByGOO4c2x0uOQTzCdKgD2bL2TpoLYbhkVllBC1UIk46d7MOUGMAA6",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "cff4f01bdab619ddb411a3f72dbfc487eaecf8c04163cdec2b0e96cd02e9ff52",
+        "shape": [
+          12,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "U9m1U9m1WMuOXbxoYq5BYLszXckmW9YYW9YYJPu+JPu+K7OeMmt+OSNeXRl9gQ+cpQW7pQW7oLhKoLhKmbBHk6dEjJ9BoItbtHd0yGOOyGOObhkVbhkVeyskiT4zllBCq0s4wEcu1UIk1UIk",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "14c53035978c908c44e1fba18034bb233b8f16d3e992e535916d70605a209096",
+        "shape": [
+          4,
+          9,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 4,
+        "width": 9
+      }
+    },
+    {
+      "description": "A 7x5 self-authored BGR source resized to 11x2 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-12-bgr-7x5-to-11x2",
+      "input": {
+        "base64": "CMcgRh8Coezp6USGV4KHVbvHnsJn0JmxRIB2xe7+eStJnDd9r/gt0Rpm1BHpCIkZNBG8ULweMa/zq15nqPQenlPqQPEQ98C8vL2gS9IMqnLouKpE9hjMzM9DPRRgYkHZq6dBqprCq2QH",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e2e61292eb8f3198c24316790a0ca80b464a5c6ddda27dbcef1d2ad93552df2a",
+        "shape": [
+          5,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "nqWNdYl1T3Rnm8nNrqm+lTFYjkFxjnVzl9pXsI9exERmtETjj4+IbOEprayAvJiopp6ue7hPdrNPpIPNsIuCtZk1",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4ce29291b6fa2148aabce6ae8b75833ed4e7758fbb6b19150cf07f0d87668f42",
+        "shape": [
+          2,
+          11,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 2,
+        "width": 11
+      }
+    },
+    {
+      "description": "A 11x2 self-authored BGR source resized to 7x5 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-13-bgr-11x2-to-7x5",
+      "input": {
+        "base64": "DNzw8RyoBybNf69XTVfNTp92DqqAJMLrjWJuSmDF6iai5hkDO/abaRBvAh0W/md8mwBjAQJL3S9iEh1vxhgZm+6J",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1c6c78504b861585394ae536e2e613c85aa975a14737dfb916272606d11b4559",
+        "shape": [
+          2,
+          11,
+          3
+        ]
+      },
+      "output": {
+        "base64": "TaXbKCTIaYmJTp92Gri9g2J6vDasWJ3KLia/aoKCVo90JKize1t4ukOlgX+FRSuebGNmdVBtTWqLVz9usnSKq2BAXTB9bkRJkxBldCtiNCNlqaRvtVguYjF1bj1CmwBjfhxYLBxjp7Fp",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "04a5bdb6f15103ee1c8947d9ce2098c0d4c2772b6316aaab3ebbe3945de873cc",
+        "shape": [
+          5,
+          7,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 5,
+        "width": 7
+      }
+    },
+    {
+      "description": "A 1x1 self-authored BGR source resized to 1x1 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-14-bgr-1x1-to-1x1",
+      "input": {
+        "base64": "EfHA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "dc7bcaca89072dfbd4385db7f94b6ff3e3886948083f60e1230c40b535c93f64",
+        "shape": [
+          1,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "EfHA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "dc7bcaca89072dfbd4385db7f94b6ff3e3886948083f60e1230c40b535c93f64",
+        "shape": [
+          1,
+          1,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 1,
+        "width": 1
+      }
+    },
+    {
+      "description": "A 1x1 self-authored BGR source resized to 4x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-15-bgr-1x1-to-4x3",
+      "input": {
+        "base64": "FQaQ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "bbf576aeadaccaa161d0c9fc6a8cc7538e3c0399e6196bf57e4a2dc8c526a095",
+        "shape": [
+          1,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "FQaQFQaQFQaQFQaQFQaQFQaQFQaQFQaQFQaQFQaQFQaQFQaQ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e64306286a870af991bf671c8fd2f91a92a9e465ea40911afd65630fd9425be1",
+        "shape": [
+          3,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 5x4 self-authored BGR source resized to 1x1 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-16-bgr-5x4-to-1x1",
+      "input": {
+        "base64": "Ghtf8BWYN9V6QPDLLdagOkyEXWHMID2ZZgdX2LQbPheuw76V3u7lMfOJjkCe3/6m0c1aFNHQ4rGuSFyI",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "20549409b09108101bdb16ffa3d1117e83aa0cda20c6c8dcda4a0a4ec16e7d61",
+        "shape": [
+          4,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "f5a/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "e7c706bf26b4c90f662660080a51fc8186c44cc3076eacc2c5b466f70e6d8ef7",
+        "shape": [
+          1,
+          1,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 1,
+        "width": 1
+      }
+    },
+    {
+      "description": "A 1x7 self-authored BGR source resized to 3x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-17-bgr-1x7-to-3x3",
+      "input": {
+        "base64": "HjAvmhM+nQ9f1lucIqvnNDAzzUnm",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8dd0af0e79d18b05da1836a65778f49d1712096997cfd8530d0bc493a6c7bf69",
+        "shape": [
+          7,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "cR05cR05cR051luc1luc1lucZzhuZzhuZzhu",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "37cda4fcd0759f4b526e5ab14c598b1217c14c78e4404d92283e2af28139d299",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 7x1 self-authored BGR source resized to 3x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-18-bgr-7x1-to-3x3",
+      "input": {
+        "base64": "I0X/RRHkAklDbMZtGIAtLRXiPDD/",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "60488bed7072756bf702503e88576c8f5a1c86105345e10ebc545a4851ea22b3",
+        "shape": [
+          1,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "OSLtbMZtMh7sOiLtbMZtMh7sOSLtbMZtMh7s",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8d21b927537399aced3f4ea7596da6b445385dcfc5592af433d16807e7ef6350",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 3x3 self-authored BGR source resized to 1x6 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-19-bgr-3x3-to-1x6",
+      "input": {
+        "base64": "J1rP7w6JaIMoAjE+DVVzJvmRrBgYG7hHP6xA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "95007a8e35a243db1499292360fb47297f9ded2e82319e3fdc6b03cfaa815cc7",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "7w6JtyCERkN5EW5oGJ9SG7hH",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "f4e219ab691dc4c851c6df8c8d8597b8fcfa9ec6c966f4193daf9c8880aba665",
+        "shape": [
+          6,
+          1,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 6,
+        "width": 1
+      }
+    },
+    {
+      "description": "A 3x3 self-authored BGR source resized to 6x1 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-20-bgr-3x3-to-6x1",
+      "input": {
+        "base64": "LG+fmgwvzr0MmJwPAyq6IN1AHAAyb+KBiI04",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "948fad238137b86adc25e50b4507e8e8ff4fadd60e41b03dace35c0e773b0925",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "output": {
+        "base64": "mJwPc4A6KEePClecGbBfIN1A",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "46c1e3b2db6d1b4b901824d357168815e87703b5496f8b40a4644666e91317de",
+        "shape": [
+          1,
+          6,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 1,
+        "width": 6
+      }
+    },
+    {
+      "description": "A 31x1 self-authored BGR source resized to 5x1 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-21-bgr-31x1-to-5x1",
+      "input": {
+        "base64": "MIRvRArVM/fwLQfg+P8AGcLvjOhLwwu70G8wcOwBdP5tMyc0meEMKMOzdnqAq1GW1nifiiquQDPYThmwsjnwh8qBkNFSpAJWbjIBjz9o4MiNtp7+0UnLJoUEhuv+",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0f5a833c518391af194359d5a1ade60f57e5a18354e9baa662135830d4c3ace5",
+        "shape": [
+          1,
+          31,
+          3
+        ]
+      },
+      "output": {
+        "base64": "L2fmg9MKq1GWict4wXzq",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "5d3de059e5a9599f749cc9187df358543f72f9bc2f3dd26b00d4ddcb14ffc781",
+        "shape": [
+          1,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 1,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 1x31 self-authored BGR source resized to 1x5 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-22-bgr-1x31-to-1x5",
+      "input": {
+        "base64": "NZk+7gh6mTHVw3Kx7tRGE6ae+89kFjT2GFEp9F3I5fnHfQm6Jd96wLq8pIauoS75PmdHPG/b7bNHtdi5z13rhWUgQyMg1F+ESSPvCC7kPArYREdMW6QETNJvVeZI",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "082dc6b7c59104318eaf753f9d2768793fdbe290837275d3c89215eae5a9c8a4",
+        "shape": [
+          31,
+          1,
+          3
+        ]
+      },
+      "output": {
+        "base64": "sli/yFqooS75eFggTWwv",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c0c52dbd9a806b04bdbf53bf925d030cb9e5784563198b5c8724f458f20e8ecb",
+        "shape": [
+          5,
+          1,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 5,
+        "width": 1
+      }
+    },
+    {
+      "description": "A 2x24 self-authored BGR source resized to 6x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-23-bgr-2x24-to-6x3",
+      "input": {
+        "base64": "Oa0OmQUg/mu5WdyC46mNDIpNa7d9al0wYTIhec+PVvQgxupAsNzoWLDE0pHblwxcpVbu7bQHmTO2HZjB7IHmggG/93XvA7yyJBPdgR5gl00j0vCZ5f49cx/aJOKSI5pZ2waEOgvN+dcRjlKUQyaDDZ4BamCUeRAPdcUEAdLFT6hiLrdVQ9QyK6kg2lJW67ZQ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "51ff727205571b2e8d113c1ff230b91a0984b3b2ece254bef659858f9ad71def",
+        "shape": [
+          24,
+          2,
+          3
+        ]
+      },
+      "output": {
+        "base64": "ZnVPZnVPan9UbYtacpZgcpZgjkTmjkTmdFLHW1+oQm2JQm2JcJNMcJNMX4dWTnxgPXFqPXFq",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "38389acc9d10d6f861638071320cc3a782d8f395dbec1512077a52aa7a59a67e",
+        "shape": [
+          3,
+          6,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 6
+      }
+    },
+    {
+      "description": "A 24x2 self-authored BGR source resized to 3x6 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-24-bgr-24x2-to-3x6",
+      "input": {
+        "base64": "PcLeQwPFZKWe70dT2H7TBm/925+XvoZqqRQZ/kBXx+95EMzGPNpW8KfNAZ0Ijem/DUaWnvk0RbQlhFfJCqbhgJxeqsa9Mxnf/wTM+w7c849vYJrnb1l1mW1F893d7ovwsGuiAf4UdVYSQNmcUezRm4GFQL9xizEmD72PNWMKOM8GbL7F+XJXChEjvsY/bgtg",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4af72f40317bc098b5b08adaf621426d73c753fc5544f591cd134a5dd5ef337b",
+        "shape": [
+          2,
+          24,
+          3
+        ]
+      },
+      "output": {
+        "base64": "42KTJtOOR37V5GOTJtOOR3/VumqcMdiba4e9kXKlPd2pjo+maHquSeO3s5iOZ3muSOK2spiO",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8b7cf5258f4ec731c2c3ae56b8a18d1ca6792054edd17a6583d2a2c67a997176",
+        "shape": [
+          6,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 6,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 7x7 self-authored BGR source resized to 3x3 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-25-bgr-7x7-to-3x3",
+      "input": {
+        "base64": "Qteu7gFryd+ChbIkzlMZ/1OsSoawEq+k8vYRg7IeOOrTWq5MyNfEiJ3VL6k2gsYjdDU+Tz5g8jST6xfRJ8rcfTf9XhiMY3UN2vS6dP1YTtG67kM0+bSuwLqwwtgnunyHhtG/yPFa8NUT82CjXrIgKmQKFR1OnFE+qrYaafVOIfepqsU1rw976Xgmojon8mBvh35i",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "d6d1b09fd04c609bad4838a7c040fef86a432b18b05e1925127547ab005b6970",
+        "shape": [
+          7,
+          7,
+          3
+        ]
+      },
+      "output": {
+        "base64": "rKxXUteZuKTAaCKy2vS6g6KNiaxRWztAqKtA",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "cdedda6d6391bbd98e3236e770f91632f9ae4c3e849af4767764ddf7919bf694",
+        "shape": [
+          3,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 3,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 9x9 self-authored BGR source resized to 4x4 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-26-bgr-9x9-to-4x4",
+      "input": {
+        "base64": "Rux+mP4RLxlmGx31wyhg+Ddbum7JZdjeOtcKByPmquUso5DSVNQyIJPeXrRjeKSG3CTlAIONnrQCU9bZRe7Xe9OcEmpaktI6tOWo7e3UqRQFfOyCgw/n5gcbkdRyhm0eXDfcj+ShbFQUpearbHlvuEeP6nwsrXJWRK6mnYeTCh9N6M2lZq2gyOAphq4PdrV+mZr9q4Z9QVybIgSOhNAUwY46w0H7s1RqKw54aimvBGNW8EcAPeicw9AcH7aQzLI+bsejMGAJsX/rhTIGMN2kWj358KChqg7Litnv1/Hn0MGeQVdv+FQjv/pUrWC/i6RKci4i",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8910df118e1042aaee46addee7166902e56dc34c711de6e59d40eafd4f2d6ed1",
+        "shape": [
+          9,
+          9,
+          3
+        ]
+      },
+      "output": {
+        "base64": "cb5dRoqBl4Zodn6wfm+6l75uaV7Di41UorIqjo7kUFKImLknoc6mhHKtaNSStm+E",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4bdaed31a4996c0ea992434b7cf4209668f5fd24434b151e12f905d0e720aaf0",
+        "shape": [
+          4,
+          4,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 4,
+        "width": 4
+      }
+    },
+    {
+      "description": "A 10x6 self-authored BGR source resized to 7x5 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-27-bgr-10x6-to-7x5",
+      "input": {
+        "base64": "SwFOQ/y2lFRLsIjGuf2m8hwKKlbjuQEYgrkCjJWtG+CF7XFY39Kgt4rmjMCQboHpQxONssi5SzVxupbhYhLSeW47xbwowi9oj9WXZtxQBVZQCpbQDWogDVSGYM+8UV21Mpz6V9fo59IVWG2zeT+9RyoTv9oJv5Ju36cx0RjY80bwJ9QVHErEqEcsaiL3+QuNq7WYAEpQBmw6j2zmoDadn75TLOdhkhbdyfR5tplhIb+g28N0",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "328ca149709492df35d2cfbbb1a67ccb5f118ba6167151e09f192b51d656cca5",
+        "shape": [
+          6,
+          10,
+          3
+        ]
+      },
+      "output": {
+        "base64": "SUVngpNzsZDGzY5iOkzNo0sejJqPUZeM0qtst3W9fLGmNS9/ZpCbdXWuYm62c5OIkImijbxsQVGGPndQZn1ktpZztE7mOM5YdGNycS3bvVFqU3RdNm9eoke8i8JPX3mbvNGLip16pbh6",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "c196d1a7b0b103439ee0d30c1ac175b8b047cc37866b2b63d0fbbb521b551ae4",
+        "shape": [
+          5,
+          7,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 5,
+        "width": 7
+      }
+    },
+    {
+      "description": "A 6x10 self-authored BGR source resized to 5x7 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-28-bgr-6x10-to-5x7",
+      "input": {
+        "base64": "TxYd7fpc+o4vRvOXrtHs6wC5mT78DSpSy5v6EQZ1jNvfNlPea88OT4Dvu8y+Y15MqgI0Yw3m97XgIlXpgDbNdgraeQ738YuWasaF4MzMYJicmD8dl8RZM6HwL8oHHU5MBwIXHsovYlEWCvS6hwYM1Q2YlDnn0LKGep+9Baoc3G6UZduF0+jph68vTpbffWCcvNAzVg8jzHzY/NU+vJwnfu5slo3HcNhPZ9t7AwoTPhvqxj/p",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "57b134c2367cc80233cd4af38f52130bd28fd0fefd11f311276cb48d265d1807",
+        "shape": [
+          10,
+          6,
+          3
+        ]
+      },
+      "output": {
+        "base64": "aDBOzLtalah1hs3OwSXFdZVrYHy/g3yXhEpqWirY2q3bR1TeeyXLehfi2YGkUcJNaHp9R2lAcokyKMTFiBQZtRynp3Ssj6GiEa01xZFwgaCJwb+Mh6N+fJONmZ2dcLRbWn5WTzaPrWDN",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "a3549f5098886291559eaa35233dcef6ae1175f0516c05b4c80336b18b66df7d",
+        "shape": [
+          7,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 7,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 14x9 self-authored BGR source resized to 5x6 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-29-bgr-14x9-to-5x6",
+      "input": {
+        "base64": "VCvtl/cCX8gU3F5opKYy5eRoCSUVYVOME3zylXg8/dY4gDVk981853f36dfrWTywEvHcFFMSozZOiRXynVrIdKV5LF/FIejDRbZzWbxJu9vnJuhrIR+RWe5b/sZR6T/k3Wg15bx23tAXvXvClMxaZPAcapfE4tOeFJhIOTthxZU3o+P1iYUNZhcyMQrHAbWrzuvPrNP2kY12aT2W2AGwXB6F/zMtT5rCBcJ9T3rGW3c1sbpdOD5plV573kt4zEtvEG2I5vwWGgM2m/jRqL/S8O6MBAY03m0IqQDe6z6G1Gqgvq38oWGbLpBy7/UeVZKk1qO2o1k/Ih7Kr6YuJLt9THTd0wIY/JsskH5mRX60B4TdHQ/Xjg+C78S/UO31uG53RzWULbL1DchEehFrQMyR5QgngugPPvl6M++uKFKPv7XoNbxWFZ9Zs1GmWjusUIWBcPG3v2oBaaJEgUMBrheALjpPTPc6kluC7sZgp+K5LHVCsYfqg9IoLbk5",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "6619e9d4a22473f225c7f5e14ae1e6e96332d15c7f1d45682185afb22692b40c",
+        "shape": [
+          9,
+          14,
+          3
+        ]
+      },
+      "output": {
+        "base64": "hr1ApnxBSk1kkqVX48qdWLZ2xlRevJx5V9ZmPaJuj8XZSCONw7rHkk1+3l9fqGo5u16Lg22Ch56HUFG+UmW4rI5FGV/LmsmxSUKgpWIooERJX6dubL6FcqxJ",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "1e6b2ba5c1217f51d6ed630a969015e024581cafb9e3e7e34b53e35c92f4b299",
+        "shape": [
+          6,
+          5,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 6,
+        "width": 5
+      }
+    },
+    {
+      "description": "A 10x6 self-authored BGR source resized to 13x8 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-30-bgr-10x6-to-13x8",
+      "input": {
+        "base64": "WEC9QvWnxQL4csk5mXt53skXeQ0vtXzGXF7rGukEbtGRyhfqgsrqf20AF+MYTxkTeeCDxZg+ULa98dT6u3/DcUAY4LGUUUXxIKdi0qvFFx0ytJK4q3rKgDvGzsGbtDB7s81SrK+8WU8XbwLJopOp8tOhP/ah8/O1r5DTbc2mrr3b4eplQCMyRn41FX6vhAq63wdqAZfJVp0V1qbu9Gc6O06fadmTLVw0o6h/m+t4edN/mzbR",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0899453d66a412dace033984a12b954ece202224c674092a63e5ff5ff5ea583b",
+        "shape": [
+          6,
+          10,
+          3
+        ]
+      },
+      "output": {
+        "base64": "WEC9SbaveY7JtSjTdcFAjpBou6JIw5YdexE1qWepgWvbRY6bGukEZpuhhnvAmXPelYLFe48eVbAyZowogWkqe5FksY5ugZKnb629oNyei7Kknleep2evmq60cGJfMa8+TY5FdGNaWJdlqpZqkpudj57Ox5vnvYe+kVdaonBQwqGeYVbmNYiAdpmPm3miLjBFn4WfqpC+mHbEjlLEzLmgt2CAsXJmtMJuoaO+Z21MZzh0gTS8lIea2b2ij9ulgeOs5dy3u6K+mZikmaedtcahzNOHbV9BT0FKUl5+ToStml+wp1yUin+WXLnBjpWMkrCuqrCywaCYpK98ZntgRmxFQHlRTYydgGegpliGjV6RO3PMVp0VqaOj44ui0GJNQk+bXbOWS5pjTXBIo6t/nN55h918hZ2bmzbR",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "3319b28755f8cb13f42edd24694f33ca8475f2cb2e57be0852fd263f6a3726c3",
+        "shape": [
+          8,
+          13,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 8,
+        "width": 13
+      }
+    },
+    {
+      "description": "A 20x6 self-authored BGR source resized to 26x8 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-31-bgr-20x6-to-26x8",
+      "input": {
+        "base64": "XVWN7PNNKzzcCDQKj1C/163G6PVICKUApEDjn1vL4MzrE/hwDshZF2MIRu9FRfZ24c8rdt1r/DYsWJMC2KO+b9y3kwNigKEe+5dQTJtBcl99QjsGNdUDpogxnb3mgCESiTNvdKID1c4YIojRsFn4gLYlFFR/BBTNSolfoV7ql+V+H/HV9sBWJeY4+fKYCF/J8SIFV1ucHK2zQw5FEM3DGX640375DB2nQo+B6Fwqli/JhrJG4CKdy71lswO9d1zme9wgC7oftlu9/9Gu+AGcqg9EEZ+WAa0xFBso+R2bLIahETtZvBVAzp+GcQRdMYY2w/FtI3uG9mwWsiAJ2FISN0p82Yz47m4O4ES5b2/FfdQexmfXAOS0j9mfHdmPFgE7CesDC9iPibAufdk2Bim9iYqj8AQLMrotJHh40tLH/9uizRaCPMBsyuyb0mXwL5hepgdRN/ZqbmJz910jKqgnXw42w954Lof5",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "8a5de57ad331eb95ad3df6b0cdc8021a355280014d3ebaa3f2d1980b7c79ee52",
+        "shape": [
+          6,
+          20,
+          3
+        ]
+      },
+      "output": {
+        "base64": "XVWNurxjmqWJJDqzCTQSa0iOs37C28Ck3/JFM7QOYmuDoknbpmjP2L/nWumbEeNmELRJF2cLOck1RfJdb+ti3c8ti9pfw31Hw1YdWJMCqoasosSZiY6PZyt4VHQbsHtfqY92iJ9wmpVlQm0XSYQ0dpBepYB5tLrZeI5zWW9KWXFUUYkIisUfZ8ZsV6WuwIinirhUcn1SUkdrJESBo5majaa5iomiiWtrXrtjz61Xm69IWa5RoJOFQ1daWnMjgIghhX5ncLDFalBhYz1SWnSBUpNJsalid4iXN2PEiG/FoY1GbmdqP0mbNU+aXXxnjXCyoZK2hc2VLt3UtMt0hNJCWeBR6dueToO+nD9hwDBCWVyUI6GsMFFoKWFwGKmxNHS0mXveZVDGHzqTV392yGpCtUKDileSe61EzS+VyISAvHOQoi6+bmvigrxaTMwkPqlKv3G42rKz7VWa2Qx1jyhYI5GRDJxXDW03Oi9O1Smba2yoKF6HOjJbrilKyoBxnEVxYTZZPIw4zqN/h5l7lnJq0EJWnjdbrnApbn04U3V+zXvc7I5n7leExjalf1iMWrJTbpd+S4uOKZeFsJOcSq+YG2huIzo6TJweUrt2bZNgdYk8YLo2fKaLW42PkWdb3kkThlkWj14vg29okYmp56bS4l9YvWNynIGlkp+tm6l1k4qUbIOeR6GObOGLSbuGU2hbU1IpFs8UJppcbqtZib9cX7p/Bim9W2istFFjyycRObMrKIpke6Wf3tS9/dOh1zyIeXh1bc98y9yl0XTmZ4aQYVtYkTVWO+1pX4pxsl9LwHEkLKInVSszmYZcj8ClLof5",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "0ca56d1e8b324d79cbfafdc8c48dcca45bbee8774cce790bf5b53e52b56d6a67",
+        "shape": [
+          8,
+          26,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 8,
+        "width": 26
+      }
+    },
+    {
+      "description": "A 5x12 self-authored BGR source resized to 3x8 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-32-bgr-5x12-to-3x8",
+      "input": {
+        "base64": "YWpdl/DykHbBnZ/bhCUF0ZF1WNxhXM477SHbI8ySUcdEXdr2msXHr1oRdPpzOtTZSL7SKCKXqbebwFMK9ce5bHdWR1UxsP5M1og+xYu9zqLJ0ORUvzA8zdacbLgwTBKpX5mNO5VKUE0Z1A/YvSBGD5mq6bNcFjTl5IHq1fAvgAwiXvlFrV57BE473WaAjLXZAj2grCBv4b1SsHedLDNN+K3RPCRf6t8Z4HWDNMzcs4sUcS26",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b67d5969ca89d65b0c52fc37b6af8df78cf80eebecdafeff8515cfcfd745d98a",
+        "shape": [
+          12,
+          5,
+          3
+        ]
+      },
+      "output": {
+        "base64": "gJyHg4ygg19kasV7i8ekf7hoYcTHMC9+vIM8yJm3rsBLyKNtfGVsS5mUTmNN2oKqZC9EhYV8bWpYdJW2dTOB4bZIMqa4hE6D",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "4f1d7e5c3f67ae4827df8616a2822e674770456588ac9ae7514a088cae1dcba2",
+        "shape": [
+          8,
+          3,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 8,
+        "width": 3
+      }
+    },
+    {
+      "description": "A 17x13 self-authored BGR source resized to 8x8 with OpenCV INTER_LINEAR.",
+      "fixture_id": "classic-v1-resize-linear-33-bgr-17x13-to-8x8",
+      "input": {
+        "base64": "Zn8tQe6Y9rClMwqsefpMynYlyMR7sPh1NQPTqD5awsKep7x8JsM1R1AZowagMLE8sK162WfEVTcKJxISE+u0ahP1+qf/4Ft6sXgtPno5KeQUXo2hSYp18yMHO7N7FwJANP6qAoiRzMwah5bgy+aVnXsuvhE6J1X9f3p2CYF0aTTFnAC1Y/uf47U+wdpoDwroFFk8AuRCp83wHd/1SJjW1t3rpsrFyaGMflyFgT2O0OdeXKkvhwbRAhxPh7wDIm1c50u5L3cnUrRFY6uKSEJlYy/8Hjj4I+1afjVzB/uwhaGiZMq22Mjlbq2a8hOcDXrHsD8lo53MybtjtprkjOmnISEc4BbY4ELxMAoNmV/W8yRfcL/XcrrnL+6A6sQodJUAy6Jy6f4pBpgYgKEAzYfpLQweXiAIJ3zhFQBCfFP/PwFcZnCtZOGA4YiQSpAzDqo63B3rsIHScyKibXdGpjjOkOIdOsW2yrNwcpCV8/VftUZJhL+ZlQFpaDO+Ub/N1py6wcGldzgoWQqemAY5iXDB8iCsrNWRebFKOq6O6ImRODGxj/zsvcbcnKmIEtZ6O7aBgjb0QFKHUIf+vtwmriRlSrsG+zSw8F4zBAEkoGe/sNvlBU6aT/sB/pgy4UMmURkAQO7TQA95sQPyaprTAf8CjBA/54eNJjC09xI1bO3dgPDyTSvoa7ZdYovsxw4QAC/DI1Bcj6jjAdLdKWUyE4/5W9hzHOTqgJ/Lu3bxVW/O8FWN5sMf0YpIpuAJ8Iu+NBcpT+8z1UY1Zt1DuVMODHczuRP1oojL/ZCfagVLzyadoOIElnE6y7dXWrcrGgXpDRkL0LP1/e2fF1K6Nd+9l56PtPuCTHxda8kqfwdqaR6o9QownSqWI1jP",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "d8fd94753b95f9a58731a1910ce864c9abc5b3bc151d4e14961ac0bf907ad2bf",
+        "shape": [
+          13,
+          17,
+          3
+        ]
+      },
+      "output": {
+        "base64": "ZJplVV+dxo5tss1ggnZKg6dqU05PUbdtpKiGop1RTUzbGoBwkhyq1bdIEiiuR9mPSG/MYsCqTqaXktCQel+uS4pnroSdg7ecfiWFZSFpyTd9hbLWvbsryKZ3PJAigWqHiJGEtHBliC96a6/BnrSMcRyWolmsjchuoaCuWcCQwIZnPMqfcDW5dcQik4BknlBQa4PhbJm8JzOahqXRJmg+VdWNkorQmWiopLE8T0Bhv9mIRdWWfsprhJxikRV5eGKB",
+        "channel_order": "BGR",
+        "dtype": "uint8",
+        "sha256": "b515cd833172f97bb2e81fadf4281f3350b4f2cd2debc3f111df4145decbc356",
+        "shape": [
+          8,
+          8,
+          3
+        ]
+      },
+      "target_size": {
+        "height": 8,
+        "width": 8
+      }
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+    "opencv_distribution": {
+      "name": "opencv-python-headless",
+      "version": "5.0.0.93"
+    },
+    "opencv_optimized": false,
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]"
+  },
+  "purpose": "developer-only OpenCV linear-resize oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/resize-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/data/imaug/rec_img_aug.py:resize_norm_img",
+      "ppocr/data/imaug/operators.py:DetResizeForTest"
+    ]
+  }
+}

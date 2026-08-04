@@ -1,0 +1,50 @@
+{
+  "fixture_id": "classic-v1-resize-linear-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/input",
+    "sha256": "5390037b958bed6fe7bb5c174a6388c2dd38ef1f1dc369e2025c65279f70f677",
+    "sha256_scope": "Concatenation of the thirty-four raw C-order input byte arrays in capture document order.",
+    "provenance": "Self-authored in-memory BGR uint8 values emitted by tools/capture_resize_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/data/imaug/rec_img_aug.py:resize_norm_img",
+      "ppocr/data/imaug/operators.py:DetResizeForTest"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_resize_oracle.py",
+    "suite": "linear-grid",
+    "capture_sha256": "a8bccebc3cd2738d73cfa5d4bc803957ed069bc49532503484363749757130dc",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_distribution": "opencv-python-headless 5.0.0.93",
+      "opencv_build_information_sha256": "0ef08003c31127b3b5d34410ab13483c511e73b99e278b1a8abd6ddcb265699a",
+      "opencv_optimized": false
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/output",
+    "schema_version": "paddleocr-rust/resize-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "b63423f238d3480f3c91ecc9e4773dbdb67b0e870a0d393aa5246791390f0dce",
+    "sha256_scope": "Concatenation of the thirty-four raw C-order output byte arrays in capture document order."
+  },
+  "tests": [
+    "resize::tests::classic_linear_resize_executes_every_captured_opencv_case"
+  ],
+  "limitations": [
+    "This is an exact regression fixture only for its thirty-four self-authored BGR cases and the recorded scalar OpenCV 5.0.0 environment.",
+    "It covers INTER_LINEAR only. INTER_CUBIC, INTER_AREA, and every other interpolation remain outside this fixture.",
+    "It fixes no resize policy: which target size the detector or recognizer requests remains DET-001 and REC-001 work.",
+    "It does not establish image-decoder, colour, alpha, orientation, detector, recognizer, model, or end-to-end OCR compatibility."
+  ]
+}

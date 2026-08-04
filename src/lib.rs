@@ -29,6 +29,8 @@ mod geometry;
 #[allow(dead_code)]
 mod image;
 #[allow(dead_code)]
+mod resize;
+#[allow(dead_code)]
 mod tensor;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};

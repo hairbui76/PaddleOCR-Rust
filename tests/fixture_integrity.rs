@@ -13,6 +13,9 @@ use sha2::{Digest, Sha256};
 const FIXTURE_ROOT: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 const UPSTREAM_BASELINE: &str = "2661c7c0ef5c613e8f93c6e93b2e052399f0f854";
 const CROP_CHANNEL_GRID_FIXTURE_ID: &str = "classic-v1-crop-channel-grid";
+const RESIZE_LINEAR_GRID_FIXTURE_ID: &str = "classic-v1-resize-linear-grid";
+const RESIZE_LINEAR_GRID_CAPTURE_SHA256: &str =
+    "a8bccebc3cd2738d73cfa5d4bc803957ed069bc49532503484363749757130dc";
 const CROP_CHANNEL_GRID_CAPTURE_SHA256: &str =
     "3b0ee3e3b231d272ac6b7751812c5af5f6390d7bd38a57d6fe5e9a89f4c620fb";
 const E2E_NO_TEXT_FIXTURE_ID: &str = "classic-v1-e2e-no-text";
@@ -145,6 +148,9 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         if fixture_id == CROP_CHANNEL_GRID_FIXTURE_ID {
             verify_crop_channel_grid_oracle(&metadata, &directory, &context);
         }
+        if fixture_id == RESIZE_LINEAR_GRID_FIXTURE_ID {
+            verify_resize_linear_grid_oracle(&metadata, &directory, &context);
+        }
         if fixture_id == "classic-v1-image-inputs" {
             verify_image_input_oracle(&metadata, &directory, &context);
         }
@@ -169,6 +175,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-crop-oracle".to_owned(),
         "classic-v1-crop-scalar-grid".to_owned(),
         CROP_CHANNEL_GRID_FIXTURE_ID.to_owned(),
+        RESIZE_LINEAR_GRID_FIXTURE_ID.to_owned(),
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),
@@ -766,6 +773,111 @@ fn verify_crop_channel_grid_oracle(metadata: &Value, fixture_directory: &Path, c
         &output_bytes,
         string_field(expected, "sha256", context),
         &format!("{context} concatenated crop channel-grid outputs"),
+    );
+}
+
+/// Checks the OpenCV `INTER_LINEAR` resize oracle record.
+fn verify_resize_linear_grid_oracle(metadata: &Value, fixture_directory: &Path, context: &str) {
+    let input = object_field(metadata, "input", context);
+    let expected = object_field(metadata, "expected", context);
+    assert_eq!(
+        string_field(input, "path", context),
+        "capture.json#/cases/*/input",
+        "{context} resize input path changed without a payload-integrity update"
+    );
+    assert_eq!(
+        string_field(expected, "path", context),
+        "capture.json#/cases/*/output",
+        "{context} resize expected path changed without a payload-integrity update"
+    );
+    assert_eq!(
+        string_field(expected, "schema_version", context),
+        "paddleocr-rust/resize-oracle/v1",
+        "{context} resize expected schema changed without review"
+    );
+
+    let oracle = object_field(metadata, "oracle", context);
+    assert_eq!(
+        string_field(oracle, "generator", context),
+        "tools/capture_resize_oracle.py",
+        "{context} resize generator changed without review"
+    );
+    assert_eq!(
+        string_field(oracle, "capture_sha256", context),
+        RESIZE_LINEAR_GRID_CAPTURE_SHA256,
+        "{context} resize capture digest changed without review"
+    );
+    let capture_bytes = read_fixture_file(fixture_directory, "capture.json", context);
+    assert_digest(
+        &capture_bytes,
+        RESIZE_LINEAR_GRID_CAPTURE_SHA256,
+        &format!("{context} resize capture document"),
+    );
+
+    let capture = parse_json_bytes(
+        &capture_bytes,
+        &format!("{context} resize capture document"),
+    );
+    assert_eq!(
+        string_field(&capture, "schema_version", context),
+        "paddleocr-rust/resize-oracle/v1",
+        "{context} resize capture schema changed without review"
+    );
+    verify_scalar_grid_capture_environment(
+        object_field(oracle, "environment", context),
+        object_field(&capture, "environment", context),
+        context,
+    );
+    assert_eq!(
+        string_field(
+            object_field(&capture, "algorithm", context),
+            "interpolation",
+            context
+        ),
+        "INTER_LINEAR",
+        "{context} resize interpolation changed without review"
+    );
+
+    let cases = array_field(&capture, "cases", context);
+    assert_eq!(
+        cases.len(),
+        34,
+        "{context} expected thirty-four reviewed resize cases"
+    );
+
+    let mut input_bytes = Vec::new();
+    let mut output_bytes = Vec::new();
+    let mut seen = BTreeSet::new();
+    for case in cases {
+        let fixture_id = string_field(case, "fixture_id", context);
+        assert!(
+            fixture_id.starts_with("classic-v1-resize-linear-"),
+            "{context} resize case identifier {fixture_id:?} is outside the reviewed namespace"
+        );
+        assert!(
+            seen.insert(fixture_id.to_owned()),
+            "{context} duplicate resize case {fixture_id:?}"
+        );
+        let target = object_field(case, "target_size", context);
+        for axis in ["width", "height"] {
+            let value = value_field(target, axis, context).as_u64();
+            assert!(
+                matches!(value, Some(value) if value > 0),
+                "{context} resize case {fixture_id:?} must declare a positive {axis}"
+            );
+        }
+        input_bytes.extend(decode_crop_payload(case, "input", context));
+        output_bytes.extend(decode_crop_payload(case, "output", context));
+    }
+    assert_digest(
+        &input_bytes,
+        string_field(input, "sha256", context),
+        &format!("{context} concatenated resize inputs"),
+    );
+    assert_digest(
+        &output_bytes,
+        string_field(expected, "sha256", context),
+        &format!("{context} concatenated resize outputs"),
     );
 }
 

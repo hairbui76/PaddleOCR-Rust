@@ -1,10 +1,11 @@
 # M2 Fixture and Tolerance Plan
 
 Roadmap items: `FIX-001`, `TOL-001`
-Status: In progress; twelve offline fixture sets are present, including a
-source-level classic score-filter boundary oracle and narrow reviewed
-classic-ONNX no-text, reading-order, tall-crop, and Unicode oracles; other
-end-to-end, decoder, and tensor coverage remains pending
+Status: In progress; fourteen offline fixture sets are present, including a
+source-level classic score-filter boundary oracle, an OpenCV `INTER_LINEAR`
+resize grid, and narrow reviewed classic-ONNX no-text, reading-order,
+tall-crop, and Unicode oracles; other end-to-end, decoder, and tensor
+coverage remains pending
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
 Applies to: the planned M2 classic DB + CTC OCR slice only
 
@@ -50,13 +51,14 @@ that its one-through-four channel coverage is retained. Focused source
 tests retain the individual numerical regressions. No fixture broadens
 the component evidence into a general OpenCV or decoded-image oracle.
 
-The current thirteen committed offline fixture directories are also covered by
+The current fourteen committed offline fixture directories are also covered by
 the offline `tests/fixture_integrity.rs` integration gate. It parses each
 metadata record, validates baseline/provenance/profile requirements and direct
 file SHA-256 values, and verifies every crop capture/base64 payload/aggregate
 digest plus the scalar-grid setting/ordered cases, the channel-grid capture
-digest, ordered cases, and required per-case channel-order labels, and the
-image-input capture's
+digest, ordered cases, and required per-case channel-order labels, the
+resize-grid capture digest, interpolation, case namespace, positive target
+sizes, and aggregate payloads, and the image-input capture's
 valid/negative encoded bytes and BGR output aggregates. The four end-to-end
 gates pin exact candidate revisions/hashes and terms-review references,
 source-record digests, matching fresh-process output digests, and their
@@ -89,6 +91,7 @@ intentions, not evidence that a file or behavior exists today.
 | `classic-v1-geometry-tall-crop` | Crop | The `height / width >= 1.5` counter-clockwise rotation boundary, including equality. | Exact rotation decision and diagnostic dimensions. | `CROP-001`. |
 | `classic-v1-db-segmentation` | DB map | Strict `map_value > 0.3` binary output, exact equality exclusion, row-major order, and malformed/non-finite map rejection. | Exact zero/one bytes for the self-authored `classic-v1-db-map-boundaries` fixture, or typed model tensor-contract error. | `DB-001`. |
 | `classic-v1-db-components` | DB map | Private 8-connected foreground components after thresholding, including diagonal connection, row-major seed order, inclusive bounds, and pixel counts. | Exact component records for the self-authored `classic-v1-db-components` fixture, or an explicit resource-limit error for more than 1,000 components. This is not an OpenCV contour/hierarchy/simplification oracle. | `DB-002`. |
+| `classic-v1-resize-linear` | Resize | OpenCV `INTER_LINEAR` fixed-point resize for interleaved `uint8`, including coefficient quantization, the asymmetric horizontal/vertical edge handling, and channel preservation. | Exact output bytes for the 34 reviewed `cv2.setUseOptimized(False)` BGR cases in `classic-v1-resize-linear-grid`. `INTER_CUBIC`, `INTER_AREA`, and resize policy are outside this row. | `IMG-002`, `TEN-001`. |
 | `classic-v1-crop-pixels` | Crop | Perspective-map sampling, replicated source borders, channel preservation, cubic subpixel behavior, output allocation limits, and `np.rot90` byte order. | Exact for self-authored fixed-kernel vectors, fifteen reviewed default-OpenCV 5.0.0 BGR cases, and 36 separately reviewed `cv2.setUseOptimized(False)` BGR grid cases with source sides from 1 to 31 pixels, one/two-pixel source axes, far border replication, wide/tall/balanced extents, phase boundaries, and perspective perturbations, plus 21 reviewed `cv2.setUseOptimized(False)` interleaved cases covering one, two, three, and four channels with extreme `0`/`255` sources that force cubic overshoot in 17 of them; further approved captures are required before claiming upstream pixel equivalence. | `CROP-001`, `ORACLE-001`. |
 | `classic-v1-ctc-basic` | CTC | Blank index 0, immediate duplicate removal before blank removal, selected-max score mean, and empty selection score. | Exact retained class indexes and score for the self-authored `classic-v1-ctc-greedy-path` fixture; text follows after dictionary validation. | `CTC-001`, `REC-003`. |
 | `classic-v1-ctc-tie-and-dictionary` | CTC | Lowest-index argmax tie, out-of-range dictionary index, and malformed/non-finite tensor behavior. | The numeric fixture covers lowest-index tie selection; exact decoded text still follows dictionary validation, while malformed/out-of-range cases require a later dictionary binding. | `CTC-001`, `REC-003`. |

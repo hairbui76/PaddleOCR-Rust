@@ -42,7 +42,10 @@ its explicit disabled-OpenCV-optimization setting, ordered case IDs, every BGR
 payload, and aggregate digests. For `classic-v1-crop-channel-grid`, it verifies
 the 21-case capture digest, the same disabled-optimization setting, ordered case
 IDs, the required per-case `BGR` or `opaque-<n>` channel-order label, every
-payload, and aggregate digests. The gate proves repository fixture integrity
+payload, and aggregate digests. For `classic-v1-resize-linear-grid`, it verifies
+the 34-case capture digest, the disabled-optimization setting, the declared
+`INTER_LINEAR` interpolation, the reviewed case namespace, positive target
+sizes, every payload, and aggregate digests. The gate proves repository fixture integrity
 and metadata consistency only; it does not replace source review, artifact-term
 review, or oracle/model equivalence. Its dev-only SHA-256 implementation uses
 the `sha2` `force-soft` feature, so the hash check itself does not select a
