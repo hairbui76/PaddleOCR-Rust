@@ -20,7 +20,7 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [Quality profile](QUALITY_PROFILE.md) and [risk register](RISK_REGISTER.md)
 - [Gate G3 resource evidence](G3_RESOURCE_EVIDENCE.md) — the measured latency,
   memory, and binary figures behind the quality profile's budgets
-- Preprocessing oracle: `tests/fixtures/classic-v1-preprocess-detector-input`
+- Preprocessing oracle: `tests/fixtures/classic-v1-preprocess-input`
   holds captured upstream detector input tensors; regenerate with
   `tools/capture_preprocess_oracle.py`
 

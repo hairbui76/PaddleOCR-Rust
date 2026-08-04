@@ -628,7 +628,7 @@ mod preprocess_fixture {
     use super::pre_001::{decode_f32, detector_input_for};
 
     const FIXTURE: &str =
-        include_str!("../tests/fixtures/classic-v1-preprocess-detector-input/expected.json");
+        include_str!("../tests/fixtures/classic-v1-preprocess-input/expected.json");
 
     /// The inputs the fixture covers, paired with their committed PNG bytes.
     const INPUTS: [(&str, &[u8]); 4] = [
@@ -663,6 +663,9 @@ mod preprocess_fixture {
 
     mod tests {
         use super::*;
+
+        use crate::crop::InterleavedImage;
+        use crate::tensor::classic_recognizer_batch;
 
         #[test]
         fn detector_input_tensors_reproduce_the_captured_upstream_bytes() {
@@ -722,6 +725,163 @@ mod preprocess_fixture {
                         ours[*index].to_bits(),
                         expected.to_bits(),
                         "{name}: element {index}"
+                    );
+                }
+            }
+        }
+
+        /// One deterministic synthetic crop, matching the capture tool's
+        /// `synthetic_crop` byte for byte.
+        ///
+        /// The formula is trivial on purpose: anything depending on a random
+        /// seed, a platform float, or a library version would defeat the point
+        /// of comparing against a capture produced on the other side.
+        fn synthetic_crop(index: usize, width: u32, height: u32) -> InterleavedImage {
+            let dimensions = match crate::types::ImageDimensions::new(width, height) {
+                Ok(value) => value,
+                Err(error) => panic!("crop {index} dimensions: {error}"),
+            };
+            let mut pixels = Vec::with_capacity((width * height * 3) as usize);
+            for y in 0..height as usize {
+                for x in 0..width as usize {
+                    for channel in 0..3_usize {
+                        let value = (x * 7 + y * 13 + channel * 29 + index * 31) % 256;
+                        pixels.push(value as u8);
+                    }
+                }
+            }
+            match InterleavedImage::new(dimensions, 3, pixels) {
+                Ok(value) => value,
+                Err(error) => panic!("crop {index}: {error}"),
+            }
+        }
+
+        /// The recognizer input tensor, per batch, against captured upstream
+        /// bytes.
+        ///
+        /// The detector case above shares its inputs with the end-to-end
+        /// fixtures. This one cannot: the recognizer's inputs are crops, which
+        /// only exist mid-pipeline. So the capture and this test agree on a
+        /// deterministic synthetic crop set instead, chosen to span the narrow
+        /// end, the base ratio, a fractional ratio, and enough crops to force
+        /// two batches whose padded widths differ.
+        #[test]
+        fn recognizer_input_tensors_reproduce_the_captured_upstream_bytes() {
+            use crate::recognizer_batch::{RECOGNITION_HEIGHT, plan_batches};
+            use crate::resize::classic_linear_resize;
+
+            let document: serde_json::Value = match serde_json::from_str(FIXTURE) {
+                Ok(value) => value,
+                Err(error) => panic!("fixture json: {error}"),
+            };
+            let recognizer = &document["recognizer"];
+            let sizes: Vec<(u32, u32)> = match recognizer["crop_sizes"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|pair| {
+                        let pair = match pair.as_array() {
+                            Some(pair) => pair,
+                            None => panic!("crop size must be a pair"),
+                        };
+                        (
+                            pair[0].as_u64().unwrap_or_default() as u32,
+                            pair[1].as_u64().unwrap_or_default() as u32,
+                        )
+                    })
+                    .collect(),
+                None => panic!("fixture must record crop sizes"),
+            };
+            let crops: Vec<InterleavedImage> = sizes
+                .iter()
+                .enumerate()
+                .map(|(index, (width, height))| synthetic_crop(index, *width, *height))
+                .collect();
+
+            let plans = match plan_batches(&sizes) {
+                Ok(plans) => plans,
+                Err(error) => panic!("batch plan: {error}"),
+            };
+            let batches = match recognizer["batches"].as_array() {
+                Some(values) => values,
+                None => panic!("fixture must record batches"),
+            };
+            assert_eq!(plans.len(), batches.len(), "batch count");
+
+            for (batch_index, (plan, expected)) in plans.iter().zip(batches).enumerate() {
+                let expected_indices: Vec<usize> = match expected["original_indices"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or_default() as usize)
+                        .collect(),
+                    None => panic!("batch {batch_index} must record its rows"),
+                };
+                let ours_indices: Vec<usize> =
+                    plan.crops.iter().map(|crop| crop.original_index).collect();
+                assert_eq!(
+                    ours_indices, expected_indices,
+                    "batch {batch_index} row order"
+                );
+
+                let mut resized = Vec::with_capacity(plan.crops.len());
+                for entry in &plan.crops {
+                    let target = match crate::types::ImageDimensions::new(
+                        entry.resized_width,
+                        RECOGNITION_HEIGHT,
+                    ) {
+                        Ok(value) => value,
+                        Err(error) => panic!("batch {batch_index} target: {error}"),
+                    };
+                    match classic_linear_resize(&crops[entry.original_index], target) {
+                        Ok(value) => resized.push(value),
+                        Err(error) => panic!("batch {batch_index} resize: {error}"),
+                    }
+                }
+                let borrowed: Vec<&InterleavedImage> = resized.iter().collect();
+                let tensor = match classic_recognizer_batch(&borrowed, plan.batch_width) {
+                    Ok(value) => value,
+                    Err(error) => panic!("batch {batch_index} tensor: {error}"),
+                };
+
+                let expected_shape: Vec<usize> = match expected["shape"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or_default() as usize)
+                        .collect(),
+                    None => panic!("batch {batch_index} must record a shape"),
+                };
+                assert_eq!(
+                    tensor.shape(),
+                    expected_shape.as_slice(),
+                    "batch {batch_index} tensor shape"
+                );
+
+                let mut bytes = Vec::with_capacity(tensor.values().len() * 4);
+                for value in tensor.values() {
+                    bytes.extend_from_slice(&value.to_le_bytes());
+                }
+                assert_eq!(
+                    sha256_hex(&bytes),
+                    expected["values_sha256"].as_str().unwrap_or_default(),
+                    "batch {batch_index}: recognizer input differs from the captured bytes"
+                );
+
+                let indices: Vec<usize> = match expected["sample_indices"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or_default() as usize)
+                        .collect(),
+                    None => panic!("batch {batch_index} must record sample indices"),
+                };
+                let samples = decode_f32(
+                    expected["sample_values_base64"]
+                        .as_str()
+                        .unwrap_or_default(),
+                );
+                for (index, want) in indices.iter().zip(&samples) {
+                    assert_eq!(
+                        tensor.values()[*index].to_bits(),
+                        want.to_bits(),
+                        "batch {batch_index}: element {index}"
                     );
                 }
             }

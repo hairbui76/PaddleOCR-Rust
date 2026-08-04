@@ -16,6 +16,15 @@
 //! - each crop resizes to height `48` with width `ceil(48 * crop_ratio)`,
 //!   capped by that batch's width, and is right-padded with zeros.
 //!
+//! The two widths round **differently**, which is easy to miss because they are
+//! computed from the same expression. Upstream writes the batch width as
+//! `imgW = int(imgH * max_wh_ratio)`, a truncation, and the per-crop width as
+//! `int(math.ceil(imgH * ratio))`. The two agree whenever the product is a whole
+//! number, which is every crop of height `48`, so the difference only appears
+//! for a batch whose widest crop has some other height. `503x50` is such a case:
+//! `48 * 10.06` is `482.88`, upstream pads to `482`, and rounding up instead
+//! produces a tensor one column wider than the model was given.
+//!
 //! The batch split is not a performance detail. `max_wh_ratio` is computed per
 //! batch, so the padded width — and therefore every crop's resized width and
 //! the amount of zero padding the model sees — depends on which crops share a
@@ -117,13 +126,13 @@ pub(crate) fn plan_batches(sizes: &[(u32, u32)]) -> Result<Vec<BatchPlan>> {
         let max_ratio = chunk
             .iter()
             .fold(base_ratio, |widest, (_, ratio)| widest.max(*ratio));
-        let batch_width = scaled_width(max_ratio)?;
+        let batch_width = truncated_width(max_ratio)?;
         let crops = chunk
             .iter()
             .map(|(original_index, ratio)| {
                 Ok(BatchedCrop {
                     original_index: *original_index,
-                    resized_width: scaled_width(*ratio)?.min(batch_width),
+                    resized_width: ceiled_width(*ratio)?.min(batch_width),
                 })
             })
             .collect::<Result<Vec<_>>>()?;
@@ -132,9 +141,23 @@ pub(crate) fn plan_batches(sizes: &[(u32, u32)]) -> Result<Vec<BatchPlan>> {
     Ok(plans)
 }
 
-/// Returns `ceil(height * ratio)` as the upstream `math.ceil` does.
-fn scaled_width(ratio: f64) -> Result<u32> {
-    let scaled = (f64::from(RECOGNITION_HEIGHT) * ratio).ceil();
+/// Returns `ceil(height * ratio)`, the per-crop width, as `math.ceil` does.
+fn ceiled_width(ratio: f64) -> Result<u32> {
+    checked_width((f64::from(RECOGNITION_HEIGHT) * ratio).ceil())
+}
+
+/// Returns `trunc(height * ratio)`, the batch width, as Python's `int()` does.
+///
+/// This is a truncation and not a rounding. `int()` on a positive float
+/// discards the fraction, so `48 * 10.06 = 482.88` becomes `482`. Using `ceil`
+/// here instead would pad the batch one column wider than upstream whenever the
+/// product is fractional.
+fn truncated_width(ratio: f64) -> Result<u32> {
+    checked_width((f64::from(RECOGNITION_HEIGHT) * ratio).trunc())
+}
+
+/// Validates a computed width before it becomes an image dimension.
+fn checked_width(scaled: f64) -> Result<u32> {
     if !scaled.is_finite() || scaled < 1.0 || scaled > f64::from(u32::MAX) {
         return Err(Error::InvalidInput {
             field: "recognizer.crop",
@@ -275,6 +298,32 @@ mod tests {
             .map(|crop| crop.original_index)
             .collect();
         assert_eq!(flattened, (0..14).collect::<Vec<_>>());
+    }
+
+    /// The batch width truncates while the per-crop width rounds up.
+    ///
+    /// Upstream computes them from the same expression with different
+    /// functions — `int(imgH * max_wh_ratio)` against
+    /// `int(math.ceil(imgH * ratio))` — and the two only disagree when the
+    /// product is fractional, which needs a widest crop whose height is not 48.
+    #[test]
+    fn a_fractional_batch_width_truncates_rather_than_rounding_up() {
+        // 503/50 = 10.06, and 48 * 10.06 = 482.88.
+        let plan = single(&[(503, 50)]);
+        assert_eq!(plan.batch_width, 482, "the batch width truncates");
+        // The crop's own width would ceil to 483, but it is capped by the batch.
+        assert_eq!(plan.crops[0].resized_width, 482);
+    }
+
+    /// A whole-number product is the case where the two roundings agree, which
+    /// is why the difference stayed invisible: every crop of height 48 lands
+    /// here.
+    #[test]
+    fn a_whole_number_batch_width_is_unaffected_by_the_rounding_rule() {
+        for width in [320_u32, 400, 960] {
+            let plan = single(&[(width, 48)]);
+            assert_eq!(plan.batch_width, width, "48 * (w/48) is exactly w");
+        }
     }
 
     /// A single very wide crop widens only its own batch.

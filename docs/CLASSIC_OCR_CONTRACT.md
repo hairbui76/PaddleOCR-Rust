@@ -248,10 +248,14 @@ For each sorted crop:
    `max_wh_ratio` per batch, so which crops share a batch decides how wide every
    crop in it is resized and how much zero padding the model sees.
 2. Use `[3, 48, 320]` as the base recognition shape. For each batch, calculate
-   `max_wh_ratio` as the maximum of `320 / 48` and its crop ratios. Resize each
-   crop to height `48`, use `ceil(48 * crop_ratio)` width capped by the batch
-   width, normalize BGR CHW values as `(value / 255 - 0.5) / 0.5`, and
-   right-pad with zeroes.
+   `max_wh_ratio` as the maximum of `320 / 48` and its crop ratios. The batch
+   width is `trunc(48 * max_wh_ratio)` — upstream's `int(imgH * max_wh_ratio)`,
+   a truncation — while each crop's own width is `ceil(48 * crop_ratio)` capped
+   by that batch width, from upstream's `int(math.ceil(imgH * ratio))`. The two
+   round differently and agree only when the product is a whole number, which is
+   every crop of height `48`; a batch whose widest crop has another height
+   exposes the difference. Normalize BGR CHW values as
+   `(value / 255 - 0.5) / 0.5` and right-pad with zeroes.
 3. Require a validated CTC output shape `[batch, time, classes]`. The selected
    artifact manifest determines whether its values are probabilities; Rust must
    not silently apply softmax to an unknown output contract.

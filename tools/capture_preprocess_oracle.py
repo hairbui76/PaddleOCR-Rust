@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture upstream detector input tensors for the committed fixture inputs.
+"""Capture upstream detector and recognizer input tensors.
 
 Roadmap item: `PRE-001`.
 
@@ -23,6 +23,16 @@ capture the upstream computation rather than a second opinion about it:
 
 read from `tools/infer/predict_det.py:pre_process_list` and
 `tools/infer/utility.py:init_args` at the pinned revision.
+
+The recognizer side cannot be imported the same way: `resize_norm_img` is a
+method on `TextRecognizer`, whose constructor builds a predictor. Its sequence is
+therefore transcribed from `tools/infer/predict_rec.py:resize_norm_img` at the
+pinned revision, with the `use_onnx` width override deliberately not applied
+because the pinned export has a dynamic width axis, which upstream leaves alone.
+Every numerically significant step is still the upstream call itself —
+`cv2.resize` at its default `INTER_LINEAR`, the `float32` transpose then `/255`,
+then `-0.5`, then `/0.5`, then the zero-padded `(C, H, W)` canvas — so what
+differs from the detector side is who sequences the calls, not who performs them.
 
 Nothing is written through the reference checkout; it is imported and read only.
 The capture is emitted as JSON with the tensor stored as base64 `float32` in C
@@ -63,6 +73,30 @@ FIXTURES = [
 ]
 
 CAPTURE_SCHEMA_VERSION = "paddleocr-rust/classic-preprocess-oracle-capture/v1"
+
+# Deterministic synthetic crops for the recognizer capture, in caller order.
+# The set spans the narrow end, the base ratio, a fractional ratio, and enough
+# crops to force two batches with different padded widths.
+RECOGNIZER_CROP_SIZES = [
+    (20, 48),
+    (48, 48),
+    (96, 48),
+    (160, 48),
+    (320, 48),
+    (49, 47),
+    (1, 240),
+    (400, 48),
+    (240, 50),
+    # 503/50 = 10.06, so 48 * 10.06 = 482.88 — the widest crop in its batch, and
+    # a batch width that is not a whole number before rounding. Upstream
+    # truncates it; anything that rounds up instead produces a different tensor,
+    # and only a fractional case that is also the batch maximum shows it.
+    (503, 50),
+]
+
+# Read from tools/infer/utility.py:init_args and predict_rec.py.
+RECOGNITION_SHAPE = (3, 48, 320)
+RECOGNITION_BATCH_SIZE = 6
 FIXTURE_SCHEMA_VERSION = "paddleocr-rust/classic-preprocess-detector-input/v1"
 
 # How many exact elements the compact fixture keeps per input. A fixed count with
@@ -128,6 +162,85 @@ def capture_one(operators, image_bgr: np.ndarray) -> dict:
     }
 
 
+def synthetic_crop(index: int, width: int, height: int) -> np.ndarray:
+    """Builds one deterministic BGR crop.
+
+    The formula is trivial on purpose: it has to be reproducible byte for byte
+    in Rust, so anything depending on a random seed, a platform float, or a
+    library version would defeat the point of the comparison.
+    """
+    x = np.arange(width, dtype=np.int64)[None, :, None]
+    y = np.arange(height, dtype=np.int64)[:, None, None]
+    c = np.arange(3, dtype=np.int64)[None, None, :]
+    return ((x * 7 + y * 13 + c * 29 + index * 31) % 256).astype(np.uint8)
+
+
+def upstream_resize_norm_img(image: np.ndarray, max_wh_ratio: float) -> np.ndarray:
+    """Transcribed from `tools/infer/predict_rec.py:resize_norm_img`.
+
+    The `use_onnx` width override is not applied: it only fires when the model's
+    input width axis is a positive integer, and the pinned export leaves that
+    axis dynamic, which upstream passes over.
+    """
+    import math
+
+    import cv2
+
+    channels, height, _ = RECOGNITION_SHAPE
+    assert channels == image.shape[2]
+    width = int(height * max_wh_ratio)
+    source_height, source_width = image.shape[:2]
+    ratio = source_width / float(source_height)
+    if math.ceil(height * ratio) > width:
+        resized_w = width
+    else:
+        resized_w = int(math.ceil(height * ratio))
+    resized = cv2.resize(image, (resized_w, height))
+    resized = resized.astype("float32")
+    resized = resized.transpose((2, 0, 1)) / 255
+    resized -= 0.5
+    resized /= 0.5
+    padded = np.zeros((channels, height, width), dtype=np.float32)
+    padded[:, :, 0:resized_w] = resized
+    return padded
+
+
+def capture_recognizer_batches() -> list[dict]:
+    """Runs the upstream recognition preprocessing over the synthetic crops."""
+    _, height, base_width = RECOGNITION_SHAPE
+    ratios = [width / float(crop_height) for width, crop_height in RECOGNIZER_CROP_SIZES]
+    order = sorted(range(len(ratios)), key=lambda index: ratios[index])
+
+    batches = []
+    for start in range(0, len(order), RECOGNITION_BATCH_SIZE):
+        chunk = order[start : start + RECOGNITION_BATCH_SIZE]
+        max_wh_ratio = base_width / height
+        for index in chunk:
+            max_wh_ratio = max(max_wh_ratio, ratios[index])
+        rows = []
+        for index in chunk:
+            width, crop_height = RECOGNIZER_CROP_SIZES[index]
+            crop = synthetic_crop(index, width, crop_height)
+            rows.append(upstream_resize_norm_img(crop, max_wh_ratio))
+        tensor = np.ascontiguousarray(np.stack(rows, axis=0), dtype="<f4")
+        batches.append(
+            {
+                "original_indices": chunk,
+                "max_wh_ratio": max_wh_ratio,
+                "shape": list(tensor.shape),
+                "dtype": "float32",
+                "order": "C",
+                "values_base64": base64.b64encode(tensor.tobytes()).decode("ascii"),
+                "values_sha256": hashlib.sha256(tensor.tobytes()).hexdigest(),
+            }
+        )
+        print(
+            f"recognizer batch {len(batches)}: rows {chunk}, "
+            f"max_wh_ratio {max_wh_ratio:.6f}, shape {list(tensor.shape)}"
+        )
+    return batches
+
+
 def compact_record(record: dict) -> dict:
     """Reduces one full capture record to the committed fixture form."""
     captured = record["detector_input"]
@@ -147,6 +260,24 @@ def compact_record(record: dict) -> dict:
         "sample_indices": indices,
         # Exact bits, not decimal text: a rounded sample would compare a
         # different number than the one upstream produced.
+        "sample_values_base64": base64.b64encode(
+            np.ascontiguousarray(values[indices], dtype="<f4").tobytes()
+        ).decode("ascii"),
+    }
+
+
+def compact_batch(batch: dict) -> dict:
+    """Reduces one recognizer batch to the committed fixture form."""
+    values = np.frombuffer(base64.b64decode(batch["values_base64"]), dtype="<f4")
+    stride = max(1, values.size // SAMPLE_COUNT)
+    indices = list(range(0, values.size, stride))[:SAMPLE_COUNT]
+    return {
+        "original_indices": batch["original_indices"],
+        "max_wh_ratio": batch["max_wh_ratio"],
+        "shape": batch["shape"],
+        "values_sha256": batch["values_sha256"],
+        "sample_stride": stride,
+        "sample_indices": indices,
         "sample_values_base64": base64.b64encode(
             np.ascontiguousarray(values[indices], dtype="<f4").tobytes()
         ).decode("ascii"),
@@ -185,9 +316,17 @@ def main() -> int:
             f"{record['detector_input']['shape']}"
         )
 
+    recognizer_batches = capture_recognizer_batches()
+
     document = {
         "capture_schema_version": CAPTURE_SCHEMA_VERSION,
-        "stage": "detector_input",
+        "stage": "detector_input_and_recognizer_input",
+        "recognizer": {
+            "crop_sizes": RECOGNIZER_CROP_SIZES,
+            "recognition_shape": list(RECOGNITION_SHAPE),
+            "batch_size": RECOGNITION_BATCH_SIZE,
+            "batches": recognizer_batches,
+        },
         "upstream": {
             "reference_paths": [
                 "ppocr/data/imaug/operators.py",
@@ -212,10 +351,15 @@ def main() -> int:
 
     fixture = {
         "schema_version": FIXTURE_SCHEMA_VERSION,
-        "stage": "detector_input",
+        "stage": "detector_input_and_recognizer_input",
         "sample_count": SAMPLE_COUNT,
         "operators": document["upstream"]["operators"],
         "records": [compact_record(record) for record in records],
+        "recognizer": {
+            "crop_sizes": RECOGNIZER_CROP_SIZES,
+            "batch_size": RECOGNITION_BATCH_SIZE,
+            "batches": [compact_batch(batch) for batch in recognizer_batches],
+        },
     }
     fixture_output.write_text(
         json.dumps(fixture, indent=2, sort_keys=True) + "\n", encoding="utf-8"
