@@ -176,6 +176,23 @@ The single remaining prerequisite is therefore OpenCV's exact edge-visit order:
 the vertex at which `convexHull` starts, its direction, and how
 `rotatingCalipers` advances. No geometry question remains open.
 
+
+**Resolved: 16 of 16.** A sweep over hull orientation, edge direction, and
+tie-break comparison found exactly one configuration that reproduces every
+recorded case:
+
+- convex hull in **counter-clockwise** monotone-chain order;
+- edges visited **forward** in that order;
+- the minimum-area comparison **non-strict**, so a later tied candidate
+  replaces an earlier one and the **last** tied edge wins.
+
+The other seven configurations score 13, 14 or 15 of 16, and each failure is
+one of `triangle`, `hexagon`, or `diamond` — exactly the tie cases. A strict
+comparison keeps the first tied edge and fails `triangle` and `hexagon`; a
+clockwise hull fails `diamond`. Nothing about `minAreaRect` is unresolved now:
+the geometry, the degenerate branches, the corner derivation, and the
+tie-break rule are all pinned by the recorded oracle.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
