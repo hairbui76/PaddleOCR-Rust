@@ -220,6 +220,18 @@ symmetric widening but the **set** is not, which means OpenCV's boundary rule is
 and a right edge are not rounded the same way. All three rules score 7 of 8, and
 in every rule the only failure is `slanted`.
 
+**That hypothesis is now ruled out.** A follow-up sweep tried all nine
+combinations of `floor`, `ceil`, and round-half-up applied independently to the
+left and right endpoint of each row. Every one of the nine scores 7 of 8, and
+every one fails on `slanted` alone. The per-row endpoint rounding is therefore
+**not** where the difference lives.
+
+What remains is structural: either the scanline set itself differs, for example
+by sampling at `y + 0.5` rather than at integer rows, or `fillPoly` walks each
+edge and marks every pixel the edge touches instead of intersecting rows
+analytically. The next attempt should test those two hypotheses rather than
+any further endpoint-rounding variant, which is now known to be a dead end.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
