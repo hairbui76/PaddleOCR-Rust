@@ -100,6 +100,12 @@ streaming it **before** the model is loaded. A mismatch fails with a typed
 error and the runtime never sees the file. Omitting them skips the check, which
 is a choice you make rather than a silent default.
 
+Declaring the digest is not decoration. The detector and recognizer export the
+same tensor names and leave the axes this port constrains dynamic, so **swapping
+them loads without complaint** and fails only on first use. With the expected
+digest declared, the swap is refused before the runtime sees a byte. Shape does
+not tell two models apart; identity does.
+
 ### Bounding a run
 
 `--time-budget-ms <n>` gives the whole request a wall-clock budget. The Rust API
