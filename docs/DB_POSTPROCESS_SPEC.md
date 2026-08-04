@@ -210,6 +210,16 @@ fixed point with `XY_SHIFT` and includes boundary pixels a float scanline with
 `ceil`/`floor` excludes. Reproducing it requires that fixed-point edge walk,
 not a tighter tolerance.
 
+A follow-up sweep over three fill rules narrows it further. With
+`ceil(left) ..= floor(right)` the slanted case fills 70 pixels; with
+`round(left) ..= round(right)` it fills 77; with
+`floor(left) ..= ceil(right)` it fills **exactly 84**, matching OpenCV's count,
+yet the resulting mean still differs. The count is therefore reproducible by a
+symmetric widening but the **set** is not, which means OpenCV's boundary rule is
+**asymmetric per edge** rather than a uniform widening of both ends: a left edge
+and a right edge are not rounded the same way. All three rules score 7 of 8, and
+in every rule the only failure is `slanted`.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
