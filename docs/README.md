@@ -60,6 +60,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   Markdown formatters, and a newline that is added twice
 - [Reading order contract](READING_ORDER_CONTRACT.md) — the four XY-cut
   primitives, and why the two cut orders are different reading orders
+- [DEPLOY-DEC-001 evidence](DEPLOY_DEC_001_EVIDENCE.md) — what each deployment
+  target measurably costs, and which are not equally distant
 - [Config reconciliation](CONFIG_RECONCILIATION.md) — all 139 upstream configs
   classified per file, and why only two are Verified
 - [Evaluation metric contract](METRIC_CONTRACT.md) — upstream's detection and
