@@ -82,6 +82,7 @@ mod score_filter;
 mod tensor;
 #[allow(dead_code)]
 mod unclip;
+mod unwarp;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};
 pub use types::{

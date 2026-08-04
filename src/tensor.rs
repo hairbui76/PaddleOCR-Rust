@@ -73,6 +73,36 @@ pub(crate) struct NchwTensor {
 }
 
 impl NchwTensor {
+    /// Builds a tensor from values already in `NCHW` order.
+    ///
+    /// The length is checked against the shape, so a caller cannot hand the
+    /// backend a buffer that disagrees with the dimensions it declares.
+    pub(crate) fn new(
+        batch: usize,
+        channels: usize,
+        height: usize,
+        width: usize,
+        values: Vec<f32>,
+    ) -> Result<Self> {
+        let expected = batch
+            .checked_mul(channels)
+            .and_then(|value| value.checked_mul(height))
+            .and_then(|value| value.checked_mul(width));
+        if expected != Some(values.len()) {
+            return Err(Error::InvalidInput {
+                field: "tensor.shape",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+        Ok(Self {
+            batch,
+            channels,
+            height,
+            width,
+            values,
+        })
+    }
+
     /// Returns the `[batch, channels, height, width]` shape.
     pub(crate) const fn shape(&self) -> [usize; 4] {
         [self.batch, self.channels, self.height, self.width]

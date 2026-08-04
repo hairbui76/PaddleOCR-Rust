@@ -119,8 +119,41 @@ than an inference from an absent registration.
    exposes it.
 5. **A default of off**, matching `use_doc_unwarping` in the pipeline config.
 
-## 6. Status
+## 6. A fourth rounding, found by the capture
 
-Contract frozen, artifact provisioned and hashed, tensor signature measured. No
-implementation and no fixture. `UNWARP-001` stays open, and its resource-bound
-question is the first thing to answer rather than the last.
+`DocTr` ends with `convertTo(CV_8U)`, which goes through
+`saturate_cast<uchar>` and therefore `cvRound` — **half to even**, not half away
+from zero.
+
+This was found by comparison, not by reading: the first implementation used
+Rust's `f32::round`, which rounds half away from zero, and the captured image did
+not match. It is the fourth rounding convention this project has had to pin,
+after the recognizer's `ceil`, the batch width's truncation, and the page
+rotation's truncated output size — and it is the same rule the detector's rescale
+already needed, so the helper is now shared rather than written twice.
+
+## 7. Oracle results
+
+Three synthetic pages at `64x128`, `96x72`, and `33x17`. Every input tensor is
+reproduced **bit-identically**, and the `uint8` conversion of every recorded raw
+output matches the captured image. The two halves are checked separately, so a
+failure in the normalization does not implicate the conversion.
+
+The output shape equals the input shape in all three cases, which is what turns
+"there is no resize" from an absent registration into a measurement.
+
+## 8. Status
+
+Contract frozen, artifact provisioned and hashed, and `src/unwarp.rs` implements
+it: the bound first, then the normalization, the tensor layout, and the `uint8`
+conversion — each matched against a capture.
+
+The module is deliberately unreachable, for the reason §3 gives. Exposing
+unwarping means returning polygons in an image the caller never supplied, with no
+inverse available to fix that, and wiring it in before deciding what a caller is
+told would ship coordinates that look like they belong to the input.
+
+`UNWARP-001` therefore stays open on one question, and it is a public-API
+question rather than an implementation one: what a document-preprocessing result
+contains, and how it says which image its coordinates describe. That is
+`DOCPIPE-001`.

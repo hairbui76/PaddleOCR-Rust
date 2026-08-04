@@ -118,7 +118,10 @@ fn rescale_axis(value: f32, source: u32, dest: u32) -> i32 {
 }
 
 /// Rounds half-way cases to the nearest even integer, matching `np.round`.
-fn round_half_to_even(value: f32) -> f32 {
+///
+/// Shared with `unwarp`, whose `uint8` conversion goes through OpenCV's
+/// `cvRound` and needs the same rule.
+pub(crate) fn round_half_to_even(value: f32) -> f32 {
     let nearest = value.round();
     if (value - value.trunc()).abs() == 0.5 && nearest % 2.0 != 0.0 {
         nearest - value.signum()
