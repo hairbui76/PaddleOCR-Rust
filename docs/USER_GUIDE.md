@@ -358,7 +358,109 @@ recognition now batches in groups of six with a per-batch padded width, and that
 batch width truncates rather than rounding up. Both changes shift confidences in
 roughly the fourth decimal on multi-line pages.
 
-## 9. Reporting a difference
+## 9. Troubleshooting
+
+Every message below is one this project actually emits. They are grouped by what
+you should change, not by which module produced them.
+
+### It exits 2 and says there is no backend
+
+```
+paddleocr-rust: this build has no inference backend compiled in.
+Rebuild with `--features onnxruntime` to run the classic pipeline.
+```
+
+The feature is off by default. Rebuild with `--features onnxruntime`.
+
+### The runtime library will not load
+
+```
+backend error: cannot load the ONNX Runtime library from the supplied path
+```
+
+`--ort-dylib` must name the shared library file itself, not its directory. The
+library must be ONNX Runtime `1.28.0`; an older or newer major API will fail at
+load rather than silently misbehave, because the `api-28` feature pins it.
+
+### It says the artifact identity does not match
+
+```
+model error: model artifact identity does not match the manifest
+```
+
+The file at that path is not the one whose SHA-256 you declared. The three most
+common causes, in order: a partial download, the detector and recognizer passed
+in the wrong order, and a different revision of the same model family. Check with
+`sha256sum` against the table in §3.
+
+### It loads and then fails on the first image
+
+```
+backend error: the ONNX Runtime session failed to run
+```
+
+Almost always the detector and recognizer swapped. They export the same tensor
+names, so the swap **loads** without complaint and only fails here. Declare the
+digests and the swap is refused before the runtime sees a byte.
+
+### It says the input is unsupported
+
+```
+unsupported capability: image format
+```
+
+Only PNG is supported, and the format is decided by the file's content, not its
+extension. A `.png` that is really a JPEG produces this.
+
+### It says a resource limit was exceeded
+
+```
+resource limit exceeded for image.encoded_bytes: actual 200000000, limit 67108864
+```
+
+The named resource tells you which limit; §7 lists them all. `image.total_pixels`
+and `image.width_pixels` come from the PNG header, so they fire on a declared
+size before anything is decoded.
+
+### It returns no lines for a page that clearly has text
+
+Nothing is wrong with the models by default. Check, in this order:
+
+1. **Contrast.** The detector runs on the image as-is; there is no binarisation
+   or contrast normalisation step.
+2. **`--time-budget-ms`**, if set. A budget that expires returns an error, not an
+   empty result, so an empty result is not a timeout.
+3. **The thresholds.** `box_threshold` `0.6` and `drop_score` `0.5` are the
+   upstream defaults. Lowering `drop_score` shows you low-confidence lines that
+   were found and filtered, which distinguishes "not detected" from "detected and
+   dropped".
+
+### The dictionary count looks wrong
+
+```
+dictionary: 18708 entries
+```
+
+That is entries, excluding the CTC blank and the appended space, so the model's
+class count is `18,710`. If your recognizer expects a different class count,
+loading fails with a contract error rather than decoding into the wrong
+characters.
+
+### Text comes out as the wrong script entirely
+
+The dictionary decides every scalar the recognizer can emit. Run
+`cargo run --example dictionary_census -- <dictionary.txt>` to see what yours
+contains, and read [`LANGUAGE_SUPPORT.md`](LANGUAGE_SUPPORT.md) for why a
+dictionary containing a script is not the same as that script being supported.
+
+### It is slower than you expected
+
+Session creation is roughly `0.7 s` of every process start. If you are running
+the binary once per file, pass the files together instead — the models load once.
+Measured figures and their conditions are in
+[`PERF_001_BENCHMARK.md`](PERF_001_BENCHMARK.md).
+
+## 10. Reporting a difference
 
 A difference is only actionable with the input that produced it. The most useful
 report is a small PNG, the exact command, the output you got, and the output you
