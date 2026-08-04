@@ -1,0 +1,530 @@
+{
+ "note": "These four functions are the reading-order algorithm; the rest of xycut_enhanced is per-label heuristics layered on them. Boxes are integers because the projection uses them as array indices.",
+ "orders": [
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     190,
+     40
+    ],
+    [
+     10,
+     50,
+     190,
+     80
+    ],
+    [
+     10,
+     90,
+     190,
+     120
+    ]
+   ],
+   "case": "single_column",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    1,
+    2
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     90,
+     40
+    ],
+    [
+     110,
+     10,
+     190,
+     40
+    ],
+    [
+     10,
+     50,
+     90,
+     80
+    ],
+    [
+     110,
+     50,
+     190,
+     80
+    ]
+   ],
+   "case": "two_columns",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    2,
+    1,
+    3
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1,
+    2,
+    3
+   ]
+  },
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     190,
+     30
+    ],
+    [
+     10,
+     40,
+     90,
+     70
+    ],
+    [
+     110,
+     40,
+     190,
+     70
+    ],
+    [
+     10,
+     80,
+     90,
+     110
+    ],
+    [
+     110,
+     80,
+     190,
+     110
+    ]
+   ],
+   "case": "header_over_two_columns",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
+  },
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     90,
+     40
+    ],
+    [
+     110,
+     10,
+     190,
+     40
+    ],
+    [
+     210,
+     10,
+     290,
+     40
+    ]
+   ],
+   "case": "tied_tops",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    1,
+    2
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1,
+    2
+   ]
+  },
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     90,
+     60
+    ],
+    [
+     110,
+     30,
+     190,
+     80
+    ]
+   ],
+   "case": "overlapping_rows",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    1
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1
+   ]
+  },
+  {
+   "boxes": [
+    [
+     5,
+     5,
+     50,
+     50
+    ]
+   ],
+   "case": "single_block",
+   "xy_error": null,
+   "xy_order": [
+    0
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0
+   ]
+  },
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     100,
+     40
+    ],
+    [
+     100,
+     10,
+     190,
+     40
+    ]
+   ],
+   "case": "touching_columns",
+   "xy_error": null,
+   "xy_order": [
+    0,
+    1
+   ],
+   "yx_error": null,
+   "yx_order": [
+    0,
+    1
+   ]
+  }
+ ],
+ "projections": [
+  {
+   "axis": 0,
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     20,
+     0,
+     30,
+     10
+    ]
+   ],
+   "case": "simple_x",
+   "projection": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "axis": 1,
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     0,
+     20,
+     10,
+     30
+    ]
+   ],
+   "case": "simple_y",
+   "projection": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "axis": 0,
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     5,
+     0,
+     15,
+     10
+    ]
+   ],
+   "case": "overlapping",
+   "projection": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    2,
+    2,
+    2,
+    2,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "axis": 0,
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     10,
+     0,
+     20,
+     10
+    ]
+   ],
+   "case": "touching",
+   "projection": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/reading-order-oracle-capture/v1",
+ "splits": [
+  {
+   "case": "one_run",
+   "ends": [
+    4
+   ],
+   "min_gap": 1,
+   "min_value": 0,
+   "starts": [
+    1
+   ],
+   "values": [
+    0,
+    1,
+    1,
+    1,
+    0,
+    0
+   ]
+  },
+  {
+   "case": "two_runs_wide_gap",
+   "ends": [
+    1,
+    7
+   ],
+   "min_gap": 1,
+   "min_value": 0,
+   "starts": [
+    0,
+    5
+   ],
+   "values": [
+    1,
+    1,
+    0,
+    0,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "case": "gap_equal_to_min_gap",
+   "ends": [
+    1,
+    5
+   ],
+   "min_gap": 1,
+   "min_value": 0,
+   "starts": [
+    0,
+    3
+   ],
+   "values": [
+    1,
+    1,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "case": "gap_below_min_gap",
+   "ends": [
+    5
+   ],
+   "min_gap": 2,
+   "min_value": 0,
+   "starts": [
+    0
+   ],
+   "values": [
+    1,
+    1,
+    0,
+    1,
+    1
+   ]
+  },
+  {
+   "case": "all_zero",
+   "ends": null,
+   "min_gap": 1,
+   "min_value": 0,
+   "starts": null,
+   "values": [
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "case": "threshold_excludes",
+   "ends": [
+    2
+   ],
+   "min_gap": 1,
+   "min_value": 1,
+   "starts": [
+    1
+   ],
+   "values": [
+    1,
+    2,
+    1
+   ]
+  }
+ ],
+ "upstream": "paddlex 3.7.2 inference/pipelines/layout_parsing/xycut_enhanced/utils.py"
+}

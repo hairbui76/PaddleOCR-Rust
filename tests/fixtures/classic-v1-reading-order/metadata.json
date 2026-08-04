@@ -1,0 +1,41 @@
+{
+ "fixture_id": "classic-v1-reading-order",
+ "kind": "reading_order_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/projections,#/splits,#/orders",
+  "sha256": "7c2bae5f35e652ccf74ba9618de6fff08140112b4dd9cefdaf4ea7e9dd3697a5",
+  "sha256_scope": "No image input. Every case is a list of integer boxes or a small histogram written out in the capture tool, so the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_reading_order_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/utils.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py"
+  ],
+  "capture_method": "The pinned PaddleX functions were imported and executed, not transcribed.",
+  "environment": "python 3.12, numpy 2.3.5, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "7c2bae5f35e652ccf74ba9618de6fff08140112b4dd9cefdaf4ea7e9dd3697a5",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/reading-order-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "reading_order::tests::the_captured_projections_are_reproduced",
+  "reading_order::tests::the_captured_splits_are_reproduced",
+  "reading_order::tests::the_captured_reading_orders_are_reproduced",
+  "reading_order::tests::the_two_cut_orders_read_a_two_column_page_differently"
+ ],
+ "limitations": [
+  "Only the four pure XY-cut primitives are covered. The label-aware heuristics above them in xycut_enhanced -- document titles, captions, figures, regions -- are not ported, and several depend on P8 modules with no published ONNX export.",
+  "NumPy's argsort is not stable, so upstream's tie order is formally unspecified. The corpus includes a tied-tops case and this port matches it; that is the most that can be claimed.",
+  "No model is run and no page is decoded. This pins ordering over given boxes, not the detection that produces them."
+ ]
+}

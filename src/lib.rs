@@ -74,6 +74,7 @@ mod orientation;
 mod paddlex_detection;
 #[allow(dead_code)]
 mod pipeline;
+mod reading_order;
 #[allow(dead_code)]
 mod recognizer;
 #[allow(dead_code)]
