@@ -208,6 +208,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-reading-order".to_owned(),
         "classic-v1-markdown".to_owned(),
         "classic-v1-metrics".to_owned(),
+        "classic-v1-config-reconciliation".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

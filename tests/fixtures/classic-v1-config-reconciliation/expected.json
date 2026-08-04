@@ -1,0 +1,986 @@
+{
+ "counts": {
+  "Deferred": 53,
+  "Postprocess implemented, parameters unverified": 84,
+  "Verified": 2
+ },
+ "note": "Status is per file, never per family. A config is `Verified` only when this port froze its parameters from that exact file and matched them against a capture; two files qualify. `Out of scope` is deliberately unused: the roadmap reserves it for a user-approved exclusion, and this reconciliation records evidence rather than making that decision.",
+ "rows": [
+  {
+   "algorithm": "CLS",
+   "config": "configs/cls/ch_PP-OCRv3/ch_PP-OCRv3_rotnet.yml",
+   "postprocess": "ClsPostProcess",
+   "reason": "This port implements ClsPostProcess (`DOCORI-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CLS",
+   "config": "configs/cls/cls_mv3.yml",
+   "postprocess": "ClsPostProcess",
+   "reason": "This port implements ClsPostProcess (`DOCORI-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/PP-OCRv3/PP-OCRv3_det_cml.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/PP-OCRv3/PP-OCRv3_det_dml.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv3/PP-OCRv3_mobile_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv3/PP-OCRv3_server_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/PP-OCRv4/PP-OCRv4_det_cml.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv4/PP-OCRv4_mobile_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv4/PP-OCRv4_mobile_seal_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv4/PP-OCRv4_server_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv4/PP-OCRv4_server_seal_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv5/PP-OCRv5_mobile_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv5/PP-OCRv5_server_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv6/PP-OCRv6_medium_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "Parameters frozen from this exact file and matched against a captured oracle.",
+   "status": "Verified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv6/PP-OCRv6_small_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/PP-OCRv6/PP-OCRv6_tiny_det.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/ch_PP-OCRv2/ch_PP-OCRv2_det_cml.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/ch_PP-OCRv2/ch_PP-OCRv2_det_distill.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/det/ch_PP-OCRv2/ch_PP-OCRv2_det_dml.yml",
+   "postprocess": "DistillationDBPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationDBPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/ch_PP-OCRv2/ch_PP-OCRv2_det_student.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/ch_ppocr_v2.0/ch_det_mv3_db_v2.0.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/ch_ppocr_v2.0/ch_det_res18_db_v2.0.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/det_mv3_db.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "EAST",
+   "config": "configs/det/det_mv3_east.yml",
+   "postprocess": "EASTPostProcess",
+   "reason": "Algorithm `EAST` and postprocess `EASTPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "PSE",
+   "config": "configs/det/det_mv3_pse.yml",
+   "postprocess": "PSEPostProcess",
+   "reason": "Algorithm `PSE` and postprocess `PSEPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CT",
+   "config": "configs/det/det_r18_vd_ct.yml",
+   "postprocess": "CTPostProcess",
+   "reason": "Algorithm `CT` and postprocess `CTPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB++",
+   "config": "configs/det/det_r50_db++_icdar15.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB++",
+   "config": "configs/det/det_r50_db++_td_tr.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DRRG",
+   "config": "configs/det/det_r50_drrg_ctw.yml",
+   "postprocess": "DRRGPostprocess",
+   "reason": "Algorithm `DRRG` and postprocess `DRRGPostprocess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/det_r50_vd_db.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "FCE",
+   "config": "configs/det/det_r50_vd_dcn_fce_ctw.yml",
+   "postprocess": "FCEPostProcess",
+   "reason": "Algorithm `FCE` and postprocess `FCEPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "EAST",
+   "config": "configs/det/det_r50_vd_east.yml",
+   "postprocess": "EASTPostProcess",
+   "reason": "Algorithm `EAST` and postprocess `EASTPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "PSE",
+   "config": "configs/det/det_r50_vd_pse.yml",
+   "postprocess": "PSEPostProcess",
+   "reason": "Algorithm `PSE` and postprocess `PSEPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SAST",
+   "config": "configs/det/det_r50_vd_sast_icdar15.yml",
+   "postprocess": "SASTPostProcess",
+   "reason": "Algorithm `SAST` and postprocess `SASTPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SAST",
+   "config": "configs/det/det_r50_vd_sast_totaltext.yml",
+   "postprocess": "SASTPostProcess",
+   "reason": "Algorithm `SAST` and postprocess `SASTPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/det_repsvtr_db.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "DB",
+   "config": "configs/det/det_res18_db_v2.0.yml",
+   "postprocess": "DBPostProcess",
+   "reason": "This port implements DBPostProcess (`DET-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "PGNet",
+   "config": "configs/e2e/e2e_r50_vd_pg.yml",
+   "postprocess": "PGPostProcess",
+   "reason": "Algorithm `PGNet` and postprocess `PGPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutLMv2",
+   "config": "configs/kie/layoutlm_series/re_layoutlmv2_xfund_zh.yml",
+   "postprocess": "VQAReTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutLMv2` and postprocess `VQAReTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutXLM",
+   "config": "configs/kie/layoutlm_series/re_layoutxlm_xfund_zh.yml",
+   "postprocess": "VQAReTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutXLM` and postprocess `VQAReTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutLM",
+   "config": "configs/kie/layoutlm_series/ser_layoutlm_xfund_zh.yml",
+   "postprocess": "VQASerTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutLM` and postprocess `VQASerTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutLMv2",
+   "config": "configs/kie/layoutlm_series/ser_layoutlmv2_xfund_zh.yml",
+   "postprocess": "VQASerTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutLMv2` and postprocess `VQASerTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutXLM",
+   "config": "configs/kie/layoutlm_series/ser_layoutxlm_xfund_zh.yml",
+   "postprocess": "VQASerTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutXLM` and postprocess `VQASerTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SDMGR",
+   "config": "configs/kie/sdmgr/kie_unet_sdmgr.yml",
+   "postprocess": "None",
+   "reason": "Algorithm `SDMGR` and postprocess `None` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutXLM",
+   "config": "configs/kie/vi_layoutxlm/re_vi_layoutxlm_xfund_zh.yml",
+   "postprocess": "VQAReTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutXLM` and postprocess `VQAReTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/kie/vi_layoutxlm/re_vi_layoutxlm_xfund_zh_udml.yml",
+   "postprocess": "DistillationRePostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationRePostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "LayoutXLM",
+   "config": "configs/kie/vi_layoutxlm/ser_vi_layoutxlm_xfund_zh.yml",
+   "postprocess": "VQASerTokenLayoutLMPostProcess",
+   "reason": "Algorithm `LayoutXLM` and postprocess `VQASerTokenLayoutLMPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/kie/vi_layoutxlm/ser_vi_layoutxlm_xfund_zh_udml.yml",
+   "postprocess": "DistillationSerPostProcess",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationSerPostProcess` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/rec/PP-OCRv3/PP-OCRv3_mobile_rec_distillation.yml",
+   "postprocess": "DistillationCTCLabelDecode",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationCTCLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/en_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/arabic_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/cyrillic_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/devanagari_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/japan_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/ka_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/korean_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/latin_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/ta_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv3/multi_language/te_PP-OCRv3_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_mobile_rec_ampO2_ultra.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_mobile_rec_distillation.yml",
+   "postprocess": "DistillationCTCLabelDecode",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationCTCLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_mobile_rec_fp32_ultra.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_server_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_server_rec_ampO2_ultra.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_server_rec_doc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/PP-OCRv4/PP-OCRv4_server_rec_fp32_ultra.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv4/ch_PP-OCRv4_rec_svtr_large.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv4/en_PP-OCRv4_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv5/PP-OCRv5_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/PP-OCRv5/PP-OCRv5_server_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv5/multi_language/eslav_PP-OCRv5_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv5/multi_language/korean_PP-OCRv5_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv5/multi_language/latin_PP-OCRv5_mobile_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv6/PP-OCRv6_medium_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "Parameters frozen from this exact file and matched against a captured oracle.",
+   "status": "Verified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv6/PP-OCRv6_small_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_LCNet",
+   "config": "configs/rec/PP-OCRv6/PP-OCRv6_tiny_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/SVTRv2/ch_RepSVTR_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/SVTRv2/ch_RepSVTR_rec_gtc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/SVTRv2/ch_SVTRv2_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/rec/SVTRv2/ch_SVTRv2_rec_distillation.yml",
+   "postprocess": "DistillationCTCLabelDecode",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationCTCLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SVTR_HGNet",
+   "config": "configs/rec/SVTRv2/ch_SVTRv2_rec_gtc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/rec/SVTRv2/ch_SVTRv2_rec_gtc_distill.yml",
+   "postprocess": "DistillationCTCLabelDecode",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationCTCLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/ch_PP-OCRv2/ch_PP-OCRv2_rec.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Distillation",
+   "config": "configs/rec/ch_PP-OCRv2/ch_PP-OCRv2_rec_distillation.yml",
+   "postprocess": "DistillationCTCLabelDecode",
+   "reason": "Algorithm `Distillation` and postprocess `DistillationCTCLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/ch_PP-OCRv2/ch_PP-OCRv2_rec_enhanced_ctc_loss.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/ch_ppocr_v2.0/rec_chinese_common_train_v2.0.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/ch_ppocr_v2.0/rec_chinese_lite_train_v2.0.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_arabic_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_cyrillic_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_devanagari_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_en_number_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_french_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_german_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_hebrew_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_japan_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_korean_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_latin_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_multi_language_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_samaritan_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/multi_language/rec_syriac_lite_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CAN",
+   "config": "configs/rec/rec_d28_can.yml",
+   "postprocess": "CANLabelDecode",
+   "reason": "Algorithm `CAN` and postprocess `CANLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "PREN",
+   "config": "configs/rec/rec_efficientb3_fpn_pren.yml",
+   "postprocess": "PRENLabelDecode",
+   "reason": "Algorithm `PREN` and postprocess `PRENLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/rec_icdar15_train.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "NRTR",
+   "config": "configs/rec/rec_mtb_nrtr.yml",
+   "postprocess": "NRTRLabelDecode",
+   "reason": "Algorithm `NRTR` and postprocess `NRTRLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/rec_mv3_none_bilstm_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Rosetta",
+   "config": "configs/rec/rec_mv3_none_none_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "RARE",
+   "config": "configs/rec/rec_mv3_tps_bilstm_att.yml",
+   "postprocess": "AttnLabelDecode",
+   "reason": "Algorithm `RARE` and postprocess `AttnLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "STARNet",
+   "config": "configs/rec/rec_mv3_tps_bilstm_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "RobustScanner",
+   "config": "configs/rec/rec_r31_robustscanner.yml",
+   "postprocess": "SARLabelDecode",
+   "reason": "Algorithm `RobustScanner` and postprocess `SARLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SAR",
+   "config": "configs/rec/rec_r31_sar.yml",
+   "postprocess": "SARLabelDecode",
+   "reason": "Algorithm `SAR` and postprocess `SARLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SPIN",
+   "config": "configs/rec/rec_r32_gaspin_bilstm_att.yml",
+   "postprocess": "SPINLabelDecode",
+   "reason": "Algorithm `SPIN` and postprocess `SPINLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CRNN",
+   "config": "configs/rec/rec_r34_vd_none_bilstm_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "Rosetta",
+   "config": "configs/rec/rec_r34_vd_none_none_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "RARE",
+   "config": "configs/rec/rec_r34_vd_tps_bilstm_att.yml",
+   "postprocess": "AttnLabelDecode",
+   "reason": "Algorithm `RARE` and postprocess `AttnLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "STARNet",
+   "config": "configs/rec/rec_r34_vd_tps_bilstm_ctc.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "ABINet",
+   "config": "configs/rec/rec_r45_abinet.yml",
+   "postprocess": "ABINetLabelDecode",
+   "reason": "Algorithm `ABINet` and postprocess `ABINetLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "VisionLAN",
+   "config": "configs/rec/rec_r45_visionlan.yml",
+   "postprocess": "VLLabelDecode",
+   "reason": "Algorithm `VisionLAN` and postprocess `VLLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SRN",
+   "config": "configs/rec/rec_r50_fpn_srn.yml",
+   "postprocess": "SRNLabelDecode",
+   "reason": "Algorithm `SRN` and postprocess `SRNLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "RFL",
+   "config": "configs/rec/rec_resnet_rfl_att.yml",
+   "postprocess": "RFLLabelDecode",
+   "reason": "Algorithm `RFL` and postprocess `RFLLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "RFL",
+   "config": "configs/rec/rec_resnet_rfl_visual.yml",
+   "postprocess": "RFLLabelDecode",
+   "reason": "Algorithm `RFL` and postprocess `RFLLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SEED",
+   "config": "configs/rec/rec_resnet_stn_bilstm_att.yml",
+   "postprocess": "SEEDLabelDecode",
+   "reason": "Algorithm `SEED` and postprocess `SEEDLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SATRN",
+   "config": "configs/rec/rec_satrn.yml",
+   "postprocess": "SATRNLabelDecode",
+   "reason": "Algorithm `SATRN` and postprocess `SATRNLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SVTR",
+   "config": "configs/rec/rec_svtrnet.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SVTR",
+   "config": "configs/rec/rec_svtrnet_ch.yml",
+   "postprocess": "CTCLabelDecode",
+   "reason": "This port implements CTCLabelDecode (`REC-004`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "CPPD",
+   "config": "configs/rec/rec_svtrnet_cppd_base_ch.yml",
+   "postprocess": "CPPDLabelDecode",
+   "reason": "Algorithm `CPPD` and postprocess `CPPDLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "CPPD",
+   "config": "configs/rec/rec_svtrnet_cppd_base_en.yml",
+   "postprocess": "CPPDLabelDecode",
+   "reason": "Algorithm `CPPD` and postprocess `CPPDLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "ParseQ",
+   "config": "configs/rec/rec_vit_parseq.yml",
+   "postprocess": "ParseQLabelDecode",
+   "reason": "Algorithm `ParseQ` and postprocess `ParseQLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "ViTSTR",
+   "config": "configs/rec/rec_vitstr_none_ce.yml",
+   "postprocess": "ViTSTRLabelDecode",
+   "reason": "Algorithm `ViTSTR` and postprocess `ViTSTRLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Telescope",
+   "config": "configs/sr/sr_telescope.yml",
+   "postprocess": "None",
+   "reason": "Algorithm `Telescope` and postprocess `None` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "Gestalt",
+   "config": "configs/sr/sr_tsrn_transformer_strock.yml",
+   "postprocess": "None",
+   "reason": "Algorithm `Gestalt` and postprocess `None` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "SLANeXt",
+   "config": "configs/table/SLANeXt_wired.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SLANeXt",
+   "config": "configs/table/SLANeXt_wireless.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SLANet",
+   "config": "configs/table/SLANet.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SLANet",
+   "config": "configs/table/SLANet_lcnetv2.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "SLANet",
+   "config": "configs/table/SLANet_plus.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  },
+  {
+   "algorithm": "TableMaster",
+   "config": "configs/table/table_master.yml",
+   "postprocess": "TableMasterLabelDecode",
+   "reason": "Algorithm `TableMaster` and postprocess `TableMasterLabelDecode` are not implemented; the training scope they belong to is blocked on `D-011`.",
+   "status": "Deferred"
+  },
+  {
+   "algorithm": "TableAttn",
+   "config": "configs/table/table_mv3.yml",
+   "postprocess": "TableLabelDecode",
+   "reason": "This port implements TableLabelDecode (`TBLSTRUCT-001`), but its thresholds and tensor contract were frozen from a different config. No claim is made about this file.",
+   "status": "Postprocess implemented, parameters unverified"
+  }
+ ],
+ "schema_version": "paddleocr-rust/config-reconciliation/v1",
+ "total": 139,
+ "upstream_commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854"
+}

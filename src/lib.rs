@@ -48,6 +48,8 @@ mod backend_ort;
 mod contour;
 
 /// Cancellation and the wall-clock time policy.
+pub mod config_reconciliation;
+
 pub mod control;
 #[allow(dead_code)]
 mod crop;
