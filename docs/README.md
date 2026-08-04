@@ -30,6 +30,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   two gaps it found
 - [SAFE-001 unsafe and native boundary audit](SAFE_001_AUDIT.md) — what the
   memory-safety argument actually rests on
+- [CLOSE-001 inventory closeout](CLOSE_001_AUDIT.md) — every inventory row
+  classified: verified, intentional difference, deferred, or out of scope
 - [Gate P6 evidence](GATE_P6_EVIDENCE.md) — the M2 milestone gate, clause by
   clause, against what was actually run
 - [PERF-001 benchmark record](PERF_001_BENCHMARK.md) — startup, throughput, and
