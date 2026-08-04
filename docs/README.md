@@ -33,7 +33,7 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [Candidate provisioning ledger](CANDIDATE_PROVISIONING_LEDGER.md)
 - [License review](LICENSE_REVIEW.md)
 - [Local ONNX inspection](LOCAL_ONNX_CANDIDATE_INSPECTION.md)
-- [Runtime rubric](RUNTIME_RUBRIC.md) and [runtime proof plan](RUNTIME_PROOF_PLAN.md)
+- [Runtime rubric](RUNTIME_RUBRIC.md), [runtime proof plan](RUNTIME_PROOF_PLAN.md), and [runtime scorecard](RUNTIME_SCORECARD.md)
 - [Tract evidence](RUNTIME_TRACT_EVIDENCE.md), [ORT evidence](RUNTIME_ORT_EVIDENCE.md), and [source-built ORT evidence](RUNTIME_ORT_SOURCE_EVIDENCE.md)
 
 The reusable [parse-only ONNX ABI inspection](ONNX_ABI_INSPECTION.md), the
