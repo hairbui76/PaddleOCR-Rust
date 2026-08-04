@@ -439,12 +439,16 @@ impl OcrEngine {
                 detector: (&self.detector, &self.detector_contract),
                 recognizer: (&self.recognizer, &self.recognizer_contract),
                 dictionary: &self.dictionary,
+                // No orientation artifact is loaded, matching upstream's
+                // `use_angle_cls = False` default.
+                orientation: None,
             },
             &image,
             ClassicThresholds {
                 box_threshold: options.box_threshold,
                 unclip_ratio: options.unclip_ratio,
                 drop_score: options.drop_score,
+                orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
             },
             &options.control.begin(),
         )?;

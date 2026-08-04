@@ -45,6 +45,12 @@ const MAX_BATCH_IMAGES: usize = 256;
 /// (`0x3b808081`).
 const DETECTOR_SCALE: f32 = 1.0_f32 / 255.0_f32;
 
+/// The orientation classifier's fixed input width, from the artifact config.
+pub(crate) const ORIENTATION_INPUT_WIDTH: u32 = 160;
+
+/// The orientation classifier's fixed input height, from the artifact config.
+pub(crate) const ORIENTATION_INPUT_HEIGHT: u32 = 80;
+
 /// Per-channel means applied positionally to the interleaved channel axis.
 const DETECTOR_MEAN: [f32; 3] = [0.485, 0.456, 0.406];
 
@@ -123,6 +129,67 @@ pub(crate) fn classic_detector_input(image: &InterleavedImage) -> Result<NchwTen
 /// Narrower crops are right-padded with `0.0` in the normalized domain, which
 /// is what the pinned source does by writing into a zero-filled buffer rather
 /// than by normalizing a zero pixel.
+/// Builds the `[N, 3, 80, 160]` orientation-classifier input batch.
+///
+/// The normalization is the **detector's**, not the recognizer's:
+/// `PP-LCNet_x1_0_textline_ori`'s `inference.yml` declares `scale 1/255` with the
+/// ImageNet mean and standard deviation, which is exactly what
+/// [`classic_detector_input`] applies. `docs/ORIENTATION_CONTRACT.md` records how
+/// that differs from the legacy `predict_cls.py` path, which uses
+/// `(x / 255 - 0.5) / 0.5` and would be wrong for this artifact.
+///
+/// Every crop must already be resized to the fixed `160x80`. The classifier's
+/// resize is unconditional — no aspect ratio, no padding — so unlike recognition
+/// there is nothing to plan and no per-batch width.
+pub(crate) fn classic_orientation_batch(crops: &[&InterleavedImage]) -> Result<NchwTensor> {
+    if crops.is_empty() {
+        return Err(Error::InvalidInput {
+            field: "orientation.batch",
+            violation: InputViolation::Empty,
+        });
+    }
+    let (width, height) = (
+        ORIENTATION_INPUT_WIDTH as usize,
+        ORIENTATION_INPUT_HEIGHT as usize,
+    );
+    for crop in crops {
+        require_classic_channels(crop)?;
+        let dimensions = crop.dimensions();
+        if dimensions.width() != ORIENTATION_INPUT_WIDTH
+            || dimensions.height() != ORIENTATION_INPUT_HEIGHT
+        {
+            return Err(Error::InvalidInput {
+                field: "orientation.crop_dimensions",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+    }
+
+    let mut values = bounded_tensor_buffer(crops.len(), CLASSIC_CHANNELS as usize, height, width)?;
+    for crop in crops {
+        let pixels = crop.pixels();
+        for channel in 0..CLASSIC_CHANNELS as usize {
+            let mean = DETECTOR_MEAN[channel];
+            let deviation = DETECTOR_STD[channel];
+            for row in 0..height {
+                for column in 0..width {
+                    let source = (row * width + column) * CLASSIC_CHANNELS as usize + channel;
+                    let value = f32::from(pixels[source]);
+                    values.push((value * DETECTOR_SCALE - mean) / deviation);
+                }
+            }
+        }
+    }
+
+    Ok(NchwTensor {
+        batch: crops.len(),
+        channels: CLASSIC_CHANNELS as usize,
+        height,
+        width,
+        values,
+    })
+}
+
 pub(crate) fn classic_recognizer_batch(
     crops: &[&InterleavedImage],
     batch_width: u32,

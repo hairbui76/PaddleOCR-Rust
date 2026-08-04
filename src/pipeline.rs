@@ -25,9 +25,11 @@ use crate::detector::detect_boxes;
 use crate::dictionary::CtcDictionary;
 use crate::error::Result;
 use crate::geometry::{classic_perspective_crop_plan, classic_sort_quadrilaterals};
+use crate::orientation::{classify, orientation_input_size, rotate_180};
 use crate::recognizer::recognize;
+use crate::resize::classic_linear_resize;
 use crate::score_filter::retain_by_score;
-use crate::types::{Point, Quadrilateral};
+use crate::types::{ImageDimensions, Point, Quadrilateral};
 
 /// One recognized text line with its source-space quadrilateral.
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +50,12 @@ pub(crate) struct ClassicModels<'a> {
     pub(crate) recognizer: (&'a dyn InferenceBackend, &'a ModelContract),
     /// Dictionary bound to the recognizer artifact.
     pub(crate) dictionary: &'a CtcDictionary,
+    /// Optional text-line orientation classifier and its validated contract.
+    ///
+    /// `None` matches upstream's default: `use_angle_cls` is `False`, so a
+    /// caller who has not provisioned the classifier gets exactly the behaviour
+    /// they had before it existed.
+    pub(crate) orientation: Option<(&'a dyn InferenceBackend, &'a ModelContract)>,
 }
 
 /// The frozen thresholds the classic pipeline applies.
@@ -59,6 +67,8 @@ pub(crate) struct ClassicThresholds {
     pub(crate) unclip_ratio: f64,
     /// Minimum recognition confidence; equality is retained.
     pub(crate) drop_score: f64,
+    /// Minimum orientation confidence to act on; equality does **not** rotate.
+    pub(crate) orientation_threshold: f64,
 }
 
 /// Runs the complete classic pipeline over one decoded BGR image.
@@ -87,6 +97,7 @@ pub(crate) fn run_classic_ocr(
         box_threshold,
         unclip_ratio,
         drop_score,
+        orientation_threshold,
     } = thresholds;
 
     schedule.check("detector")?;
@@ -115,11 +126,38 @@ pub(crate) fn run_classic_ocr(
     // Cropping is bounded by the region count, which the detector already caps,
     // but it is the last cheap place to stop before recognition dominates.
     schedule.check("crop")?;
-    let mut crops = Vec::with_capacity(quadrilaterals.len());
+    let mut crops: Vec<InterleavedImage> = Vec::with_capacity(quadrilaterals.len());
     for quadrilateral in &quadrilaterals {
         let plan = classic_perspective_crop_plan(*quadrilateral)?;
         crops.push(classic_perspective_crop(image, plan)?);
     }
+    // Optional orientation stage, between cropping and recognition, which is
+    // where upstream places it. A crop the classifier is confident is upside
+    // down is replaced by its rotated self, so recognition sees the corrected
+    // image; the detected polygon is untouched, because rotating a crop does not
+    // move the region it came from.
+    if let Some((backend, orientation_contract)) = models.orientation {
+        schedule.check("orientation")?;
+        let (width, height) = orientation_input_size();
+        let target = ImageDimensions::new(width, height)?;
+        let mut resized = Vec::with_capacity(crops.len());
+        for crop in &crops {
+            resized.push(classic_linear_resize(crop, target)?);
+        }
+        let borrowed: Vec<&InterleavedImage> = resized.iter().collect();
+        let verdicts = classify(
+            backend,
+            orientation_contract,
+            &borrowed,
+            orientation_threshold,
+        )?;
+        for (crop, verdict) in crops.iter_mut().zip(&verdicts) {
+            if verdict.rotate {
+                *crop = rotate_180(crop)?;
+            }
+        }
+    }
+
     let borrowed: Vec<&InterleavedImage> = crops.iter().collect();
     let recognized = recognize(
         recognizer,
@@ -293,12 +331,14 @@ mod tests {
                 detector: (&detector, &detector_contract),
                 recognizer: (&recognizer, &recognizer_contract),
                 dictionary: &dictionary,
+                orientation: None,
             },
             &source,
             ClassicThresholds {
                 box_threshold: 0.5,
                 unclip_ratio: 1.5,
                 drop_score: 0.5,
+                orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
             },
             schedule,
         )
@@ -408,6 +448,7 @@ pub(crate) mod gate_support {
         box_threshold: 0.6,
         unclip_ratio: 1.5,
         drop_score: 0.5,
+        orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
     };
 
     pub(crate) struct Sha256(Vec<u8>);
@@ -456,6 +497,7 @@ pub(crate) mod gate_support {
                 detector: (&self.detector, &self.detector_contract),
                 recognizer: (&self.recognizer, &self.recognizer_contract),
                 dictionary: &self.dictionary,
+                orientation: None,
             }
         }
     }

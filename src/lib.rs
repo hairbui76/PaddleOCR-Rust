@@ -64,6 +64,7 @@ mod image;
 pub mod input;
 #[allow(dead_code)]
 mod min_area;
+mod orientation;
 #[allow(dead_code)]
 mod pipeline;
 #[allow(dead_code)]
