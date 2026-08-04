@@ -128,6 +128,113 @@ pub(crate) fn centre_crop(source: &InterleavedImage, size: u32) -> Result<Interl
     )
 }
 
+/// The affine geometry of upstream's page rotation, and its inverse.
+///
+/// # The one-pixel finding
+///
+/// `RotateImage` builds its matrix with `getRotationMatrix2D(center, angle, 1)`
+/// where `center = (w / 2, h / 2)`. That is **not** the centre of the pixel grid,
+/// which is `((w - 1) / 2, (h - 1) / 2)`, so upstream's rotation carries a
+/// half-pixel offset in each axis.
+///
+/// The consequence is measurable and was measured. At `180` degrees on a
+/// `1280x720` page, upstream's `warpAffine` output equals a true
+/// `cv2.rotate(ROTATE_180)` **shifted by exactly one pixel in both axes** —
+/// zero mismatching pixels at that shift, and tens of thousands at any other.
+/// The matrix is `x' = -x + 1280`, `y' = -y + 720`, where an exact rotation
+/// would give `1279 - x` and `719 - y`.
+///
+/// So implementing the obvious exact right-angle rotation would displace every
+/// coordinate on the page by one pixel against upstream. This type reproduces
+/// upstream's matrix rather than the tidy one.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct DocumentRotation {
+    /// The forward matrix's first row, `[a, b, c]`.
+    forward: [f64; 3],
+    /// The forward matrix's second row, `[d, e, f]`.
+    forward_second: [f64; 3],
+    /// Output width after the expansion upstream applies.
+    width: u32,
+    /// Output height after the expansion upstream applies.
+    height: u32,
+}
+
+impl DocumentRotation {
+    /// Builds the rotation for a page and a clockwise angle in degrees.
+    ///
+    /// Only the four angles the classifier can emit are accepted. An arbitrary
+    /// angle is rejected rather than silently supported, because nothing in this
+    /// project produces one and accepting it would imply a resampling path that
+    /// has no oracle.
+    pub(crate) fn new(source: ImageDimensions, degrees: u32) -> Result<Self> {
+        if !matches!(degrees, 0 | 90 | 180 | 270) {
+            return Err(Error::InvalidInput {
+                field: "document_orientation.angle",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+        let (width, height) = (f64::from(source.width()), f64::from(source.height()));
+        // `getRotationMatrix2D` uses the *counter-clockwise* convention for a
+        // positive angle, and the centre upstream passes is `(w/2, h/2)`.
+        let radians = f64::from(degrees).to_radians();
+        let (sin, cos) = radians.sin_cos();
+        let (centre_x, centre_y) = (width / 2.0, height / 2.0);
+        let mut forward = [cos, sin, (1.0 - cos) * centre_x - sin * centre_y];
+        let mut forward_second = [-sin, cos, sin * centre_x + (1.0 - cos) * centre_y];
+
+        let absolute_cos = forward[0].abs();
+        let absolute_sin = forward[1].abs();
+        // `int(...)`, a truncation, exactly as upstream writes it.
+        let new_width = (height * absolute_sin + width * absolute_cos) as u32;
+        let new_height = (height * absolute_cos + width * absolute_sin) as u32;
+
+        forward[2] += (f64::from(new_width) - width) / 2.0;
+        forward_second[2] += (f64::from(new_height) - height) / 2.0;
+
+        Ok(Self {
+            forward,
+            forward_second,
+            width: new_width,
+            height: new_height,
+        })
+    }
+
+    /// Returns the rotated page's dimensions.
+    pub(crate) const fn output_dimensions(self) -> (u32, u32) {
+        (self.width, self.height)
+    }
+
+    /// Maps a source point into the rotated page.
+    pub(crate) fn forward(self, x: f64, y: f64) -> (f64, f64) {
+        (
+            self.forward[0] * x + self.forward[1] * y + self.forward[2],
+            self.forward_second[0] * x + self.forward_second[1] * y + self.forward_second[2],
+        )
+    }
+
+    /// Maps a point in the rotated page back to the source.
+    ///
+    /// This is what `DOCORI-001` means by inverse geometry: every coordinate a
+    /// caller receives must describe the image they supplied, not the rotated
+    /// one the detector actually saw.
+    pub(crate) fn inverse(self, x: f64, y: f64) -> Result<(f64, f64)> {
+        let [a, b, c] = self.forward;
+        let [d, e, f] = self.forward_second;
+        let determinant = a * e - b * d;
+        if determinant.abs() < f64::EPSILON {
+            return Err(Error::InvalidInput {
+                field: "document_orientation.rotation",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+        let (shifted_x, shifted_y) = (x - c, y - f);
+        Ok((
+            (e * shifted_x - b * shifted_y) / determinant,
+            (a * shifted_y - d * shifted_x) / determinant,
+        ))
+    }
+}
+
 /// Runs the artifact's declared preprocessing over one page.
 pub(crate) fn document_orientation_input(page: &InterleavedImage) -> Result<NchwTensor> {
     let resized_dimensions = resize_by_short_dimensions(page.dimensions(), DOCUMENT_RESIZE_SHORT)?;
@@ -251,6 +358,73 @@ mod tests {
             Err(error) => panic!("{error}"),
         };
         assert_eq!(tensor.shape(), [1, 3, 224, 224]);
+    }
+
+    /// The captured matrix, reproduced exactly.
+    ///
+    /// `1280x720` at `180` degrees gives `x' = -x + 1280` and `y' = -y + 720`,
+    /// which the capture recorded from OpenCV. A true right-angle rotation would
+    /// give `1279 - x` and `719 - y`, and the measured difference between the
+    /// two is exactly one pixel in both axes.
+    #[test]
+    fn the_rotation_reproduces_the_upstream_matrix_including_its_offset() {
+        let rotation = match DocumentRotation::new(dimensions(1280, 720), 180) {
+            Ok(value) => value,
+            Err(error) => panic!("{error}"),
+        };
+        assert_eq!(rotation.output_dimensions(), (1280, 720));
+
+        let (x, y) = rotation.forward(0.0, 0.0);
+        assert!((x - 1280.0).abs() < 1e-9, "x was {x}, upstream gives 1280");
+        assert!((y - 720.0).abs() < 1e-9, "y was {y}, upstream gives 720");
+
+        // The tidy rotation everyone would write instead.
+        assert!(
+            (x - 1279.0).abs() > 0.5,
+            "matching the exact rotation here would be the bug"
+        );
+    }
+
+    /// A right angle swaps the page's dimensions.
+    #[test]
+    fn a_quarter_turn_swaps_the_dimensions() {
+        for degrees in [90_u32, 270] {
+            let rotation = match DocumentRotation::new(dimensions(1280, 720), degrees) {
+                Ok(value) => value,
+                Err(error) => panic!("{error}"),
+            };
+            assert_eq!(rotation.output_dimensions(), (720, 1280), "{degrees}");
+        }
+    }
+
+    /// The inverse returns a coordinate to the caller's image.
+    #[test]
+    fn the_inverse_round_trips() {
+        for degrees in [0_u32, 90, 180, 270] {
+            let rotation = match DocumentRotation::new(dimensions(1280, 720), degrees) {
+                Ok(value) => value,
+                Err(error) => panic!("{error}"),
+            };
+            for (x, y) in [(0.0, 0.0), (47.0, 78.0), (1279.0, 719.0), (640.5, 360.5)] {
+                let (rotated_x, rotated_y) = rotation.forward(x, y);
+                let (back_x, back_y) = match rotation.inverse(rotated_x, rotated_y) {
+                    Ok(value) => value,
+                    Err(error) => panic!("{degrees}: {error}"),
+                };
+                assert!(
+                    (back_x - x).abs() < 1e-6 && (back_y - y).abs() < 1e-6,
+                    "{degrees}: ({x}, {y}) -> ({rotated_x}, {rotated_y}) -> ({back_x}, {back_y})"
+                );
+            }
+        }
+    }
+
+    /// An angle the classifier cannot emit is refused.
+    #[test]
+    fn an_arbitrary_angle_is_refused() {
+        assert!(DocumentRotation::new(dimensions(100, 100), 45).is_err());
+        assert!(DocumentRotation::new(dimensions(100, 100), 360).is_err());
+        assert!(DocumentRotation::new(dimensions(100, 100), 0).is_ok());
     }
 
     #[test]

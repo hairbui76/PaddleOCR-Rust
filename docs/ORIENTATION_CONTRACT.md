@@ -285,7 +285,38 @@ outputs; `src/document_orientation.rs` reproduces every captured tensor
 **bit-identically**, which is the only evidence that both new roundings — the
 resize's round-half-away and the crop origin's integer division — are right.
 
-## 14. Status
+## 14. The one-pixel finding in upstream's page rotation
+
+`RotateImage` builds its matrix with `getRotationMatrix2D(center, angle, 1)`
+where `center = (w / 2, h / 2)`. That is **not** the centre of the pixel grid,
+which is `((w - 1) / 2, (h - 1) / 2)`, so the rotation carries a half-pixel
+offset in each axis.
+
+This was measured rather than reasoned about. At `180` degrees on the `1280x720`
+benchmark page, upstream's `warpAffine` output equals `cv2.rotate(ROTATE_180)`
+**shifted by exactly one pixel in both axes**:
+
+| Shift applied to the exact rotation | Mismatching pixels |
+|---|---|
+| `(0, 0)` | `15,795` |
+| `(1, 0)` | `10,760` |
+| `(0, 1)` | `11,687` |
+| **`(1, 1)`** | **`0`** |
+
+The matrix is `x' = -x + 1280`, `y' = -y + 720`, where an exact rotation gives
+`1279 - x` and `719 - y`.
+
+So the obvious implementation — a transpose-and-flip right-angle rotation, which
+is exact, lossless, and what any reviewer would expect — **displaces every
+coordinate on the page by one pixel** against upstream. `DocumentRotation`
+reproduces upstream's matrix rather than the tidy one, and a test asserts that
+matching the exact rotation at that corner would be the bug.
+
+The same measurement also rules out reusing a right-angle rotation for the
+pixels: upstream resamples with `INTER_CUBIC` through this offset matrix, so the
+rotated page differs from a transposed one everywhere, not only at the border.
+
+## 15. Status
 
 Contract frozen for both models. Artifacts provisioned and hashed. The text-line
 classifier is implemented in `src/orientation.rs`, compared against a captured
@@ -304,7 +335,17 @@ without the inverse would return polygons that are internally consistent and
 silently wrong against the image the caller supplied, which is worse than not
 wiring it in.
 
-`DOCORI-001` stays open for exactly that: the rotation and its inverse geometry.
+The rotation **geometry** is now implemented: `DocumentRotation` reproduces
+upstream's affine matrix including its one-pixel offset — see §14, which is where
+the obvious implementation would have gone wrong — computes the expanded output
+size with upstream's truncation, and provides the inverse map that returns a
+coordinate to the caller's image.
+
+`DOCORI-001` stays open for the remaining piece: resampling the page through that
+matrix with `INTER_CUBIC`. The cubic machinery exists in `src/crop.rs`, verified
+against `72` captured OpenCV cases, but it is written for a projective crop and
+has not been driven by an affine page rotation or compared against a capture of
+one.
 
 Two corrections are recorded above rather than silently fixed, because both were
 wrong in ways that would have produced working code against the wrong contract:
