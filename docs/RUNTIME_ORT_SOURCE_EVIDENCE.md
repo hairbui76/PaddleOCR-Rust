@@ -5,6 +5,57 @@ Status: partial source-built CPU-route evidence; no backend or artifact accepted
 Recorded: 2026-08-02; updated 2026-08-03
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
+## Declared M2 shape-coverage expansion (2026-08-04)
+
+The earlier probes covered the six `RT-003` qualification shapes. The rubric's
+graph/operator gate asks for "every required operator/shape", and the frozen M2
+`limit_type=max` / `960` detector policy admits many more shapes than those six,
+so this expansion probes the policy's range rather than three points inside it.
+
+A disposable external C harness (source SHA-256
+`ab27d62d2280bc7f0ca57e06e1a1e16a260e807e5839368b3ed2b38ba8713879`) verified the
+source-built `libonnxruntime.so.1.28.0` (`1c04ac41…2742fa`) and both exact ONNX
+files by SHA-256 **before** `dlopen` and before either session was created. It
+used the same configuration as the earlier probes: `CPUExecutionProvider`, one
+intra-op and one inter-op thread, memory patterns disabled, `OMP_NUM_THREADS=1`,
+and a 900-second watchdog. It retained no tensor; only shapes, counts,
+finiteness, extrema, and a compact FNV-1a fingerprint were emitted.
+
+Twenty-three shapes ran: the three detector and three recognizer `RT-003`
+shapes as controls, plus ten new detector shapes and seven new recognizer
+shapes. Every side of every detector shape is a multiple of `32` with a longer
+side no greater than `960`, matching the frozen policy; the recognizer shapes
+span the candidate HPI dynamic-shape record from `[1, 3, 48, 160]` through
+`[8, 3, 48, 3200]`.
+
+| Result | Value |
+|---|---|
+| Shapes executed | 23 of 23, no failure, no fallback, no graph edit |
+| Output elements | 33,452,620 |
+| Non-finite outputs | 0 |
+| Detector output range | `[0.0, 0.9866344]` across all thirteen detector shapes, consistent with the declared terminal `Sigmoid` |
+| Recognizer output range | `[0.0, 0.9704716]` across all ten recognizer shapes, consistent with the declared terminal `Softmax(axis=2)` |
+| Determinism | Two fresh processes produced identical per-probe fingerprints and an identical stable-core record, SHA-256 `1685ce10d85d4162b35ca7ec6a33d3fd065dc7011decd09c6dd9d78637d0606d` |
+| Wall time / peak RSS | 20.51 s and 688,680 KiB for the whole twenty-three-shape run |
+
+Two structural observations follow directly from the recorded output shapes and
+are worth stating because a later adapter must not rediscover them by guessing:
+
+1. The detector output always has the input's height and width with exactly one
+   channel, for every probed shape.
+2. The recognizer time dimension is exactly the input width divided by `8` for
+   every probed width, from `48 → 6` through `3200 → 400`. The batch dimension
+   passes through unchanged.
+
+This closes the shape half of the graph/operator gate for the frozen M2 policy
+and this exact library. It is **not** a numerical qualification: only the six
+`RT-003` shapes have been compared against the independent static reference, so
+the seventeen new shapes are evidence of successful, finite, repeatable
+execution and nothing more. It also does not cover no-AVX execution, physical
+baseline hardware, preprocessing, postprocessing, an adapter, or a backend
+decision.
+
+
 ## Decision boundary
 
 This document records a temporary build and diagnostics outside this repository.

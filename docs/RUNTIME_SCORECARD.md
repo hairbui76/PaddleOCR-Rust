@@ -2,7 +2,8 @@
 
 Roadmap item: `RT-002`
 Status: In progress. This scorecard makes the remaining gap quantitative; it
-selects no runtime and does not satisfy `RT-002`
+selects no runtime and does not satisfy `RT-002`. Last updated 2026-08-04 after
+the shape-coverage expansion raised the total from `186` to `206`
 Compiled: 2026-08-04
 Rubric: [`RUNTIME_RUBRIC.md`](RUNTIME_RUBRIC.md)
 
@@ -39,7 +40,7 @@ rejected one.
 | Gate | Status | Basis |
 |---|---|---|
 | Exact artifact | **Pass** for the ONNX pair | Every recorded probe verifies the exact byte counts and SHA-256 values before loading. The static pair has never been loaded from Rust, and no reviewed conversion route exists. |
-| Graph/operator completeness | **Partial** | The six declared qualification shapes execute on the host and through no-AVX routes. The frozen M2 `960/max` policy produces arbitrary shapes that have not been probed. |
+| Graph/operator completeness | **Pass on the host** | Updated 2026-08-04: twenty-three shapes now execute with no failure, fallback, or graph edit — the six `RT-003` controls plus ten detector and seven recognizer shapes spanning the frozen `960/max` policy and the candidate HPI range through `[8, 3, 48, 3200]`. 33,452,620 output elements, zero non-finite, identical fingerprints across two fresh processes. No-AVX coverage for the new shapes is still absent. |
 | Tensor ABI | **Partial** | Names, `float32`, NCHW, rank, dynamic axes, and batch semantics are checked, but the rubric requires validation "from the pinned manifest" and `MOD-002` has not produced one. |
 | Numerical equivalence | **Pass, narrowly** | `RT-003` completed on 2026-08-04: two fresh processes, byte-identical aggregates, zero `m2-tensor-v1` violations across 7,057,864 elements. It covers the Python-wheel library on an AVX host and the six declared shapes only. |
 | End-to-end semantics | **Not started** | [`RUNTIME_ORT_EVIDENCE.md`](RUNTIME_ORT_EVIDENCE.md) records this gate as "Not run". Structurally it cannot run before a pipeline exists. |
@@ -54,7 +55,7 @@ Scores are `0` where the evidence does not yet exist, per the rubric.
 
 | Dimension | Weight | Score | Weighted | Basis for not scoring higher |
 |---|---:|---:|---:|---|
-| Exact graph/operator/shape coverage | 20 | 3 | 60 | Six declared shapes execute with no graph edits, but the `960/max` policy's arbitrary shapes are unprobed and the static representation has never been loaded. |
+| Exact graph/operator/shape coverage | 20 | 4 | 80 | Raised from `3` on 2026-08-04: twenty-three shapes across the frozen policy range now execute cleanly and repeatably. Held below `5` because the expansion ran only on the AVX host and the static representation has still never been loaded from Rust. |
 | Raw numerical and end-to-end fidelity | 20 | 2 | 40 | The tensor gate passes narrowly; geometry, text, score, and deterministic-output gates have not run. |
 | CPU portability and determinism | 12 | 2 | 24 | Explicit thread controls and repeatable host output, but only emulated no-AVX coverage, no accepted emulation policy, and recorded host/QEMU bit-pattern differences. |
 | Memory/latency/binary budget | 12 | 0 | 0 | No measurement against the `QUALITY_PROFILE.md` budgets exists. Peak-RSS observations from unrelated probes are not a budget pass. |
@@ -63,7 +64,7 @@ Scores are `0` where the evidence does not yet exist, per the rubric.
 | Deployment path | 6 | 2 | 12 | Dynamic loading is demonstrated and glibc requirements are recorded; no packaging or distribution path is decided. |
 | Diagnostics and operability | 5 | 2 | 10 | Version reporting and model diagnostics exist; the wrapper surfaces raw native error strings, which is recorded as a gap. |
 | Rust integration cost | 5 | 2 | 10 | Process-global loader and environment ownership, manual native-pointer `Send`/`Sync` assertions, and an explicit non-concurrent same-session contract all raise integration cost. |
-| **Total** | **100** | | **186 / 500** | |
+| **Total** | **100** | | **206 / 500** | |
 
 A total is only comparable against another candidate scored the same way. There
 is currently no second candidate to compare with, which is itself a finding:
@@ -71,7 +72,7 @@ the rubric's weighted comparison cannot do its job with one survivor.
 
 ## What the number means
 
-`186 / 500` is not a verdict on `ort`'s quality. Most of the deficit sits in
+`206 / 500` is not a verdict on `ort`'s quality. Most of the deficit sits in
 dimensions that **cannot** be scored before a decision is made:
 
 - End-to-end fidelity, adapter-boundary resource controls, and the audited
@@ -87,8 +88,11 @@ Two deficits are genuinely closable now and are not part of that cycle:
    `FETCHCONTENT_FULLY_DISCONNECTED=ON`, hash-pinned dependencies including the
    currently unpinned one, a verified source tag, and a generated SBOM.
    Estimated cost: a multi-hour native build plus review.
-2. **Shape coverage (weight 20).** Probing additional valid `960/max` shapes
-   with the already-built library. Estimated cost: about an hour.
+2. **Shape coverage (weight 20).** ~~Probing additional valid `960/max` shapes
+   with the already-built library.~~ **Closed on 2026-08-04**: twenty-three
+   shapes executed cleanly and repeatably in 20.51 s using the existing
+   library. The dimension is still not a `5` because the expansion covers the
+   AVX host only.
 
 One deficit needs a recorded decision rather than an experiment:
 
