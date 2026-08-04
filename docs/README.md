@@ -22,7 +22,7 @@ only the discovery and authority entrypoints: [README](../README.md),
 ## Contracts and architecture
 
 - [Architecture](ARCHITECTURE.md)
-- [Classic OCR contract](CLASSIC_OCR_CONTRACT.md)
+- [Classic OCR contract](CLASSIC_OCR_CONTRACT.md) and [DB postprocessing specification](DB_POSTPROCESS_SPEC.md)
 - [API contract](API_CONTRACT.md)
 - [Compatibility ledger](COMPATIBILITY.md)
 - [M2 contract coverage](M2_CONTRACT_COVERAGE.md)
