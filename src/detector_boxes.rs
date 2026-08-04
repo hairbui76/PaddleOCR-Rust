@@ -72,6 +72,17 @@ pub(crate) fn rescale_box(
             violation: InputViolation::Empty,
         });
     }
+    // A zero destination extent is unreachable through the public path, where
+    // the destination comes from validated `ImageDimensions`. It is rejected
+    // anyway because the arithmetic below would not fail on it: every
+    // coordinate would scale to zero and clamp to zero, so the caller would
+    // receive four coincident corners as a successful result.
+    if dest_width == 0 || dest_height == 0 {
+        return Err(Error::InvalidInput {
+            field: "detector.destination_dimensions",
+            violation: InputViolation::Empty,
+        });
+    }
     if box_corners.is_empty() {
         return Err(Error::InvalidInput {
             field: "detector.box",
@@ -287,6 +298,195 @@ pub(crate) fn classic_db_boxes(
 #[cfg(test)]
 mod pipeline_tests {
     use super::*;
+
+    /// Builds a map of `width * height` zeros with `fill` written wherever the
+    /// predicate holds, so each boundary case reads as its geometry.
+    fn map_with(width: u32, height: u32, fill: f32, inside: impl Fn(u32, u32) -> bool) -> Vec<f32> {
+        let mut map = vec![0.0_f32; (width * height) as usize];
+        for y in 0..height {
+            for x in 0..width {
+                if inside(x, y) {
+                    map[(y * width + x) as usize] = fill;
+                }
+            }
+        }
+        map
+    }
+
+    fn boxes(map: &[f32], width: u32, height: u32, box_threshold: f64) -> Vec<DetectedBox> {
+        match classic_db_boxes(map, width, height, box_threshold, 1.5, width, height) {
+            Ok(boxes) => boxes,
+            Err(error) => panic!("expected detected boxes, got {error}"),
+        }
+    }
+
+    /// The binary mask is `value > 0.3`, so a map that is exactly `0.3`
+    /// everywhere has no foreground at all.
+    ///
+    /// This is the boundary the segmentation threshold sits on. A `>=` here
+    /// would turn every uniform 0.3 map into one page-sized region, which is
+    /// the difference between "no text" and "the whole page is text".
+    #[test]
+    fn a_probability_exactly_at_the_segmentation_threshold_is_background() {
+        let width = 16;
+        let height = 16;
+        let at = map_with(width, height, 0.3, |_, _| true);
+        assert!(
+            boxes(&at, width, height, 0.0).is_empty(),
+            "0.3 is not greater than 0.3"
+        );
+
+        // The next representable step above the threshold is foreground.
+        let above = map_with(width, height, 0.3_f32.next_up(), |x, y| {
+            (4..12).contains(&x) && (4..12).contains(&y)
+        });
+        assert_eq!(
+            boxes(&above, width, height, 0.0).len(),
+            1,
+            "one step above the threshold must be foreground"
+        );
+    }
+
+    /// A region flush against the map border is detected, and unclipping it
+    /// cannot push a corner outside the destination extent.
+    ///
+    /// Border regions are the ones most likely to produce out-of-range
+    /// coordinates, because unclip expands outward with no knowledge of the
+    /// image edge; the clip in `rescale_axis` is what contains it.
+    #[test]
+    fn a_region_touching_the_map_border_is_detected_and_clipped() {
+        let width = 24;
+        let height = 24;
+        let corner = map_with(width, height, 0.9, |x, y| x < 10 && y < 10);
+        let detected = boxes(&corner, width, height, 0.5);
+        assert_eq!(detected.len(), 1, "a corner region must still be detected");
+        for (x, y) in &detected[0].corners {
+            assert!(
+                (0..=i32::try_from(width).unwrap_or(i32::MAX)).contains(x),
+                "x {x} left the destination after unclipping"
+            );
+            assert!(
+                (0..=i32::try_from(height).unwrap_or(i32::MAX)).contains(y),
+                "y {y} left the destination after unclipping"
+            );
+        }
+    }
+
+    /// Two regions separated by background are two boxes; two regions that
+    /// touch are one.
+    ///
+    /// Nothing in this path merges or splits regions on its own — connectivity
+    /// in the bitmap is the only thing that decides, so the boundary worth
+    /// pinning is a one-pixel gap against no gap.
+    #[test]
+    fn separation_alone_decides_whether_regions_merge() {
+        let width = 40;
+        let height = 20;
+
+        let separated = map_with(width, height, 0.9, |x, y| {
+            (5..15).contains(&y) && ((4..16).contains(&x) || (20..32).contains(&x))
+        });
+        assert_eq!(
+            boxes(&separated, width, height, 0.5).len(),
+            2,
+            "a four-pixel gap must keep the regions apart"
+        );
+
+        let joined = map_with(width, height, 0.9, |x, y| {
+            (5..15).contains(&y) && (4..32).contains(&x)
+        });
+        assert_eq!(
+            boxes(&joined, width, height, 0.5).len(),
+            1,
+            "one connected region is one box"
+        );
+    }
+
+    /// A diagonal region produces a rotated quadrilateral, not the axis-aligned
+    /// bounding box of its pixels.
+    ///
+    /// This is the visible difference between `minAreaRect` and a bounding box.
+    /// If the geometry silently degraded to an axis-aligned box, every rotated
+    /// line would crop with its neighbours' pixels included.
+    #[test]
+    fn a_diagonal_region_produces_a_rotated_quadrilateral() {
+        let width = 48;
+        let height = 48;
+        let band = map_with(width, height, 0.9, |x, y| {
+            (8..40).contains(&x) && x.abs_diff(y) <= 3
+        });
+        let detected = boxes(&band, width, height, 0.5);
+        assert_eq!(detected.len(), 1, "the band is one region");
+
+        let corners = &detected[0].corners;
+        let axis_aligned = corners
+            .iter()
+            .all(|(x, _)| *x == corners[0].0 || *x == corners[2].0);
+        assert!(
+            !axis_aligned,
+            "a diagonal band must not collapse to an axis-aligned box: {corners:?}"
+        );
+        // The quadrilateral must still be inside the image and non-degenerate.
+        let distinct_x: std::collections::BTreeSet<i32> = corners.iter().map(|(x, _)| *x).collect();
+        assert!(distinct_x.len() >= 3, "a rotated box has spread corners");
+    }
+
+    /// A one-pixel-tall strip of any length never reaches scoring.
+    ///
+    /// The short-side check runs before scoring, so an extreme aspect ratio is
+    /// rejected on geometry regardless of how confident the map is.
+    #[test]
+    fn an_extreme_aspect_ratio_strip_is_rejected_before_scoring() {
+        let width = 64;
+        let height = 16;
+        let strip = map_with(width, height, 1.0, |x, y| y == 8 && (2..62).contains(&x));
+        assert!(
+            boxes(&strip, width, height, 0.0).is_empty(),
+            "a one-pixel short side is below min_size even at probability 1.0 \
+             and threshold 0.0"
+        );
+    }
+
+    /// A single foreground pixel is degenerate and produces nothing.
+    #[test]
+    fn a_single_foreground_pixel_produces_no_box() {
+        let width = 16;
+        let height = 16;
+        let dot = map_with(width, height, 1.0, |x, y| x == 8 && y == 8);
+        assert!(boxes(&dot, width, height, 0.0).is_empty());
+    }
+
+    /// A non-finite probability is a typed error, not a panic and not a box.
+    #[test]
+    fn a_non_finite_probability_is_a_typed_error() {
+        for poison in [f32::NAN, f32::INFINITY, f32::NEG_INFINITY] {
+            let mut map = vec![0.9_f32; 16 * 16];
+            map[42] = poison;
+            assert!(
+                classic_db_boxes(&map, 16, 16, 0.5, 1.5, 16, 16).is_err(),
+                "{poison} must be rejected"
+            );
+        }
+    }
+
+    /// A map whose length disagrees with its declared dimensions is rejected
+    /// before any pixel is read.
+    #[test]
+    fn a_map_length_mismatch_is_rejected() {
+        let map = vec![0.0_f32; 10];
+        assert!(classic_db_boxes(&map, 8, 8, 0.5, 1.5, 8, 8).is_err());
+        assert!(classic_db_boxes(&[], 8, 8, 0.5, 1.5, 8, 8).is_err());
+    }
+
+    /// Zero destination dimensions are rejected rather than dividing by zero.
+    #[test]
+    fn a_zero_destination_extent_is_rejected() {
+        let map = map_with(20, 20, 0.9, |x, y| {
+            (4..16).contains(&x) && (4..16).contains(&y)
+        });
+        assert!(classic_db_boxes(&map, 20, 20, 0.5, 1.5, 0, 20).is_err());
+        assert!(classic_db_boxes(&map, 20, 20, 0.5, 1.5, 20, 0).is_err());
+    }
 
     /// A probability map with one solid block produces one detected box.
     #[test]

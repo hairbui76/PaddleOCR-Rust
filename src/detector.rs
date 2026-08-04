@@ -215,4 +215,92 @@ mod tests {
         };
         assert!(boxes.is_empty());
     }
+
+    /// A backend whose output shape disagrees with the contract is a typed
+    /// error, not a panic and not a silent reinterpretation of the buffer.
+    ///
+    /// This is the path a corrupted or substituted model reaches. The shape is
+    /// what `detect_boxes` indexes to recover the map dimensions, so accepting
+    /// a wrong rank here would read the probability map with the wrong stride.
+    struct MisshapenDetector(Vec<usize>);
+
+    impl InferenceBackend for MisshapenDetector {
+        fn run(&self, _input: &BackendTensor) -> Result<(String, BackendTensor)> {
+            let count = self.0.iter().product();
+            let tensor = BackendTensor::new(self.0.clone(), vec![0.5_f32; count])?;
+            Ok(("fetch_name_0".to_owned(), tensor))
+        }
+    }
+
+    #[test]
+    fn a_detector_output_shape_that_breaks_the_contract_is_a_typed_error() {
+        let source = image(64, 48);
+        let plan = classic_detector_resize_plan(source.dimensions());
+        let resized = plan.resized();
+        let (map_width, map_height) = (resized.width() as usize, resized.height() as usize);
+
+        for shape in [
+            // Rank three: no channel axis at all.
+            vec![1, map_height, map_width],
+            // Right rank, wrong channel count.
+            vec![1, 2, map_height, map_width],
+            // Right rank, one column too wide.
+            vec![1, 1, map_height, map_width + 1],
+        ] {
+            let backend = MisshapenDetector(shape.clone());
+            let result = detect_boxes(
+                &backend,
+                &contract(map_width, map_height),
+                &source,
+                0.5,
+                1.5,
+            );
+            assert!(
+                result.is_err(),
+                "output shape {shape:?} must not be accepted"
+            );
+        }
+    }
+
+    /// A detector that returns a different output name than the contract names
+    /// is rejected, because the name is what identifies which head was read.
+    struct MisnamedDetector {
+        width: usize,
+        height: usize,
+    }
+
+    impl InferenceBackend for MisnamedDetector {
+        fn run(&self, _input: &BackendTensor) -> Result<(String, BackendTensor)> {
+            let tensor = BackendTensor::new(
+                vec![1, 1, self.height, self.width],
+                vec![0.0_f32; self.height * self.width],
+            )?;
+            Ok(("some_other_output".to_owned(), tensor))
+        }
+    }
+
+    #[test]
+    fn a_detector_output_name_that_breaks_the_contract_is_a_typed_error() {
+        let source = image(64, 48);
+        let plan = classic_detector_resize_plan(source.dimensions());
+        let resized = plan.resized();
+        let (map_width, map_height) = (resized.width() as usize, resized.height() as usize);
+        // Everything except the name is exactly what the contract asks for, so
+        // only the name can be what rejects this.
+        let backend = MisnamedDetector {
+            width: map_width,
+            height: map_height,
+        };
+        assert!(
+            detect_boxes(
+                &backend,
+                &contract(map_width, map_height),
+                &source,
+                0.5,
+                1.5
+            )
+            .is_err(),
+            "the contract names fetch_name_0"
+        );
+    }
 }

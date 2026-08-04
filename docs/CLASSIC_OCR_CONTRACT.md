@@ -241,9 +241,12 @@ public API decision. Those semantics remain `IMG-DEC-001`, `IMG-001`, and
 
 For each sorted crop:
 
-1. Sort crops by `width / height` for batching, then restore the original
-   sorted-crop order after decoding. Ordering must not depend on backend
-   completion order.
+1. Sort crops by `width / height` for batching, then split the sorted order into
+   consecutive batches of `rec_batch_num` = `6`, then restore the original
+   caller order after decoding. Ordering must not depend on backend completion
+   order. The split is observable, not an optimisation: step 2 computes
+   `max_wh_ratio` per batch, so which crops share a batch decides how wide every
+   crop in it is resized and how much zero padding the model sees.
 2. Use `[3, 48, 320]` as the base recognition shape. For each batch, calculate
    `max_wh_ratio` as the maximum of `320 / 48` and its crop ratios. Resize each
    crop to height `48`, use `ceil(48 * crop_ratio)` width capped by the batch
