@@ -879,3 +879,162 @@ mod detection_only {
         );
     }
 }
+
+/// `IMG-003` entry gate: what a component delta of `36` does downstream.
+///
+/// `docs/IMAGE_DECODER_EVIDENCE.md` records that every evaluated pure-Rust JPEG
+/// decoder differs from the committed OpenCV oracle by up to `36` in one
+/// component. The roadmap makes measuring the **consequence** of that the
+/// precondition for deciding anything about JPEG: a component difference cannot
+/// be assumed harmless to a model tensor.
+///
+/// This probe measures it. It does not need a JPEG decoder — it perturbs a
+/// decoded page directly, which isolates the question "what does a delta of `d`
+/// do?" from "which decoder produces it".
+#[cfg(feature = "onnxruntime")]
+mod jpeg_delta_gate {
+    use paddleocr_rust::api::{Artifacts, OcrEngine, OcrOptions, parse_dictionary};
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) if !value.is_empty() => value,
+            _ => panic!("set {name} to run this test"),
+        }
+    }
+
+    /// Re-encodes a decoded page as a PNG with every component perturbed.
+    ///
+    /// `uniform` shifts every component by the same amount, which is the worst
+    /// case a bounded delta permits. `scattered` varies per component within the
+    /// bound, which is closer to what a decoder difference actually looks like.
+    /// Both are measured, because the worst case decides what is safe and the
+    /// realistic case decides what is likely.
+    fn perturbed_png(source: &[u8], delta: i16, scattered: bool) -> Vec<u8> {
+        let decoder = png::Decoder::new(std::io::Cursor::new(source));
+        let mut reader = match decoder.read_info() {
+            Ok(value) => value,
+            Err(error) => panic!("png info: {error}"),
+        };
+        let mut buffer = vec![0_u8; reader.output_buffer_size().unwrap_or(0)];
+        let info = match reader.next_frame(&mut buffer) {
+            Ok(value) => value,
+            Err(error) => panic!("png frame: {error}"),
+        };
+        let (width, height) = (info.width, info.height);
+        let bytes = &mut buffer[..info.buffer_size()];
+
+        for (index, component) in bytes.iter_mut().enumerate() {
+            let shift = if scattered {
+                // Deterministic and spread across the whole range, so the
+                // measurement is repeatable.
+                let mixed = (index as u64).wrapping_mul(2_654_435_761) >> 13;
+                (mixed % (2 * delta as u64 + 1)) as i16 - delta
+            } else {
+                delta
+            };
+            *component = (i16::from(*component) + shift).clamp(0, 255) as u8;
+        }
+
+        let mut out = Vec::new();
+        {
+            let mut encoder = png::Encoder::new(&mut out, width, height);
+            encoder.set_color(info.color_type);
+            encoder.set_depth(info.bit_depth);
+            let mut writer = match encoder.write_header() {
+                Ok(value) => value,
+                Err(error) => panic!("png header: {error}"),
+            };
+            if let Err(error) = writer.write_image_data(bytes) {
+                panic!("png write: {error}");
+            }
+        }
+        out
+    }
+
+    #[test]
+    #[ignore = "IMG-003: needs explicitly provisioned models"]
+    fn a_component_delta_of_36_is_measured_through_the_models() {
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let dictionary_path = env("PADDLEOCR_RUST_DICTIONARY");
+        let text = match std::fs::read_to_string(&dictionary_path) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let engine = match OcrEngine::load(
+            &Artifacts::new(&library, &detector, &recognizer),
+            &dictionary,
+        ) {
+            Ok(value) => value,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
+        let options = OcrOptions::default();
+
+        let baseline = match engine.recognize_png(PAGE, &options) {
+            Ok(value) => value,
+            Err(error) => panic!("baseline: {error}"),
+        };
+        let baseline_text: Vec<String> = baseline.iter().map(|l| l.text.clone()).collect();
+        println!("baseline: {} lines {baseline_text:?}", baseline.len());
+
+        for (label, delta, scattered) in [
+            ("uniform +1", 1_i16, false),
+            ("uniform +4", 4, false),
+            ("uniform +16", 16, false),
+            ("uniform +36", 36, false),
+            ("scattered +/-36", 36, true),
+        ] {
+            let png = perturbed_png(PAGE, delta, scattered);
+            let lines = match engine.recognize_png(&png, &options) {
+                Ok(value) => value,
+                Err(error) => panic!("{label}: {error}"),
+            };
+            let texts: Vec<String> = lines.iter().map(|l| l.text.clone()).collect();
+            let same_text = texts == baseline_text;
+            let same_count = lines.len() == baseline.len();
+
+            // Worst corner movement, when the counts allow a comparison.
+            let mut worst_corner = 0.0_f32;
+            if same_count {
+                for (a, b) in baseline.iter().zip(&lines) {
+                    for (p, q) in a
+                        .quadrilateral
+                        .points()
+                        .iter()
+                        .zip(b.quadrilateral.points())
+                    {
+                        worst_corner = worst_corner
+                            .max((p.x() - q.x()).abs())
+                            .max((p.y() - q.y()).abs());
+                    }
+                }
+            }
+            println!(
+                "{label:<18} lines {:>2} (same_count {same_count}) same_text {same_text} \
+                 worst_corner_px {worst_corner}",
+                lines.len()
+            );
+        }
+
+        // The probe reports; it does not decide. `IMG-003` is the decision, and
+        // asserting a tolerance here would make it before the evidence is
+        // recorded. The only assertion is that the baseline itself is stable,
+        // without which none of the comparisons above mean anything.
+        let repeat = match engine.recognize_png(PAGE, &options) {
+            Ok(value) => value,
+            Err(error) => panic!("repeat: {error}"),
+        };
+        assert_eq!(
+            repeat.iter().map(|l| l.text.clone()).collect::<Vec<_>>(),
+            baseline_text,
+            "the unperturbed baseline must be reproducible"
+        );
+    }
+}
