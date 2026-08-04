@@ -15,6 +15,12 @@ Nothing here classifies a target as in or out of scope.
 Every number below is from a command run on 2026-08-05 against this commit, not
 an estimate.
 
+These are also **checked continuously**. `tools/gate.sh` runs
+`cargo check --target` for both cross targets on every gate run, so the
+portability below is a standing property rather than a measurement that was true
+once. Each check is skipped when its target is not installed, so a clean checkout
+with only the host target still passes.
+
 | Fact | Value |
 |---|---|
 | Release CLI binary | `361,288` bytes |
@@ -53,7 +59,9 @@ conversion steps applies to backends too.
 ## 3. Windows type-checks, and that is not the same as working
 
 `cargo check --target x86_64-pc-windows-msvc` succeeds with default features.
-That establishes there is no Unix-only code in the pure-Rust core.
+That establishes there is no Unix-only code in the pure-Rust core, and the gate
+now keeps it true: introducing a single `std::os::unix` call was verified to fail
+both cross checks and the gate's exit code.
 
 It establishes nothing else. `PLAT-001` asks for tests **run** on each promised
 platform, and a type-check is not a test run — the ONNX Runtime library loading,

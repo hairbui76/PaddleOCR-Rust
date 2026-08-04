@@ -64,6 +64,30 @@ for configuration in "${configurations[@]}"; do
     fi
 done
 
+# Cross-compilation checks, which lock in the portability
+# `docs/DEPLOY_DEC_001_EVIDENCE.md` measured once so it cannot silently regress.
+#
+# `check`, not `build`: these targets have no linker here, and a type-check is
+# what the evidence actually claimed. Each is **skipped** when its target is not
+# installed, so a clean checkout with only the host target still passes -- an
+# absent toolchain is not a defect in this crate.
+#
+# Default features only. `--features onnxruntime` does not compile for wasm32
+# and is not expected to: `ort`'s `load-dynamic` has no wasm32 backend, which is
+# the recorded blocker rather than a regression.
+for target in x86_64-pc-windows-msvc wasm32-unknown-unknown; do
+    if ! rustup target list --installed 2>/dev/null | grep -qx "$target"; then
+        note "cross [$target]" "skipped, target not installed"
+        continue
+    fi
+    if cargo check --offline --locked --target "$target" >/dev/null 2>&1; then
+        note "cross [$target]" "type-checks"
+    else
+        note "cross [$target]" "FAILED"
+        fail
+    fi
+done
+
 if [ "$status" -eq 0 ]; then
     echo "gate: PASS"
 else
