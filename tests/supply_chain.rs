@@ -56,16 +56,17 @@ fn locked_packages() -> BTreeMap<String, (String, Option<String>)> {
     let mut version: Option<String> = None;
     let mut checksum: Option<String> = None;
 
-    let mut flush = |name: &mut Option<String>,
-                     version: &mut Option<String>,
-                     checksum: &mut Option<String>,
-                     packages: &mut BTreeMap<String, (String, Option<String>)>| {
-        if let (Some(name), Some(version)) = (name.take(), version.take()) {
-            packages.insert(name, (version, checksum.take()));
-        } else {
-            *checksum = None;
-        }
-    };
+    let mut flush =
+        |name: &mut Option<String>,
+         version: &mut Option<String>,
+         checksum: &mut Option<String>,
+         packages: &mut BTreeMap<String, (String, Option<String>)>| {
+            if let (Some(name), Some(version)) = (name.take(), version.take()) {
+                packages.insert(name, (version, checksum.take()));
+            } else {
+                *checksum = None;
+            }
+        };
 
     for line in LOCKFILE.lines() {
         let line = line.trim();
@@ -211,7 +212,9 @@ fn every_direct_dependency_is_exactly_pinned() {
         };
         // Both `png = "=0.18.1"` and the table form carry the requirement in a
         // quoted string; the pin must be the first character of it.
-        let Some(start) = rest.find('"') else { continue };
+        let Some(start) = rest.find('"') else {
+            continue;
+        };
         let requirement = &rest[start + 1..];
         let Some(end) = requirement.find('"') else {
             continue;
