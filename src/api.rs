@@ -27,6 +27,7 @@ use crate::types::{EncodedImage, Quadrilateral};
 
 /// One recognized text line.
 #[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
 pub struct TextLine {
     /// Four corners in the source image's coordinates.
     pub quadrilateral: Quadrilateral,
@@ -37,7 +38,13 @@ pub struct TextLine {
 }
 
 /// Thresholds and run control applied by the classic pipeline.
+///
+/// Construct with [`OcrOptions::default`] and the `with_*` methods rather than a
+/// struct literal. The type is `#[non_exhaustive]` so a future option can be
+/// added without breaking callers, which is the whole reason the builders exist:
+/// this struct already grew once, when `OCR-003` added `control`.
 #[derive(Clone, Debug)]
+#[non_exhaustive]
 pub struct OcrOptions {
     /// Minimum mean probability for a detected region.
     pub box_threshold: f64,
@@ -63,6 +70,36 @@ impl Default for OcrOptions {
             drop_score: 0.5,
             control: RunControl::unbounded(),
         }
+    }
+}
+
+impl OcrOptions {
+    /// Sets the minimum mean probability for a detected region.
+    #[must_use]
+    pub fn with_box_threshold(mut self, threshold: f64) -> Self {
+        self.box_threshold = threshold;
+        self
+    }
+
+    /// Sets the polygon expansion ratio applied after scoring.
+    #[must_use]
+    pub fn with_unclip_ratio(mut self, ratio: f64) -> Self {
+        self.unclip_ratio = ratio;
+        self
+    }
+
+    /// Sets the minimum recognition confidence; equality is retained.
+    #[must_use]
+    pub fn with_drop_score(mut self, score: f64) -> Self {
+        self.drop_score = score;
+        self
+    }
+
+    /// Sets how the caller may abandon a run in progress.
+    #[must_use]
+    pub fn with_control(mut self, control: RunControl) -> Self {
+        self.control = control;
+        self
     }
 }
 
@@ -215,6 +252,7 @@ mod tests {
 /// rather than a silent default.
 #[cfg(feature = "onnxruntime")]
 #[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
 pub struct Artifacts<'a> {
     /// Path to the ONNX Runtime shared library.
     pub library: &'a str,
@@ -226,6 +264,41 @@ pub struct Artifacts<'a> {
     pub recognizer: &'a str,
     /// Expected recognizer SHA-256, lowercase hexadecimal.
     pub recognizer_sha256: Option<&'a str>,
+}
+
+#[cfg(feature = "onnxruntime")]
+impl<'a> Artifacts<'a> {
+    /// Declares the three paths a run always needs, with no digest checking.
+    ///
+    /// Omitting the digests is a choice, not a default that happens to you:
+    /// without them a substituted or swapped artifact loads without complaint,
+    /// because the detector and recognizer are not distinguishable by shape.
+    /// Use [`Artifacts::with_detector_sha256`] and
+    /// [`Artifacts::with_recognizer_sha256`], or a `MOD-002` manifest.
+    #[must_use]
+    pub const fn new(library: &'a str, detector: &'a str, recognizer: &'a str) -> Self {
+        Self {
+            library,
+            detector,
+            detector_sha256: None,
+            recognizer,
+            recognizer_sha256: None,
+        }
+    }
+
+    /// Requires the detector to match this lowercase hexadecimal SHA-256.
+    #[must_use]
+    pub const fn with_detector_sha256(mut self, digest: &'a str) -> Self {
+        self.detector_sha256 = Some(digest);
+        self
+    }
+
+    /// Requires the recognizer to match this lowercase hexadecimal SHA-256.
+    #[must_use]
+    pub const fn with_recognizer_sha256(mut self, digest: &'a str) -> Self {
+        self.recognizer_sha256 = Some(digest);
+        self
+    }
 }
 
 /// A loaded classic OCR engine: both models, their contracts, and the
@@ -534,13 +607,7 @@ mod engine_reuse {
             Ok(value) => value,
             Err(error) => panic!("dictionary: {error}"),
         };
-        let artifacts = Artifacts {
-            library: &library,
-            detector: &detector,
-            detector_sha256: None,
-            recognizer: &recognizer,
-            recognizer_sha256: None,
-        };
+        let artifacts = Artifacts::new(&library, &detector, &recognizer);
         let options = OcrOptions::default();
 
         let loading = std::time::Instant::now();

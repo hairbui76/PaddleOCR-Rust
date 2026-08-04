@@ -199,12 +199,16 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     // 1.4 s on the reference host, and paying it per image would make a
     // multi-page run several times slower than it needs to be.
     let engine = paddleocr_rust::api::OcrEngine::load(
-        &paddleocr_rust::api::Artifacts {
-            library: &library,
-            detector: &detector,
-            detector_sha256: detector_sha256.as_deref(),
-            recognizer: &recognizer,
-            recognizer_sha256: recognizer_sha256.as_deref(),
+        &{
+            let mut artifacts =
+                paddleocr_rust::api::Artifacts::new(&library, &detector, &recognizer);
+            if let Some(digest) = detector_sha256.as_deref() {
+                artifacts = artifacts.with_detector_sha256(digest);
+            }
+            if let Some(digest) = recognizer_sha256.as_deref() {
+                artifacts = artifacts.with_recognizer_sha256(digest);
+            }
+            artifacts
         },
         &parsed,
     )

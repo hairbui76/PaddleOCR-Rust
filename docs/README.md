@@ -30,6 +30,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   two gaps it found
 - [SAFE-001 unsafe and native boundary audit](SAFE_001_AUDIT.md) — what the
   memory-safety argument actually rests on
+- [STABLE-001 API stability review](STABLE_001_API_REVIEW.md) — the semver
+  policy, and the growth mechanism the API did not have
 - [CLOSE-001 inventory closeout](CLOSE_001_AUDIT.md) — every inventory row
   classified: verified, intentional difference, deferred, or out of scope
 - [Gate P6 evidence](GATE_P6_EVIDENCE.md) — the M2 milestone gate, clause by

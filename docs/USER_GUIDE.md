@@ -249,13 +249,13 @@ let text = std::fs::read_to_string("ppocrv6_dict.txt")?;
 let dictionary = parse_dictionary(&text, true)?;
 
 let engine = OcrEngine::load(
-    &Artifacts {
-        library: "/path/to/libonnxruntime.so",
-        detector: "/path/to/detector/inference.onnx",
-        detector_sha256: Some("eb13b44b…d086e1"),
-        recognizer: "/path/to/recognizer/inference.onnx",
-        recognizer_sha256: Some("9c09abf0…b673ba"),
-    },
+    &Artifacts::new(
+        "/path/to/libonnxruntime.so",
+        "/path/to/detector/inference.onnx",
+        "/path/to/recognizer/inference.onnx",
+    )
+    .with_detector_sha256("eb13b44b…d086e1")
+    .with_recognizer_sha256("9c09abf0…b673ba"),
     &dictionary,
 )?;
 
@@ -266,7 +266,18 @@ for line in engine.recognize_png(&std::fs::read("page.png")?, &OcrOptions::defau
 
 `OcrOptions` carries `box_threshold` (`0.6`), `unclip_ratio` (`1.5`),
 `drop_score` (`0.5`), and `control`, which holds the time budget and an
-`Arc<AtomicBool>` cancellation flag.
+`Arc<AtomicBool>` cancellation flag. Build it with the `with_*` methods:
+
+```rust
+let options = OcrOptions::default()
+    .with_drop_score(0.6)
+    .with_control(RunControl::unbounded().with_time_budget(budget));
+```
+
+`OcrOptions` and `Artifacts` are `#[non_exhaustive]`, so future options can be
+added without breaking your code — which is why the builders exist rather than
+struct literals. See
+[`STABLE_001_API_REVIEW.md`](STABLE_001_API_REVIEW.md).
 
 **Concurrency:** an `OcrEngine` is `!Sync`, and the compiler enforces it rather
 than the documentation. Load one engine per thread. A lock would turn that

@@ -242,16 +242,7 @@ mod provisioned {
         recognizer: &str,
         dictionary: &Dictionary,
     ) -> OcrEngine {
-        match OcrEngine::load(
-            &Artifacts {
-                library,
-                detector,
-                detector_sha256: None,
-                recognizer,
-                recognizer_sha256: None,
-            },
-            dictionary,
-        ) {
+        match OcrEngine::load(&Artifacts::new(library, detector, recognizer), dictionary) {
             Ok(engine) => engine,
             Err(error) => panic!("load: {error}"),
         }
@@ -330,14 +321,8 @@ mod provisioned {
         let dictionary = dictionary();
         let engine = engine(&library, &detector, &recognizer, &dictionary);
 
-        let permissive = OcrOptions {
-            drop_score: 0.0,
-            ..OcrOptions::default()
-        };
-        let impossible = OcrOptions {
-            drop_score: 1.0,
-            ..OcrOptions::default()
-        };
+        let permissive = OcrOptions::default().with_drop_score(0.0);
+        let impossible = OcrOptions::default().with_drop_score(1.0);
 
         let kept = match engine.recognize_png(READING_ORDER, &permissive) {
             Ok(lines) => lines,
@@ -360,10 +345,7 @@ mod provisioned {
 
         // A box threshold above 1.0 cannot be met by any region, so detection
         // itself yields nothing and no crop is ever recognized.
-        let no_boxes = OcrOptions {
-            box_threshold: 1.1,
-            ..OcrOptions::default()
-        };
+        let no_boxes = OcrOptions::default().with_box_threshold(1.1);
         let none = match engine.recognize_png(READING_ORDER, &no_boxes) {
             Ok(lines) => lines,
             Err(error) => panic!("box threshold: {error}"),
@@ -381,13 +363,7 @@ mod provisioned {
             "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1".to_owned();
 
         let missing = OcrEngine::load(
-            &Artifacts {
-                library: &library,
-                detector: "/nonexistent/detector.onnx",
-                detector_sha256: None,
-                recognizer: &recognizer,
-                recognizer_sha256: None,
-            },
+            &Artifacts::new(&library, "/nonexistent/detector.onnx", &recognizer),
             &dictionary,
         );
         assert!(missing.is_err(), "a missing artifact must not load");
@@ -395,15 +371,9 @@ mod provisioned {
         // A declared digest that does not match the file must be refused
         // before the runtime ever sees the bytes.
         let wrong_digest = OcrEngine::load(
-            &Artifacts {
-                library: &library,
-                detector: &detector,
-                detector_sha256: Some(
-                    "0000000000000000000000000000000000000000000000000000000000000001",
-                ),
-                recognizer: &recognizer,
-                recognizer_sha256: None,
-            },
+            &Artifacts::new(&library, &detector, &recognizer).with_detector_sha256(
+                "0000000000000000000000000000000000000000000000000000000000000001",
+            ),
             &dictionary,
         );
         assert!(
@@ -417,13 +387,7 @@ mod provisioned {
         // constrains dynamic, so nothing in the declared ABI distinguishes
         // them. Load-time validation can only check what a model declares.
         let swapped = OcrEngine::load(
-            &Artifacts {
-                library: &library,
-                detector: &recognizer,
-                detector_sha256: None,
-                recognizer: &detector,
-                recognizer_sha256: None,
-            },
+            &Artifacts::new(&library, &recognizer, &detector),
             &dictionary,
         );
         let swapped = match swapped {
@@ -445,13 +409,8 @@ mod provisioned {
         // runtime sees a byte. This is the concrete reason the digest arguments
         // exist: identity, not shape, is what tells two models apart.
         let swapped_with_digest = OcrEngine::load(
-            &Artifacts {
-                library: &library,
-                detector: &recognizer,
-                detector_sha256: Some(&detector_digest),
-                recognizer: &detector,
-                recognizer_sha256: None,
-            },
+            &Artifacts::new(&library, &recognizer, &detector)
+                .with_detector_sha256(&detector_digest),
             &dictionary,
         );
         assert!(
@@ -460,14 +419,9 @@ mod provisioned {
         );
 
         // A file that exists and is not a model at all.
+        let dictionary_path = env("PADDLEOCR_RUST_DICTIONARY");
         let not_a_model = OcrEngine::load(
-            &Artifacts {
-                library: &library,
-                detector: &env("PADDLEOCR_RUST_DICTIONARY"),
-                detector_sha256: None,
-                recognizer: &recognizer,
-                recognizer_sha256: None,
-            },
+            &Artifacts::new(&library, &dictionary_path, &recognizer),
             &dictionary,
         );
         assert!(not_a_model.is_err(), "a text file must not load as a model");

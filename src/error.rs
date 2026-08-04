@@ -11,6 +11,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// A category of invalid user-supplied value.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum InputViolation {
     /// A required value was empty or zero.
     Empty,
@@ -42,6 +43,7 @@ impl fmt::Display for InputViolation {
 
 /// A category of model-artifact failure.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub enum ModelProblem {
     /// The required artifact was not supplied.
     Missing,
@@ -67,6 +69,7 @@ impl fmt::Display for ModelProblem {
 
 /// An error reported by the public Rust surface.
 #[derive(Debug)]
+#[non_exhaustive]
 pub enum Error {
     /// A user-provided value did not satisfy its documented contract.
     InvalidInput {

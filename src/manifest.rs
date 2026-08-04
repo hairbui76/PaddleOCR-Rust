@@ -48,6 +48,7 @@ const MAX_MANIFEST_LINES: usize = 2_048;
 
 /// One artifact's identity and tensor contract.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct ArtifactEntry {
     /// Source repository or distribution URL, recorded and never fetched.
     pub url: String,
@@ -65,6 +66,7 @@ pub struct ArtifactEntry {
 
 /// The dictionary an artifact pair is bound to.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct DictionaryEntry {
     /// Lowercase hexadecimal SHA-256 of the exact dictionary file.
     pub sha256: String,
@@ -76,6 +78,7 @@ pub struct DictionaryEntry {
 
 /// A complete, validated model manifest.
 #[derive(Clone, Debug, Eq, PartialEq)]
+#[non_exhaustive]
 pub struct ModelManifest {
     /// Task this manifest serves, for example `ocr.classic`.
     pub task: String,
