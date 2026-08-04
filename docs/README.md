@@ -50,6 +50,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   distribution, cache, integrity, provenance, and licensing decisions
 - [Layout contract](LAYOUT_CONTRACT.md) — frozen from the PaddleX baseline, and
   what the artifact config does not say
+- [Table classification contract](TABLE_CLASSIFICATION_CONTRACT.md) — two
+  operators the two pinned baselines spell the same and compute differently
 - [P8 baseline finding](P8_BASELINE_FINDING.md) — why the specialized modules
   cannot be frozen from the pinned checkout
 - [Unwarping contract](UNWARPING_CONTRACT.md) — why unwarping has no inverse,

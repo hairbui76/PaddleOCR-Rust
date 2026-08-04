@@ -83,6 +83,7 @@ mod resize_cubic;
 mod score;
 #[allow(dead_code)]
 mod score_filter;
+mod table_classification;
 #[allow(dead_code)]
 mod tensor;
 #[allow(dead_code)]
