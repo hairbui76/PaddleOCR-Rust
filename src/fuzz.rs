@@ -45,6 +45,57 @@ pub fn exercise(input: &[u8]) {
     exercise_db_kernels(&mut reader);
     exercise_ctc_kernel(&mut reader);
     exercise_geometry_and_crop_kernels(&mut reader);
+    exercise_parsers(input);
+}
+
+/// Drives the parsers that consume caller-supplied bytes directly.
+///
+/// These are the surfaces where the input is *the attacker's document* rather
+/// than a derived tensor: an encoded image, a manifest, and a stream. Every one
+/// is bounded before it allocates, and every one must answer with a typed error
+/// rather than a panic, an abort, or an allocation proportional to a declared
+/// field.
+fn exercise_parsers(input: &[u8]) {
+    // The PNG decoder. Its resource envelope is enforced from the declared
+    // header, so a hostile header is the interesting case rather than a hostile
+    // pixel stream.
+    if let Ok(encoded) = EncodedImage::new(input) {
+        let _ = crate::image::decode_classic_bgr(encoded);
+    }
+
+    // The manifest parser. Arbitrary bytes are rarely valid UTF-8, so the
+    // lossy conversion is what keeps this reaching the parser at all rather
+    // than stopping at the encoding check.
+    let text = String::from_utf8_lossy(input);
+    let _ = crate::manifest::ModelManifest::parse(&text);
+
+    // The bounded stream reader, driven by a reader that yields the input in
+    // awkward pieces rather than one slice.
+    let _ = crate::input::read_encoded_from(Dribble {
+        remaining: input,
+        step: 1 + usize::from(input.first().copied().unwrap_or(0)),
+    });
+
+    // The dictionary parser, which decides every scalar a recognizer can emit.
+    let _ = crate::dictionary::CtcDictionary::new(
+        text.lines().map(str::to_owned).collect(),
+        input.len().is_multiple_of(2),
+    );
+}
+
+/// A reader that hands out the input in small, irregular chunks.
+struct Dribble<'a> {
+    remaining: &'a [u8],
+    step: usize,
+}
+
+impl std::io::Read for Dribble<'_> {
+    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
+        let take = self.step.min(buffer.len()).min(self.remaining.len());
+        buffer[..take].copy_from_slice(&self.remaining[..take]);
+        self.remaining = &self.remaining[take..];
+        Ok(take)
+    }
 }
 
 fn exercise_public_validators(reader: &mut ByteReader<'_>, input: &[u8]) {
