@@ -31,6 +31,7 @@
     "comparison_profile": "m2-unit-v1"
   },
   "tests": [
+    "score_filter::tests::the_recorded_boundary_selection_is_reproduced",
     "fixture_integrity::tests::classic_v1_ctc_score_boundary_fixture_is_well_formed"
   ],
   "limitations": [

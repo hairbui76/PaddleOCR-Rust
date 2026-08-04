@@ -49,6 +49,8 @@ mod resize;
 #[allow(dead_code)]
 mod score;
 #[allow(dead_code)]
+mod score_filter;
+#[allow(dead_code)]
 mod tensor;
 #[allow(dead_code)]
 mod unclip;
