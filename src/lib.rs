@@ -20,6 +20,10 @@ pub mod types;
 // before the corresponding compatibility evidence exists.
 #[allow(dead_code)]
 mod backend;
+/// ONNX Runtime implementation of the internal adapter; off by default.
+#[cfg(feature = "onnxruntime")]
+#[allow(dead_code)]
+mod backend_ort;
 #[allow(dead_code)]
 mod crop;
 #[allow(dead_code)]

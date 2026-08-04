@@ -13,7 +13,7 @@ graph/operator gate asks for "every required operator/shape", and the frozen M2
 so this expansion probes the policy's range rather than three points inside it.
 
 A disposable external C harness (source SHA-256
-`ab27d62d2280bc7f0ca57e06e1a1e16a260e807e5839368b3ed2b38ba8713879`) verified the
+`4ce1ed7527dcc9716bfcf4df533eff882f3f2cd2aaa29d86d839fbf30a55b6fd`) verified the
 source-built `libonnxruntime.so.1.28.0` (`1c04ac41…2742fa`) and both exact ONNX
 files by SHA-256 **before** `dlopen` and before either session was created. It
 used the same configuration as the earlier probes: `CPUExecutionProvider`, one
@@ -35,7 +35,7 @@ span the candidate HPI dynamic-shape record from `[1, 3, 48, 160]` through
 | Non-finite outputs | 0 |
 | Detector output range | `[0.0, 0.9866344]` across all thirteen detector shapes, consistent with the declared terminal `Sigmoid` |
 | Recognizer output range | `[0.0, 0.9704716]` across all ten recognizer shapes, consistent with the declared terminal `Softmax(axis=2)` |
-| Determinism | Two fresh processes produced identical per-probe fingerprints and an identical stable-core record, SHA-256 `1685ce10d85d4162b35ca7ec6a33d3fd065dc7011decd09c6dd9d78637d0606d` |
+| Determinism | Two fresh processes produced identical per-probe fingerprints and an identical stable-core record, SHA-256 `fc70962dd3c497fbc3e58448ef0d49802b8ef7ea4ca8bb6c37cacd079d4c6e53` |
 | Wall time / peak RSS | 20.51 s and 688,680 KiB for the whole twenty-three-shape run |
 
 Two structural observations follow directly from the recorded output shapes and
@@ -46,6 +46,24 @@ are worth stating because a later adapter must not rediscover them by guessing:
 2. The recognizer time dimension is exactly the input width divided by `8` for
    every probed width, from `48 → 6` through `3200 → 400`. The batch dimension
    passes through unchanged.
+
+### Fingerprint-constant correction
+
+The first version of this harness (source SHA-256
+`ab27d62d2280bc7f0ca57e06e1a1e16a260e807e5839368b3ed2b38ba8713879`) used
+`1469598103934665603` as its FNV offset basis. That is one digit short of the
+canonical FNV-1a 64-bit basis `14695981039346656037`, so its recorded
+fingerprints and its stable-core digest
+`1685ce10d85d4162b35ca7ec6a33d3fd065dc7011decd09c6dd9d78637d0606d` were
+labelled `FNV-1a` but were not. The error was found when the Rust adapter's
+independent canonical implementation disagreed with the recorded value for the
+detector minimum shape.
+
+The harness was corrected and re-run; the values in this section are the
+corrected ones. No model output changed: recomputing the same outputs under the
+corrected basis reproduces exactly the value the Rust adapter had already
+produced, which is what identified the constant as the sole difference. The
+superseded digests are recorded here so the earlier commit remains traceable.
 
 This closes the shape half of the graph/operator gate for the frozen M2 policy
 and this exact library. It is **not** a numerical qualification: only the six

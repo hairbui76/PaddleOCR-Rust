@@ -4,6 +4,11 @@ resolver = "3"
 
 [features]
 fuzzing = []
+# Off by default: the default build has no native dependency and no ort in its
+# dependency graph. Enabling this compiles the adapter implementation only; the
+# ONNX Runtime library is still loaded at run time from an explicit path, never
+# downloaded or bundled, and no test requires it.
+onnxruntime = ["dep:ort"]
 
 [package]
 name = "paddleocr-rust"
@@ -27,6 +32,14 @@ bench = false
 # Default features only: no nightly, no benchmark, and no alternative zlib
 # backend, so the dependency stays pure Rust and needs no C toolchain.
 png = "=0.18.1"
+# Selected by docs/ADR_RT004_RUNTIME_SELECTION.md. `load-dynamic` keeps the
+# native library out of the build: nothing is downloaded or linked at build
+# time.
+ort = { version = "=2.0.0-rc.13", default-features = false, features = [
+    "std",
+    "load-dynamic",
+    "api-28",
+], optional = true }
 
 [lints.rust]
 unsafe_code = "forbid"
