@@ -415,3 +415,231 @@ mod tests {
         assert_eq!(orientation_input_size(), (160, 80));
     }
 }
+
+/// Comparison against the captured orientation oracle.
+///
+/// The capture is produced by `tools/capture_orientation_oracle.py`, which runs
+/// the artifact's declared preprocessing and the real model. Two divergences in
+/// the classic path were found by exactly this kind of comparison, which is why
+/// the classifier gets one before it is exposed through the public API.
+#[cfg(test)]
+mod oracle {
+    use super::*;
+
+    use crate::types::ImageDimensions;
+
+    const FIXTURE: &str = include_str!("../tests/fixtures/classic-v1-orientation/expected.json");
+    const READING_ORDER: &[u8] =
+        include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png");
+
+    fn decode_f32(encoded: &str) -> Vec<f32> {
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        let bytes = match STANDARD.decode(encoded) {
+            Ok(bytes) => bytes,
+            Err(error) => panic!("base64: {error}"),
+        };
+        bytes
+            .chunks_exact(4)
+            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect()
+    }
+
+    fn sha256_hex(bytes: &[u8]) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+        hasher
+            .finalize()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect()
+    }
+
+    /// The same formula the capture tool uses, so both sides agree byte for byte.
+    fn synthetic_crop(index: usize, width: u32, height: u32) -> InterleavedImage {
+        let dimensions = match ImageDimensions::new(width, height) {
+            Ok(value) => value,
+            Err(error) => panic!("dimensions: {error}"),
+        };
+        let mut pixels = Vec::with_capacity((width * height * 3) as usize);
+        for y in 0..height as usize {
+            for x in 0..width as usize {
+                for channel in 0..3_usize {
+                    pixels.push(((x * 7 + y * 13 + channel * 29 + index * 31) % 256) as u8);
+                }
+            }
+        }
+        match InterleavedImage::new(dimensions, 3, pixels) {
+            Ok(value) => value,
+            Err(error) => panic!("crop: {error}"),
+        }
+    }
+
+    /// Rebuilds the source image for one recorded case.
+    fn source_for(case: &str) -> InterleavedImage {
+        match case {
+            "reading-order-upright" | "reading-order-rotated" => {
+                let encoded = match crate::types::EncodedImage::new(READING_ORDER) {
+                    Ok(value) => value,
+                    Err(error) => panic!("encoded: {error}"),
+                };
+                let decoded = match crate::image::decode_classic_bgr(encoded) {
+                    Ok(value) => value,
+                    Err(error) => panic!("decode: {error}"),
+                };
+                if case.ends_with("rotated") {
+                    match rotate_180(&decoded) {
+                        Ok(value) => value,
+                        Err(error) => panic!("rotate: {error}"),
+                    }
+                } else {
+                    decoded
+                }
+            }
+            other => {
+                let index: usize = match other.trim_start_matches("synthetic-").parse() {
+                    Ok(value) => value,
+                    Err(error) => panic!("case {other}: {error}"),
+                };
+                let sizes = [(160_u32, 80_u32), (320, 48), (48, 160), (97, 53)];
+                let (width, height) = sizes[index];
+                synthetic_crop(index, width, height)
+            }
+        }
+    }
+
+    fn fixture() -> serde_json::Value {
+        match serde_json::from_str(FIXTURE) {
+            Ok(value) => value,
+            Err(error) => panic!("fixture json: {error}"),
+        }
+    }
+
+    /// This port's preprocessing must reproduce the captured tensor exactly.
+    ///
+    /// It also proves `rotate_180` agrees with `cv2.ROTATE_180`: the rotated
+    /// case's source digest is checked against the one the capture recorded
+    /// after calling OpenCV.
+    #[test]
+    fn the_captured_input_tensors_are_reproduced() {
+        let document = fixture();
+        let records = match document["records"].as_array() {
+            Some(records) => records,
+            None => panic!("fixture must hold records"),
+        };
+        assert_eq!(records.len(), 6);
+
+        for record in records {
+            let case = record["case"].as_str().unwrap_or_default();
+            let source = source_for(case);
+
+            // The source bytes themselves, which for the rotated case is the
+            // cross-check of rotate_180 against OpenCV.
+            assert_eq!(
+                sha256_hex(source.pixels()),
+                record["source_bgr_sha256"].as_str().unwrap_or_default(),
+                "{case}: source BGR bytes differ from the capture"
+            );
+
+            let (width, height) = orientation_input_size();
+            let target = match ImageDimensions::new(width, height) {
+                Ok(value) => value,
+                Err(error) => panic!("target: {error}"),
+            };
+            let resized = match crate::resize::classic_linear_resize(&source, target) {
+                Ok(value) => value,
+                Err(error) => panic!("{case} resize: {error}"),
+            };
+            let tensor = match classic_orientation_batch(&[&resized]) {
+                Ok(value) => value,
+                Err(error) => panic!("{case} tensor: {error}"),
+            };
+
+            let expected_shape: Vec<usize> = match record["input_shape"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|value| value.as_u64().unwrap_or_default() as usize)
+                    .collect(),
+                None => panic!("{case}: no input shape"),
+            };
+            assert_eq!(tensor.shape(), expected_shape.as_slice(), "{case} shape");
+
+            let mut bytes = Vec::with_capacity(tensor.values().len() * 4);
+            for value in tensor.values() {
+                bytes.extend_from_slice(&value.to_le_bytes());
+            }
+            assert_eq!(
+                sha256_hex(&bytes),
+                record["input_values_sha256"].as_str().unwrap_or_default(),
+                "{case}: input tensor differs from the captured upstream bytes"
+            );
+
+            let indices: Vec<usize> = match record["input_sample_indices"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|value| value.as_u64().unwrap_or_default() as usize)
+                    .collect(),
+                None => panic!("{case}: no sample indices"),
+            };
+            let samples = decode_f32(
+                record["input_sample_values_base64"]
+                    .as_str()
+                    .unwrap_or_default(),
+            );
+            for (index, expected) in indices.iter().zip(&samples) {
+                assert_eq!(
+                    tensor.values()[*index].to_bits(),
+                    expected.to_bits(),
+                    "{case}: element {index}"
+                );
+            }
+        }
+    }
+
+    /// Given the recorded model output, this port must reach the same verdict.
+    ///
+    /// This separates the two halves: the test above checks what we feed the
+    /// model, this one checks what we conclude from what it answers. A failure
+    /// in one does not implicate the other.
+    #[test]
+    fn the_captured_verdicts_are_reproduced() {
+        let document = fixture();
+        let records = match document["records"].as_array() {
+            Some(records) => records,
+            None => panic!("fixture must hold records"),
+        };
+
+        let mut rotated_cases = 0;
+        for record in records {
+            let case = record["case"].as_str().unwrap_or_default();
+            let scores = decode_f32(record["output_values_base64"].as_str().unwrap_or_default());
+            let (class, score) = match argmax(&scores) {
+                Ok(value) => value,
+                Err(error) => panic!("{case} argmax: {error}"),
+            };
+
+            assert_eq!(
+                ORIENTATION_LABELS[class],
+                record["label"].as_str().unwrap_or_default(),
+                "{case}: label"
+            );
+            let expected_score = record["score"].as_f64().unwrap_or_default();
+            assert!(
+                (score - expected_score).abs() < 1e-6,
+                "{case}: score {score} against {expected_score}"
+            );
+
+            if rotates(ORIENTATION_LABELS[class], score, ORIENTATION_THRESHOLD) {
+                rotated_cases += 1;
+            }
+        }
+
+        // The upright page is left alone and the rotated one is corrected, which
+        // is the whole point of the classifier and the only outcome that would
+        // not also be produced by a broken model returning a constant.
+        assert_eq!(
+            rotated_cases, 1,
+            "exactly the 180-degree page should be marked for rotation"
+        );
+    }
+}

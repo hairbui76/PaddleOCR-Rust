@@ -236,11 +236,42 @@ Recorded now so it constrains the work rather than being written to fit it:
    comparison is the detail most likely to be got wrong.
 5. **A default of off**, matching upstream, so enabling it is a caller's choice.
 
-## 12. Status
+## 12. Oracle results
 
-Contract frozen for both models, from the pinned source and from the provisioned
-artifact configs. Artifacts provisioned and hashed; no implementation and no
-fixture yet. `DOCORI-001` stays open.
+`tools/capture_orientation_oracle.py` ran the provisioned artifact over six
+cases: four deterministic synthetic crops and the committed reading-order page
+both upright and rotated 180 degrees.
+
+| Case | Label | Score |
+|---|---|---|
+| `reading-order-upright` | `0_degree` | `0.998999` |
+| `reading-order-rotated` | `180_degree` | `0.999229` |
+| four synthetic crops | `0_degree` | `0.520`–`0.979` |
+
+The model answers correctly on the pair that matters, and both answers clear the
+`0.9` threshold, so the rotated page would be corrected and the upright one left
+alone. The synthetic crops are text-free noise and the model is unconfident about
+them, which is the expected shape of that answer rather than a problem.
+
+`tests/fixtures/classic-v1-orientation` records the input tensors, the model
+outputs, and the verdicts. This port reproduces every captured input tensor
+**bit-identically**, and separately reaches the same verdict from each recorded
+output. The two halves are tested apart so a failure in one does not implicate
+the other.
+
+One useful by-product: the rotated case's source digest is the one the capture
+recorded *after* calling `cv2.rotate(img, cv2.ROTATE_180)`, so matching it proves
+`rotate_180` agrees with OpenCV rather than merely looking plausible.
+
+## 13. Status
+
+Contract frozen for both models. Artifacts provisioned and hashed. The text-line
+classifier is implemented in `src/orientation.rs`, compared against a captured
+oracle, and available as an optional pipeline stage that defaults to off.
+
+`DOCORI-001` stays open for: the public API surface, and document-level
+orientation, whose `resize_short` plus centre-crop preprocessing this project has
+never implemented and which needs its own capture.
 
 Two corrections are recorded above rather than silently fixed, because both were
 wrong in ways that would have produced working code against the wrong contract:
