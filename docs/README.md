@@ -60,6 +60,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   Markdown formatters, and a newline that is added twice
 - [Reading order contract](READING_ORDER_CONTRACT.md) — the four XY-cut
   primitives, and why the two cut orders are different reading orders
+- [VLM-DEC-001 evidence](VLM_DEC_001_EVIDENCE.md) — three routes with very
+  different answers, and a determinism vocabulary that does not apply
 - [TRAIN-DEC-001 evidence](TRAIN_DEC_001_EVIDENCE.md) — 121 architecture
   components for full coverage, 4 for the minimal one
 - [DEPLOY-DEC-001 evidence](DEPLOY_DEC_001_EVIDENCE.md) — what each deployment
