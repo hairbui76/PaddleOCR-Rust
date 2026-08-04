@@ -27,7 +27,6 @@ use crate::error::{Error, InputViolation, Result};
 use crate::geometry::classic_detector_resize_plan;
 use crate::resize::classic_linear_resize;
 use crate::tensor::classic_detector_input;
-use crate::types::ImageDimensions;
 
 /// Runs the detector over one decoded BGR image.
 pub(crate) fn detect_boxes(
@@ -77,6 +76,8 @@ pub(crate) fn detect_boxes(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use crate::types::ImageDimensions;
 
     use crate::backend::{AxisExtent, ModelArtifact, RunBudget, TensorContract};
 
