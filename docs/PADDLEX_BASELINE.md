@@ -1,8 +1,9 @@
 # PaddleX Baseline Resolution Record
 
-Roadmap item: BASE-002
-Status: Deferred from M2 by P0_DECISIONS.md; still unresolved for modern parity
-Inspection date: 2026-08-02
+Roadmap item: BASE-002 (resolved by `D-013`)
+Status: **Resolved 2026-08-05.** PaddleX `3.7.2` is pinned as a second read-only
+reference baseline, on a recorded user decision.
+Inspection date: 2026-08-02; resolution 2026-08-05
 PaddleOCR baseline: 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 
 ## Purpose
@@ -108,3 +109,45 @@ following must be recorded in the root `ROADMAP.md`:
 When unblocked, capture the selected source/release in an isolated read-only
 reference workflow. Do not add PaddleX as a dependency of PaddleOCR-Rust and do
 not execute it inside ./PaddleOCR.
+
+## Resolution — `D-013`, 2026-08-05
+
+`docs/P8_BASELINE_FINDING.md` established that P8's capabilities cannot be frozen
+from the PaddleOCR checkout at all: `paddleocr/_models/*.py` are wrappers, their
+base imports `paddlex`, and PaddleX is an external dependency declared as a
+**range** rather than a pin. The user chose to pin it.
+
+### The pin
+
+| Field | Value |
+|---|---|
+| Package | `paddlex` |
+| Version | **`3.7.2`** |
+| Selected because | it is what `>=3.7.0,<3.8.0` resolves to, checked rather than assumed |
+| Role | **read-only behavioural reference**, exactly like `PaddleOCR` |
+
+A range is not a baseline. The version is recorded here so a future reader knows
+which source a contract was frozen from, and so a divergence can be attributed to
+a version change rather than to this port.
+
+### What it restores
+
+The method, unchanged: read the source, freeze the contract, capture the oracle,
+compare bit-for-bit. `paddlex/inference/models/object_detection/processors.py`
+defines `Resize`, `Normalize`, `ToCHWImage`, `ToBatch`, `DetPad`, `PadStride`,
+`WarpAffine`, and `DetPostProcess` — operators with their rounding, padding, and
+ordering written out, which is the same shape of source the classic path was
+frozen from.
+
+The division of labour is the one document orientation established: the
+**artifact's `inference.yml` names the operators and their arguments**, and the
+**pinned source defines what each operator does**. Neither alone is sufficient,
+and this project has four recorded bugs that prove it.
+
+### The same constraints apply
+
+PaddleX is a reference, not a dependency. Nothing in this repository's build,
+test, or runtime may require it, it is never vendored, and no Rust code links to
+or invokes it. It is read during development to freeze contracts and to capture
+oracles, and that is all — the same boundary `CLAUDE.md` places around
+`PaddleOCR/`.

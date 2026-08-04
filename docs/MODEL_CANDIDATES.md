@@ -277,3 +277,20 @@ contract itself is frozen.
 
 No fixture exists for either model, and neither is verified. Provisioning is not
 support; `LANG-001` sets the bar at a committed fixture reproduced by a gate.
+
+## Structure candidates (`LAY-001`)
+
+Provisioned 2026-08-05, Apache-2.0, stored outside version control.
+
+| Model | ONNX source | Revision | `inference.onnx` SHA-256 / bytes |
+|---|---|---|---|
+| `PP-DocLayout_plus-L` | [`PaddlePaddle/PP-DocLayout_plus-L_onnx`](https://huggingface.co/PaddlePaddle/PP-DocLayout_plus-L_onnx) | `feb74619326f634e0e883218598096a3733ad9f7` | `77afb2caa74dd13240d087d2eced91d7fcd2caebd16006a0a66162fc8707ff0e` / `129,736,329` |
+
+At `129.7 MB` it is larger than the detector and recognizer combined. Its
+`inference.yml` (SHA-256 `d60f782a16f96afb27e8280399899a94c3e9ffc694ffb2f913ea00af1c522f1e`)
+declares a `Resize` to `800x800` with `keep_ratio: false` and `interp: 2`, a
+`NormalizeImage` with `norm_type: none`, a `Permute`, and a **twenty-class**
+label list. The operators are defined in the pinned PaddleX baseline; see
+[`PADDLEX_BASELINE.md`](PADDLEX_BASELINE.md).
+
+Not verified. Provisioning is not support.
