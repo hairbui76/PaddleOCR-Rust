@@ -178,9 +178,30 @@ Before a non-trivial change:
    conventional Cargo workspace, that normally includes:
 
    ```sh
+   tools/gate.sh
+   ```
+
+   That script runs `fmt`, then `clippy -D warnings` and the test suite once per
+   feature configuration this crate defines — default, `--all-features`, and
+   `--features fuzzing` — and **exits non-zero if any of them fails**. It prints
+   the figures a commit message should quote.
+
+   Run it as a **separate command** and read its exit code before committing.
+   Running the gate and writing the commit in one shell invocation lets the
+   message be written before the result comes back; that produced a pushed
+   commit claiming a green gate over a red one, recorded in the change log for
+   `a803634`.
+
+   ```sh
+   tools/gate.sh && git commit ...
+   ```
+
+   The underlying commands remain:
+
+   ```sh
    cargo fmt --all --check
-   cargo clippy --workspace --all-targets --all-features -- -D warnings
-   cargo test --workspace --all-features
+   cargo clippy --offline --locked --workspace --all-targets -- -D warnings
+   cargo test --offline --locked --workspace
    ```
 
    Adjust features/targets only when the actual workspace defines a more
