@@ -142,6 +142,37 @@ impl TableImage {
     }
 }
 
+impl TableResult {
+    /// Serialises this result as `paddleocr-rust/table-result/v1`.
+    ///
+    /// Byte-deterministic, for the reason `src/result_json.rs` records: fields
+    /// appear in a fixed order with fixed numeric formatting, so two runs over
+    /// the same input produce the same bytes.
+    ///
+    /// `width` and `height` describe the **table crop**, not the page. The cell
+    /// boxes are in that crop's coordinates, and saying so in the document is
+    /// what keeps a consumer from placing them on the wrong image.
+    #[must_use]
+    pub fn to_json(&self, width: u32, height: u32, id: Option<&str>) -> String {
+        let route = match self.route {
+            TableRoute::Wired => TABLE_CLS_LABELS[0],
+            TableRoute::Wireless => TABLE_CLS_LABELS[1],
+        };
+        crate::structure_json::table_to_json(
+            &crate::structure_json::TableDocument {
+                route,
+                route_score: self.route_score,
+                html: &self.html,
+                cell_boxes: &self.cell_boxes,
+                tokens: &self.tokens,
+            },
+            width,
+            height,
+            id,
+        )
+    }
+}
+
 /// Three loaded table models, usable from one thread.
 ///
 /// `Debug` prints the route and the loaded vocabulary size and nothing else:
@@ -519,6 +550,35 @@ mod tests {
         assert_eq!(
             built, captured,
             "the committed character_dict must round-trip"
+        );
+    }
+
+    /// A result serialises to the frozen schema, deterministically.
+    #[test]
+    fn a_table_result_serialises_to_the_frozen_schema() {
+        let result = TableResult {
+            route: TableRoute::Wired,
+            route_score: 0.95067,
+            html: "<html><body><table></table></body></html>".to_owned(),
+            cell_boxes: vec![[0.0, 0.0, 50.0, 20.0]],
+            tokens: vec!["<html>".to_owned()],
+        };
+        let json = result.to_json(480, 320, Some("t0"));
+        assert!(
+            json.starts_with("{\"schema_version\":\"paddleocr-rust/table-result/v1\""),
+            "{json}"
+        );
+        assert!(json.contains("\"label\":\"wired_table\""), "{json}");
+        assert_eq!(json, result.to_json(480, 320, Some("t0")));
+
+        let wireless = TableResult {
+            route: TableRoute::Wireless,
+            ..result
+        };
+        assert!(
+            wireless
+                .to_json(1, 1, None)
+                .contains("\"label\":\"wireless_table\""),
         );
     }
 

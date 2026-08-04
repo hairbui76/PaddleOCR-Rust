@@ -56,6 +56,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   code path, and the two bugs it found in layout
 - [Table structure contract](TABLE_STRUCTURE_CONTRACT.md) — three facts that
   live in the registration functions, and a vocabulary that is built not read
+- [Specialized module API](SPECIALIZED_API.md) — what the table pipeline
+  exposes, the two result schemas, and why layout is not exposed
 - [Table pipeline contract](TABLE_PIPELINE_CONTRACT.md) — the matcher's score
   is not IoU, and two branches nothing can reach
 - [P8 artifact availability](P8_ARTIFACT_AVAILABILITY.md) — the four modules
