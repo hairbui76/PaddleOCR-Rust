@@ -26,7 +26,10 @@ PaddleOCR replacement, and the table below says exactly where the line is.
 | Not distributable yet | The supply-chain gate `G2` in [docs/ADR_RT004_RUNTIME_SELECTION.md](docs/ADR_RT004_RUNTIME_SELECTION.md) is open: the ONNX Runtime build is not hermetic and has no SBOM. |
 
 Treat a capability as supported only when its row in
-[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) says so.
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md) says so. For scripts and languages
+specifically, [docs/LANGUAGE_SUPPORT.md](docs/LANGUAGE_SUPPORT.md) separates what
+the dictionary *contains* from what has actually been *verified* — the pinned
+dictionary holds 672 emoji scalars, which supports nothing.
 
 ## Usage
 

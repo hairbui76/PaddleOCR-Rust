@@ -18,6 +18,9 @@ pub mod error;
 pub mod fuzz;
 /// The versioned JSON result document.
 pub mod result_json;
+
+/// Unicode script classification for dictionary contents.
+pub mod script;
 /// Checked domain types shared by later image, geometry, model, and pipeline code.
 pub mod types;
 

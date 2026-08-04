@@ -76,6 +76,19 @@ pub struct Dictionary {
 }
 
 impl Dictionary {
+    /// Counts the Unicode scripts this dictionary can spell.
+    ///
+    /// This reports what classes exist in the output layer, and nothing more.
+    /// A dictionary that contains emoji does not make this port an emoji
+    /// recogniser, and a count of CJK scalars does not decide whether a model
+    /// was trained for Chinese, Japanese, or Korean. See
+    /// `docs/LANGUAGE_SUPPORT.md` for the difference between what a dictionary
+    /// contains and what has actually been verified.
+    #[must_use]
+    pub fn script_census(&self) -> Vec<crate::script::ScriptCount> {
+        crate::script::census(self.inner.entries().iter().map(String::as_str))
+    }
+
     /// Returns the number of configured entries, excluding blank and space.
     #[must_use]
     pub fn len(&self) -> usize {

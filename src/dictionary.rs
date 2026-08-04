@@ -44,6 +44,11 @@ pub(crate) struct CtcDictionary {
 }
 
 impl CtcDictionary {
+    /// Returns the configured entries in class order.
+    pub(crate) fn entries(&self) -> &[String] {
+        &self.entries
+    }
+
     /// Builds a dictionary from entries already parsed by the caller.
     ///
     /// `appends_space` mirrors the artifact's `use_space_char`. The recorded
