@@ -43,6 +43,8 @@ mod min_area;
 #[allow(dead_code)]
 mod resize;
 #[allow(dead_code)]
+mod score;
+#[allow(dead_code)]
 mod tensor;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};

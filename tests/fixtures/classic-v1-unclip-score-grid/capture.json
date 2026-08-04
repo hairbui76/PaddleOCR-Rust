@@ -1,0 +1,1171 @@
+{
+  "algorithm": {
+    "input_generator": "lcg-v1 scaled to [0, 1] by /65535",
+    "score": "floor/ceil clip, fillPoly mask, cv2.mean over the ROI",
+    "unclip": "Polygon(box).area * ratio / .length, then PyclipperOffset JT_ROUND/ET_CLOSEDPOLYGON"
+  },
+  "cases": [
+    {
+      "box": [
+        [
+          1.0,
+          1.0
+        ],
+        [
+          9.0,
+          1.0
+        ],
+        [
+          9.0,
+          5.0
+        ],
+        [
+          1.0,
+          5.0
+        ]
+      ],
+      "description": "A small axis-aligned box.",
+      "fixture_id": "classic-v1-unclip-score-axis-small",
+      "probability_map": {
+        "sha256": "4ff05cf4d2f93574cec1eabaa96edd37a12e4fda86ea64926e2fa87c9d2cbd2d",
+        "shape": [
+          12,
+          16
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 9,
+          "xmin": 1,
+          "ymax": 5,
+          "ymin": 1
+        },
+        "mask_set_pixels": 45,
+        "mask_shape": [
+          5,
+          9
+        ],
+        "value": 0.4995356152661973
+      },
+      "unclip": [
+        {
+          "distance": 2.0,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                11,
+                0
+              ],
+              [
+                11,
+                5
+              ],
+              [
+                10,
+                7
+              ],
+              [
+                1,
+                7
+              ],
+              [
+                -1,
+                6
+              ],
+              [
+                -1,
+                1
+              ],
+              [
+                0,
+                -1
+              ],
+              [
+                9,
+                -1
+              ]
+            ]
+          ],
+          "shapely_area": 32.0,
+          "shapely_length": 24.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 2.6666666666666665,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                11,
+                -1
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                12,
+                5
+              ],
+              [
+                11,
+                7
+              ],
+              [
+                9,
+                8
+              ],
+              [
+                1,
+                8
+              ],
+              [
+                -1,
+                7
+              ],
+              [
+                -2,
+                5
+              ],
+              [
+                -2,
+                1
+              ],
+              [
+                -1,
+                -1
+              ],
+              [
+                1,
+                -2
+              ],
+              [
+                9,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 32.0,
+          "shapely_length": 24.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          2.0,
+          4.0
+        ],
+        [
+          14.0,
+          4.0
+        ],
+        [
+          14.0,
+          7.0
+        ],
+        [
+          2.0,
+          7.0
+        ]
+      ],
+      "description": "A thin box whose offset distance is small.",
+      "fixture_id": "classic-v1-unclip-score-axis-thin",
+      "probability_map": {
+        "sha256": "92bbc63431d9b82aafd1a7283c52c48fd8298c1a23de01d59eef53a76b58013a",
+        "shape": [
+          12,
+          20
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 14,
+          "xmin": 2,
+          "ymax": 7,
+          "ymin": 4
+        },
+        "mask_set_pixels": 52,
+        "mask_shape": [
+          4,
+          13
+        ],
+        "value": 0.46544359610057795
+      },
+      "unclip": [
+        {
+          "distance": 1.8,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                16,
+                4
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                14,
+                9
+              ],
+              [
+                2,
+                9
+              ],
+              [
+                0,
+                7
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                14,
+                2
+              ]
+            ]
+          ],
+          "shapely_area": 36.0,
+          "shapely_length": 30.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 2.4,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                16,
+                3
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                15,
+                9
+              ],
+              [
+                2,
+                9
+              ],
+              [
+                0,
+                8
+              ],
+              [
+                0,
+                4
+              ],
+              [
+                1,
+                2
+              ],
+              [
+                14,
+                2
+              ]
+            ]
+          ],
+          "shapely_area": 36.0,
+          "shapely_length": 30.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          3.0,
+          1.0
+        ],
+        [
+          7.0,
+          1.0
+        ],
+        [
+          7.0,
+          15.0
+        ],
+        [
+          3.0,
+          15.0
+        ]
+      ],
+      "description": "A tall box.",
+      "fixture_id": "classic-v1-unclip-score-axis-tall",
+      "probability_map": {
+        "sha256": "f8a2c570dead82ec6fa2a10bc5702ff26b0b1c6c203565ead47f9df4a63b8ae1",
+        "shape": [
+          20,
+          12
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 7,
+          "xmin": 3,
+          "ymax": 15,
+          "ymin": 1
+        },
+        "mask_set_pixels": 75,
+        "mask_shape": [
+          15,
+          5
+        ],
+        "value": 0.49083024435676637
+      },
+      "unclip": [
+        {
+          "distance": 2.3333333333333335,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                9,
+                0
+              ],
+              [
+                9,
+                15
+              ],
+              [
+                8,
+                17
+              ],
+              [
+                3,
+                17
+              ],
+              [
+                1,
+                16
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                -1
+              ],
+              [
+                7,
+                -1
+              ]
+            ]
+          ],
+          "shapely_area": 56.0,
+          "shapely_length": 36.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 3.111111111111111,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                9,
+                -1
+              ],
+              [
+                10,
+                1
+              ],
+              [
+                10,
+                15
+              ],
+              [
+                9,
+                17
+              ],
+              [
+                7,
+                18
+              ],
+              [
+                3,
+                18
+              ],
+              [
+                1,
+                17
+              ],
+              [
+                0,
+                15
+              ],
+              [
+                0,
+                1
+              ],
+              [
+                1,
+                -1
+              ],
+              [
+                3,
+                -2
+              ],
+              [
+                7,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 56.0,
+          "shapely_length": 36.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          1.7,
+          1.4
+        ],
+        [
+          9.6,
+          1.9
+        ],
+        [
+          9.2,
+          6.8
+        ],
+        [
+          1.3,
+          6.2
+        ]
+      ],
+      "description": "Fractional corners, which AddPath truncates toward zero.",
+      "fixture_id": "classic-v1-unclip-score-fractional",
+      "probability_map": {
+        "sha256": "cf9b4757f4937b9eabb2d4a7bdbc7e089f000b9caa64efabc7eba434357afeed",
+        "shape": [
+          12,
+          16
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 10,
+          "xmin": 1,
+          "ymax": 7,
+          "ymin": 1
+        },
+        "mask_set_pixels": 54,
+        "mask_shape": [
+          7,
+          10
+        ],
+        "value": 0.4859814820293751
+      },
+      "unclip": [
+        {
+          "distance": 2.260426976500048,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                11,
+                0
+              ],
+              [
+                11,
+                6
+              ],
+              [
+                10,
+                8
+              ],
+              [
+                1,
+                8
+              ],
+              [
+                -1,
+                7
+              ],
+              [
+                -1,
+                1
+              ],
+              [
+                0,
+                -1
+              ],
+              [
+                9,
+                -1
+              ]
+            ]
+          ],
+          "shapely_area": 38.535,
+          "shapely_length": 25.57149627080588,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 3.0139026353333978,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                11,
+                -1
+              ],
+              [
+                12,
+                1
+              ],
+              [
+                12,
+                6
+              ],
+              [
+                11,
+                8
+              ],
+              [
+                9,
+                9
+              ],
+              [
+                1,
+                9
+              ],
+              [
+                -1,
+                8
+              ],
+              [
+                -2,
+                6
+              ],
+              [
+                -2,
+                1
+              ],
+              [
+                -1,
+                -1
+              ],
+              [
+                1,
+                -2
+              ],
+              [
+                9,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 38.535,
+          "shapely_length": 25.57149627080588,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          6.0,
+          0.0
+        ],
+        [
+          6.0,
+          4.0
+        ],
+        [
+          0.0,
+          4.0
+        ]
+      ],
+      "description": "A box at the origin, where truncation and clipping meet.",
+      "fixture_id": "classic-v1-unclip-score-touching-origin",
+      "probability_map": {
+        "sha256": "3f5b6dc4faf89e1ab622cf93b2d0076c14a70b82086040e072f1d3d7eb6e0fac",
+        "shape": [
+          10,
+          12
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 6,
+          "xmin": 0,
+          "ymax": 4,
+          "ymin": 0
+        },
+        "mask_set_pixels": 35,
+        "mask_shape": [
+          5,
+          7
+        ],
+        "value": 0.4688277829438448
+      },
+      "unclip": [
+        {
+          "distance": 1.8,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                8,
+                0
+              ],
+              [
+                8,
+                4
+              ],
+              [
+                6,
+                6
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                -2,
+                4
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                0,
+                -2
+              ],
+              [
+                6,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 24.0,
+          "shapely_length": 20.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 2.4,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                8,
+                -1
+              ],
+              [
+                8,
+                4
+              ],
+              [
+                7,
+                6
+              ],
+              [
+                0,
+                6
+              ],
+              [
+                -2,
+                5
+              ],
+              [
+                -2,
+                0
+              ],
+              [
+                -1,
+                -2
+              ],
+              [
+                6,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 24.0,
+          "shapely_length": 20.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          2.0,
+          3.0
+        ],
+        [
+          11.0,
+          1.0
+        ],
+        [
+          13.0,
+          8.0
+        ],
+        [
+          4.0,
+          10.0
+        ]
+      ],
+      "description": "A slanted box.",
+      "fixture_id": "classic-v1-unclip-score-slanted",
+      "probability_map": {
+        "sha256": "b09d2f5e3f5686322fa254891c5774ac86b71f5ae8ba2b57d51171e35b9c9ae7",
+        "shape": [
+          16,
+          20
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 13,
+          "xmin": 2,
+          "ymax": 10,
+          "ymin": 1
+        },
+        "mask_set_pixels": 84,
+        "mask_shape": [
+          10,
+          12
+        ],
+        "value": 0.5365233787645896
+      },
+      "unclip": [
+        {
+          "distance": 3.0455183450819234,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                14,
+                0
+              ],
+              [
+                16,
+                7
+              ],
+              [
+                16,
+                10
+              ],
+              [
+                14,
+                11
+              ],
+              [
+                5,
+                13
+              ],
+              [
+                2,
+                13
+              ],
+              [
+                1,
+                11
+              ],
+              [
+                -1,
+                4
+              ],
+              [
+                -1,
+                1
+              ],
+              [
+                1,
+                0
+              ],
+              [
+                10,
+                -2
+              ],
+              [
+                13,
+                -2
+              ]
+            ]
+          ],
+          "shapely_area": 67.0,
+          "shapely_length": 32.99930869314681,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 4.060691126775898,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                15,
+                0
+              ],
+              [
+                17,
+                7
+              ],
+              [
+                17,
+                10
+              ],
+              [
+                14,
+                12
+              ],
+              [
+                5,
+                14
+              ],
+              [
+                2,
+                14
+              ],
+              [
+                0,
+                11
+              ],
+              [
+                -2,
+                4
+              ],
+              [
+                -2,
+                1
+              ],
+              [
+                1,
+                -1
+              ],
+              [
+                10,
+                -3
+              ],
+              [
+                13,
+                -3
+              ]
+            ]
+          ],
+          "shapely_area": 67.0,
+          "shapely_length": 32.99930869314681,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          8.0,
+          6.0
+        ],
+        [
+          15.0,
+          6.0
+        ],
+        [
+          15.0,
+          11.0
+        ],
+        [
+          8.0,
+          11.0
+        ]
+      ],
+      "description": "A box against the right and bottom edges.",
+      "fixture_id": "classic-v1-unclip-score-near-edge",
+      "probability_map": {
+        "sha256": "15c9246f6ba1eb7ab58dc75c2d2ae8ae6f6726bf73310f6f5eb41f20cdf5246a",
+        "shape": [
+          12,
+          16
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 15,
+          "xmin": 8,
+          "ymax": 11,
+          "ymin": 6
+        },
+        "mask_set_pixels": 48,
+        "mask_shape": [
+          6,
+          8
+        ],
+        "value": 0.5057488410578419
+      },
+      "unclip": [
+        {
+          "distance": 2.1875,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                17,
+                5
+              ],
+              [
+                17,
+                11
+              ],
+              [
+                16,
+                13
+              ],
+              [
+                8,
+                13
+              ],
+              [
+                6,
+                12
+              ],
+              [
+                6,
+                6
+              ],
+              [
+                7,
+                4
+              ],
+              [
+                15,
+                4
+              ]
+            ]
+          ],
+          "shapely_area": 35.0,
+          "shapely_length": 24.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 2.9166666666666665,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                17,
+                4
+              ],
+              [
+                18,
+                6
+              ],
+              [
+                18,
+                11
+              ],
+              [
+                17,
+                13
+              ],
+              [
+                15,
+                14
+              ],
+              [
+                8,
+                14
+              ],
+              [
+                6,
+                13
+              ],
+              [
+                5,
+                11
+              ],
+              [
+                5,
+                6
+              ],
+              [
+                6,
+                4
+              ],
+              [
+                8,
+                3
+              ],
+              [
+                15,
+                3
+              ]
+            ]
+          ],
+          "shapely_area": 35.0,
+          "shapely_length": 24.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    },
+    {
+      "box": [
+        [
+          2.0,
+          5.0
+        ],
+        [
+          12.0,
+          5.0
+        ],
+        [
+          12.0,
+          6.0
+        ],
+        [
+          2.0,
+          6.0
+        ]
+      ],
+      "description": "A one-pixel-thin box, the degenerate score case.",
+      "fixture_id": "classic-v1-unclip-score-one-pixel-thin",
+      "probability_map": {
+        "sha256": "22dbeb887df833f7d197ca8d5d5ecb80e012f267a7595ee9b692129f0e914178",
+        "shape": [
+          12,
+          16
+        ]
+      },
+      "score": {
+        "bounds": {
+          "xmax": 12,
+          "xmin": 2,
+          "ymax": 6,
+          "ymin": 5
+        },
+        "mask_set_pixels": 22,
+        "mask_shape": [
+          2,
+          11
+        ],
+        "value": 0.4986981258050285
+      },
+      "unclip": [
+        {
+          "distance": 0.6818181818181818,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                13,
+                5
+              ],
+              [
+                13,
+                6
+              ],
+              [
+                12,
+                7
+              ],
+              [
+                2,
+                7
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                12,
+                4
+              ]
+            ]
+          ],
+          "shapely_area": 10.0,
+          "shapely_length": 22.0,
+          "unclip_ratio": 1.5
+        },
+        {
+          "distance": 0.9090909090909091,
+          "path_count": 1,
+          "paths": [
+            [
+              [
+                13,
+                5
+              ],
+              [
+                13,
+                6
+              ],
+              [
+                12,
+                7
+              ],
+              [
+                2,
+                7
+              ],
+              [
+                1,
+                6
+              ],
+              [
+                1,
+                5
+              ],
+              [
+                2,
+                4
+              ],
+              [
+                12,
+                4
+              ]
+            ]
+          ],
+          "shapely_area": 10.0,
+          "shapely_length": 22.0,
+          "unclip_ratio": 2.0
+        }
+      ]
+    }
+  ],
+  "environment": {
+    "numpy": "2.5.1",
+    "opencv": "5.0.0",
+    "opencv_optimized": false,
+    "platform": "Linux-7.0.0-28-generic-x86_64-with-glibc2.39",
+    "pyclipper": "1.4.0",
+    "python": "3.12.3 (main, Jun 19 2026, 12:46:00) [GCC 13.3.0]",
+    "shapely": "2.1.2"
+  },
+  "purpose": "developer-only unclip and score oracle; not a normal Rust test dependency",
+  "schema_version": "paddleocr-rust/unclip-score-oracle/v1",
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:unclip",
+      "ppocr/postprocess/db_postprocess.py:box_score_fast"
+    ]
+  }
+}

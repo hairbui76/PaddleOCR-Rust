@@ -178,6 +178,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         RESIZE_LINEAR_GRID_FIXTURE_ID.to_owned(),
         "classic-v1-contour-grid".to_owned(),
         "classic-v1-min-area-box-grid".to_owned(),
+        "classic-v1-unclip-score-grid".to_owned(),
         "classic-v1-db-components".to_owned(),
         "classic-v1-ctc-greedy-path".to_owned(),
         "classic-v1-db-map-boundaries".to_owned(),

@@ -1,0 +1,47 @@
+{
+  "fixture_id": "classic-v1-unclip-score-grid",
+  "kind": "component_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "capture.json#/cases/*/box",
+    "sha256": "bcbace819d98c74b009aab4b7518119c567d48b47394909b8fc15a37e3df769c",
+    "sha256_scope": "SHA-256 of the whole capture document, which is the reviewed unit here.",
+    "provenance": "Self-authored boxes and lcg-v1 probability maps from tools/capture_unclip_score_oracle.py.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/postprocess/db_postprocess.py:unclip",
+      "ppocr/postprocess/db_postprocess.py:box_score_fast"
+    ]
+  },
+  "artifacts": null,
+  "oracle": {
+    "generator": "tools/capture_unclip_score_oracle.py",
+    "suite": "unclip-score",
+    "capture_sha256": "bcbace819d98c74b009aab4b7518119c567d48b47394909b8fc15a37e3df769c",
+    "environment": {
+      "python": "3.12.3",
+      "numpy": "2.5.1",
+      "opencv": "5.0.0",
+      "opencv_optimized": false,
+      "pyclipper": "1.4.0",
+      "shapely": "2.1.2"
+    }
+  },
+  "expected": {
+    "path": "capture.json#/cases/*/score/value",
+    "schema_version": "paddleocr-rust/unclip-score-oracle/v1",
+    "comparison_profile": "m2-unit-v1",
+    "sha256": "bcbace819d98c74b009aab4b7518119c567d48b47394909b8fc15a37e3df769c",
+    "sha256_scope": "SHA-256 of the whole capture document; the score values are read from it by the consuming test."
+  },
+  "tests": ["score::tests::classic_box_score_executes_every_captured_case"],
+  "limitations": [
+    "Only the score half is consumed by Rust. The recorded unclip paths have no Rust implementation yet and establish no equivalence claim.",
+    "The score is exact to 1e-9 for the eight recorded boxes in the recorded scalar OpenCV 5.0.0 environment, and nothing else.",
+    "It does not establish detector output, model behaviour, or OCR compatibility."
+  ]
+}
