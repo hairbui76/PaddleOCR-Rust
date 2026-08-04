@@ -19,6 +19,8 @@ pub mod types;
 // Keeping them non-public avoids freezing internal detector/image/geometry APIs
 // before the corresponding compatibility evidence exists.
 #[allow(dead_code)]
+mod backend;
+#[allow(dead_code)]
 mod crop;
 #[allow(dead_code)]
 mod ctc;
