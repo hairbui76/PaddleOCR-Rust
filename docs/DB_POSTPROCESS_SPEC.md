@@ -151,7 +151,8 @@ oracle over representative boxes and match the emitted vertices instead.
 ## Required oracles
 
 `tools/capture_min_area_box_oracle.py` already records sixteen
-`minAreaRect`/`boxPoints` cases. Still missing: a `fillPoly` plus `cv2.mean`
-oracle for the score, and an `unclip` oracle. The latter is now capturable:
-`pyclipper` 1.4.0 and `shapely` 2.1.2 install cleanly in a disposable
-environment, and one worked example is recorded above.
+`minAreaRect`/`boxPoints` cases. `tools/capture_unclip_score_oracle.py` records the
+remaining two steps together over eight self-authored boxes at two unclip
+ratios, deliberately from the same input so the truncated-versus-untruncated
+corner difference stays visible. Both generators are complete; what remains is
+the Rust implementation that consumes them.
