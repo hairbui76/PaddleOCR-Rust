@@ -1,0 +1,42 @@
+{
+ "fixture_id": "classic-v1-markdown",
+ "kind": "markdown_reconstruction_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/titles,#/para_titles,#/first_lines,#/tables",
+  "sha256": "b276bc44a6f6ec5d5935bb4fc0ae8723ebdf9dade87df9236ff4ab57d4c2bcc4",
+  "sha256_scope": "No image input. Every case is a short string written out in the capture tool, so the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_markdown_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/common/result/converter/markdown_format_funcs.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/result_v2.py"
+  ],
+  "capture_method": "The pinned PaddleX formatters were imported and executed, not transcribed.",
+  "environment": "python 3.12, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "b276bc44a6f6ec5d5935bb4fc0ae8723ebdf9dade87df9236ff4ab57d4c2bcc4",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/markdown-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "markdown::tests::the_captured_titles_are_reproduced",
+  "markdown::tests::the_captured_paragraph_titles_are_reproduced",
+  "markdown::tests::the_captured_first_lines_are_reproduced",
+  "markdown::tests::the_captured_newline_handling_is_reproduced",
+  "markdown::tests::the_captured_table_simplification_is_reproduced"
+ ],
+ "limitations": [
+  "The image, chart, formula, and seal formatters are deliberately absent: they depend on P8 modules with no published ONNX export, so a port of them would have nothing to check against.",
+  "The numbering pattern is reproduced by a hand-written matcher rather than a regex engine. The sixteen captured title cases are what check it; forms outside that corpus are unverified.",
+  "No document is assembled end to end. This pins the per-label formatters, not the ordering or the block extraction that feeds them."
+ ]
+}

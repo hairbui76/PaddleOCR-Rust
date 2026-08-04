@@ -19,8 +19,9 @@ pub mod error;
 #[cfg(feature = "fuzzing")]
 #[doc(hidden)]
 pub mod fuzz;
-/// The versioned model manifest.
 pub mod manifest;
+/// The versioned model manifest.
+mod markdown;
 /// The versioned JSON result document.
 pub mod result_json;
 

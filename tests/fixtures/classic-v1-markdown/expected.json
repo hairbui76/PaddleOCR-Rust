@@ -1,0 +1,243 @@
+{
+ "collapse_soft_newlines": [
+  {
+   "content": "plain",
+   "markdown": "plain"
+  },
+  {
+   "content": "soft-\nwrapped",
+   "markdown": "softwrapped"
+  },
+  {
+   "content": "two\nlines",
+   "markdown": "two lines"
+  },
+  {
+   "content": "para\n\nbreak",
+   "markdown": "para  break"
+  },
+  {
+   "content": "trailing\n",
+   "markdown": "trailing "
+  },
+  {
+   "content": "",
+   "markdown": ""
+  },
+  {
+   "content": "multi\n\n\nblank",
+   "markdown": "multi   blank"
+  }
+ ],
+ "first_lines": [
+  {
+   "content": "abstract",
+   "markdown": "## abstract\n",
+   "splitter": " ",
+   "template": "## {}\n",
+   "templates": [
+    "\u6458\u8981",
+    "abstract"
+   ]
+  },
+  {
+   "content": "Abstract This paper",
+   "markdown": "## Abstract\n This paper",
+   "splitter": " ",
+   "template": "## {}\n",
+   "templates": [
+    "\u6458\u8981",
+    "abstract"
+   ]
+  },
+  {
+   "content": "\u6458\u8981 \u672c\u6587",
+   "markdown": "## \u6458\u8981\n \u672c\u6587",
+   "splitter": " ",
+   "template": "## {}\n",
+   "templates": [
+    "\u6458\u8981",
+    "abstract"
+   ]
+  },
+  {
+   "content": "  abstract",
+   "markdown": "  ## abstract\n",
+   "splitter": " ",
+   "template": "## {}\n",
+   "templates": [
+    "\u6458\u8981",
+    "abstract"
+   ]
+  },
+  {
+   "content": "Introduction only",
+   "markdown": "Introduction only",
+   "splitter": " ",
+   "template": "## {}\n",
+   "templates": [
+    "\u6458\u8981",
+    "abstract"
+   ]
+  },
+  {
+   "content": "references",
+   "markdown": "## references",
+   "splitter": " ",
+   "template": "## {}",
+   "templates": [
+    "\u53c2\u8003\u6587\u732e",
+    "references"
+   ]
+  },
+  {
+   "content": "\u53c2\u8003\u6587\u732e [1] a",
+   "markdown": "## \u53c2\u8003\u6587\u732e [1] a",
+   "splitter": " ",
+   "template": "## {}",
+   "templates": [
+    "\u53c2\u8003\u6587\u732e",
+    "references"
+   ]
+  }
+ ],
+ "normalize_newlines": [
+  {
+   "content": "plain",
+   "markdown": "plain"
+  },
+  {
+   "content": "soft-\nwrapped",
+   "markdown": "soft-\n\nwrapped"
+  },
+  {
+   "content": "two\nlines",
+   "markdown": "two\n\nlines"
+  },
+  {
+   "content": "para\n\nbreak",
+   "markdown": "para\n\nbreak"
+  },
+  {
+   "content": "trailing\n",
+   "markdown": "trailing\n\n"
+  },
+  {
+   "content": "",
+   "markdown": ""
+  },
+  {
+   "content": "multi\n\n\nblank",
+   "markdown": "multi\n\n\n\nblank"
+  }
+ ],
+ "note": "The image, chart, formula, and seal handlers are deliberately absent: they depend on P8 modules with no published ONNX export, so a port of them would have nothing to check against.",
+ "para_titles": [
+  {
+   "content": "1.2 Methods",
+   "markdown": "### 1.2 Methods",
+   "title_level": null
+  },
+  {
+   "content": "1.2 Methods",
+   "markdown": "## 1.2 Methods",
+   "title_level": 1
+  },
+  {
+   "content": "Methods",
+   "markdown": "#### Methods",
+   "title_level": 3
+  },
+  {
+   "content": "Methods",
+   "markdown": "####### Methods",
+   "title_level": 6
+  }
+ ],
+ "schema_version": "paddleocr-rust/markdown-oracle-capture/v1",
+ "tables": [
+  {
+   "content": "<html><body><table><tr><td>a</td></tr></table></body></html>",
+   "markdown": "\n\n<table><tr><td>a</td></tr></table>"
+  },
+  {
+   "content": "<table><tr><td>bare</td></tr></table>",
+   "markdown": "\n\n<table><tr><td>bare</td></tr></table>"
+  },
+  {
+   "content": "<html><body></body></html>",
+   "markdown": "\n\n"
+  },
+  {
+   "content": "",
+   "markdown": "\n\n"
+  }
+ ],
+ "titles": [
+  {
+   "content": "1 Introduction",
+   "markdown": "## 1 Introduction"
+  },
+  {
+   "content": "1. Introduction",
+   "markdown": "### 1. Introduction"
+  },
+  {
+   "content": "1.2 Methods",
+   "markdown": "### 1.2 Methods"
+  },
+  {
+   "content": "1.2.3 Results",
+   "markdown": "#### 1.2.3 Results"
+  },
+  {
+   "content": "1.2.3. Results",
+   "markdown": "##### 1.2.3. Results"
+  },
+  {
+   "content": "2\u3001\u65b9\u6cd5",
+   "markdown": "## 2\u3001 \u65b9\u6cd5"
+  },
+  {
+   "content": "(1) First",
+   "markdown": "## (1) First"
+  },
+  {
+   "content": "\uff08\u4e00\uff09\u7b2c\u4e00",
+   "markdown": "## \uff08\u4e00\uff09 \u7b2c\u4e00"
+  },
+  {
+   "content": "\u4e00\u3001\u7eea\u8bba",
+   "markdown": "## \u4e00\u3001 \u7eea\u8bba"
+  },
+  {
+   "content": "IV. Discussion",
+   "markdown": "### IV. Discussion"
+  },
+  {
+   "content": "Introduction",
+   "markdown": "## Introduction"
+  },
+  {
+   "content": "  1.1   Spaced  ",
+   "markdown": "### 1.1 Spaced  "
+  },
+  {
+   "content": "Trailing dots...",
+   "markdown": "## Trailing dots"
+  },
+  {
+   "content": "A.B.C lettered",
+   "markdown": "#### A.B.C lettered"
+  },
+  {
+   "content": "10.20.30 deep",
+   "markdown": "#### 10.20.30 deep"
+  },
+  {
+   "content": "Soft-\nwrapped title",
+   "markdown": "## Softwrapped title"
+  }
+ ],
+ "upstream": "paddlex 3.7.2 inference/common/result/converter/markdown_format_funcs.py"
+}

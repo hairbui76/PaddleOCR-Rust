@@ -56,6 +56,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   code path, and the two bugs it found in layout
 - [Table structure contract](TABLE_STRUCTURE_CONTRACT.md) — three facts that
   live in the registration functions, and a vocabulary that is built not read
+- [Reconstruction contract](RECONSTRUCTION_CONTRACT.md) — the per-label
+  Markdown formatters, and a newline that is added twice
 - [Reading order contract](READING_ORDER_CONTRACT.md) — the four XY-cut
   primitives, and why the two cut orders are different reading orders
 - [Specialized module API](SPECIALIZED_API.md) — what the table pipeline
