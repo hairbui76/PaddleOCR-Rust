@@ -159,6 +159,23 @@ structure is therefore to compute `(center, size, angle)` first, including the
 `boxPoints` formula, rather than emitting corners directly from the calipers
 step.
 
+
+**Second prototype: 14 of 16.** Deriving the corners from `(center, size,
+angle)` with the `boxPoints` formula fixed all three degenerate cases. The two
+remaining failures, `diamond` and `triangle`, collapse to **one** cause rather
+than two.
+
+Both are ties in edge selection. `triangle` has three candidate rectangles of
+area exactly `144`. `diamond` produces the same four corners as OpenCV but
+starting from a different one: its rectangle is square, so several edges tie on
+area, the winning edge fixes the `angle`, the `angle` rotates the `boxPoints`
+output, and the later sort by `x` is stable, so a tie between two corners at
+equal `x` preserves that rotation into the final ordered box.
+
+The single remaining prerequisite is therefore OpenCV's exact edge-visit order:
+the vertex at which `convexHull` starts, its direction, and how
+`rotatingCalipers` advances. No geometry question remains open.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
