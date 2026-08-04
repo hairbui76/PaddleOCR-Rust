@@ -1,0 +1,38 @@
+{
+  "fixture_id": "classic-v1-preprocess-detector-input",
+  "kind": "preprocess_oracle",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "expected.json#/records/*/fixture_id",
+    "sha256": "63e094352168cd6e9cb095b301ed22e73d0782b3fc7534c75f24552099421510",
+    "sha256_scope": "Concatenation of the four committed input.png files this fixture covers, in record order: classic-v1-e2e-reading-order, classic-v1-e2e-unicode, classic-v1-e2e-tall-crop, classic-v1-benchmark-page.",
+    "provenance": "This fixture introduces no new input pixels. Its inputs are four PNGs already committed and already reviewed in their own fixture directories; only their preprocessed tensors are new here.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "ppocr/data/imaug/operators.py",
+      "tools/infer/predict_det.py",
+      "tools/infer/utility.py"
+    ]
+  },
+  "artifacts": null,
+  "expected": {
+    "path": "expected.json",
+    "sha256": "9beb4533e0f17147abaf080698529f0212a03b7b3847fba21fa4e9eb15e0020d",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/classic-preprocess-detector-input/v1",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "tensor::preprocess_fixture::tests::detector_input_tensors_reproduce_the_captured_upstream_bytes"
+  ],
+  "limitations": [
+    "This is the detector input tensor only. The recognizer input tensor has no captured oracle yet, so its resize, per-batch padding, and normalization are still verified by construction rather than against upstream.",
+    "The committed values are a SHA-256 of the exact float32 little-endian C-order bytes plus a fixed stride sample of 512 exact elements per input. The full tensors are tens of megabytes and are deliberately not committed; running every element requires regenerating the capture with tools/capture_preprocess_oracle.py and the ignored tensor::pre_001 gate.",
+    "The capture was produced by importing the upstream operator classes from the read-only reference checkout and running them, so it is the upstream computation rather than a reimplementation of it. That also means regenerating it needs numpy, cv2, PIL, and paddle, none of which this repository depends on and none of which its normal test run may require.",
+    "Four inputs is not a corpus. All four are synthetic renderings; none exercises a photographic or scanned image, and the two 800x320 inputs pass through the resize unchanged because they are already stride-aligned and under the limit side length."
+  ]
+}

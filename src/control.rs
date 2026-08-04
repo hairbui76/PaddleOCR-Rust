@@ -71,6 +71,12 @@ impl RunControl {
     }
 
     /// Starts the clock, producing the per-run schedule the pipeline checks.
+    ///
+    /// Without the `onnxruntime` feature there is no backend, so nothing in the
+    /// crate begins a run and this is unreachable. The type stays public in that
+    /// build anyway rather than appearing and disappearing with a feature, which
+    /// would make the public surface depend on how the crate was compiled.
+    #[cfg_attr(not(feature = "onnxruntime"), allow(dead_code))]
     pub(crate) fn begin(&self) -> RunSchedule<'_> {
         RunSchedule {
             deadline: self.time_budget.map(|budget| Instant::now() + budget),

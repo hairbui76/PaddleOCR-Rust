@@ -470,3 +470,261 @@ mod tests {
         ));
     }
 }
+
+/// Optional comparison against a captured upstream preprocessing tensor.
+///
+/// This is `PRE-001`'s acceptance criterion. It is ignored by default because
+/// the capture is produced by `tools/capture_preprocess_oracle.py`, which needs
+/// the read-only upstream checkout plus `numpy`, `cv2`, `PIL`, and `paddle` —
+/// none of which this repository depends on, and none of which may be required
+/// to run its tests.
+///
+/// The committed offline fixture holds a sample of the same capture, so the
+/// normal test run still checks real captured values; this gate checks every
+/// element of every captured tensor.
+///
+/// ```sh
+/// PADDLEOCR_RUST_PREPROCESS_CAPTURE=<capture.json> \
+///   cargo test --lib -- --ignored --nocapture pre_001
+/// ```
+#[cfg(test)]
+mod pre_001 {
+    use super::*;
+
+    use base64::{Engine as _, engine::general_purpose::STANDARD};
+
+    use crate::geometry::classic_detector_resize_plan;
+    use crate::image::decode_classic_bgr;
+    use crate::resize::classic_linear_resize;
+    use crate::types::EncodedImage;
+
+    /// The `m2-tensor-v1` comparison rule from `docs/QUALITY_PROFILE.md`.
+    fn within_tolerance(candidate: f64, reference: f64) -> bool {
+        (candidate - reference).abs() <= 1e-4 + 1e-4 * reference.abs()
+    }
+
+    /// Builds this port's detector input tensor for one encoded PNG.
+    pub(super) fn detector_input_for(png: &[u8]) -> (Vec<usize>, Vec<f32>) {
+        let encoded = match EncodedImage::new(png) {
+            Ok(value) => value,
+            Err(error) => panic!("encoded image: {error}"),
+        };
+        let image = match decode_classic_bgr(encoded) {
+            Ok(value) => value,
+            Err(error) => panic!("decode: {error}"),
+        };
+        let plan = classic_detector_resize_plan(image.dimensions());
+        let resized = match classic_linear_resize(&image, plan.resized()) {
+            Ok(value) => value,
+            Err(error) => panic!("resize: {error}"),
+        };
+        let tensor = match classic_detector_input(&resized) {
+            Ok(value) => value,
+            Err(error) => panic!("tensor: {error}"),
+        };
+        (tensor.shape().to_vec(), tensor.values().to_vec())
+    }
+
+    /// Decodes a base64 little-endian `float32` payload.
+    pub(super) fn decode_f32(encoded: &str) -> Vec<f32> {
+        let bytes = match STANDARD.decode(encoded) {
+            Ok(bytes) => bytes,
+            Err(error) => panic!("base64: {error}"),
+        };
+        assert_eq!(bytes.len() % 4, 0, "float32 payload must be a whole number");
+        bytes
+            .chunks_exact(4)
+            .map(|chunk| f32::from_le_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]))
+            .collect()
+    }
+
+    #[test]
+    #[ignore = "PRE-001: needs a capture from the upstream checkout"]
+    fn every_captured_element_matches_within_the_declared_tolerance() {
+        let path = match std::env::var("PADDLEOCR_RUST_PREPROCESS_CAPTURE") {
+            Ok(value) => value,
+            Err(_) => panic!("set PADDLEOCR_RUST_PREPROCESS_CAPTURE"),
+        };
+        let text = match std::fs::read_to_string(&path) {
+            Ok(value) => value,
+            Err(error) => panic!("capture file: {error}"),
+        };
+        let document: serde_json::Value = match serde_json::from_str(&text) {
+            Ok(value) => value,
+            Err(error) => panic!("capture json: {error}"),
+        };
+
+        let records = match document["records"].as_array() {
+            Some(records) => records,
+            None => panic!("capture must hold records"),
+        };
+        assert!(!records.is_empty(), "capture must not be empty");
+
+        for record in records {
+            let fixture = record["fixture_id"].as_str().unwrap_or("<unnamed>");
+            let png_path = record["input_path"].as_str().unwrap_or_default();
+            let png = match std::fs::read(png_path) {
+                Ok(bytes) => bytes,
+                Err(error) => panic!("{fixture} input {png_path}: {error}"),
+            };
+
+            let (shape, ours) = detector_input_for(&png);
+            let captured = &record["detector_input"];
+            let expected_shape: Vec<usize> = match captured["shape"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|value| value.as_u64().unwrap_or_default() as usize)
+                    .collect(),
+                None => panic!("{fixture} capture must record a shape"),
+            };
+            assert_eq!(shape, expected_shape, "{fixture} tensor shape");
+
+            let reference = decode_f32(captured["values_base64"].as_str().unwrap_or_default());
+            assert_eq!(reference.len(), ours.len(), "{fixture} element count");
+
+            let mut worst = 0.0_f64;
+            let mut worst_index = 0;
+            let mut failures = 0_usize;
+            for (index, (candidate, expected)) in ours.iter().zip(&reference).enumerate() {
+                let (candidate, expected) = (f64::from(*candidate), f64::from(*expected));
+                let deviation = (candidate - expected).abs();
+                if deviation > worst {
+                    worst = deviation;
+                    worst_index = index;
+                }
+                if !within_tolerance(candidate, expected) {
+                    failures += 1;
+                }
+            }
+            let identical = ours
+                .iter()
+                .zip(&reference)
+                .all(|(candidate, expected)| candidate.to_bits() == expected.to_bits());
+            println!(
+                "[pre_001] {fixture}: {} elements, worst absolute deviation {worst:.3e} at \
+                 index {worst_index}, {failures} outside tolerance, bit-identical: {identical}",
+                ours.len()
+            );
+            assert_eq!(
+                failures, 0,
+                "{fixture}: {failures} elements outside the m2-tensor-v1 tolerance"
+            );
+        }
+    }
+}
+
+/// The committed offline half of `PRE-001`.
+///
+/// The full upstream capture is tens of megabytes and is not in this repository.
+/// What is committed is, per input, the tensor shape and the SHA-256 of the
+/// exact `float32` little-endian C-order bytes upstream produced, plus a fixed
+/// stride sample of exact values.
+///
+/// The digest is the real check. The samples exist so that a failure says
+/// *where* the tensors diverged rather than only *that* they did, which is the
+/// difference between a usable regression signal and a dead end.
+#[cfg(test)]
+mod preprocess_fixture {
+    use super::pre_001::{decode_f32, detector_input_for};
+
+    const FIXTURE: &str =
+        include_str!("../tests/fixtures/classic-v1-preprocess-detector-input/expected.json");
+
+    /// The inputs the fixture covers, paired with their committed PNG bytes.
+    const INPUTS: [(&str, &[u8]); 4] = [
+        (
+            "classic-v1-e2e-reading-order",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png"),
+        ),
+        (
+            "classic-v1-e2e-unicode",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-unicode/input.png"),
+        ),
+        (
+            "classic-v1-e2e-tall-crop",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-tall-crop/input.png"),
+        ),
+        (
+            "classic-v1-benchmark-page",
+            include_bytes!("../tests/fixtures/classic-v1-benchmark-page/input.png"),
+        ),
+    ];
+
+    fn sha256_hex(bytes: &[u8]) -> String {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+        hasher
+            .finalize()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect()
+    }
+
+    mod tests {
+        use super::*;
+
+        #[test]
+        fn detector_input_tensors_reproduce_the_captured_upstream_bytes() {
+            let document: serde_json::Value = match serde_json::from_str(FIXTURE) {
+                Ok(value) => value,
+                Err(error) => panic!("fixture json: {error}"),
+            };
+            let records = match document["records"].as_array() {
+                Some(records) => records,
+                None => panic!("fixture must hold records"),
+            };
+            assert_eq!(records.len(), INPUTS.len(), "fixture record count");
+
+            for (record, (name, png)) in records.iter().zip(INPUTS) {
+                assert_eq!(
+                    record["fixture_id"].as_str().unwrap_or_default(),
+                    name,
+                    "fixture record order must match the committed inputs"
+                );
+
+                let (shape, ours) = detector_input_for(png);
+                let expected_shape: Vec<usize> = match record["shape"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or_default() as usize)
+                        .collect(),
+                    None => panic!("{name}: fixture must record a shape"),
+                };
+                assert_eq!(shape, expected_shape, "{name} tensor shape");
+
+                // The bytes upstream produced, reconstructed exactly: little-endian
+                // float32 in C order, which is what the capture hashed.
+                let mut bytes = Vec::with_capacity(ours.len() * 4);
+                for value in &ours {
+                    bytes.extend_from_slice(&value.to_le_bytes());
+                }
+                assert_eq!(
+                    sha256_hex(&bytes),
+                    record["values_sha256"].as_str().unwrap_or_default(),
+                    "{name}: detector input tensor differs from the captured upstream bytes"
+                );
+
+                // The digest already proved equality; the samples are checked so
+                // that a future divergence reports a located value.
+                let indices: Vec<usize> = match record["sample_indices"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or_default() as usize)
+                        .collect(),
+                    None => panic!("{name}: fixture must record sample indices"),
+                };
+                let samples =
+                    decode_f32(record["sample_values_base64"].as_str().unwrap_or_default());
+                assert_eq!(indices.len(), samples.len(), "{name} sample length");
+                for (index, expected) in indices.iter().zip(&samples) {
+                    assert_eq!(
+                        ours[*index].to_bits(),
+                        expected.to_bits(),
+                        "{name}: element {index}"
+                    );
+                }
+            }
+        }
+    }
+}

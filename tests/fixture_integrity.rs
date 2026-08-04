@@ -190,6 +190,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-geometry-min-area-candidate".to_owned(),
         "classic-v1-image-inputs".to_owned(),
         "classic-v1-benchmark-page".to_owned(),
+        "classic-v1-preprocess-detector-input".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,
