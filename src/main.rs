@@ -13,6 +13,7 @@ fn usage() -> &'static str {
     "usage: paddleocr-rust --ort-dylib <libonnxruntime.so> \\\n\
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
      \x20                 --dictionary <dict.txt> [--json] [--time-budget-ms <n>] \\\n\
+     \x20                 [--manifest <manifest.txt>] \\\n\
      \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>...\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
@@ -66,6 +67,7 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut images: Vec<String> = Vec::new();
     let mut json = false;
     let mut time_budget_ms = None;
+    let mut manifest_path = None;
     let mut detector_sha256 = None;
     let mut recognizer_sha256 = None;
 
@@ -108,6 +110,10 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
                 take(&mut time_budget_ms)?;
                 index += 2;
             }
+            "--manifest" => {
+                take(&mut manifest_path)?;
+                index += 2;
+            }
             "--json" => {
                 json = true;
                 index += 1;
@@ -142,11 +148,50 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             .with_time_budget(std::time::Duration::from_millis(milliseconds));
     }
 
+    // A manifest is provenance and identity, never a download instruction and
+    // never a path resolver: the artifact paths above are still the caller's.
+    // Its digests are applied as the expected ones when the caller did not give
+    // them explicitly, so declaring a manifest is also declaring verification.
+    let manifest = match &manifest_path {
+        Some(path) => {
+            let text = std::fs::read_to_string(path)
+                .map_err(|error| format!("cannot read the manifest: {error}"))?;
+            let parsed = paddleocr_rust::manifest::ModelManifest::parse(&text)
+                .map_err(|error| format!("{path}: {error}"))?;
+            eprintln!(
+                "manifest: {} {} ({} via {})",
+                parsed.family, parsed.version, parsed.format, parsed.backend
+            );
+            Some(parsed)
+        }
+        None => None,
+    };
+    if let Some(parsed) = &manifest {
+        if detector_sha256.is_none() {
+            detector_sha256 = Some(parsed.detector.sha256.clone());
+        }
+        if recognizer_sha256.is_none() {
+            recognizer_sha256 = Some(parsed.recognizer.sha256.clone());
+        }
+    }
+
     let dictionary_text = std::fs::read_to_string(&dictionary)
         .map_err(|error| format!("cannot read the dictionary: {error}"))?;
     let parsed = paddleocr_rust::api::parse_dictionary(&dictionary_text, true)
         .map_err(|error| format!("{error}"))?;
     eprintln!("dictionary: {} entries", parsed.len());
+    // A manifest that disagrees with the dictionary it was given describes a
+    // different pairing than the one about to run, so it is refused rather than
+    // recorded alongside a result it does not describe.
+    if let Some(expected) = &manifest
+        && expected.dictionary.entries != parsed.len()
+    {
+        return Err(format!(
+            "the manifest declares {} dictionary entries but the file has {}",
+            expected.dictionary.entries,
+            parsed.len()
+        ));
+    }
 
     // Loading once is the point of the engine: session creation costs about
     // 1.4 s on the reference host, and paying it per image would make a
@@ -182,7 +227,13 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             let id = if several { Some(image.as_str()) } else { None };
             println!(
                 "{}",
-                paddleocr_rust::result_json::result_to_json(&lines, width, height, id)
+                paddleocr_rust::result_json::result_to_json(
+                    &lines,
+                    width,
+                    height,
+                    id,
+                    manifest.as_ref(),
+                )
             );
         } else {
             for line in &lines {

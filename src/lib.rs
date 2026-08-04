@@ -12,10 +12,13 @@ pub mod api;
 pub mod digest;
 /// Structured errors returned by public foundation types.
 pub mod error;
+
 /// Developer-only byte-driven fuzz driver for current private pure kernels.
 #[cfg(feature = "fuzzing")]
 #[doc(hidden)]
 pub mod fuzz;
+/// The versioned model manifest.
+pub mod manifest;
 /// The versioned JSON result document.
 pub mod result_json;
 

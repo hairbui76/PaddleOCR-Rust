@@ -20,6 +20,8 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [Quality profile](QUALITY_PROFILE.md) and [risk register](RISK_REGISTER.md)
 - [Gate G3 resource evidence](G3_RESOURCE_EVIDENCE.md) — the measured latency,
   memory, and binary figures behind the quality profile's budgets
+- [Model artifact policy](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md) — conversion,
+  distribution, cache, integrity, provenance, and licensing decisions
 - [User guide](USER_GUIDE.md) — building, provisioning, running, output schema,
   limits, and known differences from upstream
 - [Language and script support](LANGUAGE_SUPPORT.md) — the one verified

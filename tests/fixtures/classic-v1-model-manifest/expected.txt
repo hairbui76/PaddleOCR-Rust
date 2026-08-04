@@ -1,0 +1,36 @@
+# Classic PP-OCRv6_medium OCR manifest.
+#
+# Policy: docs/ADR_MODEL_DEC_001_ARTIFACT_POLICY.md
+# Schema: src/manifest.rs
+#
+# URLs are recorded, never fetched. Nothing here selects an artifact by search,
+# cache, or environment; a caller still names each local path.
+
+schema_version = paddleocr-rust/model-manifest/v1
+
+task = ocr.classic
+family = PP-OCRv6_medium
+version = 2026-08-04
+format = onnx
+backend = onnxruntime
+
+upstream.commit = 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
+license.review = LIC-001
+
+detector.url = https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_det_onnx
+detector.revision = 61323801669c338b7891481ec7bac61ce31b576a
+detector.sha256 = eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1
+detector.bytes = 62032837
+detector.input.name = x
+detector.output.name = fetch_name_0
+
+recognizer.url = https://huggingface.co/PaddlePaddle/PP-OCRv6_medium_rec_onnx
+recognizer.revision = 50c7eacafc52fa7bcf4194e8cd08e46f8558504b
+recognizer.sha256 = 9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba
+recognizer.bytes = 76554979
+recognizer.input.name = x
+recognizer.output.name = fetch_name_0
+
+dictionary.sha256 = b5f2bfe2bdd9448429e3e82b51c789775d9b42f2403d082b00662eb77e401c5d
+dictionary.entries = 18708
+dictionary.appends_space = true

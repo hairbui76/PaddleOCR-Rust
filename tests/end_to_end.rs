@@ -13,6 +13,7 @@
 
 use paddleocr_rust::api::{OcrOptions, parse_dictionary};
 use paddleocr_rust::error::Error;
+use paddleocr_rust::manifest::ModelManifest;
 use paddleocr_rust::result_json::{RESULT_SCHEMA_VERSION, result_to_json};
 use paddleocr_rust::types::{MAX_ENCODED_IMAGE_BYTES, MAX_IMAGE_PIXELS, MAX_IMAGE_SIDE_LENGTH};
 
@@ -134,18 +135,48 @@ fn dictionary_parsing_reports_its_own_failures() {
     assert_eq!(parsed.len(), 3, "the entry count excludes blank and space");
 }
 
+/// A manifest supplies the model-identity block, and a caller without one gets
+/// an explicit `null` rather than a missing field.
+#[test]
+fn the_model_block_is_null_without_a_manifest_and_filled_with_one() {
+    let anonymous = result_to_json(&[], 8, 8, None, None);
+    assert!(anonymous.contains("\"model\":null"), "{anonymous}");
+
+    let text = include_str!("fixtures/classic-v1-model-manifest/expected.txt");
+    let manifest = match ModelManifest::parse(text) {
+        Ok(manifest) => manifest,
+        Err(error) => panic!("manifest: {error}"),
+    };
+    let identified = result_to_json(&[], 8, 8, None, Some(&manifest));
+    assert!(
+        identified.contains("\"family\":\"PP-OCRv6_medium\""),
+        "{identified}"
+    );
+    assert_eq!(manifest.recognizer_class_count(), 18_710);
+}
+
+/// A manifest that fails validation is refused through the public API too.
+#[test]
+fn an_invalid_manifest_is_a_typed_error() {
+    assert!(ModelManifest::parse("").is_err(), "an empty manifest");
+    assert!(
+        ModelManifest::parse("schema_version = paddleocr-rust/model-manifest/v1\n").is_err(),
+        "a manifest with only a schema version"
+    );
+}
+
 #[test]
 fn the_result_document_is_versioned_and_deterministic() {
-    let empty = result_to_json(&[], 800, 320, None);
+    let empty = result_to_json(&[], 800, 320, None, None);
     assert!(empty.contains(RESULT_SCHEMA_VERSION), "{empty}");
     assert!(empty.contains("\"lines\":[]"), "{empty}");
     assert_eq!(
         empty,
-        result_to_json(&[], 800, 320, None),
+        result_to_json(&[], 800, 320, None, None),
         "the same input must serialise byte-identically"
     );
 
-    let named = result_to_json(&[], 800, 320, Some("page-01.png"));
+    let named = result_to_json(&[], 800, 320, Some("page-01.png"), None);
     assert!(named.contains("\"id\":\"page-01.png\""), "{named}");
 }
 

@@ -1,0 +1,37 @@
+{
+  "fixture_id": "classic-v1-model-manifest",
+  "kind": "manifest",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "expected.txt#/schema_version",
+    "sha256": "ae7c87afda01616b9564467b1ec2a220a032e4f891f525dffa1533e9d910884a",
+    "sha256_scope": "Exact UTF-8 manifest file; the fixture's input and its expectation are the same document, because a manifest is validated by parsing it.",
+    "provenance": "Self-authored. Every digest, revision, byte count, and tensor name in it is copied from docs/MODEL_CANDIDATES.md and the committed end-to-end fixtures, which recorded them first. No artifact bytes are present.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/utility.py",
+      "ppocr/utils/dict/ppocrv6_dict.txt"
+    ]
+  },
+  "artifacts": null,
+  "expected": {
+    "path": "expected.txt",
+    "sha256": "ae7c87afda01616b9564467b1ec2a220a032e4f891f525dffa1533e9d910884a",
+    "sha256_scope": "Exact UTF-8 manifest file.",
+    "schema_version": "paddleocr-rust/model-manifest/v1",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "manifest::tests::the_committed_manifest_parses_and_matches_the_pinned_artifacts"
+  ],
+  "limitations": [
+    "This records identity and provenance, not resolution. Nothing loads a model from it yet; MOD-003 owns turning a manifest into loaded sessions, and until then the digests here and the digests a caller passes on the command line are maintained separately.",
+    "It records URLs and never fetches them. A URL in this file is provenance, not a download instruction, and MOD-004 remains unapproved.",
+    "The tensor contract is recorded as input and output names only. The per-axis extents this port enforces live in code, so a manifest cannot yet relax or tighten them.",
+    "One manifest for one artifact pair. It demonstrates the schema; it is not a registry, and a second pair needs its own verification under LANG-001 rather than another row here."
+  ]
+}

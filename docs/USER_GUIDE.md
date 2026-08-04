@@ -142,6 +142,35 @@ in the wrong order loads without complaint** and fails only on first use. With
 digests declared, the swap is refused before the runtime sees a byte. Shape does
 not tell two models apart; identity does.
 
+### Using a manifest
+
+A manifest names the artifact pair a run is meant to use: family, version,
+format, backend, each artifact's source revision, byte count and SHA-256, the
+dictionary fingerprint, the licence review, and the upstream commit it was
+verified against.
+
+```sh
+paddleocr-rust ... --manifest classic-ppocrv6-medium.txt page.png
+```
+
+Three things it does, and one it does not:
+
+- Its digests become the expected ones when you did not pass
+  `--detector-sha256` / `--recognizer-sha256`, so declaring a manifest is also
+  declaring verification.
+- It is checked against the dictionary you loaded; a manifest declaring a
+  different entry count describes a different pairing and is refused.
+- Its identity fields appear in `--json` output under `model`.
+- It does **not** resolve paths, and it never fetches a URL. You still name each
+  local file. The URLs in it are provenance for whoever provisions, not download
+  instructions.
+
+The schema is `paddleocr-rust/model-manifest/v1`; the committed example is
+`tests/fixtures/classic-v1-model-manifest/expected.txt` and the policy behind it
+is [`ADR_MODEL_DEC_001_ARTIFACT_POLICY.md`](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md).
+An unknown key is an error rather than being ignored, because a lenient parser
+turns `detector.sha265` into an artifact that looks verified and is not.
+
 ### Bounding a run
 
 ```sh
@@ -197,6 +226,7 @@ One document per image, on one line. With several images that is JSONL.
 | `schema_version` | frozen identifier; a breaking change gets a new one |
 | `input.id` | the path you gave, when several images were passed; `null` for one |
 | `input.page_index` | always `null`; multipage input does not exist yet |
+| `model` | identity from `--manifest`: family, version, format, backend, and the three digests; `null` when no manifest was given |
 | `input.width` / `height` | the decoded image's dimensions |
 | `lines[].quad` | four corners in source-image pixels, in `get_mini_boxes` order |
 | `lines[].text` | exact Unicode scalars, JSON-escaped and nothing else |

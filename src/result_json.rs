@@ -14,6 +14,7 @@
 //! which is the same exact-scalar rule the dictionary enforces.
 
 use crate::api::TextLine;
+use crate::manifest::ModelManifest;
 
 /// The frozen result schema version.
 pub const RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/ocr-result/v1";
@@ -24,8 +25,20 @@ pub const RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/ocr-result/v1";
 /// single anonymous input and `Some` when the caller has several, which is what
 /// makes a JSONL stream of these documents self-describing: without it, two
 /// lines of output would be indistinguishable except by position.
+///
+/// `model` fills the document's model-metadata block. It is `None` when the
+/// caller did not supply a manifest, and the block is then `null` rather than
+/// being omitted: a field that appears and disappears would make the schema
+/// two schemas, and a consumer could not tell "no manifest was given" from
+/// "this producer predates the field".
 #[must_use]
-pub fn result_to_json(lines: &[TextLine], width: u32, height: u32, id: Option<&str>) -> String {
+pub fn result_to_json(
+    lines: &[TextLine],
+    width: u32,
+    height: u32,
+    id: Option<&str>,
+    model: Option<&ModelManifest>,
+) -> String {
     let mut out = String::new();
     out.push_str("{\"schema_version\":\"");
     out.push_str(RESULT_SCHEMA_VERSION);
@@ -38,7 +51,12 @@ pub fn result_to_json(lines: &[TextLine], width: u32, height: u32, id: Option<&s
     out.push_str(&width.to_string());
     out.push_str(",\"height\":");
     out.push_str(&height.to_string());
-    out.push_str("},\"lines\":[");
+    out.push_str("},\"model\":");
+    match model {
+        Some(manifest) => push_model(&mut out, manifest),
+        None => out.push_str("null"),
+    }
+    out.push_str(",\"lines\":[");
     for (index, line) in lines.iter().enumerate() {
         if index > 0 {
             out.push(',');
@@ -62,6 +80,30 @@ pub fn result_to_json(lines: &[TextLine], width: u32, height: u32, id: Option<&s
     }
     out.push_str("]}");
     out
+}
+
+/// Appends the model-metadata block from a validated manifest.
+///
+/// Only identity travels: family, version, format, backend, the two artifact
+/// digests, and the dictionary digest. Not the URLs, which are provenance for
+/// whoever provisions rather than something a result should carry, and not the
+/// byte counts, which say nothing a digest does not.
+fn push_model(out: &mut String, manifest: &ModelManifest) {
+    out.push_str("{\"family\":");
+    push_json_string(out, &manifest.family);
+    out.push_str(",\"version\":");
+    push_json_string(out, &manifest.version);
+    out.push_str(",\"format\":");
+    push_json_string(out, &manifest.format);
+    out.push_str(",\"backend\":");
+    push_json_string(out, &manifest.backend);
+    out.push_str(",\"detector_sha256\":");
+    push_json_string(out, &manifest.detector.sha256);
+    out.push_str(",\"recognizer_sha256\":");
+    push_json_string(out, &manifest.recognizer.sha256);
+    out.push_str(",\"dictionary_sha256\":");
+    push_json_string(out, &manifest.dictionary.sha256);
+    out.push('}');
 }
 
 /// Appends one JSON string literal with the minimal required escaping.
@@ -111,16 +153,19 @@ mod tests {
 
     #[test]
     fn the_result_shape_is_stable_and_deterministic() {
-        let json = result_to_json(&[line("hi", 0.5)], 800, 320, None);
+        let json = result_to_json(&[line("hi", 0.5)], 800, 320, None, None);
         let expected = concat!(
             "{\"schema_version\":\"paddleocr-rust/ocr-result/v1\",",
-            "\"input\":{\"id\":null,\"page_index\":null,\"width\":800,\"height\":320},",
+            "\"input\":{\"id\":null,\"page_index\":null,\"width\":800,\"height\":320},\"model\":null,",
             "\"lines\":[{\"quad\":[[1,2],[3,2],[3,4],[1,4]],",
             "\"text\":\"hi\",\"confidence\":0.5000000000}]}"
         );
         assert_eq!(json, expected);
         // Serialising the same input twice must be byte-identical.
-        assert_eq!(json, result_to_json(&[line("hi", 0.5)], 800, 320, None));
+        assert_eq!(
+            json,
+            result_to_json(&[line("hi", 0.5)], 800, 320, None, None)
+        );
     }
 
     /// A named input carries its identifier, escaped like any other text.
@@ -129,21 +174,42 @@ mod tests {
     /// which document belongs to which input.
     #[test]
     fn a_named_input_records_its_identifier() {
-        let json = result_to_json(&[], 4, 4, Some("pages/a\"b.png"));
+        let json = result_to_json(&[], 4, 4, Some("pages/a\"b.png"), None);
         assert!(json.contains("\"id\":\"pages/a\\\"b.png\""), "{json}");
     }
 
     #[test]
     fn an_empty_result_is_still_well_formed() {
-        let json = result_to_json(&[], 3, 2, None);
+        let json = result_to_json(&[], 3, 2, None, None);
         assert!(json.contains("\"lines\":[]"), "{json}");
+    }
+
+    /// A supplied manifest fills the model block with identity only.
+    #[test]
+    fn a_supplied_manifest_records_model_identity() {
+        let text = include_str!("../tests/fixtures/classic-v1-model-manifest/expected.txt");
+        let manifest = match ModelManifest::parse(text) {
+            Ok(manifest) => manifest,
+            Err(error) => panic!("manifest: {error}"),
+        };
+        let json = result_to_json(&[], 8, 8, None, Some(&manifest));
+        assert!(json.contains("\"family\":\"PP-OCRv6_medium\""), "{json}");
+        assert!(json.contains("\"backend\":\"onnxruntime\""), "{json}");
+        assert!(
+            json.contains("\"detector_sha256\":\"eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1\""),
+            "{json}"
+        );
+        // Provenance stays out of the result: a URL belongs with whoever
+        // provisions the artifact, not in every document produced from it.
+        assert!(!json.contains("huggingface.co"), "{json}");
+        assert!(!json.contains("62032837"), "{json}");
     }
 
     #[test]
     fn text_is_escaped_but_scalars_are_not_transformed() {
         let control = char::from_u32(1).unwrap_or('?');
         let text = format!("a\"b\\c{control}\u{4f60}");
-        let json = result_to_json(&[line(&text, 0.25)], 10, 10, None);
+        let json = result_to_json(&[line(&text, 0.25)], 10, 10, None, None);
         // The quote and backslash are escaped, the control becomes a \u
         // sequence, and the CJK scalar passes through unchanged.
         assert!(json.contains("\\\"b\\\\c\\u0001\u{4f60}"), "{json}");
