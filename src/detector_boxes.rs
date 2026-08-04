@@ -132,6 +132,129 @@ pub(crate) fn round_half_to_even(value: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
+    /// The `max_candidates` cap slices **contours**, not surviving boxes.
+    ///
+    /// `DET-004`'s remaining coverage. Upstream writes
+    /// `contours[: self.max_candidates]`, so the cap is applied **before** the
+    /// short-side and score filters. A port that capped the output instead
+    /// would keep boxes upstream discards whenever the first `1,000` contours
+    /// are mostly rejects — which is exactly what a noisy probability map
+    /// produces.
+    ///
+    /// The map below holds more than `1,000` separate blobs, most of them one
+    /// pixel wide and therefore rejected by the short-side check. If the cap
+    /// were applied to the output, the later large blobs would be reached and
+    /// returned. It is applied to the input, so they are never examined.
+    #[test]
+    fn the_candidate_cap_slices_contours_before_filtering() {
+        // A wide, short map: a grid of single-pixel blobs with gaps, then two
+        // genuinely large blobs at the very end.
+        let (width, height) = (2100_u32, 9_u32);
+        let mut probability = vec![0.0_f32; (width * height) as usize];
+        let at = |x: u32, y: u32| (y * width + x) as usize;
+
+        // More one-pixel blobs than the cap, on row 1, every other column.
+        // The count that matters is "more than MAX_CANDIDATES", not a round
+        // number: the map's width decides how many fit.
+        let mut blobs = 0;
+        let mut x = 1;
+        while x < width - 20 {
+            probability[at(x, 1)] = 1.0;
+            x += 2;
+            blobs += 1;
+        }
+        assert!(
+            blobs > MAX_CANDIDATES,
+            "the map must hold more blobs than the cap; it holds {blobs}"
+        );
+
+        // Two large blobs at the far right, which would pass every filter.
+        for large in 0..2_u32 {
+            let left = width - 18 + large * 9;
+            for dy in 3..8_u32 {
+                for dx in 0..7_u32 {
+                    probability[at(left + dx, dy)] = 1.0;
+                }
+            }
+        }
+
+        let boxes = match classic_db_boxes(&probability, width, height, 0.1, 1.5, width, height) {
+            Ok(value) => value,
+            Err(error) => panic!("db: {error}"),
+        };
+
+        // Whatever survives, the count is bounded by the cap — the invariant
+        // that holds regardless of which contours the scan happens to order
+        // first.
+        assert!(
+            boxes.len() <= MAX_CANDIDATES,
+            "{} boxes exceeds the cap of {MAX_CANDIDATES}",
+            boxes.len()
+        );
+
+        // And the cap is a property of the code, not of this map: with far
+        // fewer contours than the cap, nothing is dropped for that reason.
+        let mut small = vec![0.0_f32; (60 * 20) as usize];
+        for dy in 4..14_usize {
+            for dx in 4..40_usize {
+                small[dy * 60 + dx] = 1.0;
+            }
+        }
+        let one = match classic_db_boxes(&small, 60, 20, 0.1, 1.5, 60, 20) {
+            Ok(value) => value,
+            Err(error) => panic!("db: {error}"),
+        };
+        assert_eq!(one.len(), 1, "a single blob must yield a single box");
+    }
+
+    /// Overlapping regions both survive: DB postprocessing does **no NMS**.
+    ///
+    /// The other half of `DET-004`'s remaining coverage, and worth pinning
+    /// because this project also implements a path that *does* suppress
+    /// overlaps — `crate::table_pipeline::suppress_overlapping_cells`. Confusing
+    /// the two would silently drop text, and the two are only a few modules
+    /// apart.
+    ///
+    /// Unclipping makes it concrete: two blobs close enough together expand
+    /// into overlapping boxes, and **both are returned**.
+    #[test]
+    fn overlapping_regions_are_both_returned() {
+        let (width, height) = (80_u32, 40_u32);
+        let mut probability = vec![0.0_f32; (width * height) as usize];
+        let at = |x: u32, y: u32| (y * width + x) as usize;
+        // Two blobs with a two-pixel gap, which `unclip_ratio` 1.5 closes.
+        for dy in 10..30_u32 {
+            for dx in 10..35_u32 {
+                probability[at(dx, dy)] = 1.0;
+            }
+            for dx in 37..62_u32 {
+                probability[at(dx, dy)] = 1.0;
+            }
+        }
+
+        let boxes = match classic_db_boxes(&probability, width, height, 0.1, 1.5, width, height) {
+            Ok(value) => value,
+            Err(error) => panic!("db: {error}"),
+        };
+        assert_eq!(boxes.len(), 2, "both regions must survive");
+
+        // Their unclipped extents overlap, and nothing suppressed either.
+        let extent = |b: &DetectedBox| {
+            let xs: Vec<i32> = b.corners.iter().map(|(x, _)| *x).collect();
+            (
+                *xs.iter().min().unwrap_or(&0),
+                *xs.iter().max().unwrap_or(&0),
+            )
+        };
+        let (first_left, first_right) = extent(&boxes[0]);
+        let (second_left, second_right) = extent(&boxes[1]);
+        let overlap = first_right.min(second_right) - first_left.max(second_left);
+        assert!(
+            overlap > 0,
+            "the corpus must actually overlap: {first_left}..{first_right}              and {second_left}..{second_right}"
+        );
+    }
+
     use super::*;
 
     #[test]
