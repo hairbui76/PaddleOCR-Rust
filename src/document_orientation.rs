@@ -235,6 +235,55 @@ impl DocumentRotation {
     }
 }
 
+/// Classifies a page's orientation, returning the angle in degrees.
+///
+/// The label list is `["0", "90", "180", "270"]`, bare numbers rather than the
+/// text-line model's `_degree` suffix, so the label parses directly. Ties
+/// resolve to the lowest class, matching NumPy's `argmax`.
+///
+/// Unlike the text-line classifier there is **no threshold**: upstream's
+/// document pipeline acts on the top class whatever its confidence, and adding a
+/// threshold here would be this project inventing a behaviour rather than
+/// porting one.
+pub(crate) fn classify_page(
+    backend: &dyn crate::backend::InferenceBackend,
+    contract: &crate::backend::ModelContract,
+    page: &InterleavedImage,
+) -> Result<u32> {
+    use crate::backend::{BackendTensor, run_validated};
+
+    let tensor = document_orientation_input(page)?;
+    let input = BackendTensor::new(tensor.shape().to_vec(), tensor.values().to_vec())?;
+    let output = run_validated(backend, contract, &input)?;
+
+    let shape = output.shape();
+    if shape.len() != 2 || shape[0] != 1 || shape[1] != DOCUMENT_LABELS.len() {
+        return Err(Error::InvalidInput {
+            field: "document_orientation.output_shape",
+            violation: InputViolation::OutOfRange,
+        });
+    }
+    let scores = output.values();
+    let mut best = 0_usize;
+    for (index, value) in scores.iter().enumerate() {
+        if !value.is_finite() {
+            return Err(Error::InvalidInput {
+                field: "document_orientation.scores",
+                violation: InputViolation::NonFinite,
+            });
+        }
+        if *value > scores[best] {
+            best = index;
+        }
+    }
+    DOCUMENT_LABELS[best]
+        .parse::<u32>()
+        .map_err(|_| Error::InvalidInput {
+            field: "document_orientation.label",
+            violation: InputViolation::OutOfRange,
+        })
+}
+
 /// Rotates a page through upstream's affine matrix with cubic resampling.
 ///
 /// # Why this cannot reuse the crop warp

@@ -58,6 +58,13 @@ pub struct OcrOptions {
     /// opposite convention from `box_threshold`. Ignored unless an orientation
     /// artifact was supplied.
     pub orientation_threshold: f64,
+    /// Which document preprocessing stages to run before detection.
+    ///
+    /// Both default to off, matching upstream. Enabling unwarping makes the
+    /// returned coordinates unmappable to the caller's page, which is why
+    /// [`OcrEngine::recognize_png`] refuses it and
+    /// [`OcrEngine::recognize_document`] exists.
+    pub document: crate::document_pipeline::DocumentPreprocessOptions,
     /// How the caller may abandon a run in progress.
     ///
     /// The default imposes no budget and no cancellation. See
@@ -75,6 +82,7 @@ impl Default for OcrOptions {
             unclip_ratio: 1.5,
             drop_score: 0.5,
             orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
+            document: crate::document_pipeline::DocumentPreprocessOptions::default(),
             control: RunControl::unbounded(),
         }
     }
@@ -106,6 +114,16 @@ impl OcrOptions {
     #[must_use]
     pub fn with_orientation_threshold(mut self, threshold: f64) -> Self {
         self.orientation_threshold = threshold;
+        self
+    }
+
+    /// Sets which document preprocessing stages run before detection.
+    #[must_use]
+    pub fn with_document_preprocessing(
+        mut self,
+        document: crate::document_pipeline::DocumentPreprocessOptions,
+    ) -> Self {
+        self.document = document;
         self
     }
 
@@ -285,6 +303,14 @@ pub struct Artifacts<'a> {
     pub orientation: Option<&'a str>,
     /// Expected orientation classifier SHA-256, lowercase hexadecimal.
     pub orientation_sha256: Option<&'a str>,
+    /// Optional document orientation classifier.
+    pub document_orientation: Option<&'a str>,
+    /// Expected document orientation classifier SHA-256.
+    pub document_orientation_sha256: Option<&'a str>,
+    /// Optional unwarping model.
+    pub unwarping: Option<&'a str>,
+    /// Expected unwarping model SHA-256.
+    pub unwarping_sha256: Option<&'a str>,
 }
 
 #[cfg(feature = "onnxruntime")]
@@ -306,6 +332,10 @@ impl<'a> Artifacts<'a> {
             recognizer_sha256: None,
             orientation: None,
             orientation_sha256: None,
+            document_orientation: None,
+            document_orientation_sha256: None,
+            unwarping: None,
+            unwarping_sha256: None,
         }
     }
 
@@ -338,6 +368,37 @@ impl<'a> Artifacts<'a> {
     #[must_use]
     pub const fn with_orientation_sha256(mut self, digest: &'a str) -> Self {
         self.orientation_sha256 = Some(digest);
+        self
+    }
+
+    /// Adds a document orientation classifier, for whole-page rotation.
+    ///
+    /// Distinct from [`Artifacts::with_orientation`], which corrects individual
+    /// text lines. The two are different models with different classes.
+    #[must_use]
+    pub const fn with_document_orientation(mut self, path: &'a str) -> Self {
+        self.document_orientation = Some(path);
+        self
+    }
+
+    /// Requires the document orientation classifier to match this SHA-256.
+    #[must_use]
+    pub const fn with_document_orientation_sha256(mut self, digest: &'a str) -> Self {
+        self.document_orientation_sha256 = Some(digest);
+        self
+    }
+
+    /// Adds an unwarping model.
+    #[must_use]
+    pub const fn with_unwarping(mut self, path: &'a str) -> Self {
+        self.unwarping = Some(path);
+        self
+    }
+
+    /// Requires the unwarping model to match this SHA-256.
+    #[must_use]
+    pub const fn with_unwarping_sha256(mut self, digest: &'a str) -> Self {
+        self.unwarping_sha256 = Some(digest);
         self
     }
 }
@@ -374,6 +435,14 @@ pub struct OcrEngine {
     recognizer_contract: crate::backend::ModelContract,
     dictionary: CtcDictionary,
     orientation: Option<(
+        crate::backend_ort::OrtBackend,
+        crate::backend::ModelContract,
+    )>,
+    document_orientation: Option<(
+        crate::backend_ort::OrtBackend,
+        crate::backend::ModelContract,
+    )>,
+    unwarping: Option<(
         crate::backend_ort::OrtBackend,
         crate::backend::ModelContract,
     )>,
@@ -468,6 +537,78 @@ impl OcrEngine {
             None => None,
         };
 
+        // Document orientation: a fixed 224 square, four classes.
+        let document_orientation = match artifacts.document_orientation {
+            Some(path) => {
+                let batch = AxisExtent::Bounded {
+                    minimum: 1,
+                    maximum: 8,
+                };
+                let contract = ModelContract::new(
+                    ModelArtifact::new(
+                        path,
+                        artifacts
+                            .document_orientation_sha256
+                            .unwrap_or(UNCHECKED_DIGEST),
+                    )?,
+                    TensorContract::new(
+                        "x",
+                        vec![
+                            batch,
+                            AxisExtent::Fixed(3),
+                            AxisExtent::Fixed(224),
+                            AxisExtent::Fixed(224),
+                        ],
+                    )?,
+                    TensorContract::new("fetch_name_0", vec![batch, AxisExtent::Fixed(4)])?,
+                    RunBudget::new(40_000_000, 40_000_000, 8)?,
+                );
+                let backend =
+                    load_backend(&contract, artifacts.document_orientation_sha256.is_some())?;
+                Some((backend, contract))
+            }
+            None => None,
+        };
+
+        // Unwarping: every axis dynamic, bounded by the module's own page cap
+        // rather than by a shape, because upstream applies no resize.
+        let unwarping = match artifacts.unwarping {
+            Some(path) => {
+                let free_side = AxisExtent::Bounded {
+                    minimum: 1,
+                    maximum: 8192,
+                };
+                let contract = ModelContract::new(
+                    ModelArtifact::new(
+                        path,
+                        artifacts.unwarping_sha256.unwrap_or(UNCHECKED_DIGEST),
+                    )?,
+                    TensorContract::new(
+                        "image",
+                        vec![
+                            AxisExtent::Fixed(1),
+                            AxisExtent::Fixed(3),
+                            free_side,
+                            free_side,
+                        ],
+                    )?,
+                    TensorContract::new(
+                        "fetch_name_0",
+                        vec![
+                            AxisExtent::Fixed(1),
+                            AxisExtent::Fixed(3),
+                            free_side,
+                            free_side,
+                        ],
+                    )?,
+                    RunBudget::new(40_000_000, 40_000_000, 1)?,
+                );
+                let backend = load_backend(&contract, artifacts.unwarping_sha256.is_some())?;
+                Some((backend, contract))
+            }
+            None => None,
+        };
+
         Ok(Self {
             detector,
             detector_contract,
@@ -475,6 +616,90 @@ impl OcrEngine {
             recognizer_contract,
             dictionary: dictionary.inner.clone(),
             orientation,
+            document_orientation,
+            unwarping,
+        })
+    }
+
+    /// Runs the configured document preprocessing over one decoded page.
+    ///
+    /// Stages run in upstream's order: orientation, then unwarping. A stage the
+    /// caller enabled without supplying its artifact is a typed error rather
+    /// than a silent skip — an option that quietly does nothing is worse than
+    /// one that refuses.
+    fn preprocess_document(
+        &self,
+        page: crate::crop::InterleavedImage,
+        options: &OcrOptions,
+    ) -> Result<crate::document_pipeline::DocumentPreprocessing> {
+        use crate::document_pipeline::DocumentPreprocessing;
+
+        let mut result = DocumentPreprocessing::unchanged(page);
+
+        if options.document.orientation {
+            let Some((backend, contract)) = self.document_orientation.as_ref() else {
+                return Err(Error::InvalidInput {
+                    field: "document.orientation_artifact",
+                    violation: InputViolation::Empty,
+                });
+            };
+            let angle =
+                crate::document_orientation::classify_page(backend, contract, result.image())?;
+            if angle != 0 {
+                let rotation = crate::document_orientation::DocumentRotation::new(
+                    result.image().dimensions(),
+                    angle,
+                )?;
+                let rotated = crate::document_orientation::rotate_page(result.image(), angle)?;
+                result = DocumentPreprocessing::rotated(rotated, rotation);
+            }
+        }
+
+        if options.document.unwarping {
+            let Some((backend, contract)) = self.unwarping.as_ref() else {
+                return Err(Error::InvalidInput {
+                    field: "document.unwarping_artifact",
+                    violation: InputViolation::Empty,
+                });
+            };
+            let flattened = crate::unwarp::unwarp(backend, contract, result.image())?;
+            result = result.unwarp(flattened);
+        }
+
+        Ok(result)
+    }
+
+    /// Recognizes text with document preprocessing, reporting the coordinate
+    /// space the result is in.
+    ///
+    /// Use this rather than [`OcrEngine::recognize_png`] when unwarping is
+    /// enabled: unwarping has no inverse, so the returned polygons describe the
+    /// processed page rather than the caller's, and
+    /// [`DocumentResult::coordinate_space`] is how that is stated rather than
+    /// assumed.
+    pub fn recognize_document(&self, png: &[u8], options: &OcrOptions) -> Result<DocumentResult> {
+        let encoded = EncodedImage::new(png)?;
+        let decoded = crate::image::decode_classic_bgr(encoded)?;
+        let preprocessed = self.preprocess_document(decoded, options)?;
+        let space = preprocessed.coordinate_space();
+        let lines = self.recognize_image(preprocessed.image(), options)?;
+
+        // Coordinates come back in the processed page's space. Where the chain
+        // is invertible they are mapped home; where it is not, they are left as
+        // they are and the space says so.
+        let lines = match space {
+            crate::document_pipeline::CoordinateSpace::Source => {
+                let mut mapped = Vec::with_capacity(lines.len());
+                for line in lines {
+                    mapped.push(map_line(&preprocessed, line)?);
+                }
+                mapped
+            }
+            crate::document_pipeline::CoordinateSpace::Processed => lines,
+        };
+        Ok(DocumentResult {
+            lines,
+            coordinate_space: space,
         })
     }
 
@@ -504,17 +729,14 @@ impl OcrEngine {
         self.recognize_png(&bytes, options)
     }
 
-    /// Recognizes text in one PNG image, reusing the loaded sessions.
-    ///
-    /// Each call is independent: no state carries between images, so the same
-    /// input always produces the same result, and a failed call leaves the
-    /// engine usable. `options` is taken by reference because it now carries the
-    /// cancellation flag, which a caller will usually want to keep.
-    pub fn recognize_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
+    /// Runs the classic pipeline over an already decoded page.
+    fn recognize_image(
+        &self,
+        image: &crate::crop::InterleavedImage,
+        options: &OcrOptions,
+    ) -> Result<Vec<TextLine>> {
         use crate::pipeline::{ClassicModels, ClassicThresholds, run_classic_ocr};
 
-        let encoded = EncodedImage::new(png)?;
-        let image = crate::image::decode_classic_bgr(encoded)?;
         let lines = run_classic_ocr(
             &ClassicModels {
                 detector: (&self.detector, &self.detector_contract),
@@ -524,7 +746,7 @@ impl OcrEngine {
                     (backend as &dyn crate::backend::InferenceBackend, contract)
                 }),
             },
-            &image,
+            image,
             ClassicThresholds {
                 box_threshold: options.box_threshold,
                 unclip_ratio: options.unclip_ratio,
@@ -533,7 +755,6 @@ impl OcrEngine {
             },
             &options.control.begin(),
         )?;
-
         Ok(lines
             .into_iter()
             .map(|line| TextLine {
@@ -543,6 +764,79 @@ impl OcrEngine {
             })
             .collect())
     }
+
+    /// Recognizes text in one PNG image, reusing the loaded sessions.
+    ///
+    /// Each call is independent: no state carries between images, so the same
+    /// input always produces the same result, and a failed call leaves the
+    /// engine usable. `options` is taken by reference because it now carries the
+    /// cancellation flag, which a caller will usually want to keep.
+    pub fn recognize_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
+        // Unwarping would make the returned coordinates describe an image the
+        // caller never supplied, and this signature has no way to say so.
+        // Refusing is the only honest answer; `recognize_document` is the one
+        // that can report a coordinate space.
+        if options.document.unwarping {
+            return Err(Error::Unsupported {
+                capability: "unwarping through recognize_png; use recognize_document",
+            });
+        }
+        let encoded = EncodedImage::new(png)?;
+        let decoded = crate::image::decode_classic_bgr(encoded)?;
+        let preprocessed = self.preprocess_document(decoded, options)?;
+        let lines = self.recognize_image(preprocessed.image(), options)?;
+        let mut mapped = Vec::with_capacity(lines.len());
+        for line in lines {
+            mapped.push(map_line(&preprocessed, line)?);
+        }
+        Ok(mapped)
+    }
+}
+
+/// Recognized lines together with the image their coordinates describe.
+#[cfg(feature = "onnxruntime")]
+#[derive(Clone, Debug)]
+#[non_exhaustive]
+pub struct DocumentResult {
+    /// The recognized lines.
+    pub lines: Vec<TextLine>,
+    /// Which image `lines`' quadrilaterals describe.
+    ///
+    /// `Processed` means an unwarping step ran and the coordinates **cannot**
+    /// be mapped back to the page the caller supplied.
+    pub coordinate_space: crate::document_pipeline::CoordinateSpace,
+}
+
+/// Maps one line's quadrilateral back to the caller's page.
+///
+/// Only called where the chain is invertible; a `None` here would mean the
+/// caller was handed a coordinate space the code thought was mappable, so it is
+/// a contract error rather than a silent pass-through.
+#[cfg(feature = "onnxruntime")]
+fn map_line(
+    preprocessed: &crate::document_pipeline::DocumentPreprocessing,
+    line: TextLine,
+) -> Result<TextLine> {
+    let mut corners = [crate::types::Point::new(0.0, 0.0)?; 4];
+    for (slot, point) in corners
+        .iter_mut()
+        .zip(line.quadrilateral.points().iter().copied())
+    {
+        match preprocessed.to_source(f64::from(point.x()), f64::from(point.y()))? {
+            Some((x, y)) => *slot = crate::types::Point::new(x as f32, y as f32)?,
+            None => {
+                return Err(Error::InvalidInput {
+                    field: "document.coordinate_space",
+                    violation: InputViolation::OutOfRange,
+                });
+            }
+        }
+    }
+    Ok(TextLine {
+        quadrilateral: crate::types::Quadrilateral::new(corners)?,
+        text: line.text,
+        score: line.score,
+    })
 }
 
 /// Recognizes text in one PNG image using explicitly provisioned artifacts.

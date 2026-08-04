@@ -528,6 +528,67 @@ mod provisioned {
         }
     }
 
+    /// `DOCPIPE-001`: a rotated page is corrected and its coordinates come home.
+    ///
+    /// The property that matters is the second half. Recovering the text only
+    /// shows the rotation happened; the polygons landing inside the *original*
+    /// page is what shows the inverse was applied rather than forgotten.
+    #[test]
+    #[ignore = "DOCPIPE-001: needs the document orientation artifact"]
+    fn a_rotated_page_is_corrected_and_its_coordinates_map_home() {
+        let (library, detector, recognizer) = artifacts();
+        let document_orientation = env("PADDLEOCR_RUST_DOC_ORIENTATION_ONNX");
+        let dictionary = dictionary();
+        let engine = match OcrEngine::load(
+            &Artifacts::new(&library, &detector, &recognizer)
+                .with_document_orientation(&document_orientation),
+            &dictionary,
+        ) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        let rotated = std::fs::read(env("PADDLEOCR_RUST_ROTATED_PAGE")).unwrap_or_default();
+        let (width, height) = match paddleocr_rust::api::decode_png(&rotated) {
+            Ok(value) => value,
+            Err(error) => panic!("rotated page: {error}"),
+        };
+        assert_eq!((width, height), (320, 800), "the input is the rotated page");
+
+        let options = OcrOptions::default().with_document_preprocessing(
+            paddleocr_rust::document_pipeline::DocumentPreprocessOptions::default()
+                .with_orientation(true),
+        );
+        let result = match engine.recognize_document(&rotated, &options) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_document: {error}"),
+        };
+
+        assert_eq!(
+            result.coordinate_space,
+            paddleocr_rust::document_pipeline::CoordinateSpace::Source,
+            "rotation alone must stay mappable"
+        );
+        assert_eq!(texts(&result.lines), ["Hello", "World", "Rust", "OCR"]);
+
+        // Every corner must lie inside the page the caller supplied, not the
+        // rotated one the detector saw.
+        for line in &result.lines {
+            for point in line.quadrilateral.points() {
+                assert!(
+                    point.x() >= -1.0 && point.x() <= 321.0,
+                    "x {} outside the supplied 320-wide page",
+                    point.x()
+                );
+                assert!(
+                    point.y() >= -1.0 && point.y() <= 801.0,
+                    "y {} outside the supplied 800-tall page",
+                    point.y()
+                );
+            }
+        }
+    }
+
     #[test]
     #[ignore = "E2E-001: needs explicitly provisioned models"]
     fn resource_limits_and_bad_input_survive_a_loaded_engine() {
