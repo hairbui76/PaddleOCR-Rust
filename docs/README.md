@@ -48,6 +48,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   office is rejected, why PDF waits, and what a renderer must prove first
 - [Model artifact policy](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md) — conversion,
   distribution, cache, integrity, provenance, and licensing decisions
+- [P8 baseline finding](P8_BASELINE_FINDING.md) — why the specialized modules
+  cannot be frozen from the pinned checkout
 - [Unwarping contract](UNWARPING_CONTRACT.md) — why unwarping has no inverse,
   and what that costs a caller
 - [Orientation contract](ORIENTATION_CONTRACT.md) — the frozen text-line
