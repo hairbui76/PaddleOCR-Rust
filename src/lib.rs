@@ -43,6 +43,8 @@ mod image;
 #[allow(dead_code)]
 mod min_area;
 #[allow(dead_code)]
+mod recognizer_batch;
+#[allow(dead_code)]
 mod resize;
 #[allow(dead_code)]
 mod score;
