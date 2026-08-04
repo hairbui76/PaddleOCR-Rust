@@ -518,6 +518,62 @@ mod provisioned {
         }
     }
 
+    /// `CONC-001`: concurrent runs produce byte-identical serialized results.
+    ///
+    /// Agreeing on the recognized text is weaker than it sounds — two runs can
+    /// agree on every string while differing in a coordinate or the last digit
+    /// of a confidence. Comparing the serialized document instead compares
+    /// geometry and scores at full precision, which is the property a caller
+    /// writing results to disk actually depends on.
+    #[test]
+    #[ignore = "CONC-001: needs explicitly provisioned models"]
+    fn concurrent_runs_are_byte_identical() {
+        let (library, detector, recognizer) = artifacts();
+        let dictionary = dictionary();
+
+        let render = |engine: &OcrEngine| -> String {
+            let lines = match engine.recognize_png(READING_ORDER, &OcrOptions::default()) {
+                Ok(lines) => lines,
+                Err(error) => panic!("run: {error}"),
+            };
+            result_to_json(&lines, 800, 320, None, None)
+        };
+
+        let expected = render(&engine(&library, &detector, &recognizer, &dictionary));
+
+        let results = std::thread::scope(|scope| {
+            let handles: Vec<_> = (0..4)
+                .map(|_| {
+                    let (library, detector, recognizer) = (&library, &detector, &recognizer);
+                    let dictionary = &dictionary;
+                    scope.spawn(move || {
+                        // One engine per thread, reused across three runs: this
+                        // covers both the shutdown of a dropped engine and the
+                        // reuse of a live one.
+                        let engine = engine(library, detector, recognizer, dictionary);
+                        (0..3).map(|_| render(&engine)).collect::<Vec<_>>()
+                    })
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| match handle.join() {
+                    Ok(value) => value,
+                    Err(_) => panic!("a worker thread panicked"),
+                })
+                .collect::<Vec<_>>()
+        });
+
+        for (thread, runs) in results.iter().enumerate() {
+            for (run, document) in runs.iter().enumerate() {
+                assert_eq!(
+                    document, &expected,
+                    "thread {thread} run {run} differed from the single-threaded result"
+                );
+            }
+        }
+    }
+
     #[test]
     #[ignore = "E2E-001: needs explicitly provisioned models"]
     fn resource_limits_and_bad_input_survive_a_loaded_engine() {
