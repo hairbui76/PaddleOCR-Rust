@@ -13,10 +13,15 @@ fn usage() -> &'static str {
     "usage: paddleocr-rust --ort-dylib <libonnxruntime.so> \\\n\
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
      \x20                 --dictionary <dict.txt> [--json] [--time-budget-ms <n>] \\\n\
-     \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>\n\
+     \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>...\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
-     docs/IMAGE_DECODER_DECISION.md for why JPEG is deferred.\n"
+     docs/IMAGE_DECODER_DECISION.md for why JPEG is deferred.\n\
+     \n\
+     Several images may be given. The models are loaded once and reused, which \n\
+     is the whole reason to pass them together rather than running this per \n\
+     file. With more than one image the text output gains a leading path \n\
+     column, as grep does, and --json emits one JSON document per line.\n"
 }
 
 fn main() -> ExitCode {
@@ -58,7 +63,7 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut detector = None;
     let mut recognizer = None;
     let mut dictionary = None;
-    let mut image = None;
+    let mut images: Vec<String> = Vec::new();
     let mut json = false;
     let mut time_budget_ms = None;
     let mut detector_sha256 = None;
@@ -111,23 +116,23 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
                 return Err(format!("unknown option {other}"));
             }
             other => {
-                if image.is_some() {
-                    return Err("only one image may be given".to_owned());
-                }
-                image = Some(other.to_owned());
+                images.push(other.to_owned());
                 index += 1;
             }
         }
     }
 
-    let (library, detector, recognizer, dictionary, image) =
-        match (library, detector, recognizer, dictionary, image) {
-            (Some(a), Some(b), Some(c), Some(d), Some(e)) => (a, b, c, d, e),
+    let (library, detector, recognizer, dictionary) =
+        match (library, detector, recognizer, dictionary) {
+            (Some(a), Some(b), Some(c), Some(d)) if !images.is_empty() => (a, b, c, d),
             _ => return Err(format!("missing required arguments\n\n{}", usage())),
         };
 
     // The budget is checked at stage boundaries, so it bounds a run rather than
-    // interrupting one; see the `control` module for what that guarantees.
+    // interrupting one; see the `control` module for what that guarantees. It
+    // applies per image, not to the whole invocation: a caller passing fifty
+    // pages means "no page may take longer than this", and a total budget would
+    // silently abandon the tail of the list.
     let mut options = paddleocr_rust::api::OcrOptions::default();
     if let Some(value) = time_budget_ms {
         let milliseconds: u64 = value
@@ -137,19 +142,16 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             .with_time_budget(std::time::Duration::from_millis(milliseconds));
     }
 
-    let bytes = std::fs::read(&image).map_err(|error| format!("cannot read the image: {error}"))?;
-    let (width, height) =
-        paddleocr_rust::api::decode_png(&bytes).map_err(|error| format!("{error}"))?;
-
     let dictionary_text = std::fs::read_to_string(&dictionary)
         .map_err(|error| format!("cannot read the dictionary: {error}"))?;
     let parsed = paddleocr_rust::api::parse_dictionary(&dictionary_text, true)
         .map_err(|error| format!("{error}"))?;
-
-    eprintln!("image: {image} ({width}x{height} PNG)");
     eprintln!("dictionary: {} entries", parsed.len());
 
-    let lines = paddleocr_rust::api::recognize_png(
+    // Loading once is the point of the engine: session creation costs about
+    // 1.4 s on the reference host, and paying it per image would make a
+    // multi-page run several times slower than it needs to be.
+    let engine = paddleocr_rust::api::OcrEngine::load(
         &paddleocr_rust::api::Artifacts {
             library: &library,
             detector: &detector,
@@ -158,22 +160,41 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             recognizer_sha256: recognizer_sha256.as_deref(),
         },
         &parsed,
-        &bytes,
-        options,
     )
     .map_err(|error| format!("{error}"))?;
 
-    if json {
-        println!(
-            "{}",
-            paddleocr_rust::result_json::result_to_json(&lines, width, height)
-        );
-    } else {
-        for line in &lines {
-            println!("{:.6}\t{}", line.score, line.text);
-        }
-        if lines.is_empty() {
-            eprintln!("no text detected");
+    let several = images.len() > 1;
+    for image in &images {
+        let bytes =
+            std::fs::read(image).map_err(|error| format!("cannot read {image}: {error}"))?;
+        let (width, height) =
+            paddleocr_rust::api::decode_png(&bytes).map_err(|error| format!("{image}: {error}"))?;
+        eprintln!("image: {image} ({width}x{height} PNG)");
+
+        let lines = engine
+            .recognize_png(&bytes, &options)
+            .map_err(|error| format!("{image}: {error}"))?;
+
+        if json {
+            // One document per line: with several inputs that is JSONL, and
+            // each document names its input so position is not the only thing
+            // identifying it.
+            let id = if several { Some(image.as_str()) } else { None };
+            println!(
+                "{}",
+                paddleocr_rust::result_json::result_to_json(&lines, width, height, id)
+            );
+        } else {
+            for line in &lines {
+                if several {
+                    println!("{image}\t{:.6}\t{}", line.score, line.text);
+                } else {
+                    println!("{:.6}\t{}", line.score, line.text);
+                }
+            }
+            if lines.is_empty() {
+                eprintln!("{image}: no text detected");
+            }
         }
     }
     Ok(ExitCode::SUCCESS)

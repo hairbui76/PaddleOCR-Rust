@@ -215,10 +215,144 @@ pub struct Artifacts<'a> {
     pub recognizer_sha256: Option<&'a str>,
 }
 
+/// A loaded classic OCR engine: both models, their contracts, and the
+/// dictionary, ready to run over many images.
+///
+/// # Why this exists
+///
+/// Creating the two sessions costs roughly `1.4 s` on the reference host, which
+/// `docs/G3_RESOURCE_EVIDENCE.md` measures as the gap between the `4.2 s` cold
+/// run and the `2.8 s` warm one. A caller processing a directory of pages should
+/// pay that once. [`recognize_png`] pays it every call by construction, which is
+/// correct for the one-image CLI and wrong for anything else.
+///
+/// # Concurrency
+///
+/// An engine is usable from one thread at a time, and the type system says so
+/// rather than the documentation alone: the backend holds its session in a
+/// `RefCell`, so `OcrEngine` is `!Sync` and will not compile behind a shared
+/// reference across threads. That is deliberate. The runtime's session is not
+/// documented as concurrently callable through this adapter, and a `Mutex` here
+/// would convert a compile error into a runtime queue, which hides the
+/// serialisation rather than removing it.
+///
+/// To use several threads, load one engine per thread. Each pays its own session
+/// creation; nothing is shared, so nothing needs locking.
+#[cfg(feature = "onnxruntime")]
+#[derive(Debug)]
+pub struct OcrEngine {
+    detector: crate::backend_ort::OrtBackend,
+    detector_contract: crate::backend::ModelContract,
+    recognizer: crate::backend_ort::OrtBackend,
+    recognizer_contract: crate::backend::ModelContract,
+    dictionary: CtcDictionary,
+}
+
+#[cfg(feature = "onnxruntime")]
+impl OcrEngine {
+    /// Loads both models once, verifying any declared artifact digest first.
+    ///
+    /// The dictionary is cloned into the engine because the recognizer's output
+    /// contract is built from its class count: an engine whose dictionary could
+    /// change underneath it would have a contract that no longer describes the
+    /// model it validates.
+    pub fn load(artifacts: &Artifacts<'_>, dictionary: &Dictionary) -> Result<Self> {
+        use crate::backend::{AxisExtent, ModelArtifact, ModelContract, RunBudget, TensorContract};
+        use crate::backend_ort::initialize_runtime;
+
+        initialize_runtime(std::path::Path::new(artifacts.library))?;
+
+        let free = AxisExtent::Bounded {
+            minimum: 1,
+            maximum: 8192,
+        };
+        // A declared digest is checked; an absent one is recorded as unchecked
+        // by the placeholder value, which the matching stream then satisfies.
+        let detector_contract = ModelContract::new(
+            ModelArtifact::new(
+                artifacts.detector,
+                artifacts.detector_sha256.unwrap_or(UNCHECKED_DIGEST),
+            )?,
+            TensorContract::new(
+                "x",
+                vec![AxisExtent::Fixed(1), AxisExtent::Fixed(3), free, free],
+            )?,
+            TensorContract::new(
+                "fetch_name_0",
+                vec![AxisExtent::Fixed(1), AxisExtent::Fixed(1), free, free],
+            )?,
+            RunBudget::new(40_000_000, 40_000_000, 1)?,
+        );
+        let recognizer_contract = ModelContract::new(
+            ModelArtifact::new(
+                artifacts.recognizer,
+                artifacts.recognizer_sha256.unwrap_or(UNCHECKED_DIGEST),
+            )?,
+            TensorContract::new(
+                "x",
+                vec![free, AxisExtent::Fixed(3), AxisExtent::Fixed(48), free],
+            )?,
+            TensorContract::new(
+                "fetch_name_0",
+                vec![free, free, AxisExtent::Fixed(dictionary.class_count())],
+            )?,
+            RunBudget::new(40_000_000, 40_000_000, 64)?,
+        );
+
+        let detector = load_backend(&detector_contract, artifacts.detector_sha256.is_some())?;
+        let recognizer = load_backend(&recognizer_contract, artifacts.recognizer_sha256.is_some())?;
+
+        Ok(Self {
+            detector,
+            detector_contract,
+            recognizer,
+            recognizer_contract,
+            dictionary: dictionary.inner.clone(),
+        })
+    }
+
+    /// Recognizes text in one PNG image, reusing the loaded sessions.
+    ///
+    /// Each call is independent: no state carries between images, so the same
+    /// input always produces the same result, and a failed call leaves the
+    /// engine usable. `options` is taken by reference because it now carries the
+    /// cancellation flag, which a caller will usually want to keep.
+    pub fn recognize_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
+        use crate::pipeline::{ClassicModels, ClassicThresholds, run_classic_ocr};
+
+        let encoded = EncodedImage::new(png)?;
+        let image = crate::image::decode_classic_bgr(encoded)?;
+        let lines = run_classic_ocr(
+            &ClassicModels {
+                detector: (&self.detector, &self.detector_contract),
+                recognizer: (&self.recognizer, &self.recognizer_contract),
+                dictionary: &self.dictionary,
+            },
+            &image,
+            ClassicThresholds {
+                box_threshold: options.box_threshold,
+                unclip_ratio: options.unclip_ratio,
+                drop_score: options.drop_score,
+            },
+            &options.control.begin(),
+        )?;
+
+        Ok(lines
+            .into_iter()
+            .map(|line| TextLine {
+                quadrilateral: line.quadrilateral,
+                text: line.text,
+                score: line.score,
+            })
+            .collect())
+    }
+}
+
 /// Recognizes text in one PNG image using explicitly provisioned artifacts.
 ///
-/// Gate `G1` passed for the recorded reading-order fixture, so this returns a
-/// result rather than refusing. It remains one fixture with one artifact pair.
+/// This loads both models, runs one image, and drops them. That is the right
+/// shape for a single-image invocation and the wrong one for a batch: use
+/// [`OcrEngine`] to pay session creation once across many images.
 #[cfg(feature = "onnxruntime")]
 pub fn recognize_png(
     artifacts: &Artifacts<'_>,
@@ -226,77 +360,7 @@ pub fn recognize_png(
     png: &[u8],
     options: OcrOptions,
 ) -> Result<Vec<TextLine>> {
-    use crate::backend::{AxisExtent, ModelArtifact, ModelContract, RunBudget, TensorContract};
-    use crate::backend_ort::initialize_runtime;
-    use crate::pipeline::{ClassicModels, ClassicThresholds, run_classic_ocr};
-
-    initialize_runtime(std::path::Path::new(artifacts.library))?;
-
-    let free = AxisExtent::Bounded {
-        minimum: 1,
-        maximum: 8192,
-    };
-    // A declared digest is checked; an absent one is recorded as unchecked by
-    // the placeholder value, which the matching stream then satisfies.
-    let detector_contract = ModelContract::new(
-        ModelArtifact::new(
-            artifacts.detector,
-            artifacts.detector_sha256.unwrap_or(UNCHECKED_DIGEST),
-        )?,
-        TensorContract::new(
-            "x",
-            vec![AxisExtent::Fixed(1), AxisExtent::Fixed(3), free, free],
-        )?,
-        TensorContract::new(
-            "fetch_name_0",
-            vec![AxisExtent::Fixed(1), AxisExtent::Fixed(1), free, free],
-        )?,
-        RunBudget::new(40_000_000, 40_000_000, 1)?,
-    );
-    let recognizer_contract = ModelContract::new(
-        ModelArtifact::new(
-            artifacts.recognizer,
-            artifacts.recognizer_sha256.unwrap_or(UNCHECKED_DIGEST),
-        )?,
-        TensorContract::new(
-            "x",
-            vec![free, AxisExtent::Fixed(3), AxisExtent::Fixed(48), free],
-        )?,
-        TensorContract::new(
-            "fetch_name_0",
-            vec![free, free, AxisExtent::Fixed(dictionary.class_count())],
-        )?,
-        RunBudget::new(40_000_000, 40_000_000, 64)?,
-    );
-
-    let detector = load_backend(&detector_contract, artifacts.detector_sha256.is_some())?;
-    let recognizer = load_backend(&recognizer_contract, artifacts.recognizer_sha256.is_some())?;
-
-    let encoded = EncodedImage::new(png)?;
-    let image = crate::image::decode_classic_bgr(encoded)?;
-    let lines = run_classic_ocr(
-        &ClassicModels {
-            detector: (&detector, &detector_contract),
-            recognizer: (&recognizer, &recognizer_contract),
-            dictionary: &dictionary.inner,
-        },
-        &image,
-        ClassicThresholds {
-            box_threshold: options.box_threshold,
-            unclip_ratio: options.unclip_ratio,
-            drop_score: options.drop_score,
-        },
-        &options.control.begin(),
-    )?;
-
-    Ok(lines
-        .into_iter()
-        .map(|line| TextLine {
-            quadrilateral: line.quadrilateral,
-            text: line.text,
-            score: line.score,
-        })
-        .collect())
+    OcrEngine::load(artifacts, dictionary)?.recognize_png(png, &options)
 }
 
 /// The placeholder recorded when a caller declares no expected digest.
@@ -331,5 +395,148 @@ impl crate::backend::Sha256Stream for UncheckedDigest {
     fn update(&mut self, _bytes: &[u8]) {}
     fn finish(&mut self) -> String {
         UNCHECKED_DIGEST.to_owned()
+    }
+}
+
+/// Checks that the public surface keeps the properties it documents.
+#[cfg(all(test, feature = "onnxruntime"))]
+mod concurrency_position {
+    use super::*;
+
+    /// Resolves to `true` only when `T: Sync`.
+    ///
+    /// The inherent constant is chosen ahead of the trait's default when its
+    /// bound holds, which is the stable-Rust way to observe an auto trait
+    /// without a compile failure. Asserting `!Sync` in a normal test is
+    /// otherwise impossible: a type that *is* `Sync` would simply compile.
+    struct Probe<T>(core::marker::PhantomData<T>);
+
+    trait NotSync {
+        const IS_SYNC: bool = false;
+    }
+
+    impl<T> NotSync for Probe<T> {}
+
+    impl<T: Sync> Probe<T> {
+        const IS_SYNC: bool = true;
+    }
+
+    /// The engine must stay `!Sync`, because that is what stops a caller from
+    /// sharing one session across threads.
+    ///
+    /// If a future change makes it `Sync` — by adding a lock, say — this fails,
+    /// and it should: the documented position is one engine per thread, and a
+    /// lock would turn a compile error into a hidden queue.
+    #[test]
+    // The lint objects to asserting a constant, which is precisely the point:
+    // the value is decided at compile time by whether the auto trait holds, and
+    // there is nothing to evaluate at runtime.
+    #[allow(clippy::assertions_on_constants)]
+    fn the_engine_is_not_shareable_across_threads() {
+        assert!(
+            !<Probe<OcrEngine>>::IS_SYNC,
+            "OcrEngine became Sync; the documented concurrency position no longer holds"
+        );
+        // The probe itself must be able to see a Sync type, or the assertion
+        // above would pass for the wrong reason.
+        assert!(<Probe<u32>>::IS_SYNC, "the probe is not detecting Sync");
+    }
+}
+
+/// Optional check that a reused engine is equivalent to reloading per image.
+///
+/// This is the `API-001` claim that session reuse changes cost and nothing
+/// else. It is ignored by default because it needs provisioned artifacts.
+///
+/// ```sh
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_DETECTOR_ONNX=<detector.onnx> \
+/// PADDLEOCR_RUST_RECOGNIZER_ONNX=<recognizer.onnx> \
+/// PADDLEOCR_RUST_DICTIONARY=<dict.txt> \
+///   cargo test --release --features onnxruntime --lib -- --ignored --nocapture engine_reuse
+/// ```
+#[cfg(all(test, feature = "onnxruntime"))]
+mod engine_reuse {
+    use super::*;
+
+    const PAGES: [(&str, &[u8]); 3] = [
+        (
+            "reading-order",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png"),
+        ),
+        (
+            "unicode",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-unicode/input.png"),
+        ),
+        (
+            "tall-crop",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-tall-crop/input.png"),
+        ),
+    ];
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    #[test]
+    #[ignore = "API-001: needs explicitly provisioned models"]
+    fn a_reused_engine_returns_the_same_results_as_reloading() {
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let dictionary_text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&dictionary_text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let artifacts = Artifacts {
+            library: &library,
+            detector: &detector,
+            detector_sha256: None,
+            recognizer: &recognizer,
+            recognizer_sha256: None,
+        };
+        let options = OcrOptions::default();
+
+        let loading = std::time::Instant::now();
+        let engine = match OcrEngine::load(&artifacts, &dictionary) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        };
+        println!(
+            "[engine] load took {:.3} s",
+            loading.elapsed().as_secs_f64()
+        );
+
+        for (name, png) in PAGES {
+            let reused = match engine.recognize_png(png, &options) {
+                Ok(lines) => lines,
+                Err(error) => panic!("{name} reused: {error}"),
+            };
+            let fresh = match recognize_png(&artifacts, &dictionary, png, options.clone()) {
+                Ok(lines) => lines,
+                Err(error) => panic!("{name} fresh: {error}"),
+            };
+            assert_eq!(reused, fresh, "{name}: reuse changed the result");
+            println!("[engine] {name}: {} lines, identical", reused.len());
+        }
+
+        // Running the same page twice through one engine must also agree, which
+        // is what "no state carries between images" means concretely.
+        let first = match engine.recognize_png(PAGES[0].1, &options) {
+            Ok(lines) => lines,
+            Err(error) => panic!("repeat: {error}"),
+        };
+        let second = match engine.recognize_png(PAGES[0].1, &options) {
+            Ok(lines) => lines,
+            Err(error) => panic!("repeat: {error}"),
+        };
+        assert_eq!(first, second, "a repeated image changed its own result");
     }
 }

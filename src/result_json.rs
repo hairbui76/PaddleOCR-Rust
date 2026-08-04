@@ -19,12 +19,22 @@ use crate::api::TextLine;
 pub const RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/ocr-result/v1";
 
 /// Serialises recognized lines as one versioned JSON document.
+///
+/// `id` identifies which input the document describes. It is `None` for a
+/// single anonymous input and `Some` when the caller has several, which is what
+/// makes a JSONL stream of these documents self-describing: without it, two
+/// lines of output would be indistinguishable except by position.
 #[must_use]
-pub fn result_to_json(lines: &[TextLine], width: u32, height: u32) -> String {
+pub fn result_to_json(lines: &[TextLine], width: u32, height: u32, id: Option<&str>) -> String {
     let mut out = String::new();
     out.push_str("{\"schema_version\":\"");
     out.push_str(RESULT_SCHEMA_VERSION);
-    out.push_str("\",\"input\":{\"id\":null,\"page_index\":null,\"width\":");
+    out.push_str("\",\"input\":{\"id\":");
+    match id {
+        Some(id) => push_json_string(&mut out, id),
+        None => out.push_str("null"),
+    }
+    out.push_str(",\"page_index\":null,\"width\":");
     out.push_str(&width.to_string());
     out.push_str(",\"height\":");
     out.push_str(&height.to_string());
@@ -101,7 +111,7 @@ mod tests {
 
     #[test]
     fn the_result_shape_is_stable_and_deterministic() {
-        let json = result_to_json(&[line("hi", 0.5)], 800, 320);
+        let json = result_to_json(&[line("hi", 0.5)], 800, 320, None);
         let expected = concat!(
             "{\"schema_version\":\"paddleocr-rust/ocr-result/v1\",",
             "\"input\":{\"id\":null,\"page_index\":null,\"width\":800,\"height\":320},",
@@ -110,12 +120,22 @@ mod tests {
         );
         assert_eq!(json, expected);
         // Serialising the same input twice must be byte-identical.
-        assert_eq!(json, result_to_json(&[line("hi", 0.5)], 800, 320));
+        assert_eq!(json, result_to_json(&[line("hi", 0.5)], 800, 320, None));
+    }
+
+    /// A named input carries its identifier, escaped like any other text.
+    ///
+    /// Without this a JSONL stream would rely on line position alone to say
+    /// which document belongs to which input.
+    #[test]
+    fn a_named_input_records_its_identifier() {
+        let json = result_to_json(&[], 4, 4, Some("pages/a\"b.png"));
+        assert!(json.contains("\"id\":\"pages/a\\\"b.png\""), "{json}");
     }
 
     #[test]
     fn an_empty_result_is_still_well_formed() {
-        let json = result_to_json(&[], 3, 2);
+        let json = result_to_json(&[], 3, 2, None);
         assert!(json.contains("\"lines\":[]"), "{json}");
     }
 
@@ -123,7 +143,7 @@ mod tests {
     fn text_is_escaped_but_scalars_are_not_transformed() {
         let control = char::from_u32(1).unwrap_or('?');
         let text = format!("a\"b\\c{control}\u{4f60}");
-        let json = result_to_json(&[line(&text, 0.25)], 10, 10);
+        let json = result_to_json(&[line(&text, 0.25)], 10, 10, None);
         // The quote and backslash are escaped, the control becomes a \u
         // sequence, and the CJK scalar passes through unchanged.
         assert!(json.contains("\\\"b\\\\c\\u0001\u{4f60}"), "{json}");

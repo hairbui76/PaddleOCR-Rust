@@ -60,6 +60,32 @@ Output is one `score<TAB>text` line per detection, in reading order:
 0.999944	even mentioned to him. He knew that
 ```
 
+### Several images at once
+
+Pass more than one PNG and the models are loaded once and reused. Session
+creation costs about `1.4 s`; running the binary per file pays that every time.
+
+```sh
+paddleocr-rust --ort-dylib ... --detector ... --recognizer ... --dictionary ... \
+  page-01.png page-02.png page-03.png
+```
+
+With more than one image the text output gains a leading path column, the way
+`grep` prefixes filenames, and `--json` emits one document per line — JSONL —
+each naming its own input:
+
+```
+{"schema_version":"paddleocr-rust/ocr-result/v1","input":{"id":"page-01.png",...
+{"schema_version":"paddleocr-rust/ocr-result/v1","input":{"id":"page-02.png",...
+```
+
+A single image keeps the original output exactly: no path column, and
+`"id":null`.
+
+From Rust, `OcrEngine::load` gives the same reuse. An engine is `!Sync` and the
+compiler enforces it: use one per thread rather than sharing one behind a lock.
+`--time-budget-ms` applies per image, not to the whole invocation.
+
 ### Machine-readable output
 
 `--json` emits the versioned `paddleocr-rust/ocr-result/v1` document with the
