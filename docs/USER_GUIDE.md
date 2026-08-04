@@ -312,7 +312,11 @@ carries the authoritative list; this is the part a user is most likely to hit.
   text-orientation model before recognition. This port does not, and the crop
   stage's tall-crop rotation is not a substitute.
 - **No document preprocessing, PDF, tables, formulas, or structured output.**
-  The classic detect-and-recognize path is the whole of it.
+  The classic detect-and-recognize path is the whole of it. PDF is in scope
+  and deferred behind a stated entry gate; office formats are rejected
+  permanently, because their text is already present and OCR over a rendering
+  of one is strictly worse than reading it. See
+  [`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md).
 - **One model pair.** A different `PP-OCR` version or language pack is
   unverified, will load, and can produce wrong answers silently. Declare digests.
 - **Reading order is the upstream sort**, top-to-bottom then left-to-right with

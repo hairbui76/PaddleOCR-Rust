@@ -22,6 +22,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   clause, against what was actually run
 - [Gate G3 resource evidence](G3_RESOURCE_EVIDENCE.md) — the measured latency,
   memory, and binary figures behind the quality profile's budgets
+- [PDF and office input decision](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md) — why
+  office is rejected, why PDF waits, and what a renderer must prove first
 - [Model artifact policy](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md) — conversion,
   distribution, cache, integrity, provenance, and licensing decisions
 - [User guide](USER_GUIDE.md) — building, provisioning, running, output schema,
