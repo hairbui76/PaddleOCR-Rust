@@ -26,6 +26,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   memory-safety argument actually rests on
 - [Gate P6 evidence](GATE_P6_EVIDENCE.md) — the M2 milestone gate, clause by
   clause, against what was actually run
+- [PERF-001 benchmark record](PERF_001_BENCHMARK.md) — startup, throughput, and
+  the verdict against every predeclared budget
 - [Gate G3 resource evidence](G3_RESOURCE_EVIDENCE.md) — the measured latency,
   memory, and binary figures behind the quality profile's budgets
 - [PDF and office input decision](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md) — why

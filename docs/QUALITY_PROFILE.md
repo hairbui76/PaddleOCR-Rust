@@ -42,7 +42,9 @@ Measured on 2026-08-04 against `tests/fixtures/classic-v1-benchmark-page`
 p95 `2.923 s`, peak resident memory `464.3 MiB`, stripped binary `812,144`
 bytes, model artifacts in package `0` bytes. Every budget passes with margin.
 [`G3_RESOURCE_EVIDENCE.md`](G3_RESOURCE_EVIDENCE.md) records the full
-configuration and the limits of the result; the encoded-input, decoded-dimension
+configuration and the limits of the result, and
+[`PERF_001_BENCHMARK.md`](PERF_001_BENCHMARK.md) adds startup and throughput
+and the `PERF-002` verdict; the encoded-input, decoded-dimension
 and work-unit rejection budgets are enforced in code and covered by unit tests
 rather than by that benchmark.
 
