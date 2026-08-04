@@ -708,6 +708,32 @@ mod tests {
         }
     }
 
+    /// The `G3` benchmark page is a page-sized decode, an order of magnitude
+    /// larger than any other committed input. It is the only fixture that
+    /// exercises the decoder at the size the latency and memory budgets are
+    /// stated against, so its decoded bytes are pinned by digest rather than
+    /// held in the repository as a 2.7 MB expectation file.
+    #[test]
+    fn the_benchmark_page_decodes_to_the_recorded_bgr_digest() {
+        let bytes = include_bytes!("../tests/fixtures/classic-v1-benchmark-page/input.png");
+        let input = match EncodedImage::new(bytes) {
+            Ok(input) => input,
+            Err(error) => panic!("benchmark page rejected as encoded input: {error}"),
+        };
+        let decoded = match decode_classic_bgr(input) {
+            Ok(decoded) => decoded,
+            Err(error) => panic!("benchmark page failed to decode: {error}"),
+        };
+        assert_eq!(decoded.dimensions().width(), 1280);
+        assert_eq!(decoded.dimensions().height(), 720);
+        assert_eq!(decoded.channels(), BGR_CHANNELS);
+        assert_eq!(
+            crate::digest::sha256_hex(decoded.pixels()),
+            "dbc63016931458f402b90230c961aaec121fa48fe09ec75ed16804978cc6a382",
+            "benchmark page decoded BGR bytes changed"
+        );
+    }
+
     #[test]
     fn non_png_signatures_are_reported_as_unsupported() {
         for bytes in [

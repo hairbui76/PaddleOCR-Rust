@@ -21,7 +21,8 @@ PaddleOCR replacement, and the table below says exactly where the line is.
 | Models | One pinned pair: `PP-OCRv6_medium` detector and recognizer, ONNX. No other model, family, or language has been tried. |
 | Backend | ONNX Runtime through `ort`, behind the off-by-default `onnxruntime` feature. The default build has no native dependency. |
 | Numerical fidelity | Each stage matches a recorded OpenCV or Clipper oracle: contours 18/18, `minAreaRect` 16/16, `box_score_fast` 8/8, `unclip` 16/16, resize 34/34, crop 72 cases, PNG decode 5/5. |
-| Not measured | Latency, memory, and binary budgets. Photographic or scanned input beyond one page sample. Multi-page, PDF, tables, formulas, orientation classification. |
+| Resource budgets | **Measured and passing** on one reference host: cold CLI `4.2 s`, warm median `2.8 s`, peak memory `464 MiB`, stripped binary `812 KiB`, `0` bytes of model artifacts in the package. One synthetic 1280x720 page, single threaded; see [docs/G3_RESOURCE_EVIDENCE.md](docs/G3_RESOURCE_EVIDENCE.md) for what that does *not* establish. |
+| Not measured | Photographic or scanned input beyond one page sample. Concurrency and throughput. Cancellation and timeouts. Multi-page, PDF, tables, formulas, orientation classification. |
 | Not distributable yet | The supply-chain gate `G2` in [docs/ADR_RT004_RUNTIME_SELECTION.md](docs/ADR_RT004_RUNTIME_SELECTION.md) is open: the ONNX Runtime build is not hermetic and has no SBOM. |
 
 Treat a capability as supported only when its row in

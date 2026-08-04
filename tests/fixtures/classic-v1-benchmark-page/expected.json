@@ -1,0 +1,8 @@
+{
+  "schema_version": "paddleocr-rust/classic-decoded-page/v1",
+  "width": 1280,
+  "height": 720,
+  "channels": 3,
+  "layout": "bgr",
+  "bgr_sha256": "dbc63016931458f402b90230c961aaec121fa48fe09ec75ed16804978cc6a382"
+}

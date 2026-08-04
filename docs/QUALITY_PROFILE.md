@@ -1,7 +1,10 @@
 # Initial Quality Profile
 
 Roadmap item: QUAL-001
-Status: Approved P0 budgets; not yet measured
+Status: Approved P0 budgets; the resource and performance budgets were
+measured on 2026-08-04 and all pass — see
+[`G3_RESOURCE_EVIDENCE.md`](G3_RESOURCE_EVIDENCE.md) for the figures, the
+reference host, and what the measurement does not establish
 Baseline: PaddleOCR commit 2661c7c0ef5c613e8f93c6e93b2e052399f0f854
 Applies to: the selected M2 classic `PP-OCRv6_medium` slice only
 
@@ -33,6 +36,15 @@ evidence.
 These are release gates for the selected M2 artifact. They are deliberately
 stated before implementation and may change only through an evidence-backed
 roadmap amendment made before accepting a failed result.
+
+Measured on 2026-08-04 against `tests/fixtures/classic-v1-benchmark-page`
+(1280x720) on the reference host: cold CLI `4.23 s`, warm median `2.840 s`, warm
+p95 `2.923 s`, peak resident memory `464.3 MiB`, stripped binary `812,144`
+bytes, model artifacts in package `0` bytes. Every budget passes with margin.
+[`G3_RESOURCE_EVIDENCE.md`](G3_RESOURCE_EVIDENCE.md) records the full
+configuration and the limits of the result; the encoded-input, decoded-dimension
+and work-unit rejection budgets are enforced in code and covered by unit tests
+rather than by that benchmark.
 
 | Dimension | M2 acceptance budget | Measurement condition |
 |---|---|---|

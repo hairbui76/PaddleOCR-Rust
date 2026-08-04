@@ -1,0 +1,36 @@
+{
+  "fixture_id": "classic-v1-benchmark-page",
+  "kind": "benchmark_input",
+  "reviewed_on": "2026-08-04",
+  "contains_personal_data": false,
+  "input": {
+    "path": "input.png",
+    "sha256": "c68821c155fca558752dbfc263ce08529549d0f219367b4f9e385de132fa9caa",
+    "sha256_scope": "Exact 21,220-byte PNG file.",
+    "provenance": "Composed by tools/generate_benchmark_page_input.py from the already-committed classic-v1-e2e-reading-order, classic-v1-e2e-unicode, and classic-v1-e2e-tall-crop inputs onto one white 1280x720 page. No new pixels, font binary, OpenCV code, upstream image, or model asset enters the repository; the composition is a pure function of files this repository already pins by hash, and the generator asserts that no two placements overlap and none leaves the page.",
+    "license": "Apache-2.0"
+  },
+  "upstream": {
+    "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+    "reference_paths": [
+      "tools/infer/predict_system.py"
+    ]
+  },
+  "artifacts": null,
+  "expected": {
+    "path": "expected.json",
+    "sha256": "e2ccb6a83406c732809db51c09a011fb1ca4a486d98533631a7b32e6e6b3b231",
+    "sha256_scope": "Exact UTF-8 JSON file.",
+    "schema_version": "paddleocr-rust/classic-decoded-page/v1",
+    "comparison_profile": "m2-unit-v1"
+  },
+  "tests": [
+    "image::tests::the_benchmark_page_decodes_to_the_recorded_bgr_digest"
+  ],
+  "limitations": [
+    "This is a resource-measurement input for gate G3, not a semantic oracle. It carries no expected text, no expected geometry, and no oracle capture, because a latency or memory measurement does not need one and recording a correctness expectation this fixture cannot justify would be worse than recording none.",
+    "The only expectation it does carry is decoder-level: the recorded digest of the decoded 1280x720 BGR buffer. That pins PNG decoding at a page-sized input; it says nothing about detection or recognition on this page.",
+    "The page is three composed synthetic renderings on a white background. It is not a photograph, a scan, or a document with real-world noise, skew, compression artifacts, or varied fonts, so a latency figure measured on it is a lower bound on realistic input, not a representative one.",
+    "The generator's PNG reader accepts only 8-bit non-interlaced truecolour, which is what the three source fixtures are; it raises rather than guessing on anything else."
+  ]
+}

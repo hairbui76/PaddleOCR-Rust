@@ -119,7 +119,7 @@ on `RT-005` and later items, not on this ADR.
 |---|---|---|
 | **G1 — end-to-end semantics** | The approved offline M2 goldens must pass through the frozen preprocessing, DB, crop, CTC, and result contracts. | `MODAPI-001`, `E2E-001`, and any public support claim. |
 | **G2 — supply chain** | A hermetic rebuild with `FETCHCONTENT_FULLY_DISCONNECTED=ON`, hash-pinned dependencies, a generated SBOM, and a resolved provenance position for the unverifiable source-tag signature. | Any distribution, packaging, or release claim. |
-| **G3 — adapter-boundary resources and budgets** | Bounded allocations, threads, batches, and inputs measured at the adapter boundary, plus the `QUALITY_PROFILE.md` latency, memory, and binary budgets. | `OCR-003`, `DOC-USER-001`, and the release gate. |
+| **G3 — adapter-boundary resources and budgets** | Bounded allocations, threads, batches, and inputs measured at the adapter boundary, plus the `QUALITY_PROFILE.md` latency, memory, and binary budgets. **Budgets measured 2026-08-04 and all pass** — see [`G3_RESOURCE_EVIDENCE.md`](G3_RESOURCE_EVIDENCE.md). Still open: an explicit cancellation and time policy, and whole-input versus per-item failure semantics. | `OCR-003`, `DOC-USER-001`, and the release gate. |
 
 ## Reversal condition
 
