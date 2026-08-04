@@ -37,8 +37,10 @@
 #![allow(dead_code)]
 
 use crate::crop::InterleavedImage;
-use crate::error::{Error, InputViolation, Result};
-use crate::resize_cubic::classic_cubic_resize;
+use crate::error::Result;
+use crate::paddlex_detection::{
+    DetectionFields, decode_detections, detection_input, detection_scale_factor,
+};
 use crate::tensor::NchwTensor;
 use crate::types::ImageDimensions;
 
@@ -91,33 +93,12 @@ impl LayoutRegion {
 }
 
 /// Builds the `[1, 3, 800, 800]` layout input for one page.
+///
+/// Delegates to [`crate::paddlex_detection`], which the table cell detectors
+/// share: the two configs declare the same operator chain and differ only in the
+/// target side and the class list.
 pub(crate) fn layout_input(page: &InterleavedImage) -> Result<NchwTensor> {
-    if page.channels() != 3 {
-        return Err(Error::InvalidInput {
-            field: "layout.channels",
-            violation: InputViolation::OutOfRange,
-        });
-    }
-    let target = ImageDimensions::new(LAYOUT_INPUT_SIDE, LAYOUT_INPUT_SIDE)?;
-    let resized = classic_cubic_resize(page, target)?;
-
-    let side = LAYOUT_INPUT_SIDE as usize;
-    let mut values: Vec<f32> = Vec::new();
-    values
-        .try_reserve_exact(side * side * 3)
-        .map_err(|_| Error::Backend {
-            message: "layout input allocation failed",
-        })?;
-    let pixels = resized.pixels();
-    for channel in 0..3_usize {
-        for row in 0..side {
-            for column in 0..side {
-                let index = (row * side + column) * 3 + channel;
-                values.push(f32::from(pixels[index]) / 255.0);
-            }
-        }
-    }
-    NchwTensor::new(1, 3, side, side, values)
+    detection_input(page, LAYOUT_INPUT_SIDE)
 }
 
 /// Returns the `scale_factor` tensor the model expects, `[h_scale, w_scale]`.
@@ -126,8 +107,7 @@ pub(crate) fn layout_input(page: &InterleavedImage) -> Result<NchwTensor> {
 /// on the way in. Getting this backwards does not error: it produces boxes
 /// outside the page, which is why the oracle checks containment.
 pub(crate) fn layout_scale_factor(page: ImageDimensions) -> [f32; 2] {
-    let side = LAYOUT_INPUT_SIDE as f32;
-    [side / page.height() as f32, side / page.width() as f32]
+    detection_scale_factor(page, LAYOUT_INPUT_SIDE)
 }
 
 /// Decodes the model's `[N, 6]` detections into source-page regions.
@@ -140,47 +120,25 @@ pub(crate) fn layout_regions(
     values: &[f32],
     threshold: f32,
 ) -> Result<Vec<LayoutRegion>> {
-    if shape.len() != 2 || shape[1] != 6 {
-        return Err(Error::InvalidInput {
-            field: "layout.output_shape",
-            violation: InputViolation::OutOfRange,
-        });
-    }
-    if values.len() != shape[0] * 6 {
-        return Err(Error::InvalidInput {
-            field: "layout.output_shape",
-            violation: InputViolation::OutOfRange,
-        });
-    }
-
-    let mut regions = Vec::new();
-    for row in 0..shape[0] {
-        let entry = &values[row * 6..(row + 1) * 6];
-        if !entry.iter().all(|value| value.is_finite()) {
-            return Err(Error::InvalidInput {
-                field: "layout.detections",
-                violation: InputViolation::NonFinite,
-            });
-        }
-        // A negative class is the model's own padding for an unused slot, which
-        // it emits to keep the output shape fixed at 300 rows.
-        if entry[0] < 0.0 || entry[1] < threshold {
-            continue;
-        }
-        let class = entry[0] as usize;
-        if class >= LAYOUT_LABELS.len() {
-            return Err(Error::InvalidInput {
-                field: "layout.class_index",
-                violation: InputViolation::OutOfRange,
-            });
-        }
-        regions.push(LayoutRegion {
-            class,
-            score: entry[1],
-            box_ltrb: [entry[2], entry[3], entry[4], entry[5]],
-        });
-    }
-    Ok(regions)
+    let detections = decode_detections(
+        shape,
+        values,
+        threshold,
+        LAYOUT_LABELS.len(),
+        DetectionFields {
+            output_shape: "layout.output_shape",
+            rows: "layout.detections",
+            class_index: "layout.class_index",
+        },
+    )?;
+    Ok(detections
+        .into_iter()
+        .map(|detection| LayoutRegion {
+            class: detection.class,
+            score: detection.score,
+            box_ltrb: detection.box_ltrb,
+        })
+        .collect())
 }
 
 #[cfg(test)]
@@ -188,6 +146,8 @@ mod tests {
     use super::*;
 
     use base64::{Engine as _, engine::general_purpose::STANDARD};
+
+    use crate::error::Error;
 
     const FIXTURE: &str = include_str!("../tests/fixtures/classic-v1-layout/expected.json");
     const BENCHMARK_PAGE: &[u8] =
@@ -234,16 +194,37 @@ mod tests {
         }
     }
 
+    /// The detector reads `RGB`.
+    ///
+    /// `ReadImage(format="RGB")` converts before the resize, so a page decoded
+    /// as `BGR` has two of its three planes swapped relative to what the model
+    /// was trained on. The capture this fixture came from fed `BGR` straight
+    /// through; that is one of the two bugs the table cell oracle exposed.
+    fn to_rgb(image: InterleavedImage) -> InterleavedImage {
+        let dimensions = image.dimensions();
+        let channels = usize::from(image.channels());
+        assert_eq!(channels, 3, "the swap is only defined for three channels");
+        let mut pixels = image.pixels().to_vec();
+        for pixel in pixels.chunks_exact_mut(channels) {
+            pixel.swap(0, 2);
+        }
+        match InterleavedImage::new(dimensions, image.channels(), pixels) {
+            Ok(value) => value,
+            Err(error) => panic!("swap: {error}"),
+        }
+    }
+
     fn source_for(case: &str) -> InterleavedImage {
         if case == "benchmark-page" {
             let encoded = match crate::types::EncodedImage::new(BENCHMARK_PAGE) {
                 Ok(value) => value,
                 Err(error) => panic!("encoded: {error}"),
             };
-            return match crate::image::decode_classic_bgr(encoded) {
+            let decoded = match crate::image::decode_classic_bgr(encoded) {
                 Ok(value) => value,
                 Err(error) => panic!("decode: {error}"),
             };
+            return to_rgb(decoded);
         }
         let index: usize = case
             .trim_start_matches("synthetic-")
@@ -271,7 +252,7 @@ mod tests {
             let source = source_for(case);
             assert_eq!(
                 sha256_hex(source.pixels()),
-                record["source_bgr_sha256"].as_str().unwrap_or_default(),
+                record["source_rgb_sha256"].as_str().unwrap_or_default(),
                 "{case}: source bytes"
             );
 

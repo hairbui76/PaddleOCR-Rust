@@ -188,6 +188,31 @@ means the remaining cause is somewhere none of these seven attempts reached.
 The best measured implementation stands, the defect is open, and the test bounds
 it at `23` so it cannot grow unnoticed.
 
+## 6b. A correction: two bugs this document did not catch
+
+Sections 1 through 6 describe the contract correctly. The **implementation** did
+not match it, in two ways that `TBLCELL-001`'s oracle exposed and this one did
+not, because `LAY-001`'s capture transcribed the upstream operators instead of
+executing them.
+
+| What upstream does | What this port did |
+|---|---|
+| `x * f32(1/255)`, an `alpha` folded once in `Normalize.__init__` | `x / 255.0` |
+| `ReadImage(format="RGB")`, converted before the resize | fed OpenCV's native `BGR` |
+
+`1/255` is not representable in binary, so the multiply and the divide disagree
+on **`126` of the `256` possible byte values**. The channel order swaps two of
+the three planes outright. Neither raises, and both produce a plausible tensor.
+
+The oracle agreed with the wrong implementation because **both sides made the
+same mistake** — the surest way for a capture to certify nothing. The fixture is
+re-captured at schema `v2` by `tools/capture_layout_oracle.py`, which is
+committed and imports the pinned PaddleX operators; see
+`docs/TABLE_CELLS_CONTRACT.md`.
+
+Two of the three cases now reproduce bit-identically. The third is
+`297x421 → 800x800`, which is the cubic divergence below and nothing else.
+
 ## 7. Status
 
 Contract frozen from the pinned PaddleX baseline, artifact provisioned and

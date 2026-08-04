@@ -263,14 +263,17 @@ mod tests {
         );
     }
 
-    /// A page-scale case, which is where the small corpus was blind.
+    /// A page-scale probe, parameterized by the reference it is handed.
     ///
     /// `297x421` to `800x800` is the case that exposed the coefficient-form
-    /// difference. It stays as a permanent test rather than a one-off probe,
-    /// because the defect it found was invisible to every smaller case.
+    /// difference, and the probe stays permanent rather than one-off because the
+    /// defect it found was invisible to every smaller case. It takes its source
+    /// size, target, and seed from the reference file so a second target — the
+    /// table cell detector's `640` — can be measured with the same code rather
+    /// than a copy that might drift.
     #[test]
     #[ignore = "diagnostic: needs PADDLEOCR_RUST_PROBE"]
-    fn probe_297x421_to_800x800() {
+    fn probe_against_an_opencv_reference() {
         use base64::{Engine as _, engine::general_purpose::STANDARD};
         let raw =
             std::fs::read_to_string(std::env::var("PADDLEOCR_RUST_PROBE").unwrap_or_default())
@@ -280,8 +283,14 @@ mod tests {
             .decode(document["out_b64"].as_str().unwrap_or_default())
             .unwrap_or_default();
         assert!(!expected.is_empty(), "set PADDLEOCR_RUST_PROBE");
-        let source = synthetic(1, 297, 421);
-        let target = match ImageDimensions::new(800, 800) {
+        let width = document["width"].as_u64().unwrap_or(297) as u32;
+        let height = document["height"].as_u64().unwrap_or(421) as u32;
+        let side = document["target"].as_u64().unwrap_or(800) as u32;
+        let seed = document["seed"].as_u64().unwrap_or(1) as usize;
+        let bound = document["bound"].as_u64().unwrap_or(23) as usize;
+
+        let source = synthetic(seed, width, height);
+        let target = match ImageDimensions::new(side, side) {
             Ok(value) => value,
             Err(error) => panic!("{error}"),
         };
@@ -295,18 +304,27 @@ mod tests {
             if a != b {
                 mismatching += 1;
                 let pixel = index / 3;
-                positions.push((pixel % 800, pixel / 800, index % 3, *a, *b));
+                positions.push((
+                    pixel % side as usize,
+                    pixel / side as usize,
+                    index % 3,
+                    *a,
+                    *b,
+                ));
             }
         }
-        println!("mismatching bytes: {mismatching} of {}", expected.len());
+        println!(
+            "{width}x{height} -> {side}: mismatching bytes: {mismatching} of {}",
+            expected.len()
+        );
         for (x, y, c, a, b) in positions.iter().take(30) {
             println!("  ({x:3}, {y:3}) channel {c}: got {a}, want {b}");
         }
-        // The recorded bound, not a target. It exists so the defect cannot
-        // grow unnoticed while it stays open.
+        // The recorded bound, not a target. It exists so the defect cannot grow
+        // unnoticed while it stays open.
         assert!(
-            mismatching <= 23,
-            "page-scale divergence grew to {mismatching}; the recorded bound is 23"
+            mismatching <= bound,
+            "divergence grew to {mismatching}; the recorded bound is {bound}"
         );
     }
 

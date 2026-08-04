@@ -70,6 +70,8 @@ pub mod input;
 #[allow(dead_code)]
 mod min_area;
 mod orientation;
+
+mod paddlex_detection;
 #[allow(dead_code)]
 mod pipeline;
 #[allow(dead_code)]
@@ -83,6 +85,7 @@ mod resize_cubic;
 mod score;
 #[allow(dead_code)]
 mod score_filter;
+mod table_cells;
 mod table_classification;
 #[allow(dead_code)]
 mod tensor;
