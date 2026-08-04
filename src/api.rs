@@ -185,6 +185,12 @@ mod tests {
 }
 
 /// The explicitly provisioned artifacts a run needs.
+///
+/// The two digest fields are how `MOD-003` identity checking is requested. A
+/// `Some` digest is verified by streaming the file **before** the model is
+/// loaded, so a wrong or tampered artifact never reaches the runtime. A `None`
+/// digest skips that check, which is a deliberate choice the caller makes
+/// rather than a silent default.
 #[cfg(feature = "onnxruntime")]
 #[derive(Clone, Copy, Debug)]
 pub struct Artifacts<'a> {
@@ -192,8 +198,12 @@ pub struct Artifacts<'a> {
     pub library: &'a str,
     /// Path to the detector model.
     pub detector: &'a str,
+    /// Expected detector SHA-256, lowercase hexadecimal.
+    pub detector_sha256: Option<&'a str>,
     /// Path to the recognizer model.
     pub recognizer: &'a str,
+    /// Expected recognizer SHA-256, lowercase hexadecimal.
+    pub recognizer_sha256: Option<&'a str>,
 }
 
 /// Recognizes text in one PNG image using explicitly provisioned artifacts.
@@ -208,7 +218,7 @@ pub fn recognize_png(
     options: OcrOptions,
 ) -> Result<Vec<TextLine>> {
     use crate::backend::{AxisExtent, ModelArtifact, ModelContract, RunBudget, TensorContract};
-    use crate::backend_ort::{OrtBackend, initialize_runtime};
+    use crate::backend_ort::initialize_runtime;
     use crate::pipeline::{ClassicModels, ClassicThresholds, run_classic_ocr};
 
     initialize_runtime(std::path::Path::new(artifacts.library))?;
@@ -217,11 +227,13 @@ pub fn recognize_png(
         minimum: 1,
         maximum: 8192,
     };
-    // The digest is not enforced here: the caller supplies the path, and
-    // artifact identity policy is MOD-003 work. A zero digest with a
-    // permissive stream keeps the adapter's shape checks active.
+    // A declared digest is checked; an absent one is recorded as unchecked by
+    // the placeholder value, which the matching stream then satisfies.
     let detector_contract = ModelContract::new(
-        ModelArtifact::new(artifacts.detector, "0".repeat(64))?,
+        ModelArtifact::new(
+            artifacts.detector,
+            artifacts.detector_sha256.unwrap_or(UNCHECKED_DIGEST),
+        )?,
         TensorContract::new(
             "x",
             vec![AxisExtent::Fixed(1), AxisExtent::Fixed(3), free, free],
@@ -233,7 +245,10 @@ pub fn recognize_png(
         RunBudget::new(40_000_000, 40_000_000, 1)?,
     );
     let recognizer_contract = ModelContract::new(
-        ModelArtifact::new(artifacts.recognizer, "0".repeat(64))?,
+        ModelArtifact::new(
+            artifacts.recognizer,
+            artifacts.recognizer_sha256.unwrap_or(UNCHECKED_DIGEST),
+        )?,
         TensorContract::new(
             "x",
             vec![free, AxisExtent::Fixed(3), AxisExtent::Fixed(48), free],
@@ -245,9 +260,8 @@ pub fn recognize_png(
         RunBudget::new(40_000_000, 40_000_000, 64)?,
     );
 
-    let mut skip = SkipDigest;
-    let detector = OrtBackend::load(&detector_contract, &mut skip, 1, 1)?;
-    let recognizer = OrtBackend::load(&recognizer_contract, &mut skip, 1, 1)?;
+    let detector = load_backend(&detector_contract, artifacts.detector_sha256.is_some())?;
+    let recognizer = load_backend(&recognizer_contract, artifacts.recognizer_sha256.is_some())?;
 
     let encoded = EncodedImage::new(png)?;
     let image = crate::image::decode_classic_bgr(encoded)?;
@@ -275,17 +289,37 @@ pub fn recognize_png(
         .collect())
 }
 
-/// A digest that always reports the declared value.
-///
-/// Artifact identity enforcement is `MOD-003`; this keeps the adapter's other
-/// checks active without asserting an identity policy that does not exist yet.
+/// The placeholder recorded when a caller declares no expected digest.
 #[cfg(feature = "onnxruntime")]
-struct SkipDigest;
+const UNCHECKED_DIGEST: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+
+/// Loads one backend, hashing the artifact only when a digest was declared.
+///
+/// The file is streamed either way so the adapter's size and file-type gates
+/// still run; only the comparison differs.
+#[cfg(feature = "onnxruntime")]
+fn load_backend(
+    contract: &crate::backend::ModelContract,
+    verify: bool,
+) -> Result<crate::backend_ort::OrtBackend> {
+    use crate::backend_ort::OrtBackend;
+    if verify {
+        let mut digest = crate::digest::Sha256::new();
+        OrtBackend::load(contract, &mut digest, 1, 1)
+    } else {
+        let mut unchecked = UncheckedDigest;
+        OrtBackend::load(contract, &mut unchecked, 1, 1)
+    }
+}
+
+/// Reports the placeholder digest, so an undeclared identity is not a failure.
+#[cfg(feature = "onnxruntime")]
+struct UncheckedDigest;
 
 #[cfg(feature = "onnxruntime")]
-impl crate::backend::Sha256Stream for SkipDigest {
+impl crate::backend::Sha256Stream for UncheckedDigest {
     fn update(&mut self, _bytes: &[u8]) {}
     fn finish(&mut self) -> String {
-        "0".repeat(64)
+        UNCHECKED_DIGEST.to_owned()
     }
 }

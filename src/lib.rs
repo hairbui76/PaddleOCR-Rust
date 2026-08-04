@@ -8,6 +8,8 @@
 
 /// The public classic OCR surface.
 pub mod api;
+/// Dependency-free streaming SHA-256 for artifact identity.
+pub mod digest;
 /// Structured errors returned by public foundation types.
 pub mod error;
 /// Developer-only byte-driven fuzz driver for current private pure kernels.

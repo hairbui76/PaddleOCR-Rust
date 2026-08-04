@@ -12,7 +12,8 @@ use std::process::ExitCode;
 fn usage() -> &'static str {
     "usage: paddleocr-rust --ort-dylib <libonnxruntime.so> \\\n\
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
-     \x20                 --dictionary <dict.txt> [--json] <image.png>\n\
+     \x20                 --dictionary <dict.txt> [--json] \\\n\
+     \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
      docs/IMAGE_DECODER_DECISION.md for why JPEG is deferred.\n"
@@ -59,6 +60,8 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut dictionary = None;
     let mut image = None;
     let mut json = false;
+    let mut detector_sha256 = None;
+    let mut recognizer_sha256 = None;
 
     let mut index = 0;
     while index < arguments.len() {
@@ -85,6 +88,14 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             }
             "--dictionary" => {
                 take(&mut dictionary)?;
+                index += 2;
+            }
+            "--detector-sha256" => {
+                take(&mut detector_sha256)?;
+                index += 2;
+            }
+            "--recognizer-sha256" => {
+                take(&mut recognizer_sha256)?;
                 index += 2;
             }
             "--json" => {
@@ -126,7 +137,9 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
         &paddleocr_rust::api::Artifacts {
             library: &library,
             detector: &detector,
+            detector_sha256: detector_sha256.as_deref(),
             recognizer: &recognizer,
+            recognizer_sha256: recognizer_sha256.as_deref(),
         },
         &parsed,
         &bytes,
