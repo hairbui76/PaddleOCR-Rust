@@ -2,8 +2,8 @@
 
 Roadmap item: `DOCORI-001` (contract half)
 Baseline: PaddleOCR commit `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`
-Status: contract frozen from the pinned source; **no implementation**, no
-artifact provisioned
+Status: contract frozen from the pinned source **and** from the provisioned
+artifact configs; **no implementation** yet
 
 This freezes the observable behaviour of orientation classification before any
 Rust is written, the way `CLASSIC_OCR_CONTRACT.md` did for the classic path. Every
@@ -84,74 +84,130 @@ Frozen from `processors.cc:557`, since this part *is* in the source:
 - Resampling is `INTER_CUBIC`, not the `INTER_LINEAR` used by the detector
   resize. Two different interpolations in one pipeline, again.
 
-## 5. Frozen values — text-line orientation
+## 5. Second correction: the Python path is not this baseline's path
 
-Read from `tools/infer/utility.py:init_args`:
+Section 3 said this document freezes the Python `predict_cls.py` contract
+"because that is the path `predict_system.py` uses". **That reasoning was wrong
+for the pinned model**, and provisioning the artifact is what showed it.
 
-| Setting | Value | Note |
+`deploy/cpp_infer/src/configs/OCR.yaml` pins `PP-LCNet_x1_0_textline_ori`. That
+model's own `inference.yml` declares a contract that does not match
+`predict_cls.py` in any of its significant values:
+
+| | `predict_cls.py` (hard-coded) | `PP-LCNet_x1_0_textline_ori` (artifact config) |
 |---|---|---|
-| `use_angle_cls` | `False` | **Off by default upstream** |
-| `cls_image_shape` | `3, 48, 192` | Width is **fixed** at `192`, unlike the recognizer's per-batch width |
-| `label_list` | `["0", "180"]` | Two classes only; no `90` or `270` |
-| `cls_batch_num` | `6` | Same as `rec_batch_num` |
-| `cls_thresh` | `0.9` | |
+| Input shape | `3, 48, 192` | `3, 80, 160` |
+| Resize | aspect-preserving, then zero-pad to `192` | plain `ResizeImage` to `160×80`, **no padding** |
+| Normalization | `(x/255 − 0.5) / 0.5` | scale `1/255`, mean `[0.485, 0.456, 0.406]`, std `[0.229, 0.224, 0.225]` |
+| Labels | `["0", "180"]` | `["0_degree", "180_degree"]` |
 
-## 6. Preprocessing — `predict_cls.py:resize_norm_img`
+`predict_cls.py` describes the **legacy** `ch_ppocr_mobile_v2.0_cls` classifier.
+The baseline's configuration selects a different model with a different input
+contract, and a port that implemented the Python path would preprocess correctly
+for a model this baseline does not use.
 
-For each crop, with `imgC, imgH, imgW = 3, 48, 192`:
+This also explains the substring test flagged below as a curiosity. `"180" in
+label` is not sloppiness: with real label lists it is load-bearing, because
+`"180" in "180_degree"` is true and `"180" in "0_degree"` is false, while an
+equality test against `"180"` would never fire.
 
-1. `ratio = w / h`.
-2. `resized_w = imgW` if `ceil(imgH * ratio) > imgW`, else `ceil(imgH * ratio)`.
-3. `cv2.resize(img, (resized_w, imgH))` — default `INTER_LINEAR`.
-4. `float32`, transpose to CHW, divide by `255`.
-5. Subtract `0.5`, divide by `0.5`.
-6. Zero-pad into a `(3, 48, 192)` canvas, content at the left.
+## 6. The provisioned artifacts
 
-Three differences from the recognizer's `resize_norm_img`, each of which would
-be a bug if carried across:
+Both are Apache-2.0 and are stored outside version control, as
+`MODEL-DEC-001` requires.
 
-- **The width is a constant, not derived.** The recognizer computes
-  `imgW = int(imgH * max_wh_ratio)` per batch; the classifier does not, and pads
-  every crop to `192`.
-- **`max_wh_ratio` is computed and never used.** `__call__` calculates it per
-  batch and passes it nowhere. It is dead code upstream. A port that "uses" it
-  would produce a different tensor.
-- **A single-channel branch exists** (`cls_image_shape[0] == 1`) which the
-  default `3`-channel shape never takes.
+| Model | Revision | `inference.onnx` SHA-256 / bytes | `inference.yml` SHA-256 / bytes |
+|---|---|---|---|
+| `PP-LCNet_x1_0_textline_ori` | `7fdcf3cf7061163eda7183b224aa334bd33068f7` | `38aa97cd4be591e0ad304e659f07ba30d946f27a63315433f6659c69c8778345` / `6,777,816` | `8d5120d0e1a30a9df7ed46aa9119da3796ed066777089d1c1d705f132d5e90f9` / `735` |
+| `PP-LCNet_x1_0_doc_ori` | `7330ab7039123e46af2dc03154b9969aa412c61d` | `af9a0a4f317ff0709ce752067807f819cb15d883f8ecad89f28df1c6ee2d9c92` / `6,788,069` | `9e195eb729a8173588cd0e8a852c8b373aa606e79e77b4ac7d8346f5426caf26` / `766` |
 
-## 7. Batching — `predict_cls.py:__call__`
+Both are roughly `6.8 MB`, an order of magnitude smaller than the detector and
+recognizer.
 
-Identical in shape to recognition: sort all crops by `width / height`, process in
-chunks of `cls_batch_num`, restore results to the caller's order by index.
-`cls_res` is initialised to `[["", 0.0]] * img_num`, so a crop whose batch never
-ran keeps an empty label rather than a fabricated one.
+## 7. Text-line orientation — the real contract
 
-## 8. Postprocessing — `ppocr/postprocess/cls_postprocess.py:ClsPostProcess`
+From `PP-LCNet_x1_0_textline_ori/inference.yml`:
 
-`pred_idxs = preds.argmax(axis=1)`, then `(label_list[idx], preds[i, idx])`.
-NumPy's `argmax` returns the **first** maximum on a tie, so class `0` wins an
-exact tie — the same lowest-index rule the CTC decoder uses.
+```
+PreProcess:
+  ResizeImage: size [160, 80]          # width, height
+  NormalizeImage: scale 1/255,
+                  mean [0.485, 0.456, 0.406],
+                  std  [0.229, 0.224, 0.225],
+                  channel_num 3, order ''
+  ToCHWImage
+PostProcess:
+  Topk: topk 1, label_list ["0_degree", "180_degree"]
+```
 
-## 9. The rotation rule, and its asymmetry
+Input tensor `x` is `[N, 3, 80, 160]`, batch bounded to `8` by the declared
+dynamic shapes.
+
+Two consequences worth stating plainly:
+
+- **The normalization is the detector's, not the recognizer's.** This project
+  already has that exact evaluation order in `src/tensor.rs`
+  (`classic_detector_input`), verified bit-identical against a captured upstream
+  tensor. The classifier can reuse it; the recognizer's `(x − 0.5) / 0.5` path
+  would be wrong.
+- **The resize is unconditional.** No aspect ratio, no padding, no per-batch
+  width. Every crop becomes `160×80` regardless of shape, which makes batching
+  trivial and makes the `max_wh_ratio` dead code in `predict_cls.py` doubly
+  irrelevant.
+
+## 8. Document orientation — the real contract
+
+From `PP-LCNet_x1_0_doc_ori/inference.yml`:
+
+```
+PreProcess:
+  ResizeImage: resize_short 256        # shorter side to 256, aspect preserved
+  CropImage: size 224                  # centre crop
+  NormalizeImage: same constants as above
+  ToCHWImage
+PostProcess:
+  Topk: topk 1, label_list ["0", "90", "180", "270"]
+```
+
+Input tensor `x` is `[N, 3, 224, 224]`.
+
+**Four classes, not two**, and the labels are bare numbers here while the
+text-line model uses the `_degree` suffix. Two models in one pipeline with
+different label conventions is exactly the kind of detail that a port gets wrong
+by generalising from the first one it implements.
+
+The `resize_short` plus centre-crop pair is a preprocessing shape this project
+has never implemented: the classic path only ever resizes, never crops to a
+centre window. It needs its own oracle capture.
+
+## 9. Text-line classification with the legacy Python model
+
+Retained for reference, because `predict_system.py` still implements it and a
+caller pointing at the legacy artifact would get this behaviour. It is **not**
+the contract for the pinned model.
+
+Read from `tools/infer/utility.py:init_args`: `use_angle_cls` `False`,
+`cls_image_shape` `3, 48, 192`, `label_list` `["0", "180"]`, `cls_batch_num` `6`,
+`cls_thresh` `0.9`.
+
+`resize_norm_img` preserves aspect ratio, caps the width at `192`, normalizes
+`(x/255 − 0.5) / 0.5`, and zero-pads left-aligned. `__call__` sorts by aspect
+ratio, batches by six, restores by index, and computes a `max_wh_ratio` it never
+uses. `ClsPostProcess` takes `argmax`, which resolves ties to the lowest index.
+
+The rotation rule and its asymmetry, which apply to both paths:
 
 ```python
 if "180" in label and score > self.cls_thresh:
     img_list[...] = cv2.rotate(img_list[...], 1)
 ```
 
-Three details that are all observable:
-
-- The test is `score > cls_thresh`, **strict**. A score of exactly `0.9` does
-  **not** rotate. This is the opposite of the detector's box-score rule, where
-  `box_thresh > score` means equality is *retained*. The two thresholds in the
-  same pipeline use opposite boundary conventions, and the only way to get both
-  right is to read both.
-- The label test is `"180" in label`, a **substring** test on the label string,
-  not equality. With the default `label_list` it behaves identically, but a
-  custom label list containing `"1800"` would also rotate.
-- `cv2.rotate(img, 1)` is `ROTATE_180`. The crop is replaced in place, so
-  recognition sees the rotated image and the caller's returned crop list is
-  mutated.
+- `score > cls_thresh` is **strict**: exactly `0.9` does **not** rotate. The
+  detector's box-score rule is the opposite convention, where equality is
+  retained. Two thresholds in one pipeline with opposite boundaries.
+- `"180" in label` is a substring test, which §5 explains is load-bearing.
+- `cv2.rotate(img, 1)` is `ROTATE_180`, applied in place, so recognition sees the
+  rotated crop.
 
 ## 10. Geometry semantics
 
@@ -182,6 +238,11 @@ Recorded now so it constrains the work rather than being written to fit it:
 
 ## 12. Status
 
-Contract frozen. No implementation, no artifact, no fixture. `DOCORI-001` stays
-open, and its document-orientation half is now known to need a baseline reference
-this checkout does not provide.
+Contract frozen for both models, from the pinned source and from the provisioned
+artifact configs. Artifacts provisioned and hashed; no implementation and no
+fixture yet. `DOCORI-001` stays open.
+
+Two corrections are recorded above rather than silently fixed, because both were
+wrong in ways that would have produced working code against the wrong contract:
+the claim that document orientation is absent from the checkout, and the choice
+to freeze the Python text-line path for a model that does not use it.
