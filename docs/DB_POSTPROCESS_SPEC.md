@@ -229,8 +229,19 @@ every one fails on `slanted` alone. The per-row endpoint rounding is therefore
 What remains is structural: either the scanline set itself differs, for example
 by sampling at `y + 0.5` rather than at integer rows, or `fillPoly` walks each
 edge and marks every pixel the edge touches instead of intersecting rows
-analytically. The next attempt should test those two hypotheses rather than
-any further endpoint-rounding variant, which is now known to be a dead end.
+analytically. Both were tested. Sampling at `y + 0.5` scores **0 of 8**: it is wrong for even
+the axis-aligned cases. The edge-walk hypothesis scores **8 of 8**.
+
+**Resolved.** `fillPoly` is reproduced by:
+
+1. walking every polygon edge with an integer Bresenham line and marking each
+   pixel the edge passes through;
+2. then, for each row that has any marked pixel, filling every pixel between
+   the leftmost and rightmost marked pixel inclusive.
+
+No endpoint rounding rule is involved at all, which is why all nine of those
+variants failed identically. The mean is then taken over the marked pixels of
+the ROI, matching `cv2.mean` with the mask.
 
 ## Fidelity hazards to settle before implementing
 
