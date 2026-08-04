@@ -95,19 +95,31 @@ pub(crate) fn classic_cubic_resize(
             message: "cubic resize output allocation failed",
         })?;
 
+    // Two passes with an intermediate, which is what `HResizeCubic` and
+    // `VResizeCubic` are: separate structs, separate loops, a buffer between
+    // them. That ordering matters because float addition is not associative —
+    // summing four horizontal results and then combining them vertically is not
+    // the same as accumulating sixteen products in one running total, and the
+    // difference lands exactly on the rounding boundaries where this diverged.
     let source_pixels = source.pixels();
     for row_taps in &rows {
         for column_taps in &columns {
             for channel in 0..channels {
-                let mut accumulated = 0.0_f32;
-                for (sample_y, weight_y) in row_taps {
+                let mut horizontal = [0.0_f32; 4];
+                for (tap, (sample_y, _)) in row_taps.iter().enumerate() {
+                    let mut sum = 0.0_f32;
                     for (sample_x, weight_x) in column_taps {
                         let index = ((*sample_y as usize) * (source_width as usize)
                             + *sample_x as usize)
                             * channels
                             + channel;
-                        accumulated += weight_x * weight_y * f32::from(source_pixels[index]);
+                        sum += weight_x * f32::from(source_pixels[index]);
                     }
+                    horizontal[tap] = sum;
+                }
+                let mut accumulated = 0.0_f32;
+                for (tap, (_, weight_y)) in row_taps.iter().enumerate() {
+                    accumulated += horizontal[tap] * weight_y;
                 }
                 pixels.push(saturate(accumulated));
             }
@@ -128,27 +140,6 @@ fn axis_taps(destination: f64, scale: f64, length: u32) -> [(u32, f32); 4] {
         let coordinate = base + index as f64 - 1.0;
         (clamped_index(coordinate, length), weights[index])
     })
-}
-
-/// OpenCV's `interpolateCubic`, in its own evaluation order.
-///
-/// **Not** the same construction as `crop.rs::cubic_weights`. The two are
-/// algebraically equal and `crop.rs` already warns that they "can differ at a
-/// uint8 rounding boundary after f32 arithmetic" — which is exactly what
-/// happened: sharing the warp's form here produced `24` differing bytes in
-/// `1,920,000`, one in eighty thousand, and reading `resize.cpp` rather than
-/// guessing is what found it.
-///
-/// `warpPerspective` and `resize` genuinely use different coefficient
-/// constructions, so this project needs both.
-fn interpolate_cubic(x: f32) -> [f32; 4] {
-    const A: f32 = -0.75;
-    let mut coefficients = [0.0_f32; 4];
-    coefficients[0] = ((A * (x + 1.0) - 5.0 * A) * (x + 1.0) + 8.0 * A) * (x + 1.0) - 4.0 * A;
-    coefficients[1] = ((A + 2.0) * x - (A + 3.0)) * x * x + 1.0;
-    coefficients[2] = ((A + 2.0) * (1.0 - x) - (A + 3.0)) * (1.0 - x) * (1.0 - x) + 1.0;
-    coefficients[3] = 1.0 - coefficients[0] - coefficients[1] - coefficients[2];
-    coefficients
 }
 
 /// Clamps a sample coordinate into the source, replicating the border.
@@ -298,18 +289,24 @@ mod tests {
             Ok(value) => value,
             Err(error) => panic!("{error}"),
         };
-        let mismatching = got
-            .pixels()
-            .iter()
-            .zip(&expected)
-            .filter(|(a, b)| a != b)
-            .count();
+        let mut mismatching = 0;
+        let mut positions = Vec::new();
+        for (index, (a, b)) in got.pixels().iter().zip(&expected).enumerate() {
+            if a != b {
+                mismatching += 1;
+                let pixel = index / 3;
+                positions.push((pixel % 800, pixel / 800, index % 3, *a, *b));
+            }
+        }
         println!("mismatching bytes: {mismatching} of {}", expected.len());
+        for (x, y, c, a, b) in positions.iter().take(30) {
+            println!("  ({x:3}, {y:3}) channel {c}: got {a}, want {b}");
+        }
         // The recorded bound, not a target. It exists so the defect cannot
         // grow unnoticed while it stays open.
         assert!(
-            mismatching <= 24,
-            "page-scale divergence grew to {mismatching}; the recorded bound is 24"
+            mismatching <= 23,
+            "page-scale divergence grew to {mismatching}; the recorded bound is 23"
         );
     }
 

@@ -159,29 +159,34 @@ true of the five committed cases and **false at page scale**: a `297x421` to
 `800x800` resize differs from OpenCV in `24` bytes out of `1,920,000`, each off
 by one.
 
-Four hypotheses have been tried and measured, including two read directly from
-OpenCV's `resize.cpp` rather than guessed:
+Seven variants have been tried and measured against the `297x421` to `800x800`
+case, which is the only size that exposes the defect at all:
 
 | Attempt | Differing bytes of `1,920,000` |
 |---|---|
-| **`crop.rs` weight form, float accumulation** — current | **24** |
-| `interpolateCubic`'s own weight form, float accumulation | 33 |
+| **Two passes, `crop.rs` weight form** — current | **23** |
+| Two passes, `interpolateCubic`'s own weight form | 31 |
+| Fused `4x4` accumulation, `crop.rs` weight form | 24 |
+| Fused `4x4` accumulation, `interpolateCubic`'s form | 33 |
 | Fixed point, descaling between passes | 82,990 |
 | Fixed point, single descale by `22`, read from `resize.cpp` | 74,043 |
+| Fixed point horizontal, float vertical, per `VResizeCubicVec_32s8u` | 73,914 |
 
-The two fixed-point attempts were far worse even when read from the source,
-which says the pass structure being reproduced is not the one this dispatch
-takes. And the *correct* `interpolateCubic` coefficient order scored **worse**
-than the warp's form, which puts the remaining cause somewhere neither
-hypothesis touched.
+Two things are settled. **Fixed point is not the path this dispatch takes**:
+three variants, all read from `resize.cpp` rather than guessed, all landing
+around `74,000`, which is not a near miss but a different algorithm. And **the
+two-pass structure is right** — `HResizeCubic` and `VResizeCubic` are separate
+structs with a buffer between them, float addition is not associative, and
+separating the passes improved every coefficient form it was paired with.
+
+One thing is not settled, and is recorded as an oddity rather than explained
+away: the coefficient form that measures better is `crop.rs`'s **warp** table,
+not `resize`'s own `interpolateCubic` — by `8` bytes, consistently, in both
+structures. That is the opposite of what reading the source predicts, which
+means the remaining cause is somewhere none of these seven attempts reached.
 
 The best measured implementation stands, the defect is open, and the test bounds
-it at `24` so it cannot grow unnoticed. Recording four measured failures is worth
-more than a fifth guess.
-
-The corpus is the lesson. Five cases totalling about `2,600` pixels cannot
-exhibit a one-in-eighty-thousand defect; only a page-sized case could. A test
-suite that passes says nothing about the sizes it never tried.
+it at `23` so it cannot grow unnoticed.
 
 ## 7. Status
 
