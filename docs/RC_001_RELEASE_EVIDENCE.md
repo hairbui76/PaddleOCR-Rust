@@ -94,6 +94,12 @@ cargo test --features onnxruntime --test end_to_end -- --ignored --test-threads=
 | adapter fingerprint cross-check | reproduced |
 | loader error mapping | typed error, run alone |
 | `E2E-001` provisioned suite | `6` passing |
+| `DOCORI-001` orientation gate | recorded verdicts reproduced |
+
+Every gate needs its environment variable set, and a missing one **fails** rather
+than skipping — `CONTRIBUTING.md` lists which gate needs which. That is the same
+class of trap as the ordering constraint below: a runner with a partial
+environment sees failures and concludes the project is broken.
 
 **Finding.** Running the ignored lib gates the default way — all of them, in
 parallel — produces five failures inside `ort`'s mutex, because several tests

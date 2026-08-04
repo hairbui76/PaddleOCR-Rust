@@ -16,6 +16,7 @@ fn usage() -> &'static str {
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
      \x20                 --dictionary <dict.txt> [--json] [--time-budget-ms <n>] \\\n\
      \x20                 [--manifest <manifest.txt>] \\\n\
+     \x20                 [--orientation <textline_ori.onnx> [--orientation-sha256 <hex>]] \\\n\
      \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>...\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
@@ -70,6 +71,8 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut json = false;
     let mut time_budget_ms = None;
     let mut manifest_path = None;
+    let mut orientation = None;
+    let mut orientation_sha256 = None;
     let mut detector_sha256 = None;
     let mut recognizer_sha256 = None;
 
@@ -114,6 +117,14 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             }
             "--manifest" => {
                 take(&mut manifest_path)?;
+                index += 2;
+            }
+            "--orientation" => {
+                take(&mut orientation)?;
+                index += 2;
+            }
+            "--orientation-sha256" => {
+                take(&mut orientation_sha256)?;
                 index += 2;
             }
             "--json" => {
@@ -207,6 +218,13 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             }
             if let Some(digest) = recognizer_sha256.as_deref() {
                 artifacts = artifacts.with_recognizer_sha256(digest);
+            }
+            if let Some(path) = orientation.as_deref() {
+                artifacts = artifacts.with_orientation(path);
+                eprintln!("orientation: {path}");
+            }
+            if let Some(digest) = orientation_sha256.as_deref() {
+                artifacts = artifacts.with_orientation_sha256(digest);
             }
             artifacts
         },

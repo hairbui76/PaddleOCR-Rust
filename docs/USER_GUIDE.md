@@ -171,6 +171,34 @@ is [`ADR_MODEL_DEC_001_ARTIFACT_POLICY.md`](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md
 An unknown key is an error rather than being ignored, because a lenient parser
 turns `detector.sha265` into an artifact that looks verified and is not.
 
+### Correcting upside-down lines
+
+Supply the text-line orientation classifier and each detected line is checked and
+turned upright before recognition:
+
+```sh
+paddleocr-rust ... --orientation PP-LCNet_x1_0_textline_ori/inference.onnx page.png
+```
+
+On a page rotated 180 degrees, the difference is not subtle:
+
+```
+without    0.883741  Hello   0.899383  Word    0.966466  OCR
+with       0.999995  Hello   0.999978  World   0.999919  OCR
+```
+
+Without it the recognizer reads upside-down text at low confidence and gets a
+word wrong. With it, every line is correct.
+
+Two things it does **not** do. It only decides `0` against `180` — a page rotated
+`90` degrees is not handled, and document-level orientation is a different model
+this project does not yet support. And it rotates *crops*, not the page, so the
+reading order still follows the rotated layout: a 180-degree page reads
+bottom-to-top because that is where its lines are.
+
+The default is off, matching upstream. `--orientation-sha256` verifies the
+classifier the same way the detector and recognizer digests do.
+
 ### Bounding a run
 
 ```sh

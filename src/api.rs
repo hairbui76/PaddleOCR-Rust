@@ -52,6 +52,12 @@ pub struct OcrOptions {
     pub unclip_ratio: f64,
     /// Minimum recognition confidence; a score exactly equal is retained.
     pub drop_score: f64,
+    /// Minimum orientation confidence to act on.
+    ///
+    /// Equality does **not** rotate: the upstream test is strict, which is the
+    /// opposite convention from `box_threshold`. Ignored unless an orientation
+    /// artifact was supplied.
+    pub orientation_threshold: f64,
     /// How the caller may abandon a run in progress.
     ///
     /// The default imposes no budget and no cancellation. See
@@ -68,6 +74,7 @@ impl Default for OcrOptions {
             box_threshold: 0.6,
             unclip_ratio: 1.5,
             drop_score: 0.5,
+            orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
             control: RunControl::unbounded(),
         }
     }
@@ -92,6 +99,13 @@ impl OcrOptions {
     #[must_use]
     pub fn with_drop_score(mut self, score: f64) -> Self {
         self.drop_score = score;
+        self
+    }
+
+    /// Sets the minimum orientation confidence to act on.
+    #[must_use]
+    pub fn with_orientation_threshold(mut self, threshold: f64) -> Self {
+        self.orientation_threshold = threshold;
         self
     }
 
@@ -264,6 +278,13 @@ pub struct Artifacts<'a> {
     pub recognizer: &'a str,
     /// Expected recognizer SHA-256, lowercase hexadecimal.
     pub recognizer_sha256: Option<&'a str>,
+    /// Optional text-line orientation classifier.
+    ///
+    /// `None` matches upstream's `use_angle_cls = False`: no classifier is
+    /// loaded and no crop is rotated.
+    pub orientation: Option<&'a str>,
+    /// Expected orientation classifier SHA-256, lowercase hexadecimal.
+    pub orientation_sha256: Option<&'a str>,
 }
 
 #[cfg(feature = "onnxruntime")]
@@ -283,6 +304,8 @@ impl<'a> Artifacts<'a> {
             detector_sha256: None,
             recognizer,
             recognizer_sha256: None,
+            orientation: None,
+            orientation_sha256: None,
         }
     }
 
@@ -297,6 +320,24 @@ impl<'a> Artifacts<'a> {
     #[must_use]
     pub const fn with_recognizer_sha256(mut self, digest: &'a str) -> Self {
         self.recognizer_sha256 = Some(digest);
+        self
+    }
+
+    /// Adds a text-line orientation classifier.
+    ///
+    /// Supplying one turns the stage on. Without it the pipeline behaves exactly
+    /// as it did before the classifier existed, which is also upstream's
+    /// default.
+    #[must_use]
+    pub const fn with_orientation(mut self, path: &'a str) -> Self {
+        self.orientation = Some(path);
+        self
+    }
+
+    /// Requires the orientation classifier to match this SHA-256.
+    #[must_use]
+    pub const fn with_orientation_sha256(mut self, digest: &'a str) -> Self {
+        self.orientation_sha256 = Some(digest);
         self
     }
 }
@@ -332,6 +373,10 @@ pub struct OcrEngine {
     recognizer: crate::backend_ort::OrtBackend,
     recognizer_contract: crate::backend::ModelContract,
     dictionary: CtcDictionary,
+    orientation: Option<(
+        crate::backend_ort::OrtBackend,
+        crate::backend::ModelContract,
+    )>,
 }
 
 #[cfg(feature = "onnxruntime")]
@@ -388,12 +433,48 @@ impl OcrEngine {
         let detector = load_backend(&detector_contract, artifacts.detector_sha256.is_some())?;
         let recognizer = load_backend(&recognizer_contract, artifacts.recognizer_sha256.is_some())?;
 
+        // The classifier's shape is fixed by its artifact rather than derived,
+        // so its contract is entirely concrete: no bounded axis except batch.
+        let orientation = match artifacts.orientation {
+            Some(path) => {
+                let batch = AxisExtent::Bounded {
+                    minimum: 1,
+                    maximum: crate::orientation::ORIENTATION_MAX_BATCH,
+                };
+                let contract = ModelContract::new(
+                    ModelArtifact::new(
+                        path,
+                        artifacts.orientation_sha256.unwrap_or(UNCHECKED_DIGEST),
+                    )?,
+                    TensorContract::new(
+                        "x",
+                        vec![
+                            batch,
+                            AxisExtent::Fixed(3),
+                            AxisExtent::Fixed(80),
+                            AxisExtent::Fixed(160),
+                        ],
+                    )?,
+                    TensorContract::new("fetch_name_0", vec![batch, AxisExtent::Fixed(2)])?,
+                    RunBudget::new(
+                        40_000_000,
+                        40_000_000,
+                        crate::orientation::ORIENTATION_MAX_BATCH,
+                    )?,
+                );
+                let backend = load_backend(&contract, artifacts.orientation_sha256.is_some())?;
+                Some((backend, contract))
+            }
+            None => None,
+        };
+
         Ok(Self {
             detector,
             detector_contract,
             recognizer,
             recognizer_contract,
             dictionary: dictionary.inner.clone(),
+            orientation,
         })
     }
 
@@ -439,16 +520,16 @@ impl OcrEngine {
                 detector: (&self.detector, &self.detector_contract),
                 recognizer: (&self.recognizer, &self.recognizer_contract),
                 dictionary: &self.dictionary,
-                // No orientation artifact is loaded, matching upstream's
-                // `use_angle_cls = False` default.
-                orientation: None,
+                orientation: self.orientation.as_ref().map(|(backend, contract)| {
+                    (backend as &dyn crate::backend::InferenceBackend, contract)
+                }),
             },
             &image,
             ClassicThresholds {
                 box_threshold: options.box_threshold,
                 unclip_ratio: options.unclip_ratio,
                 drop_score: options.drop_score,
-                orientation_threshold: crate::orientation::ORIENTATION_THRESHOLD,
+                orientation_threshold: options.orientation_threshold,
             },
             &options.control.begin(),
         )?;

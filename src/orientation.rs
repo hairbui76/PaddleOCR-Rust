@@ -643,3 +643,173 @@ mod oracle {
         );
     }
 }
+
+/// Optional gate: run the real orientation model through the adapter.
+///
+/// This is the `LANG-001` bar for the orientation artifact — a committed fixture
+/// reproduced by a gate — and it is what the public API surface waits on. It is
+/// ignored by default because it needs an artifact this repository never ships.
+///
+/// ```sh
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_ORIENTATION_ONNX=<PP-LCNet_x1_0_textline_ori/inference.onnx> \
+///   cargo test --features onnxruntime --lib -- --ignored --nocapture g_orientation
+/// ```
+#[cfg(all(test, feature = "onnxruntime"))]
+mod g_orientation {
+    use super::*;
+
+    use std::path::Path;
+
+    use crate::backend::{AxisExtent, ModelArtifact, RunBudget, TensorContract};
+    use crate::backend_ort::{OrtBackend, initialize_runtime};
+    use crate::types::ImageDimensions;
+
+    const FIXTURE: &str = include_str!("../tests/fixtures/classic-v1-orientation/expected.json");
+    const READING_ORDER: &[u8] =
+        include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png");
+
+    struct Sha256(Vec<u8>);
+
+    impl crate::backend::Sha256Stream for Sha256 {
+        fn update(&mut self, bytes: &[u8]) {
+            self.0.extend_from_slice(bytes);
+        }
+        fn finish(&mut self) -> String {
+            crate::backend_ort::tests::sha256_hex_for_tests(&self.0)
+        }
+    }
+
+    fn must<T, E: core::fmt::Display>(value: core::result::Result<T, E>, what: &str) -> T {
+        match value {
+            Ok(value) => value,
+            Err(error) => panic!("{what}: {error}"),
+        }
+    }
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    /// The two cases that carry meaning: a real page and the same page rotated.
+    fn reading_order(rotated: bool) -> InterleavedImage {
+        let encoded = must(crate::types::EncodedImage::new(READING_ORDER), "encoded");
+        let decoded = must(crate::image::decode_classic_bgr(encoded), "decode");
+        if rotated {
+            must(rotate_180(&decoded), "rotate")
+        } else {
+            decoded
+        }
+    }
+
+    #[test]
+    #[ignore = "DOCORI-001 gate: needs an explicitly provisioned classifier"]
+    fn the_real_classifier_reproduces_the_recorded_verdicts() {
+        must(
+            initialize_runtime(Path::new(&env("PADDLEOCR_RUST_ORT_DYLIB"))),
+            "initialise the runtime",
+        );
+
+        let batch = AxisExtent::Bounded {
+            minimum: 1,
+            maximum: ORIENTATION_MAX_BATCH,
+        };
+        let contract = ModelContract::new(
+            must(
+                ModelArtifact::new(
+                    env("PADDLEOCR_RUST_ORIENTATION_ONNX"),
+                    // The digest recorded in the fixture, so the gate refuses a
+                    // substituted artifact rather than reporting its answers.
+                    "38aa97cd4be591e0ad304e659f07ba30d946f27a63315433f6659c69c8778345",
+                ),
+                "orientation artifact",
+            ),
+            must(
+                TensorContract::new(
+                    "x",
+                    vec![
+                        batch,
+                        AxisExtent::Fixed(3),
+                        AxisExtent::Fixed(80),
+                        AxisExtent::Fixed(160),
+                    ],
+                ),
+                "input contract",
+            ),
+            must(
+                TensorContract::new("fetch_name_0", vec![batch, AxisExtent::Fixed(2)]),
+                "output contract",
+            ),
+            must(
+                RunBudget::new(40_000_000, 40_000_000, ORIENTATION_MAX_BATCH),
+                "budget",
+            ),
+        );
+
+        let mut digest = Sha256(Vec::new());
+        let backend = must(OrtBackend::load(&contract, &mut digest, 1, 1), "load");
+
+        let document: serde_json::Value = must(serde_json::from_str(FIXTURE), "fixture");
+        let records = match document["records"].as_array() {
+            Some(records) => records,
+            None => panic!("fixture must hold records"),
+        };
+
+        // Both real cases in one batch, which also exercises batching against
+        // the real model rather than only against the fake.
+        let sources = [reading_order(false), reading_order(true)];
+        let (width, height) = orientation_input_size();
+        let target = must(ImageDimensions::new(width, height), "target");
+        let resized: Vec<InterleavedImage> = sources
+            .iter()
+            .map(|source| {
+                must(
+                    crate::resize::classic_linear_resize(source, target),
+                    "resize",
+                )
+            })
+            .collect();
+        let borrowed: Vec<&InterleavedImage> = resized.iter().collect();
+        let verdicts = must(
+            classify(&backend, &contract, &borrowed, ORIENTATION_THRESHOLD),
+            "classify",
+        );
+
+        let mut failures = Vec::new();
+        for (verdict, case) in verdicts
+            .iter()
+            .zip(["reading-order-upright", "reading-order-rotated"])
+        {
+            let record = match records.iter().find(|entry| entry["case"] == case) {
+                Some(record) => record,
+                None => panic!("no record for {case}"),
+            };
+            let expected_label = record["label"].as_str().unwrap_or_default();
+            let expected_score = record["score"].as_f64().unwrap_or_default();
+            let label = ORIENTATION_LABELS[verdict.class];
+            println!(
+                "[{case}] expected {expected_label} {expected_score:.6}, \
+                 actual {label} {:.6}, rotate {}",
+                verdict.score, verdict.rotate
+            );
+            if label != expected_label {
+                failures.push(format!("{case}: label {label} against {expected_label}"));
+            }
+            if (verdict.score - expected_score).abs() >= 1e-5 {
+                failures.push(format!(
+                    "{case}: score {} against {expected_score}",
+                    verdict.score
+                ));
+            }
+        }
+        assert!(failures.is_empty(), "orientation mismatches: {failures:#?}");
+
+        // The property, not just the recorded numbers: upright is left alone and
+        // the rotated page is corrected.
+        assert!(!verdicts[0].rotate, "the upright page must not be rotated");
+        assert!(verdicts[1].rotate, "the rotated page must be corrected");
+    }
+}
