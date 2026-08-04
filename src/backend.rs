@@ -398,6 +398,25 @@ impl ModelContract {
 pub(crate) trait InferenceBackend {
     /// Runs one already validated input and returns the named output.
     fn run(&self, input: &BackendTensor) -> Result<(String, BackendTensor)>;
+
+    /// Runs a model with several named inputs and returns every named output.
+    ///
+    /// The classic OCR models take one input and emit one output, which is what
+    /// [`InferenceBackend::run`] exists for. The table detectors take three
+    /// — `image`, `im_shape`, `scale_factor` — and the structure recognizer
+    /// emits two, so neither fits that shape.
+    ///
+    /// Defaulting to a refusal rather than to a single-input call keeps the
+    /// distinction explicit: a backend that has not implemented this says so
+    /// instead of quietly running the wrong graph.
+    fn run_named(
+        &self,
+        _inputs: &[(&str, &BackendTensor)],
+    ) -> Result<Vec<(String, BackendTensor)>> {
+        Err(Error::Backend {
+            message: "this backend does not support multi-input models",
+        })
+    }
 }
 
 /// Runs one inference with contract and budget checks on both sides.

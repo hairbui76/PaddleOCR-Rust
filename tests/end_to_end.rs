@@ -614,3 +614,175 @@ mod provisioned {
         assert_eq!(texts(&after), ["Hello", "World", "Rust", "OCR"]);
     }
 }
+
+/// `TABLEPIPE-001` orchestration: three table models run in order.
+///
+/// Ignored by default and gated on four environment variables, the same bar
+/// every other artifact-backed test in this file meets. It is the first test in
+/// this project that loads three sessions at once, one of them `368 MB`.
+///
+/// ```text
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_TABLE_CLS_ONNX=<PP-LCNet_x1_0_table_cls/inference.onnx> \
+/// PADDLEOCR_RUST_TABLE_CELL_ONNX=<RT-DETR-L_wired_table_cell_det/inference.onnx> \
+/// PADDLEOCR_RUST_TABLE_STRUCTURE_ONNX=<SLANeXt_wired/inference.onnx> \
+///   cargo test --features onnxruntime --test end_to_end -- --ignored table_ --nocapture
+/// ```
+#[cfg(feature = "onnxruntime")]
+mod table_orchestration {
+    use paddleocr_rust::table_engine::{TableArtifacts, TableEngine, TableImage};
+    use paddleocr_rust::table_pipeline::TableRoute;
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) if !value.is_empty() => value,
+            _ => panic!("set {name} to run this test"),
+        }
+    }
+
+    /// A synthetic table image: white with dark ruling lines and text blocks.
+    ///
+    /// Deterministic and generated rather than committed, for the reason the
+    /// table fixtures record: a page-sized image exists only to exercise the
+    /// path, and a formula reproduces it exactly.
+    fn synthetic_table(width: u32, height: u32) -> Vec<u8> {
+        let mut pixels = vec![235_u8; (width * height * 3) as usize];
+        let columns = [0_u32, width / 2, width - 1];
+        let rows = [0_u32, height / 2, height - 1];
+        let mut paint = |x: u32, y: u32, value: u8| {
+            if x < width && y < height {
+                let base = ((y * width + x) * 3) as usize;
+                pixels[base] = value;
+                pixels[base + 1] = value;
+                pixels[base + 2] = value;
+            }
+        };
+        for y in 0..height {
+            for x in &columns {
+                for thickness in 0..2 {
+                    paint(x + thickness, y, 20);
+                }
+            }
+        }
+        for x in 0..width {
+            for y in &rows {
+                for thickness in 0..2 {
+                    paint(x, y + thickness, 20);
+                }
+            }
+        }
+        // Four dark blocks standing in for text, one per cell.
+        for (cell_x, cell_y) in [(0_u32, 0_u32), (1, 0), (0, 1), (1, 1)] {
+            let left = cell_x * (width / 2) + width / 8;
+            let top = cell_y * (height / 2) + height / 8;
+            for y in top..(top + height / 8) {
+                for x in left..(left + width / 4) {
+                    paint(x, y, 60);
+                }
+            }
+        }
+        pixels
+    }
+
+    fn swap_channels(pixels: &[u8]) -> Vec<u8> {
+        let mut swapped = pixels.to_vec();
+        for pixel in swapped.chunks_exact_mut(3) {
+            pixel.swap(0, 2);
+        }
+        swapped
+    }
+
+    #[test]
+    #[ignore = "TABLEPIPE-001: needs the three table artifacts"]
+    fn the_three_table_models_run_in_order_and_produce_html() {
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let classifier = env("PADDLEOCR_RUST_TABLE_CLS_ONNX");
+        let cells = env("PADDLEOCR_RUST_TABLE_CELL_ONNX");
+        let structure = env("PADDLEOCR_RUST_TABLE_STRUCTURE_ONNX");
+
+        let engine = match TableEngine::load(&TableArtifacts::new(
+            &library,
+            &classifier,
+            &cells,
+            &structure,
+            TableRoute::Wired,
+        )) {
+            Ok(value) => value,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        let (width, height) = (480_u32, 320_u32);
+        let rgb_pixels = synthetic_table(width, height);
+        let bgr_pixels = swap_channels(&rgb_pixels);
+        let rgb = match TableImage::new(width, height, rgb_pixels) {
+            Ok(value) => value,
+            Err(error) => panic!("rgb: {error}"),
+        };
+        let bgr = match TableImage::new(width, height, bgr_pixels) {
+            Ok(value) => value,
+            Err(error) => panic!("bgr: {error}"),
+        };
+
+        // Each stage is checked on its own, so a failure names the model rather
+        // than the pipeline.
+        let (route, score) = match engine.classify(&rgb) {
+            Ok(value) => value,
+            Err(error) => panic!("classify: {error}"),
+        };
+        println!("route: {route:?} score {score}");
+        assert!((0.0..=1.0).contains(&score), "score out of range: {score}");
+
+        let detected = match engine.detect_cells(&rgb) {
+            Ok(value) => value,
+            Err(error) => panic!("detect_cells: {error}"),
+        };
+        println!("cells: {}", detected.len());
+        for cell in &detected {
+            assert!(
+                cell[2] > cell[0] && cell[3] > cell[1],
+                "degenerate {cell:?}"
+            );
+        }
+
+        let tokens = match engine.recognize_structure(&bgr) {
+            Ok(value) => value,
+            Err(error) => panic!("recognize_structure: {error}"),
+        };
+        println!("tokens: {}", tokens.len());
+        assert_eq!(tokens.first().map(String::as_str), Some("<html>"));
+        assert_eq!(tokens.last().map(String::as_str), Some("</html>"));
+
+        // One OCR box per cell, placed on the dark blocks above.
+        let mut ocr_boxes = Vec::new();
+        let mut ocr_texts = Vec::new();
+        for (index, (cell_x, cell_y)) in [(0_u32, 0_u32), (1, 0), (0, 1), (1, 1)]
+            .into_iter()
+            .enumerate()
+        {
+            let left = f64::from(cell_x * (width / 2) + width / 8);
+            let top = f64::from(cell_y * (height / 2) + height / 8);
+            ocr_boxes.push([
+                left,
+                top,
+                left + f64::from(width / 4),
+                top + f64::from(height / 8),
+            ]);
+            ocr_texts.push(format!("cell{index}"));
+        }
+
+        let result = match engine.recognize_table(
+            &rgb,
+            &bgr,
+            [0.0, 0.0, f64::from(width), f64::from(height)],
+            &ocr_boxes,
+            &ocr_texts,
+        ) {
+            Ok(value) => value,
+            Err(error) => panic!("recognize_table: {error}"),
+        };
+        println!("html: {}", result.html);
+        assert!(result.html.starts_with("<html><body><table>"));
+        assert!(result.html.ends_with("</table></body></html>"));
+        assert_eq!(result.route, route);
+    }
+}

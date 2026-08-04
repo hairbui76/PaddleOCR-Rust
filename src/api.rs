@@ -856,7 +856,8 @@ pub fn recognize_png(
 
 /// The placeholder recorded when a caller declares no expected digest.
 #[cfg(feature = "onnxruntime")]
-const UNCHECKED_DIGEST: &str = "0000000000000000000000000000000000000000000000000000000000000000";
+pub(crate) const UNCHECKED_DIGEST: &str =
+    "0000000000000000000000000000000000000000000000000000000000000000";
 
 /// Loads one backend, hashing the artifact only when a digest was declared.
 ///
@@ -879,7 +880,7 @@ fn load_backend(
 
 /// Reports the placeholder digest, so an undeclared identity is not a failure.
 #[cfg(feature = "onnxruntime")]
-struct UncheckedDigest;
+pub(crate) struct UncheckedDigest;
 
 #[cfg(feature = "onnxruntime")]
 impl crate::backend::Sha256Stream for UncheckedDigest {

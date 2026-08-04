@@ -2,8 +2,8 @@
 
 Roadmap item: `TABLEPIPE-001`
 Baselines: PaddleOCR `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`, PaddleX `3.7.2`
-Status: **composition, route, suppression, and cropping matched**; model
-orchestration is the remaining `P9` plumbing
+Status: **implemented end to end** — three models run in order against real
+artifacts and produce HTML
 
 `TableRecognitionV2` turns three model outputs — structure tokens, cell boxes,
 and OCR boxes with text — into an HTML table. All three models are now ported,
@@ -141,12 +141,54 @@ The capture executes the pinned PaddleX functions rather than transcribing
 them, and where upstream raises it records the exception instead of choosing
 kinder inputs.
 
-## 10. What is left
+## 10. Orchestration: three models, one thread
 
-Running the four models in order against real artifacts. That needs artifact
-plumbing — four sessions live at once, one of them `368 MB` — which is what the
-rest of `P9` is for.
+`src/table_engine.rs` loads the three artifacts and runs them in order. It
+needed a **backend change**, not a wrapper, because every model this project had
+loaded until now takes one input named `x` and emits one output:
 
-Everything around that is now done and matched: the composition logic, the
-route, the detection threshold, the cell suppression, and the cropping. So this
-row stays `In progress`, and what remains is plumbing rather than behaviour.
+| Model | Inputs | Outputs |
+|---|---|---|
+| `PP-LCNet_x1_0_table_cls` | `x` | `fetch_name_0` |
+| `RT-DETR-L_wired_table_cell_det` | `image`, `im_shape`, `scale_factor` | two |
+| `SLANeXt_wired` | `x` | two: `[N,T,8]` boxes and `[N,T,50]` probabilities |
+
+So `InferenceBackend` grew `run_named`. It **defaults to a refusal** rather than
+to a single-input call, so a backend that has not implemented it says so instead
+of quietly running the wrong graph.
+
+Two details the artifacts forced:
+
+- **The second outputs are told apart by shape**, not by name or order, because
+  the export guarantees neither.
+- **RT-DETR's second output is not `f32`** — it is a per-image box count.
+  `run_named` skips non-`f32` outputs rather than failing the run, since
+  `BackendTensor` is `f32`-only by design.
+
+`TableEngine` is `!Sync` by construction, the same position `OcrEngine` holds,
+asserted by the same auto-trait probe.
+
+### Measured, not asserted
+
+`tests/end_to_end.rs`, opt-in behind four environment variables, runs all three
+models against a synthetic `480x320` two-by-two table:
+
+```
+route: Wired score 0.95067
+cells: 4
+tokens: 14
+html: <html><body><table><tr><td>cell0</td><td>cell1</td></tr>
+                         <tr><td>cell2</td><td>cell3</td></tr></table></body></html>
+```
+
+Four cells detected, four matched to their text, correct structure.
+
+## 11. What is left
+
+`TableEngine` does not run OCR. Text boxes and strings come in as arguments,
+because `OcrEngine` already produces them and duplicating its artifact handling
+would mean two ways to load a detector. Composing the two is a caller's job until
+`STRUCT-001` decides what a full-page structured result contains.
+
+The wireless pair is loadable but unmeasured: the route is a parameter, and only
+the wired artifacts have been provisioned and run.

@@ -146,6 +146,55 @@ impl InferenceBackend for OrtBackend {
         let output = BackendTensor::new(shape, values.to_vec())?;
         Ok((name, output))
     }
+
+    fn run_named(&self, inputs: &[(&str, &BackendTensor)]) -> Result<Vec<(String, BackendTensor)>> {
+        if inputs.is_empty() {
+            return Err(Error::Backend {
+                message: "a multi-input run needs at least one input",
+            });
+        }
+
+        let mut values = Vec::with_capacity(inputs.len());
+        for (name, tensor) in inputs {
+            let built =
+                Tensor::<f32>::from_array((tensor.shape().to_vec(), tensor.values().to_vec()))
+                    .map_err(|_| Error::Backend {
+                        message: "cannot build an ONNX Runtime input tensor",
+                    })?;
+            values.push(((*name).to_owned(), built));
+        }
+
+        let mut session = self.session.try_borrow_mut().map_err(|_| Error::Backend {
+            message: "the ONNX Runtime session is already running",
+        })?;
+        let outputs = session.run(values).map_err(|_| Error::Backend {
+            message: "the ONNX Runtime session failed to run",
+        })?;
+
+        // Names are read back from the runtime rather than assumed, for the
+        // same reason `run` reads its single name back.
+        let names: Vec<String> = outputs.keys().map(str::to_owned).collect();
+        let mut collected = Vec::with_capacity(names.len());
+        for name in names {
+            // `BackendTensor` is `f32`-only by design, and these graphs emit
+            // integer side-channels this port does not read: RT-DETR's second
+            // output is a per-image box count. Non-`f32` outputs are skipped
+            // rather than failing the run, and a caller that needed one would
+            // find it absent rather than mistyped.
+            let Ok((shape, values)) = outputs[name.as_str()].try_extract_tensor::<f32>() else {
+                continue;
+            };
+            let shape = shape
+                .iter()
+                .map(|axis| usize::try_from(*axis))
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .map_err(|_| Error::Model {
+                    problem: ModelProblem::TensorContract,
+                })?;
+            collected.push((name, BackendTensor::new(shape, values.to_vec())?));
+        }
+        Ok(collected)
+    }
 }
 
 #[cfg(test)]
