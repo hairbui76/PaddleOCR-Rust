@@ -148,3 +148,176 @@ fn specialized_rows_disclaim_accuracy() {
         "these rows run a model and do not state an accuracy position: {missing:?}"
     );
 }
+
+/// Every document the roadmap names exists, and every section it cites is there.
+///
+/// This closes a failure this session actually hit. A change described a rewrite
+/// of `P8_ARTIFACT_AVAILABILITY.md` section 5; the edit targeted a heading whose
+/// wording did not match, matched nothing, and **succeeded silently** — leaving
+/// the roadmap pointing at a section that said the opposite of what the roadmap
+/// claimed.
+///
+/// A broken link fails loudly. A link that resolves to the wrong content does
+/// not, and the only cheap defence is to check that the cited **section** is
+/// there at all.
+#[test]
+fn roadmap_references_resolve_to_real_documents_and_sections() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let roadmap = match std::fs::read_to_string(root.join("ROADMAP.md")) {
+        Ok(value) => value,
+        Err(error) => panic!("ROADMAP.md: {error}"),
+    };
+
+    // Every named document must exist.
+    let mut documents = BTreeSet::new();
+    for token in roadmap.split(|c: char| !(c.is_ascii_alphanumeric() || "/._-".contains(c))) {
+        if token.starts_with("docs/") && token.ends_with(".md") {
+            documents.insert(token.to_owned());
+        }
+    }
+    assert!(documents.len() > 10, "only {} documents cited", documents.len());
+    let missing: Vec<&String> = documents
+        .iter()
+        .filter(|name| !root.join(name).exists())
+        .collect();
+    assert!(missing.is_empty(), "the roadmap names missing documents: {missing:?}");
+
+    // Every `<doc> section N` reference must find a `## N.` heading.
+    let mut checked = 0_usize;
+    let words: Vec<&str> = roadmap.split_whitespace().collect();
+    for window in words.windows(3) {
+        let document = window[0].trim_matches(['`', ',', '.']);
+        if !(document.starts_with("docs/") && document.ends_with(".md")) {
+            continue;
+        }
+        if window[1] != "section" {
+            continue;
+        }
+        let Ok(number) = window[2].trim_matches(['`', ',', '.']).parse::<u32>() else {
+            continue;
+        };
+        let text = match std::fs::read_to_string(root.join(document)) {
+            Ok(value) => value,
+            Err(error) => panic!("{document}: {error}"),
+        };
+        let heading = format!("## {number}.");
+        assert!(
+            text.lines().any(|line| line.starts_with(&heading)),
+            "{document} has no section {number}, but the roadmap cites it"
+        );
+        checked += 1;
+    }
+    assert!(checked > 0, "no section references were found to check");
+}
+
+/// Every roadmap identifier cited in a document is a real roadmap row.
+///
+/// The inverse direction of the check above. A document naming `TBLSTRUCT-002`
+/// reads like a plan and is a typo.
+///
+/// Identifiers belong to one of three namespaces, and each is validated against
+/// the document that **owns** it rather than exempted:
+///
+/// | Prefix | Owner |
+/// |---|---|
+/// | `M2-`, `M3-`, `M4-` | `docs/COMPATIBILITY.md` |
+/// | `RISK-` | `docs/RISK_REGISTER.md` |
+/// | everything else | `ROADMAP.md` |
+///
+/// Exempting a prefix would let a typo inside it through. Checking each against
+/// its owner means `M4-TBLSTRUCT-002` fails just as `TBLSTRUCT-002` would.
+#[test]
+fn identifiers_cited_in_documents_are_real_roadmap_rows() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let roadmap = match std::fs::read_to_string(root.join("ROADMAP.md")) {
+        Ok(value) => value,
+        Err(error) => panic!("ROADMAP.md: {error}"),
+    };
+
+    // Row identifiers are the first cell of a table row.
+    let mut rows = BTreeSet::new();
+    for line in roadmap.lines() {
+        let Some(rest) = line.strip_prefix("| `") else {
+            continue;
+        };
+        if let Some((id, _)) = rest.split_once('`') {
+            rows.insert(id.to_owned());
+        }
+    }
+    assert!(rows.len() > 50, "only {} roadmap rows found", rows.len());
+
+    // Identifiers owned by another document, validated against it.
+    let owned = |file: &str, prefixes: &[&str]| -> (Vec<String>, BTreeSet<String>) {
+        let text = match std::fs::read_to_string(root.join(file)) {
+            Ok(value) => value,
+            Err(error) => panic!("{file}: {error}"),
+        };
+        let mut ids = BTreeSet::new();
+        for line in text.lines() {
+            let Some(rest) = line.strip_prefix("| `") else {
+                continue;
+            };
+            if let Some((id, _)) = rest.split_once('`') {
+                ids.insert(id.to_owned());
+            }
+        }
+        (prefixes.iter().map(|p| (*p).to_owned()).collect(), ids)
+    };
+    let namespaces = [
+        owned("docs/COMPATIBILITY.md", &["M2-", "M3-", "M4-"]),
+        owned("docs/RISK_REGISTER.md", &["RISK-"]),
+    ];
+    for (prefixes, ids) in &namespaces {
+        assert!(
+            !ids.is_empty(),
+            "no identifiers found for the namespace owning {prefixes:?}"
+        );
+    }
+
+    let mut unknown = BTreeSet::new();
+    let entries = match std::fs::read_dir(root.join("docs")) {
+        Ok(value) => value,
+        Err(error) => panic!("docs: {error}"),
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().is_none_or(|ext| ext != "md") {
+            continue;
+        }
+        let text = match std::fs::read_to_string(&path) {
+            Ok(value) => value,
+            Err(error) => panic!("{}: {error}", path.display()),
+        };
+        for token in text.split('`') {
+            // An identifier is upper-case letters, a hyphen, and three digits.
+            let looks_like_id = token.len() >= 7
+                && token.ends_with(|c: char| c.is_ascii_digit())
+                && token
+                    .chars()
+                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '-')
+                && token.contains('-');
+            if !looks_like_id || rows.contains(token) {
+                continue;
+            }
+            // If it belongs to another namespace, it must exist **there**.
+            let mut claimed = false;
+            for (prefixes, ids) in &namespaces {
+                if prefixes.iter().any(|prefix| token.starts_with(prefix)) {
+                    claimed = true;
+                    if !ids.contains(token) {
+                        unknown.insert(format!("{}: {token} (not in its owner)", path.display()));
+                    }
+                    break;
+                }
+            }
+            if !claimed {
+                unknown.insert(format!("{}: {token}", path.display()));
+            }
+        }
+    }
+    assert!(
+        unknown.is_empty(),
+        "documents cite identifiers that are not roadmap rows:\n  {}",
+        unknown.into_iter().collect::<Vec<_>>().join("\n  ")
+    );
+}
