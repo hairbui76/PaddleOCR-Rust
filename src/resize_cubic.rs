@@ -130,6 +130,27 @@ fn axis_taps(destination: f64, scale: f64, length: u32) -> [(u32, f32); 4] {
     })
 }
 
+/// OpenCV's `interpolateCubic`, in its own evaluation order.
+///
+/// **Not** the same construction as `crop.rs::cubic_weights`. The two are
+/// algebraically equal and `crop.rs` already warns that they "can differ at a
+/// uint8 rounding boundary after f32 arithmetic" — which is exactly what
+/// happened: sharing the warp's form here produced `24` differing bytes in
+/// `1,920,000`, one in eighty thousand, and reading `resize.cpp` rather than
+/// guessing is what found it.
+///
+/// `warpPerspective` and `resize` genuinely use different coefficient
+/// constructions, so this project needs both.
+fn interpolate_cubic(x: f32) -> [f32; 4] {
+    const A: f32 = -0.75;
+    let mut coefficients = [0.0_f32; 4];
+    coefficients[0] = ((A * (x + 1.0) - 5.0 * A) * (x + 1.0) + 8.0 * A) * (x + 1.0) - 4.0 * A;
+    coefficients[1] = ((A + 2.0) * x - (A + 3.0)) * x * x + 1.0;
+    coefficients[2] = ((A + 2.0) * (1.0 - x) - (A + 3.0)) * (1.0 - x) * (1.0 - x) + 1.0;
+    coefficients[3] = 1.0 - coefficients[0] - coefficients[1] - coefficients[2];
+    coefficients
+}
+
 /// Clamps a sample coordinate into the source, replicating the border.
 fn clamped_index(coordinate: f64, length: u32) -> u32 {
     if coordinate <= 0.0 {
@@ -141,7 +162,7 @@ fn clamped_index(coordinate: f64, length: u32) -> u32 {
     }
 }
 
-/// Rounds and saturates to `uint8`, as OpenCV's cubic accumulator does.
+/// Rounds and saturates to `uint8`.
 fn saturate(value: f32) -> u8 {
     crate::detector_boxes::round_half_to_even(value).clamp(0.0, 255.0) as u8
 }
@@ -248,6 +269,47 @@ mod tests {
         assert!(
             (centre[1].1 - 1.0).abs() < 1e-6,
             "an integer mapping puts full weight on the sample: {centre:?}"
+        );
+    }
+
+    /// A page-scale case, which is where the small corpus was blind.
+    ///
+    /// `297x421` to `800x800` is the case that exposed the coefficient-form
+    /// difference. It stays as a permanent test rather than a one-off probe,
+    /// because the defect it found was invisible to every smaller case.
+    #[test]
+    #[ignore = "diagnostic: needs PADDLEOCR_RUST_PROBE"]
+    fn probe_297x421_to_800x800() {
+        use base64::{Engine as _, engine::general_purpose::STANDARD};
+        let raw =
+            std::fs::read_to_string(std::env::var("PADDLEOCR_RUST_PROBE").unwrap_or_default())
+                .unwrap_or_default();
+        let document: serde_json::Value = serde_json::from_str(&raw).unwrap_or_default();
+        let expected = STANDARD
+            .decode(document["out_b64"].as_str().unwrap_or_default())
+            .unwrap_or_default();
+        assert!(!expected.is_empty(), "set PADDLEOCR_RUST_PROBE");
+        let source = synthetic(1, 297, 421);
+        let target = match ImageDimensions::new(800, 800) {
+            Ok(value) => value,
+            Err(error) => panic!("{error}"),
+        };
+        let got = match classic_cubic_resize(&source, target) {
+            Ok(value) => value,
+            Err(error) => panic!("{error}"),
+        };
+        let mismatching = got
+            .pixels()
+            .iter()
+            .zip(&expected)
+            .filter(|(a, b)| a != b)
+            .count();
+        println!("mismatching bytes: {mismatching} of {}", expected.len());
+        // The recorded bound, not a target. It exists so the defect cannot
+        // grow unnoticed while it stays open.
+        assert!(
+            mismatching <= 24,
+            "page-scale divergence grew to {mismatching}; the recorded bound is 24"
         );
     }
 

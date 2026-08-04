@@ -159,12 +159,25 @@ true of the five committed cases and **false at page scale**: a `297x421` to
 `800x800` resize differs from OpenCV in `24` bytes out of `1,920,000`, each off
 by one.
 
-The cause is that OpenCV's 8-bit cubic path is fixed point — coefficients
-quantized to `i16` at `1 << 11`, accumulated in integers — as `src/resize.rs`
-already reproduces for the linear kernel. Two attempts at that arithmetic here
-were **worse** than the float accumulator, `82,990` and `73,910` mismatching
-bytes, which means the pass structure was being guessed rather than read. The
-float version stands with the divergence measured and stated.
+Four hypotheses have been tried and measured, including two read directly from
+OpenCV's `resize.cpp` rather than guessed:
+
+| Attempt | Differing bytes of `1,920,000` |
+|---|---|
+| **`crop.rs` weight form, float accumulation** — current | **24** |
+| `interpolateCubic`'s own weight form, float accumulation | 33 |
+| Fixed point, descaling between passes | 82,990 |
+| Fixed point, single descale by `22`, read from `resize.cpp` | 74,043 |
+
+The two fixed-point attempts were far worse even when read from the source,
+which says the pass structure being reproduced is not the one this dispatch
+takes. And the *correct* `interpolateCubic` coefficient order scored **worse**
+than the warp's form, which puts the remaining cause somewhere neither
+hypothesis touched.
+
+The best measured implementation stands, the defect is open, and the test bounds
+it at `24` so it cannot grow unnoticed. Recording four measured failures is worth
+more than a fifth guess.
 
 The corpus is the lesson. Five cases totalling about `2,600` pixels cannot
 exhibit a one-in-eighty-thousand defect; only a page-sized case could. A test
