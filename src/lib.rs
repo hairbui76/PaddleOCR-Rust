@@ -14,6 +14,8 @@ pub mod error;
 #[cfg(feature = "fuzzing")]
 #[doc(hidden)]
 pub mod fuzz;
+/// The versioned JSON result document.
+pub mod result_json;
 /// Checked domain types shared by later image, geometry, model, and pipeline code.
 pub mod types;
 

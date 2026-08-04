@@ -12,7 +12,7 @@ use std::process::ExitCode;
 fn usage() -> &'static str {
     "usage: paddleocr-rust --ort-dylib <libonnxruntime.so> \\\n\
      \x20                 --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
-     \x20                 --dictionary <dict.txt> <image.png>\n\
+     \x20                 --dictionary <dict.txt> [--json] <image.png>\n\
      \n\
      All paths are explicit. Only PNG input is supported; see \n\
      docs/IMAGE_DECODER_DECISION.md for why JPEG is deferred.\n"
@@ -58,6 +58,7 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let mut recognizer = None;
     let mut dictionary = None;
     let mut image = None;
+    let mut json = false;
 
     let mut index = 0;
     while index < arguments.len() {
@@ -85,6 +86,10 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
             "--dictionary" => {
                 take(&mut dictionary)?;
                 index += 2;
+            }
+            "--json" => {
+                json = true;
+                index += 1;
             }
             other if other.starts_with("--") => {
                 return Err(format!("unknown option {other}"));
@@ -129,11 +134,18 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     )
     .map_err(|error| format!("{error}"))?;
 
-    for line in &lines {
-        println!("{:.6}\t{}", line.score, line.text);
-    }
-    if lines.is_empty() {
-        eprintln!("no text detected");
+    if json {
+        println!(
+            "{}",
+            paddleocr_rust::result_json::result_to_json(&lines, width, height)
+        );
+    } else {
+        for line in &lines {
+            println!("{:.6}\t{}", line.score, line.text);
+        }
+        if lines.is_empty() {
+            eprintln!("no text detected");
+        }
     }
     Ok(ExitCode::SUCCESS)
 }
