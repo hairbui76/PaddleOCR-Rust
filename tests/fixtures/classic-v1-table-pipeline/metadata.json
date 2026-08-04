@@ -1,0 +1,43 @@
+{
+ "fixture_id": "classic-v1-table-pipeline",
+ "kind": "table_pipeline_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/geometry,#/row_starts,#/matching",
+  "sha256": "0c61e02e0525e4413132a0e81fddcc613a157f53ce66b00b5c9150bc98f9873d",
+  "sha256_scope": "No image input at all. Every case is boxes, token lists, and short ASCII strings written out in the capture tool, so the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_table_pipeline_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/table_recognition/table_recognition_post_processing_v2.py",
+   "paddlex 3.7.2: inference/pipelines/table_recognition/pipeline_v2.py"
+  ],
+  "capture_method": "The pinned PaddleX functions were imported and executed, not transcribed. Where upstream raises, the exception is recorded rather than avoided by choosing kinder inputs.",
+  "environment": "python 3.12, numpy 2.3.5, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "0c61e02e0525e4413132a0e81fddcc613a157f53ce66b00b5c9150bc98f9873d",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "table_pipeline::tests::the_captured_geometry_is_reproduced",
+  "table_pipeline::tests::the_captured_row_starts_are_reproduced",
+  "table_pipeline::tests::the_captured_sorting_is_reproduced",
+  "table_pipeline::tests::the_captured_matching_is_reproduced",
+  "table_pipeline::tests::the_captured_html_is_reproduced",
+  "table_pipeline::tests::the_unreachable_branch_is_recorded_as_a_crash_upstream"
+ ],
+ "limitations": [
+  "No model is run and no image is decoded. This pins the composition logic only: the geometry, the cell-to-OCR matching, and the HTML assembly.",
+  "`match_table_and_ocr`'s two mismatched-flag branches are unreachable from `get_table_recognition_res`, which passes the same list twice. Handed different lists upstream raises KeyError, recorded under matching.unreachable_branch; this port takes one list so the branches cannot be reached at all.",
+  "Table cropping, the wired/wireless route, and running the four models in order are the rest of TABLEPIPE-001 and are not covered here."
+ ]
+}

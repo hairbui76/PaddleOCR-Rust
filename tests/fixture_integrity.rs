@@ -204,6 +204,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-table-classification".to_owned(),
         "classic-v1-table-cells".to_owned(),
         "classic-v1-table-structure".to_owned(),
+        "classic-v1-table-pipeline".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

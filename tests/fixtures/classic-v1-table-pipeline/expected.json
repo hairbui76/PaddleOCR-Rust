@@ -1,0 +1,442 @@
+{
+ "geometry": [
+  {
+   "case": "disjoint",
+   "compute_inter": 0.0,
+   "compute_inter_swapped": 0.0,
+   "compute_iou": 0.0,
+   "distance": 68.2842712474619,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "second": [
+    20,
+    20,
+    30,
+    30
+   ]
+  },
+  {
+   "case": "touching_edge",
+   "compute_inter": 0.0,
+   "compute_inter_swapped": 0.0,
+   "compute_iou": 0.0,
+   "distance": 20.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "second": [
+    10,
+    0,
+    20,
+    10
+   ]
+  },
+  {
+   "case": "partial_overlap",
+   "compute_inter": 0.25,
+   "compute_inter_swapped": 0.25,
+   "compute_iou": 0.14285714285714285,
+   "distance": 17.071067811865476,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "second": [
+    5,
+    5,
+    15,
+    15
+   ]
+  },
+  {
+   "case": "first_contains_second",
+   "compute_inter": 1.0,
+   "compute_inter_swapped": 0.01,
+   "compute_iou": 0.01,
+   "distance": 69.49747468305833,
+   "first": [
+    0,
+    0,
+    100,
+    100
+   ],
+   "second": [
+    10,
+    10,
+    20,
+    20
+   ]
+  },
+  {
+   "case": "second_contains_first",
+   "compute_inter": 0.01,
+   "compute_inter_swapped": 1.0,
+   "compute_iou": 0.01,
+   "distance": 69.49747468305833,
+   "first": [
+    10,
+    10,
+    20,
+    20
+   ],
+   "second": [
+    0,
+    0,
+    100,
+    100
+   ]
+  },
+  {
+   "case": "identical",
+   "compute_inter": 1.0,
+   "compute_inter_swapped": 1.0,
+   "compute_iou": 1.0,
+   "distance": 0.0,
+   "first": [
+    3,
+    4,
+    13,
+    24
+   ],
+   "second": [
+    3,
+    4,
+    13,
+    24
+   ]
+  },
+  {
+   "case": "degenerate_second",
+   "compute_inter": 0.0,
+   "compute_inter_swapped": 0.0,
+   "compute_iou": 0.0,
+   "distance": 10.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "second": [
+    5,
+    5,
+    5,
+    5
+   ]
+  },
+  {
+   "case": "negative_coordinates",
+   "compute_inter": 0.25,
+   "compute_inter_swapped": 0.25,
+   "compute_iou": 0.14285714285714285,
+   "distance": 17.071067811865476,
+   "first": [
+    -10,
+    -10,
+    0,
+    0
+   ],
+   "second": [
+    -5,
+    -5,
+    5,
+    5
+   ]
+  }
+ ],
+ "html": [
+  {
+   "case": "two_by_two",
+   "ok": true,
+   "value": "<html><body><table><tbody><tr><td>a1</td><td>b1</td></tr><tr><td>a2</td><td>b2</td></tr></tbody></table></body></html>"
+  },
+  {
+   "case": "two_boxes_in_one_cell",
+   "ok": true,
+   "value": "<html><body><table><tbody><tr><td>left right</td></tr></tbody></table></body></html>"
+  }
+ ],
+ "matching": {
+  "cell_boxes": [
+   [
+    0,
+    0,
+    50,
+    20
+   ],
+   [
+    50,
+    0,
+    100,
+    20
+   ],
+   [
+    0,
+    20,
+    50,
+    40
+   ],
+   [
+    50,
+    20,
+    100,
+    40
+   ]
+  ],
+  "ocr_boxes": [
+   [
+    2,
+    2,
+    48,
+    18
+   ],
+   [
+    52,
+    2,
+    98,
+    18
+   ],
+   [
+    2,
+    22,
+    48,
+    38
+   ],
+   [
+    52,
+    22,
+    98,
+    38
+   ],
+   [
+    200,
+    200,
+    240,
+    220
+   ]
+  ],
+  "ocr_texts": [
+   "a1",
+   "b1",
+   "a2",
+   "b2",
+   "orphan"
+  ],
+  "result": {
+   "case": "two_by_two",
+   "ok": true,
+   "value": [
+    {
+     "0": [
+      0
+     ],
+     "1": [
+      1
+     ]
+    },
+    {
+     "0": [
+      2
+     ],
+     "1": [
+      3
+     ]
+    }
+   ]
+  },
+  "row_start_index": [
+   0,
+   2,
+   4
+  ],
+  "table_cells_flag": [
+   0,
+   2,
+   4
+  ],
+  "unreachable_branch": {
+   "case": "mismatched_flag_lists",
+   "error": "2",
+   "error_type": "KeyError",
+   "ok": false,
+   "traceback_tail": "KeyError: 2"
+  }
+ },
+ "row_starts": [
+  {
+   "case": "two_by_two",
+   "row_start_index": [
+    0,
+    2
+   ],
+   "tokens": [
+    "<html>",
+    "<body>",
+    "<table>",
+    "<tbody>",
+    "<tr>",
+    "<td></td>",
+    "<td></td>",
+    "</tr>",
+    "<tr>",
+    "<td></td>",
+    "<td></td>",
+    "</tr>",
+    "</tbody>",
+    "</table>",
+    "</body>",
+    "</html>"
+   ]
+  },
+  {
+   "case": "with_head",
+   "row_start_index": [
+    0,
+    1
+   ],
+   "tokens": [
+    "<html>",
+    "<body>",
+    "<table>",
+    "<thead>",
+    "<tr>",
+    "<td></td>",
+    "</tr>",
+    "</thead>",
+    "<tbody>",
+    "<tr>",
+    "<td></td>",
+    "</tr>",
+    "</tbody>",
+    "</table>",
+    "</body>",
+    "</html>"
+   ]
+  },
+  {
+   "case": "spanning",
+   "row_start_index": [
+    0,
+    1
+   ],
+   "tokens": [
+    "<html>",
+    "<body>",
+    "<table>",
+    "<tbody>",
+    "<tr>",
+    "<td",
+    " colspan=\"2\"",
+    ">",
+    "</td>",
+    "</tr>",
+    "<tr>",
+    "<td></td>",
+    "<td></td>",
+    "</tr>",
+    "</tbody>",
+    "</table>",
+    "</body>",
+    "</html>"
+   ]
+  },
+  {
+   "case": "empty_table",
+   "row_start_index": [],
+   "tokens": [
+    "<html>",
+    "<body>",
+    "<table>",
+    "<tbody>",
+    "</tbody>",
+    "</table>",
+    "</body>",
+    "</html>"
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v1",
+ "sorting": {
+  "input": [
+   [
+    0,
+    0,
+    50,
+    20
+   ],
+   [
+    50,
+    0,
+    100,
+    20
+   ],
+   [
+    0,
+    20,
+    50,
+    40
+   ],
+   [
+    50,
+    20,
+    100,
+    40
+   ]
+  ],
+  "raw_flag": [
+   0,
+   2,
+   4
+  ],
+  "row_start_index": [
+   0,
+   2
+  ],
+  "row_start_index_full": [
+   0,
+   2,
+   4
+  ],
+  "sorted": [
+   [
+    0,
+    0,
+    50,
+    20
+   ],
+   [
+    50,
+    0,
+    100,
+    20
+   ],
+   [
+    0,
+    20,
+    50,
+    40
+   ],
+   [
+    50,
+    20,
+    100,
+    40
+   ]
+  ],
+  "table_cells_flag": [
+   0,
+   2,
+   4
+  ]
+ },
+ "upstream": "paddlex 3.7.2 inference/pipelines/table_recognition/table_recognition_post_processing_v2.py"
+}
