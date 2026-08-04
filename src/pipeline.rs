@@ -288,3 +288,191 @@ mod tests {
         );
     }
 }
+
+/// Optional end-to-end check against explicitly provisioned real models.
+///
+/// This is gate `G1` from `docs/ADR_RT004_RUNTIME_SELECTION.md`. It is ignored
+/// by default because it needs an ONNX Runtime library, both model artifacts,
+/// and a dictionary that this repository never ships.
+///
+/// ```sh
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_DETECTOR_ONNX=<detector.onnx> \
+/// PADDLEOCR_RUST_RECOGNIZER_ONNX=<recognizer.onnx> \
+/// PADDLEOCR_RUST_DICTIONARY=<dict.txt> \
+///   cargo test --features onnxruntime --lib -- --ignored --nocapture g1
+/// ```
+#[cfg(all(test, feature = "onnxruntime"))]
+mod g1 {
+    use super::*;
+
+    use std::path::Path;
+
+    use crate::backend::{AxisExtent, ModelArtifact, RunBudget, TensorContract};
+    use crate::backend_ort::{OrtBackend, initialize_runtime};
+    use crate::image::decode_classic_bgr;
+    use crate::types::EncodedImage;
+
+    const REORDER_PNG: &[u8] =
+        include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png");
+    const EXPECTED: &str =
+        include_str!("../tests/fixtures/classic-v1-e2e-reading-order/expected.json");
+
+    struct Sha256(Vec<u8>);
+
+    impl crate::backend::Sha256Stream for Sha256 {
+        fn update(&mut self, bytes: &[u8]) {
+            self.0.extend_from_slice(bytes);
+        }
+        fn finish(&mut self) -> String {
+            crate::backend_ort::tests::sha256_hex_for_tests(&self.0)
+        }
+    }
+
+    /// Unwraps in this developer-only gate without `expect`, which the crate
+    /// lints deny.
+    fn must<T, E: core::fmt::Display>(value: core::result::Result<T, E>, what: &str) -> T {
+        match value {
+            Ok(value) => value,
+            Err(error) => panic!("{what}: {error}"),
+        }
+    }
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    #[test]
+    #[ignore = "gate G1: needs explicitly provisioned models"]
+    fn the_pipeline_reproduces_the_recorded_reading_order_fixture() {
+        must(
+            initialize_runtime(Path::new(&env("PADDLEOCR_RUST_ORT_DYLIB"))),
+            "initialise the runtime",
+        );
+
+        let free = AxisExtent::Bounded {
+            minimum: 1,
+            maximum: 8192,
+        };
+        let detector_contract = ModelContract::new(
+            must(
+                ModelArtifact::new(
+                    env("PADDLEOCR_RUST_DETECTOR_ONNX"),
+                    "eb13b44b25bb36f89528b68720af8a61d9cf381176107f465db1757b65d086e1",
+                ),
+                "detector artifact",
+            ),
+            must(
+                TensorContract::new(
+                    "x",
+                    vec![AxisExtent::Fixed(1), AxisExtent::Fixed(3), free, free],
+                ),
+                "detector input",
+            ),
+            must(
+                TensorContract::new(
+                    "fetch_name_0",
+                    vec![AxisExtent::Fixed(1), AxisExtent::Fixed(1), free, free],
+                ),
+                "detector output",
+            ),
+            must(RunBudget::new(40_000_000, 40_000_000, 1), "detector budget"),
+        );
+
+        let dictionary_text = must(
+            std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")),
+            "dictionary file",
+        );
+        let entries: Vec<String> = dictionary_text.lines().map(str::to_owned).collect();
+        let dictionary = must(CtcDictionary::new(entries, true), "dictionary");
+        let classes = dictionary.class_count();
+
+        let recognizer_contract = ModelContract::new(
+            must(
+                ModelArtifact::new(
+                    env("PADDLEOCR_RUST_RECOGNIZER_ONNX"),
+                    "9c09abf0957f7968c7586464b7397b84ad2387a0497a351af40e9acc71b673ba",
+                ),
+                "recognizer artifact",
+            ),
+            must(
+                TensorContract::new(
+                    "x",
+                    vec![free, AxisExtent::Fixed(3), AxisExtent::Fixed(48), free],
+                ),
+                "recognizer input",
+            ),
+            must(
+                TensorContract::new("fetch_name_0", vec![free, free, AxisExtent::Fixed(classes)]),
+                "recognizer output",
+            ),
+            must(
+                RunBudget::new(40_000_000, 40_000_000, 64),
+                "recognizer budget",
+            ),
+        );
+
+        let mut detector_digest = Sha256(Vec::new());
+        let detector = must(
+            OrtBackend::load(&detector_contract, &mut detector_digest, 1, 1),
+            "load the detector",
+        );
+        let mut recognizer_digest = Sha256(Vec::new());
+        let recognizer = must(
+            OrtBackend::load(&recognizer_contract, &mut recognizer_digest, 1, 1),
+            "load the recognizer",
+        );
+
+        let encoded = must(EncodedImage::new(REORDER_PNG), "encoded png");
+        let image = must(decode_classic_bgr(encoded), "decode png");
+
+        let lines = must(
+            run_classic_ocr(
+                &ClassicModels {
+                    detector: (&detector, &detector_contract),
+                    recognizer: (&recognizer, &recognizer_contract),
+                    dictionary: &dictionary,
+                },
+                &image,
+                ClassicThresholds {
+                    box_threshold: 0.6,
+                    unclip_ratio: 1.5,
+                    drop_score: 0.5,
+                },
+            ),
+            "run the pipeline",
+        );
+
+        let expected: serde_json::Value = must(serde_json::from_str(EXPECTED), "expected json");
+        let recorded = match expected["lines"].as_array() {
+            Some(lines) => lines.clone(),
+            None => panic!("the expected fixture must record lines"),
+        };
+        let wanted: Vec<String> = recorded
+            .iter()
+            .map(|line| line["text"].as_str().unwrap_or_default().to_owned())
+            .collect();
+        let got: Vec<String> = lines.iter().map(|line| line.text.clone()).collect();
+
+        println!("G1 expected: {wanted:?}");
+        println!("G1 actual  : {got:?}");
+        for line in &lines {
+            println!("  score {:.6} text {:?}", line.score, line.text);
+        }
+        assert_eq!(got, wanted, "the pipeline must reproduce the recorded text");
+
+        // Confidences must match the recording too, not just the text.
+        for (line, record) in lines.iter().zip(&recorded) {
+            let recorded_score = record["confidence"].as_f64().unwrap_or_default();
+            assert!(
+                (line.score - recorded_score).abs() < 1e-5,
+                "confidence for {:?}: got {}, recorded {recorded_score}",
+                line.text,
+                line.score
+            );
+        }
+    }
+}

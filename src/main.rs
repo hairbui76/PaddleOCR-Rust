@@ -114,21 +114,26 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
     let parsed = paddleocr_rust::api::parse_dictionary(&dictionary_text, true)
         .map_err(|error| format!("{error}"))?;
 
-    // The remaining wiring — loading both sessions and running the pipeline —
-    // is implemented in the library but not yet exposed through one public
-    // entry point, and it has not been validated against a real model. Report
-    // exactly that rather than printing a result this build cannot stand
-    // behind.
-    println!("image: {image} ({width}x{height} PNG, decoded)");
-    println!("dictionary: {} entries", parsed.len());
-    println!("detector: {detector}");
-    println!("recognizer: {recognizer}");
-    println!("ort library: {library}");
-    eprintln!(
-        "paddleocr-rust: the pipeline is implemented and offline-tested, but the \
-         end-to-end run against real models is gate G1 in \
-         docs/ADR_RT004_RUNTIME_SELECTION.md and has not been completed. \
-         Refusing to print an unvalidated result."
-    );
-    Ok(ExitCode::from(3))
+    eprintln!("image: {image} ({width}x{height} PNG)");
+    eprintln!("dictionary: {} entries", parsed.len());
+
+    let lines = paddleocr_rust::api::recognize_png(
+        &paddleocr_rust::api::Artifacts {
+            library: &library,
+            detector: &detector,
+            recognizer: &recognizer,
+        },
+        &parsed,
+        &bytes,
+        paddleocr_rust::api::OcrOptions::default(),
+    )
+    .map_err(|error| format!("{error}"))?;
+
+    for line in &lines {
+        println!("{:.6}\t{}", line.score, line.text);
+    }
+    if lines.is_empty() {
+        eprintln!("no text detected");
+    }
+    Ok(ExitCode::SUCCESS)
 }

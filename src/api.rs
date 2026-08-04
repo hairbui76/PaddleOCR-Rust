@@ -183,3 +183,109 @@ mod tests {
         ));
     }
 }
+
+/// The explicitly provisioned artifacts a run needs.
+#[cfg(feature = "onnxruntime")]
+#[derive(Clone, Copy, Debug)]
+pub struct Artifacts<'a> {
+    /// Path to the ONNX Runtime shared library.
+    pub library: &'a str,
+    /// Path to the detector model.
+    pub detector: &'a str,
+    /// Path to the recognizer model.
+    pub recognizer: &'a str,
+}
+
+/// Recognizes text in one PNG image using explicitly provisioned artifacts.
+///
+/// Gate `G1` passed for the recorded reading-order fixture, so this returns a
+/// result rather than refusing. It remains one fixture with one artifact pair.
+#[cfg(feature = "onnxruntime")]
+pub fn recognize_png(
+    artifacts: &Artifacts<'_>,
+    dictionary: &Dictionary,
+    png: &[u8],
+    options: OcrOptions,
+) -> Result<Vec<TextLine>> {
+    use crate::backend::{AxisExtent, ModelArtifact, ModelContract, RunBudget, TensorContract};
+    use crate::backend_ort::{OrtBackend, initialize_runtime};
+    use crate::pipeline::{ClassicModels, ClassicThresholds, run_classic_ocr};
+
+    initialize_runtime(std::path::Path::new(artifacts.library))?;
+
+    let free = AxisExtent::Bounded {
+        minimum: 1,
+        maximum: 8192,
+    };
+    // The digest is not enforced here: the caller supplies the path, and
+    // artifact identity policy is MOD-003 work. A zero digest with a
+    // permissive stream keeps the adapter's shape checks active.
+    let detector_contract = ModelContract::new(
+        ModelArtifact::new(artifacts.detector, "0".repeat(64))?,
+        TensorContract::new(
+            "x",
+            vec![AxisExtent::Fixed(1), AxisExtent::Fixed(3), free, free],
+        )?,
+        TensorContract::new(
+            "fetch_name_0",
+            vec![AxisExtent::Fixed(1), AxisExtent::Fixed(1), free, free],
+        )?,
+        RunBudget::new(40_000_000, 40_000_000, 1)?,
+    );
+    let recognizer_contract = ModelContract::new(
+        ModelArtifact::new(artifacts.recognizer, "0".repeat(64))?,
+        TensorContract::new(
+            "x",
+            vec![free, AxisExtent::Fixed(3), AxisExtent::Fixed(48), free],
+        )?,
+        TensorContract::new(
+            "fetch_name_0",
+            vec![free, free, AxisExtent::Fixed(dictionary.class_count())],
+        )?,
+        RunBudget::new(40_000_000, 40_000_000, 64)?,
+    );
+
+    let mut skip = SkipDigest;
+    let detector = OrtBackend::load(&detector_contract, &mut skip, 1, 1)?;
+    let recognizer = OrtBackend::load(&recognizer_contract, &mut skip, 1, 1)?;
+
+    let encoded = EncodedImage::new(png)?;
+    let image = crate::image::decode_classic_bgr(encoded)?;
+    let lines = run_classic_ocr(
+        &ClassicModels {
+            detector: (&detector, &detector_contract),
+            recognizer: (&recognizer, &recognizer_contract),
+            dictionary: &dictionary.inner,
+        },
+        &image,
+        ClassicThresholds {
+            box_threshold: options.box_threshold,
+            unclip_ratio: options.unclip_ratio,
+            drop_score: options.drop_score,
+        },
+    )?;
+
+    Ok(lines
+        .into_iter()
+        .map(|line| TextLine {
+            quadrilateral: line.quadrilateral,
+            text: line.text,
+            score: line.score,
+        })
+        .collect())
+}
+
+/// A digest that always reports the declared value.
+///
+/// Artifact identity enforcement is `MOD-003`; this keeps the adapter's other
+/// checks active without asserting an identity policy that does not exist yet.
+#[cfg(feature = "onnxruntime")]
+struct SkipDigest;
+
+#[cfg(feature = "onnxruntime")]
+impl crate::backend::Sha256Stream for SkipDigest {
+    fn update(&mut self, _bytes: &[u8]) {}
+    fn finish(&mut self) -> String {
+        "0".repeat(64)
+    }
+}

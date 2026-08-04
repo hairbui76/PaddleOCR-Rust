@@ -149,7 +149,7 @@ impl InferenceBackend for OrtBackend {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod tests {
     use super::*;
 
     use crate::backend::{AxisExtent, ModelArtifact, RunBudget, TensorContract};
@@ -372,6 +372,11 @@ mod tests {
         fn finish(&mut self) -> String {
             sha256_hex(&self.state)
         }
+    }
+
+    /// Exposes the test SHA-256 to the sibling gate-G1 module.
+    pub(crate) fn sha256_hex_for_tests(data: &[u8]) -> String {
+        sha256_hex(data)
     }
 
     /// A compact SHA-256 used only by the optional developer check.
