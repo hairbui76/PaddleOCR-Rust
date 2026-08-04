@@ -275,11 +275,22 @@ project does not provide one.
 
 ## 7. Limits and failure behaviour
 
-Every limit is checked before the memory it bounds is allocated.
+Every limit is checked before the memory it bounds is allocated. For file and
+stream input that means during the read, not after it: a `200 MB` file is refused
+without being loaded, and a stream that never ends is stopped at the bound
+rather than exhausting memory. From Rust, `OcrEngine::recognize_path` and
+`recognize_reader` apply the same bound.
+
+There is no URL input, and that is a decision rather than an omission. Accepting
+one makes this an HTTP client needing scheme and host allow-listing, redirect
+handling that survives a redirect into a private network, DNS-rebinding
+protection, response size and time limits, and content validation that does not
+trust the server's own label. Fetch with a tool built for fetching and pass the
+bytes; the network policy then stays where you can see it.
 
 | Limit | Value |
 |---|---|
-| Encoded input | `64 MiB` |
+| Encoded input | `64 MiB`, enforced *during* the read |
 | Image side | `16,384` pixels |
 | Image pixels | `40,000,000` |
 | Decode envelope | `256 MiB` across both decode buffers |

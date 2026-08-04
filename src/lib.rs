@@ -57,6 +57,9 @@ mod dictionary;
 mod geometry;
 #[allow(dead_code)]
 mod image;
+
+/// Bounded input acquisition: bytes, paths, and streams.
+pub mod input;
 #[allow(dead_code)]
 mod min_area;
 #[allow(dead_code)]

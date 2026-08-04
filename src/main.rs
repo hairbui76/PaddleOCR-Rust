@@ -210,8 +210,11 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
 
     let several = images.len() > 1;
     for image in &images {
-        let bytes =
-            std::fs::read(image).map_err(|error| format!("cannot read {image}: {error}"))?;
+        // Bounded during the read: `std::fs::read` would allocate a ten
+        // gigabyte file in full and only then meet the 64 MiB limit, which
+        // honours the limit's letter and defeats its purpose.
+        let bytes = paddleocr_rust::input::read_encoded_file(image)
+            .map_err(|error| format!("{image}: {error}"))?;
         let (width, height) =
             paddleocr_rust::api::decode_png(&bytes).map_err(|error| format!("{image}: {error}"))?;
         eprintln!("image: {image} ({width}x{height} PNG)");

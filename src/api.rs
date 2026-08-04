@@ -324,6 +324,32 @@ impl OcrEngine {
         })
     }
 
+    /// Recognizes text in a PNG read from an explicit local path.
+    ///
+    /// The read is bounded during the read, not after it, so an oversized file
+    /// is refused without being allocated. See [`crate::input`].
+    pub fn recognize_path(
+        &self,
+        path: impl AsRef<std::path::Path>,
+        options: &OcrOptions,
+    ) -> Result<Vec<TextLine>> {
+        let bytes = crate::input::read_encoded_file(path)?;
+        self.recognize_png(&bytes, options)
+    }
+
+    /// Recognizes text in a PNG read from a stream.
+    ///
+    /// The same bound applies, and it is the only thing that can stop a stream
+    /// that never ends.
+    pub fn recognize_reader(
+        &self,
+        reader: impl std::io::Read,
+        options: &OcrOptions,
+    ) -> Result<Vec<TextLine>> {
+        let bytes = crate::input::read_encoded_from(reader)?;
+        self.recognize_png(&bytes, options)
+    }
+
     /// Recognizes text in one PNG image, reusing the loaded sessions.
     ///
     /// Each call is independent: no state carries between images, so the same
