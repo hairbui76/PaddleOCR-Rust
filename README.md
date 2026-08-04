@@ -33,6 +33,10 @@ dictionary holds 672 emoji scalars, which supports nothing.
 
 ## Usage
 
+The short version is below. [docs/USER_GUIDE.md](docs/USER_GUIDE.md) is the
+complete one: provisioning, the output schema field by field, every limit, the
+failure model, and the known differences from upstream PaddleOCR.
+
 You supply every artifact explicitly. Nothing is downloaded, cached, or read
 from an environment variable.
 
