@@ -10,31 +10,81 @@ Rust is written, the way `CLASSIC_OCR_CONTRACT.md` did for the classic path. Eve
 value below was read from the pinned checkout and is cited to the file it came
 from. Nothing here is inferred from documentation or from a model card.
 
-## 1. A scope finding: there are two different things called orientation
+## 1. Correction to an earlier claim in this document
 
-`DOCORI-001` names "document orientation classification". The pinned checkout
-does not contain one.
+An earlier revision of this file stated that the pinned checkout "does not
+contain" a document-orientation classifier, and characterised its mentions as
+test files, a TypeScript model list, and a JavaScript pipeline default. **That was
+wrong**, and the roadmap entry citing it was wrong with it.
 
-What it contains is a **text-line** orientation classifier —
-`tools/infer/predict_cls.py`, class `TextClassifier` — which runs on *cropped
-text lines* after detection and before recognition, and decides only whether a
-line is upside down.
+The pinned checkout contains a full document-orientation implementation in the
+C++ deployment tree:
 
-Document-level orientation, which decides the rotation of a whole page before
-detection runs, exists in the PaddleX pipeline configuration and in the
-JavaScript and TypeScript SDKs in this checkout, but there is **no Python
-predictor for it here**. Searching the pinned tree for `doc_orientation` finds
-test files, a TypeScript model list, and a JS pipeline default — no
-implementation.
+- `deploy/cpp_infer/src/api/models/doc_img_orientation_classification.{h,cc}`
+- `deploy/cpp_infer/src/pipelines/doc_preprocessor/pipeline.cc`, which predicts an
+  angle, parses it as an integer label, and rotates the whole image
+- `deploy/cpp_infer/src/common/processors.cc:557`, `ComponentsProcessor::RotateImage`
+- `deploy/cpp_infer/src/configs/OCR.yaml`, which pins the model name
+  `PP-LCNet_x1_0_doc_ori`
 
-**Consequence for `DOCORI-001`.** The item as written spans two capabilities with
-different models, different inputs, and different geometry semantics. This
-document freezes the one that exists in the pinned baseline. Document-level
-orientation needs its own artifact decision and its own baseline reference before
-it can be specified at all, and claiming otherwise would be specifying a model
-this project has never seen.
+What is true, and what the earlier claim garbled, is narrower: there is **no
+Python predictor** for document orientation in this checkout. Searching the
+Python tree is what produced the mistaken conclusion, because every previous
+capability in this port had its authority in `tools/infer/*.py` and I searched
+where the answer had always been before.
 
-## 2. Frozen values — text-line orientation
+## 2. There are still two different capabilities
+
+| | Text-line orientation | Document orientation |
+|---|---|---|
+| Authority in the checkout | `tools/infer/predict_cls.py` (Python) **and** `deploy/cpp_infer/.../textline_orientation_classification.cc` | C++ only |
+| Input | one cropped text line, after detection | the whole page, before detection |
+| Classes | `["0", "180"]` | an integer angle in `[0, 360)` |
+| Effect on geometry | none — the crop is rotated, detected polygons are untouched | every coordinate changes; the page itself is rotated and resized |
+| Pinned model | `PP-LCNet_x1_0_textline_ori` | `PP-LCNet_x1_0_doc_ori` |
+
+`DOCORI-001`'s "inverse geometry semantics" belong to the second column.
+
+## 3. What cannot be frozen from source, and why
+
+The C++ classifier is **config-driven**. `ClasPredictor` builds its preprocessing
+from keys it reads at run time out of the artifact's own `inference.yml`:
+
+```
+ResizeImage.size or ResizeImage.resize_short
+CropImage.size            (optional)
+NormalizeImage.scale, .mean, .std
+PostProcess.Topk.label_list
+```
+
+So the resize mode, the crop size, the normalization constants, and the label set
+for **both** orientation models live in the artifact, not in the source. They
+cannot be frozen by reading the repository. Provisioning the artifact is a
+prerequisite for the contract, not merely for the implementation — which is the
+opposite of the classic path, where every constant was in `predict_det.py` and
+`utility.py` and the artifact only supplied weights.
+
+A second consequence: the Python text-line classifier **hard-codes** `3,48,192`
+and `cls_thresh 0.9`, while the C++ one reads its shape from config. The two
+implementations of the same capability can therefore disagree, and a port must
+say which one it reproduces. This document freezes the Python one, because that
+is the path `predict_system.py` uses and the one every M2 contract in this
+project was read from.
+
+## 4. Document-level rotation — `RotateImage`
+
+Frozen from `processors.cc:557`, since this part *is* in the source:
+
+- The angle must be in `[0, 360)`; anything else is an error, not a clamp.
+- An angle within `1e-7` of zero returns a clone, not a resampled copy.
+- Rotation is about the image centre with `getRotationMatrix2D`, then the output
+  size is expanded to `new_w = int(h·|sin| + w·|cos|)`,
+  `new_h = int(h·|cos| + w·|sin|)` — truncated, not rounded — and the translation
+  is adjusted by `(new − old) / 2`.
+- Resampling is `INTER_CUBIC`, not the `INTER_LINEAR` used by the detector
+  resize. Two different interpolations in one pipeline, again.
+
+## 5. Frozen values — text-line orientation
 
 Read from `tools/infer/utility.py:init_args`:
 
@@ -46,7 +96,7 @@ Read from `tools/infer/utility.py:init_args`:
 | `cls_batch_num` | `6` | Same as `rec_batch_num` |
 | `cls_thresh` | `0.9` | |
 
-## 3. Preprocessing — `predict_cls.py:resize_norm_img`
+## 6. Preprocessing — `predict_cls.py:resize_norm_img`
 
 For each crop, with `imgC, imgH, imgW = 3, 48, 192`:
 
@@ -69,20 +119,20 @@ be a bug if carried across:
 - **A single-channel branch exists** (`cls_image_shape[0] == 1`) which the
   default `3`-channel shape never takes.
 
-## 4. Batching — `predict_cls.py:__call__`
+## 7. Batching — `predict_cls.py:__call__`
 
 Identical in shape to recognition: sort all crops by `width / height`, process in
 chunks of `cls_batch_num`, restore results to the caller's order by index.
 `cls_res` is initialised to `[["", 0.0]] * img_num`, so a crop whose batch never
 ran keeps an empty label rather than a fabricated one.
 
-## 5. Postprocessing — `ppocr/postprocess/cls_postprocess.py:ClsPostProcess`
+## 8. Postprocessing — `ppocr/postprocess/cls_postprocess.py:ClsPostProcess`
 
 `pred_idxs = preds.argmax(axis=1)`, then `(label_list[idx], preds[i, idx])`.
 NumPy's `argmax` returns the **first** maximum on a tie, so class `0` wins an
 exact tie — the same lowest-index rule the CTC decoder uses.
 
-## 6. The rotation rule, and its asymmetry
+## 9. The rotation rule, and its asymmetry
 
 ```python
 if "180" in label and score > self.cls_thresh:
@@ -103,7 +153,7 @@ Three details that are all observable:
   recognition sees the rotated image and the caller's returned crop list is
   mutated.
 
-## 7. Geometry semantics
+## 10. Geometry semantics
 
 Rotation happens **after** cropping, on the crop, so it does not alter the
 detected polygon. The returned box coordinates continue to describe the region in
@@ -115,7 +165,7 @@ That is why this capability is cheap to add to the classic path and why it is
 belong to document-level orientation, which rotates the page before detection and
 therefore does change every coordinate.
 
-## 8. What an implementation would need
+## 11. What an implementation would need
 
 Recorded now so it constrains the work rather than being written to fit it:
 
@@ -130,7 +180,7 @@ Recorded now so it constrains the work rather than being written to fit it:
    comparison is the detail most likely to be got wrong.
 5. **A default of off**, matching upstream, so enabling it is a caller's choice.
 
-## 9. Status
+## 12. Status
 
 Contract frozen. No implementation, no artifact, no fixture. `DOCORI-001` stays
 open, and its document-orientation half is now known to need a baseline reference
