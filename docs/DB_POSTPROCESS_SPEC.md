@@ -134,6 +134,31 @@ and the following `get_mini_boxes` call receives them as-is.
 implementation should not reimplement it from a prose description. Capture an
 oracle over representative boxes and match the emitted vertices instead.
 
+## `minAreaRect` prototype findings
+
+An external prototype using a convex hull plus a per-edge rotating rectangle
+matched 11 of the 16 recorded cases. The five failures isolate two specific
+problems, recorded so the next attempt does not rediscover them.
+
+**1. Tie-breaking, not geometry.** For the `triangle` case the three candidate
+rectangles all have area exactly `144`; the minimum is a three-way tie. OpenCV
+returned the rectangle with `sside = 11.9175` while the prototype returned
+`sside = 10.1823`. Both are genuine minimum-area rectangles. The difference is
+purely which candidate is visited first, so the implementation must reproduce
+OpenCV's hull orientation (`convexHull` with `clockwise = true`) and its
+rotating-calipers traversal order, and must keep a strictly-less comparison so
+the first minimum in that order wins.
+
+**2. Degenerate inputs must go through `boxPoints`, not through corners.** For
+one point, two points, and collinear points the prototype produced no
+rectangle, but OpenCV produces duplicated corners: the recorded `two-points`
+case is `[[2,2], [12,7], [12,7], [2,2]]` with `sside = 0`. That shape falls out
+of applying `cv2.boxPoints` to a rectangle whose height is `0`. The correct
+structure is therefore to compute `(center, size, angle)` first, including the
+`n == 1` and `n == 2` branches, and then derive the four corners with the
+`boxPoints` formula, rather than emitting corners directly from the calipers
+step.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
