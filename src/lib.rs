@@ -87,6 +87,7 @@ mod score;
 mod score_filter;
 mod table_cells;
 mod table_classification;
+mod table_structure;
 #[allow(dead_code)]
 mod tensor;
 #[allow(dead_code)]

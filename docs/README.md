@@ -54,6 +54,10 @@ only the discovery and authority entrypoints: [README](../README.md),
   operators the two pinned baselines spell the same and compute differently
 - [Table cell contract](TABLE_CELLS_CONTRACT.md) — a second oracle on a shared
   code path, and the two bugs it found in layout
+- [Table structure contract](TABLE_STRUCTURE_CONTRACT.md) — three facts that
+  live in the registration functions, and a vocabulary that is built not read
+- [P8 artifact availability](P8_ARTIFACT_AVAILABILITY.md) — the four modules
+  with no published ONNX export, and what would unblock them
 - [P8 baseline finding](P8_BASELINE_FINDING.md) — why the specialized modules
   cannot be frozen from the pinned checkout
 - [Unwarping contract](UNWARPING_CONTRACT.md) — why unwarping has no inverse,
