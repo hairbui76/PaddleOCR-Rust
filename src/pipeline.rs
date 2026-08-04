@@ -313,10 +313,29 @@ mod g1 {
     use crate::image::decode_classic_bgr;
     use crate::types::EncodedImage;
 
-    const REORDER_PNG: &[u8] =
-        include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png");
-    const EXPECTED: &str =
-        include_str!("../tests/fixtures/classic-v1-e2e-reading-order/expected.json");
+    /// The four committed end-to-end fixtures: input bytes and expectation.
+    const FIXTURES: [(&str, &[u8], &str); 4] = [
+        (
+            "reading-order",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-reading-order/input.png"),
+            include_str!("../tests/fixtures/classic-v1-e2e-reading-order/expected.json"),
+        ),
+        (
+            "no-text",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-no-text/input.png"),
+            include_str!("../tests/fixtures/classic-v1-e2e-no-text/expected.json"),
+        ),
+        (
+            "tall-crop",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-tall-crop/input.png"),
+            include_str!("../tests/fixtures/classic-v1-e2e-tall-crop/expected.json"),
+        ),
+        (
+            "unicode",
+            include_bytes!("../tests/fixtures/classic-v1-e2e-unicode/input.png"),
+            include_str!("../tests/fixtures/classic-v1-e2e-unicode/expected.json"),
+        ),
+    ];
 
     struct Sha256(Vec<u8>);
 
@@ -347,7 +366,7 @@ mod g1 {
 
     #[test]
     #[ignore = "gate G1: needs explicitly provisioned models"]
-    fn the_pipeline_reproduces_the_recorded_reading_order_fixture() {
+    fn the_pipeline_reproduces_every_recorded_end_to_end_fixture() {
         must(
             initialize_runtime(Path::new(&env("PADDLEOCR_RUST_ORT_DYLIB"))),
             "initialise the runtime",
@@ -426,53 +445,55 @@ mod g1 {
             "load the recognizer",
         );
 
-        let encoded = must(EncodedImage::new(REORDER_PNG), "encoded png");
-        let image = must(decode_classic_bgr(encoded), "decode png");
-
-        let lines = must(
-            run_classic_ocr(
-                &ClassicModels {
-                    detector: (&detector, &detector_contract),
-                    recognizer: (&recognizer, &recognizer_contract),
-                    dictionary: &dictionary,
-                },
-                &image,
-                ClassicThresholds {
-                    box_threshold: 0.6,
-                    unclip_ratio: 1.5,
-                    drop_score: 0.5,
-                },
-            ),
-            "run the pipeline",
-        );
-
-        let expected: serde_json::Value = must(serde_json::from_str(EXPECTED), "expected json");
-        let recorded = match expected["lines"].as_array() {
-            Some(lines) => lines.clone(),
-            None => panic!("the expected fixture must record lines"),
-        };
-        let wanted: Vec<String> = recorded
-            .iter()
-            .map(|line| line["text"].as_str().unwrap_or_default().to_owned())
-            .collect();
-        let got: Vec<String> = lines.iter().map(|line| line.text.clone()).collect();
-
-        println!("G1 expected: {wanted:?}");
-        println!("G1 actual  : {got:?}");
-        for line in &lines {
-            println!("  score {:.6} text {:?}", line.score, line.text);
-        }
-        assert_eq!(got, wanted, "the pipeline must reproduce the recorded text");
-
-        // Confidences must match the recording too, not just the text.
-        for (line, record) in lines.iter().zip(&recorded) {
-            let recorded_score = record["confidence"].as_f64().unwrap_or_default();
-            assert!(
-                (line.score - recorded_score).abs() < 1e-5,
-                "confidence for {:?}: got {}, recorded {recorded_score}",
-                line.text,
-                line.score
+        let mut failures = Vec::new();
+        for (name, png, expectation) in FIXTURES {
+            let encoded = must(EncodedImage::new(png), "encoded png");
+            let image = must(decode_classic_bgr(encoded), "decode png");
+            let lines = must(
+                run_classic_ocr(
+                    &ClassicModels {
+                        detector: (&detector, &detector_contract),
+                        recognizer: (&recognizer, &recognizer_contract),
+                        dictionary: &dictionary,
+                    },
+                    &image,
+                    ClassicThresholds {
+                        box_threshold: 0.6,
+                        unclip_ratio: 1.5,
+                        drop_score: 0.5,
+                    },
+                ),
+                "run the pipeline",
             );
+
+            let expected: serde_json::Value = must(serde_json::from_str(expectation), "expected");
+            let recorded = match expected["lines"].as_array() {
+                Some(lines) => lines.clone(),
+                None => panic!("{name}: the expected fixture must record lines"),
+            };
+            let wanted: Vec<String> = recorded
+                .iter()
+                .map(|line| line["text"].as_str().unwrap_or_default().to_owned())
+                .collect();
+            let got: Vec<String> = lines.iter().map(|line| line.text.clone()).collect();
+
+            println!("[{name}] expected {wanted:?}");
+            println!("[{name}] actual   {got:?}");
+            if got != wanted {
+                failures.push(format!("{name}: expected {wanted:?}, got {got:?}"));
+                continue;
+            }
+            for (line, record) in lines.iter().zip(&recorded) {
+                let recorded_score = record["confidence"].as_f64().unwrap_or_default();
+                if (line.score - recorded_score).abs() >= 1e-5 {
+                    failures.push(format!(
+                        "{name}: confidence for {:?} was {} against {recorded_score}",
+                        line.text, line.score
+                    ));
+                }
+            }
         }
+
+        assert!(failures.is_empty(), "end-to-end mismatches: {failures:#?}");
     }
 }
