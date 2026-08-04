@@ -6,6 +6,8 @@
 //! This crate intentionally exposes no OCR inference API until the selected
 //! model artifacts and backend have passed the later roadmap gates.
 
+/// The public classic OCR surface.
+pub mod api;
 /// Structured errors returned by public foundation types.
 pub mod error;
 /// Developer-only byte-driven fuzz driver for current private pure kernels.
