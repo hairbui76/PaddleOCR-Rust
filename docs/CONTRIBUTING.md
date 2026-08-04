@@ -47,3 +47,28 @@ work under Apache-2.0 unless the maintainers explicitly approve a separately
 licensed third-party component with its required notices. Do not submit model
 weights, datasets, fonts, dictionaries, converted artifacts, or other assets
 whose provenance and terms have not been reviewed.
+
+## Running the provisioned gates
+
+The gates that need explicitly provisioned artifacts are ignored by default.
+Running them the obvious way — all of them, in parallel — **fails**, because
+`ort`'s environment is process-global and several tests initialise it
+concurrently. Use these three commands:
+
+```sh
+# The loader test must run in its own process, before anything initialises the
+# runtime successfully.
+cargo test --features onnxruntime --lib -- --ignored --exact \
+  backend_ort::tests::an_invalid_library_path_is_mapped_to_a_backend_error
+
+# The remaining library gates, single-threaded.
+cargo test --features onnxruntime --lib -- --ignored --test-threads=1 \
+  --skip an_invalid_library_path
+
+# The public-surface suite, also single-threaded.
+cargo test --features onnxruntime --test end_to_end -- --ignored --test-threads=1
+```
+
+Set `PADDLEOCR_RUST_ORT_DYLIB`, `PADDLEOCR_RUST_DETECTOR_ONNX`,
+`PADDLEOCR_RUST_RECOGNIZER_ONNX`, and `PADDLEOCR_RUST_DICTIONARY` first, plus
+`PADDLEOCR_RUST_PREPROCESS_CAPTURE` for the `PRE-001` gate.
