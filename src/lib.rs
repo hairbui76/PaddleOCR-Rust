@@ -56,6 +56,9 @@ mod detector_boxes;
 #[allow(dead_code)]
 mod dictionary;
 mod document_orientation;
+
+/// Composed document preprocessing and its coordinate spaces.
+pub mod document_pipeline;
 #[allow(dead_code)]
 mod geometry;
 #[allow(dead_code)]
