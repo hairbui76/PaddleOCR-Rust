@@ -31,6 +31,8 @@ mod ctc;
 #[allow(dead_code)]
 mod db;
 #[allow(dead_code)]
+mod dictionary;
+#[allow(dead_code)]
 mod geometry;
 #[allow(dead_code)]
 mod image;
