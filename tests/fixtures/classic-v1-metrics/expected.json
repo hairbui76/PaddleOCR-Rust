@@ -1,0 +1,909 @@
+{
+ "constants": {
+  "area_precision_constraint": 0.5,
+  "eps": 1e-05,
+  "iou_constraint": 0.5
+ },
+ "detection": [
+  {
+   "case": "exact_match",
+   "det_care": 1,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 1.0,
+   "ignore": [
+    false
+   ],
+   "matched": 1,
+   "precision": 1.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "recall": 1.0
+  },
+  {
+   "case": "iou_exactly_at_the_threshold",
+   "det_care": 1,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 0.0,
+   "ignore": [
+    false
+   ],
+   "matched": 0,
+   "precision": 0.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      20
+     ],
+     [
+      0,
+      20
+     ]
+    ]
+   ],
+   "recall": 0.0
+  },
+  {
+   "case": "iou_above_the_threshold",
+   "det_care": 1,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 1.0,
+   "ignore": [
+    false
+   ],
+   "matched": 1,
+   "precision": 1.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      12
+     ],
+     [
+      0,
+      12
+     ]
+    ]
+   ],
+   "recall": 1.0
+  },
+  {
+   "case": "no_overlap",
+   "det_care": 1,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 0.0,
+   "ignore": [
+    false
+   ],
+   "matched": 0,
+   "precision": 0.0,
+   "predicted": [
+    [
+     [
+      100,
+      100
+     ],
+     [
+      110,
+      100
+     ],
+     [
+      110,
+      110
+     ],
+     [
+      100,
+      110
+     ]
+    ]
+   ],
+   "recall": 0.0
+  },
+  {
+   "case": "dont_care_absorbs_a_detection",
+   "det_care": 1,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ],
+    [
+     [
+      50,
+      0
+     ],
+     [
+      60,
+      0
+     ],
+     [
+      60,
+      10
+     ],
+     [
+      50,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 1.0,
+   "ignore": [
+    true,
+    false
+   ],
+   "matched": 1,
+   "precision": 1.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ],
+    [
+     [
+      50,
+      0
+     ],
+     [
+      60,
+      0
+     ],
+     [
+      60,
+      10
+     ],
+     [
+      50,
+      10
+     ]
+    ]
+   ],
+   "recall": 1.0
+  },
+  {
+   "case": "greedy_first_match_wins",
+   "det_care": 2,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 0.6666666666666666,
+   "ignore": [
+    false
+   ],
+   "matched": 1,
+   "precision": 0.5,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      11
+     ],
+     [
+      0,
+      11
+     ]
+    ],
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "recall": 1.0
+  },
+  {
+   "case": "no_detections",
+   "det_care": 0,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 1,
+   "hmean": 0.0,
+   "ignore": [
+    false
+   ],
+   "matched": 0,
+   "precision": 0.0,
+   "predicted": [],
+   "recall": 0.0
+  },
+  {
+   "case": "no_ground_truth",
+   "det_care": 1,
+   "ground_truth": [],
+   "gt_care": 0,
+   "hmean": 0.0,
+   "ignore": [],
+   "matched": 0,
+   "precision": 0.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "recall": 0.0
+  },
+  {
+   "case": "all_dont_care",
+   "det_care": 0,
+   "ground_truth": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "gt_care": 0,
+   "hmean": 0.0,
+   "ignore": [
+    true
+   ],
+   "matched": 0,
+   "precision": 0.0,
+   "predicted": [
+    [
+     [
+      0,
+      0
+     ],
+     [
+      10,
+      0
+     ],
+     [
+      10,
+      10
+     ],
+     [
+      0,
+      10
+     ]
+    ]
+   ],
+   "recall": 0.0
+  }
+ ],
+ "detection_corpus": {
+  "hmean": 0.5333333333333333,
+  "precision": 0.5,
+  "recall": 0.5714285714285714
+ },
+ "recognition": [
+  {
+   "acc": 0.9999900000999989,
+   "case": "identical/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "identical/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "identical/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "identical/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "case_differs/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "Hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.0,
+   "case": "case_differs/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "Hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "case_differs/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "Hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.0,
+   "case": "case_differs/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "Hello",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "space_only/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello world",
+   "target": "helloworld"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "space_only/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello world",
+   "target": "helloworld"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "space_only/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "hello world",
+   "target": "helloworld"
+  },
+  {
+   "acc": 0.0,
+   "case": "space_only/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.9090918181727273,
+   "prediction": "hello world",
+   "target": "helloworld"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_substitution/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hallo"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_substitution/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hallo"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_substitution/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hallo"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_substitution/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hallo"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_deletion/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hell"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_deletion/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hell"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_deletion/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hell"
+  },
+  {
+   "acc": 0.0,
+   "case": "one_deletion/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.8000019999800002,
+   "prediction": "hello",
+   "target": "hell"
+  },
+  {
+   "acc": 0.0,
+   "case": "empty_prediction/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 9.999900001056439e-06,
+   "prediction": "",
+   "target": "hello"
+  },
+  {
+   "acc": 0.0,
+   "case": "empty_prediction/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 9.999900001056439e-06,
+   "prediction": "",
+   "target": "hello"
+  },
+  {
+   "acc": 0.0,
+   "case": "empty_prediction/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 9.999900001056439e-06,
+   "prediction": "",
+   "target": "hello"
+  },
+  {
+   "acc": 0.0,
+   "case": "empty_prediction/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 9.999900001056439e-06,
+   "prediction": "",
+   "target": "hello"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "both_empty/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "",
+   "target": ""
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "both_empty/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 1.0,
+   "prediction": "",
+   "target": ""
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "both_empty/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "",
+   "target": ""
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "both_empty/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 1.0,
+   "prediction": "",
+   "target": ""
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "punctuation/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "a-b.c",
+   "target": "abc"
+  },
+  {
+   "acc": 0.0,
+   "case": "punctuation/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.6000039999600004,
+   "prediction": "a-b.c",
+   "target": "abc"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "punctuation/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "a-b.c",
+   "target": "abc"
+  },
+  {
+   "acc": 0.0,
+   "case": "punctuation/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.6000039999600004,
+   "prediction": "a-b.c",
+   "target": "abc"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "cjk/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "\u4f60\u597d\u4e16\u754c",
+   "target": "\u4f60\u597d\u4e16\u95f4"
+  },
+  {
+   "acc": 0.0,
+   "case": "cjk/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.7500024999750002,
+   "prediction": "\u4f60\u597d\u4e16\u754c",
+   "target": "\u4f60\u597d\u4e16\u95f4"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "cjk/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "\u4f60\u597d\u4e16\u754c",
+   "target": "\u4f60\u597d\u4e16\u95f4"
+  },
+  {
+   "acc": 0.0,
+   "case": "cjk/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.7500024999750002,
+   "prediction": "\u4f60\u597d\u4e16\u754c",
+   "target": "\u4f60\u597d\u4e16\u95f4"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "digits_and_letters/space=True/filter=True",
+   "ignore_space": true,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "AB12",
+   "target": "ab12"
+  },
+  {
+   "acc": 0.0,
+   "case": "digits_and_letters/space=True/filter=False",
+   "ignore_space": true,
+   "is_filter": false,
+   "norm_edit_dis": 0.5000049999500005,
+   "prediction": "AB12",
+   "target": "ab12"
+  },
+  {
+   "acc": 0.9999900000999989,
+   "case": "digits_and_letters/space=False/filter=True",
+   "ignore_space": false,
+   "is_filter": true,
+   "norm_edit_dis": 1.0,
+   "prediction": "AB12",
+   "target": "ab12"
+  },
+  {
+   "acc": 0.0,
+   "case": "digits_and_letters/space=False/filter=False",
+   "ignore_space": false,
+   "is_filter": false,
+   "norm_edit_dis": 0.5000049999500005,
+   "prediction": "AB12",
+   "target": "ab12"
+  }
+ ],
+ "recognition_corpus": {
+  "acc": 0.2999997000003,
+  "ignore_space": true,
+  "is_filter": false,
+  "norm_edit_dis": 0.725000274999725,
+  "pairs": [
+   [
+    "hello",
+    "hello"
+   ],
+   [
+    "Hello",
+    "hello"
+   ],
+   [
+    "hello world",
+    "helloworld"
+   ],
+   [
+    "hello",
+    "hallo"
+   ],
+   [
+    "hello",
+    "hell"
+   ],
+   [
+    "",
+    "hello"
+   ],
+   [
+    "",
+    ""
+   ],
+   [
+    "a-b.c",
+    "abc"
+   ],
+   [
+    "\u4f60\u597d\u4e16\u754c",
+    "\u4f60\u597d\u4e16\u95f4"
+   ],
+   [
+    "AB12",
+    "ab12"
+   ]
+  ]
+ },
+ "schema_version": "paddleocr-rust/metric-oracle-capture/v1",
+ "upstream": "PaddleOCR ppocr/metrics/{eval_det_iou,det_metric,rec_metric}.py"
+}

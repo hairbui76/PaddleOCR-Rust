@@ -60,6 +60,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   Markdown formatters, and a newline that is added twice
 - [Reading order contract](READING_ORDER_CONTRACT.md) — the four XY-cut
   primitives, and why the two cut orders are different reading orders
+- [Evaluation metric contract](METRIC_CONTRACT.md) — upstream's detection and
+  recognition metrics, and the greedy matcher a reimplementation gets wrong
 - [IMG-003 delta measurement](IMG_003_DELTA_MEASUREMENT.md) — what a component
   delta of 36 does to recognized text, and what it does not establish
 - [Specialized module API](SPECIALIZED_API.md) — what the table pipeline

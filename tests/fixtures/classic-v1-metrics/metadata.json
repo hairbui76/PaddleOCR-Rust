@@ -1,0 +1,44 @@
+{
+ "fixture_id": "classic-v1-metrics",
+ "kind": "evaluation_metric_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/detection,#/recognition",
+  "sha256": "e2788fc84e08a01def4bd762d84c106ccf4984286666e2708390018b15386d6b",
+  "sha256_scope": "No image input. Every case is a list of quadrilaterals or a short string written out in the capture tool, so the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_metric_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "ppocr/metrics/eval_det_iou.py",
+   "ppocr/metrics/det_metric.py",
+   "ppocr/metrics/rec_metric.py"
+  ],
+  "capture_method": "DetectionIoUEvaluator was loaded by file path and executed. The package __init__ pulls in e2e_metric, which needs scipy; loading the one file directly reads exactly what is being frozen and avoids adding a dependency the read-only checkout does not need.",
+  "environment": "python 3.12, numpy 2.3.5, shapely 2.1.2, rapidfuzz"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "e2788fc84e08a01def4bd762d84c106ccf4984286666e2708390018b15386d6b",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/metric-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "metrics::tests::the_captured_detection_cases_are_reproduced",
+  "metrics::tests::the_captured_recognition_cases_are_reproduced",
+  "metrics::tests::the_captured_recognition_corpus_is_reproduced",
+  "metrics::tests::the_iou_threshold_is_strictly_greater",
+  "metrics::tests::matching_is_greedy_in_index_order"
+ ],
+ "limitations": [
+  "Detection and recognition only. Table, KIE, and super-resolution metrics score modules this port does not have, three of which have no published ONNX export.",
+  "Distributed reduction is absent because there is nothing to reduce across: this port has no distributed evaluation.",
+  "Ground truth is axis-aligned quadrilaterals. Upstream accepts any shapely-valid polygon; the Rust intersection is Sutherland-Hodgman and is correct for convex clippers, which is what a detection quadrilateral is.",
+  "This fixture pins the metric, not any model's score against it. It makes an accuracy question askable; it does not answer one."
+ ]
+}

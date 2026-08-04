@@ -23,6 +23,8 @@ pub mod manifest;
 
 /// The versioned model manifest.
 mod markdown;
+pub mod metrics;
+
 pub mod observability;
 /// The versioned JSON result document.
 pub mod resolve;
