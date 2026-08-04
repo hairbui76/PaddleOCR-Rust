@@ -582,6 +582,16 @@ Gate P6 (`M2`) requires the approved detector/recognizer path to run end to end
 through both Rust API and CLI on the baseline CPU, offline after explicit model
 provisioning, without Python or the upstream checkout.
 
+**Status: passed on 2026-08-04.** Evidence in
+[`docs/GATE_P6_EVIDENCE.md`](docs/GATE_P6_EVIDENCE.md), which checks each clause
+against something that was run. The last clause is demonstrated rather than
+asserted: the release binary was copied out of the repository with one PNG and
+one manifest and run from that directory under `env -i`, with `ldd` showing only
+`libc`, `libm`, `libgcc_s`, and the loader — no Python, and no ONNX Runtime
+either, since the runtime is opened at the path given on the command line.
+Passing the gate does not make the project releasable: `G2`, `MOD-003`,
+`MOD-004`, and everything from P7 onwards remain open.
+
 ### P7 — Document input and preprocessing
 
 | ID | Status | Dependencies | Deliverable and acceptance criteria |
