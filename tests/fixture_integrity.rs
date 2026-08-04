@@ -199,6 +199,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-document-orientation".to_owned(),
         "classic-v1-page-rotation".to_owned(),
         "classic-v1-unwarp".to_owned(),
+        "classic-v1-cubic-resize".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

@@ -232,8 +232,9 @@ fn replicated_index(coordinate: f32, length: u32) -> u32 {
     }
 }
 
-/// Shared with the page rotation, which needs the same weights and a different
-/// border rule; see `document_orientation::rotate_page`.
+/// Shared with the page rotation and the cubic scale, which need the same
+/// weights and different border or mapping rules; see
+/// `document_orientation::rotate_page` and `resize_cubic`.
 pub(crate) fn cubic_weights(alpha: f32) -> [f32; 4] {
     debug_assert!((0.0..=1.0).contains(&alpha));
 

@@ -77,6 +77,7 @@ mod recognizer;
 mod recognizer_batch;
 #[allow(dead_code)]
 mod resize;
+mod resize_cubic;
 #[allow(dead_code)]
 mod score;
 #[allow(dead_code)]

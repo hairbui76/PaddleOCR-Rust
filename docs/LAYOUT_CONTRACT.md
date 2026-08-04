@@ -115,10 +115,36 @@ the same reason `crop.rs` preserves OpenCV's cubic weight order.
    the detector and recognizer combined, which changes the memory budget a
    caller loading everything must plan for.
 
-## 5. Status
+## 5. The cubic resize, implemented and matched
+
+`src/resize_cubic.rs` implements `cv2.resize` with `INTER_CUBIC`, reproducing all
+five captured cases **byte for byte** — pure upscale, pure downscale, mixed axes,
+a `4x` upscale, and a heavy downscale.
+
+Two details carried it:
+
+- **The mapping is centre aligned**: `src = (dst + 0.5) * scale - 0.5`. Dropping
+  the half pixel makes a `2x` upscale sample at integers and reproduce the source
+  exactly in every other column, which looks plausible and matches nothing.
+- **The border replicates**, and the cubic weights are the same construction
+  `src/crop.rs` already pins against `72` captured OpenCV cases, shared rather
+  than rewritten.
+
+Neither existing path was reusable: `src/resize.rs` is `INTER_LINEAR` with
+fixed-point weights, and `src/crop.rs`'s cubic sampler is a projective warp for
+an arbitrary quadrilateral rather than the separable axis-aligned scale
+`cv2.resize` performs.
+
+## 6. Status
 
 Contract frozen from the pinned PaddleX baseline, artifact provisioned and
-hashed. No implementation, no fixture, no capture.
+hashed, and the first operator it needs — the cubic non-aspect-preserving resize
+— implemented and matched byte for byte against a capture.
+
+The layout path itself is not built: the model is not run, there is no class map
+in code, and `scale_factors` are not carried anywhere. The resize is verified on
+its own so that when the path is built, its resize is not one of the things that
+could be wrong.
 
 The pin earned itself here. `interp: 2` meaning bicubic, `norm_type: none`
 meaning `x/255`, and the reversed `target_size` are all in the source and none is
