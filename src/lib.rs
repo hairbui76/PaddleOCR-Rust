@@ -20,8 +20,10 @@ pub mod error;
 #[doc(hidden)]
 pub mod fuzz;
 pub mod manifest;
+
 /// The versioned model manifest.
 mod markdown;
+pub mod observability;
 /// The versioned JSON result document.
 pub mod resolve;
 pub mod result_json;
