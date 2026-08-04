@@ -31,6 +31,19 @@
 //! This port takes a single flag list, which makes the unreachable branches
 //! structurally impossible rather than reproducing a crash nothing can trigger.
 //!
+//! # The route, and a threshold the config does not carry
+//!
+//! `predict_single_table_recognition_res` branches on the classifier's label:
+//! `wired_table` selects the wired structure and cell models, `wireless_table`
+//! the wireless pair. **Any other label leaves both predictions unbound** and
+//! upstream raises `UnboundLocalError`; [`table_route`] returns `None` instead,
+//! which is the same refusal expressed as a type.
+//!
+//! The cell detector is then called with **`threshold=0.3`**, written into the
+//! pipeline with a comment explaining the choice. The artifact's own
+//! `draw_threshold` is `0.5`. Taking the config value would silently drop cells
+//! the reference pipeline keeps.
+//!
 //! # Not wired into a public API
 //!
 //! This slice is the composition logic. Running the four models in order,
@@ -48,6 +61,101 @@ pub(crate) const TABLE_MATCH_THRESHOLD: f64 = 0.7;
 
 /// The row-grouping tolerance in `sort_table_cells_boxes`, in pixels.
 pub(crate) const TABLE_ROW_TOLERANCE: f64 = 10.0;
+
+/// The IoU threshold `cells_det_results_nms` suppresses above.
+pub(crate) const TABLE_CELL_NMS_THRESHOLD: f64 = 0.3;
+
+/// The threshold the pipeline passes to the cell detector.
+///
+/// **Not** the artifact's `draw_threshold`, which is `0.5`.
+/// `predict_single_table_recognition_res` overrides it with `0.3` and a comment
+/// explaining that it improves cell recall.
+pub(crate) const TABLE_CELL_DETECTION_THRESHOLD: f32 = 0.3;
+
+/// Which pair of models the classifier's label selects.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[non_exhaustive]
+pub enum TableRoute {
+    /// `wired_table`: the wired structure and cell-detection models.
+    Wired,
+    /// `wireless_table`: the wireless pair.
+    Wireless,
+}
+
+/// Maps the classifier's label to a route.
+///
+/// Returns `None` for anything else. Upstream has no `else` branch at all and
+/// falls through to an `UnboundLocalError`; refusing by type says the same thing
+/// where a caller can act on it.
+#[must_use]
+pub(crate) fn table_route(label: &str) -> Option<TableRoute> {
+    match label {
+        "wired_table" => Some(TableRoute::Wired),
+        "wireless_table" => Some(TableRoute::Wireless),
+        _ => None,
+    }
+}
+
+/// Suppresses overlapping cell boxes by IoU, highest score first.
+///
+/// Note this uses **IoU**, unlike the matcher in
+/// [`intersection_over_second`]. A box fully containing another has a low IoU,
+/// so containment is **not** suppressed — which the captured corpus shows.
+#[must_use]
+pub(crate) fn suppress_overlapping_cells(
+    boxes: &[Box],
+    scores: &[f32],
+    threshold: f64,
+) -> (Vec<Box>, Vec<f32>) {
+    if boxes.len() != scores.len() {
+        return (Vec::new(), Vec::new());
+    }
+    // `scores.argsort()[::-1]`: ascending, then reversed, so equal scores come
+    // out **highest index first**. Captured rather than assumed.
+    let mut order: Vec<usize> = (0..scores.len()).collect();
+    order.sort_by(|left, right| scores[*left].total_cmp(&scores[*right]));
+    order.reverse();
+
+    let mut kept_boxes = Vec::new();
+    let mut kept_scores = Vec::new();
+    while let Some((&current, rest)) = order.split_first() {
+        kept_boxes.push(boxes[current]);
+        kept_scores.push(scores[current]);
+        let survivors: Vec<usize> = rest
+            .iter()
+            .copied()
+            .filter(|other| intersection_over_union(boxes[current], boxes[*other]) <= threshold)
+            .collect();
+        order = survivors;
+    }
+    (kept_boxes, kept_scores)
+}
+
+/// Re-expresses OCR boxes in a table region's coordinate space.
+///
+/// Boxes not **fully** inside the region are discarded, not clipped. A box
+/// exactly on the boundary is kept: the comparison is inclusive on all four
+/// edges.
+#[must_use]
+pub(crate) fn crop_ocr_boxes_to_table(ocr_boxes: &[Box], table_box: Box) -> Vec<Box> {
+    ocr_boxes
+        .iter()
+        .filter(|entry| {
+            entry[0] >= table_box[0]
+                && entry[1] >= table_box[1]
+                && entry[2] <= table_box[2]
+                && entry[3] <= table_box[3]
+        })
+        .map(|entry| {
+            [
+                entry[0] - table_box[0],
+                entry[1] - table_box[1],
+                entry[2] - table_box[0],
+                entry[3] - table_box[1],
+            ]
+        })
+        .collect()
+}
 
 /// An axis-aligned box, `[left, top, right, bottom]`.
 pub(crate) type Box = [f64; 4];
@@ -760,6 +868,116 @@ mod tests {
             .map(|token| (*token).to_owned())
             .collect();
         assert!(table_html(&[], &[], &tokens, &[]).is_err());
+    }
+
+    /// The captured NMS, including the tie order and the containment case.
+    #[test]
+    fn the_captured_cell_suppression_is_reproduced() {
+        let fixture = fixture();
+        let cases = match fixture["nms"].as_array() {
+            Some(value) => value,
+            None => panic!("nms"),
+        };
+        assert_eq!(cases.len(), 4);
+        for case in cases {
+            let name = case["case"].as_str().unwrap_or("?");
+            let boxes: Vec<Box> = match case["boxes"].as_array() {
+                Some(values) => values.iter().map(read_box).collect(),
+                None => panic!("{name}: boxes"),
+            };
+            let scores: Vec<f32> = match case["scores"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|value| value.as_f64().unwrap_or(f64::NAN) as f32)
+                    .collect(),
+                None => panic!("{name}: scores"),
+            };
+            let (kept, kept_scores) =
+                suppress_overlapping_cells(&boxes, &scores, TABLE_CELL_NMS_THRESHOLD);
+            let expected: Vec<Box> = match case["kept_boxes"].as_array() {
+                Some(values) => values.iter().map(read_box).collect(),
+                None => panic!("{name}: kept_boxes"),
+            };
+            assert_eq!(kept, expected, "{name}: kept boxes");
+            let expected_scores: Vec<f32> = match case["kept_scores"].as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|value| value.as_f64().unwrap_or(f64::NAN) as f32)
+                    .collect(),
+                None => panic!("{name}: kept_scores"),
+            };
+            assert_eq!(kept_scores, expected_scores, "{name}: kept scores");
+        }
+    }
+
+    /// Containment survives NMS, because NMS uses IoU and the matcher does not.
+    #[test]
+    fn nms_does_not_suppress_containment() {
+        let outer = [0.0, 0.0, 100.0, 100.0];
+        let inner = [10.0, 10.0, 20.0, 20.0];
+        let (kept, _) =
+            suppress_overlapping_cells(&[outer, inner], &[0.8, 0.9], TABLE_CELL_NMS_THRESHOLD);
+        assert_eq!(kept.len(), 2, "IoU is only 0.01, so neither is suppressed");
+        // The matcher would score the same pair at 1.0 in one direction.
+        assert!((intersection_over_second(outer, inner) - 1.0).abs() < 1e-9);
+    }
+
+    /// The captured cropping, including the boundary and the crossings.
+    #[test]
+    fn the_captured_cropping_is_reproduced() {
+        let fixture = fixture();
+        let cases = match fixture["crop"].as_array() {
+            Some(value) => value,
+            None => panic!("crop"),
+        };
+        assert_eq!(cases.len(), 5);
+        for case in cases {
+            let name = case["case"].as_str().unwrap_or("?");
+            let table_box = read_box(&case["table_box"]);
+            let ocr: Vec<Box> = match case["ocr_boxes"].as_array() {
+                Some(values) => values.iter().map(read_box).collect(),
+                None => panic!("{name}: ocr_boxes"),
+            };
+            let expected: Vec<Box> = match case["adjusted"].as_array() {
+                Some(values) => values.iter().map(read_box).collect(),
+                None => panic!("{name}: adjusted"),
+            };
+            assert_eq!(crop_ocr_boxes_to_table(&ocr, table_box), expected, "{name}");
+        }
+    }
+
+    /// The route, including the label upstream has no branch for.
+    #[test]
+    fn the_route_refuses_an_unknown_label() {
+        let fixture = fixture();
+        let route = &fixture["route"];
+        assert_eq!(
+            table_route(route["wired_label"].as_str().unwrap_or("")),
+            Some(TableRoute::Wired)
+        );
+        assert_eq!(
+            table_route(route["wireless_label"].as_str().unwrap_or("")),
+            Some(TableRoute::Wireless)
+        );
+        // Upstream falls through to an UnboundLocalError here.
+        assert_eq!(table_route("borderless_table"), None);
+        assert_eq!(table_route(""), None);
+    }
+
+    /// The pipeline overrides the artifact's own detection threshold.
+    #[test]
+    fn the_cell_detection_threshold_is_the_pipelines_not_the_artifacts() {
+        let fixture = fixture();
+        assert_eq!(
+            fixture["route"]["cell_detection_threshold"]
+                .as_f64()
+                .unwrap_or(0.0) as f32,
+            TABLE_CELL_DETECTION_THRESHOLD
+        );
+        // A compile-time assertion, because both sides are constants: the
+        // pipeline keeps cells the artifact default would drop.
+        const _: () =
+            assert!(TABLE_CELL_DETECTION_THRESHOLD < crate::table_cells::TABLE_CELL_THRESHOLD);
     }
 
     /// Rows are grouped against the row's first box, not a running mean.

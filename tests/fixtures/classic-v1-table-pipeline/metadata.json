@@ -5,7 +5,7 @@
  "contains_personal_data": false,
  "input": {
   "path": "expected.json#/geometry,#/row_starts,#/matching",
-  "sha256": "0c61e02e0525e4413132a0e81fddcc613a157f53ce66b00b5c9150bc98f9873d",
+  "sha256": "cf7f054b1bfeea9ac4a9960c1c29fed5a35bb5200a7353c3d49826cf6682f5d5",
   "sha256_scope": "No image input at all. Every case is boxes, token lists, and short ASCII strings written out in the capture tool, so the expected file is both the input record and the expected record.",
   "provenance": "Authored in tools/capture_table_pipeline_oracle.py.",
   "license": "Apache-2.0"
@@ -22,9 +22,9 @@
  "artifacts": null,
  "expected": {
   "path": "expected.json",
-  "sha256": "0c61e02e0525e4413132a0e81fddcc613a157f53ce66b00b5c9150bc98f9873d",
+  "sha256": "cf7f054b1bfeea9ac4a9960c1c29fed5a35bb5200a7353c3d49826cf6682f5d5",
   "sha256_scope": "Exact UTF-8 JSON file.",
-  "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v1",
+  "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v2",
   "comparison_profile": "m2-unit-v1"
  },
  "tests": [
@@ -33,11 +33,14 @@
   "table_pipeline::tests::the_captured_sorting_is_reproduced",
   "table_pipeline::tests::the_captured_matching_is_reproduced",
   "table_pipeline::tests::the_captured_html_is_reproduced",
-  "table_pipeline::tests::the_unreachable_branch_is_recorded_as_a_crash_upstream"
+  "table_pipeline::tests::the_unreachable_branch_is_recorded_as_a_crash_upstream",
+  "table_pipeline::tests::the_captured_cell_suppression_is_reproduced",
+  "table_pipeline::tests::the_captured_cropping_is_reproduced",
+  "table_pipeline::tests::the_route_refuses_an_unknown_label"
  ],
  "limitations": [
   "No model is run and no image is decoded. This pins the composition logic only: the geometry, the cell-to-OCR matching, and the HTML assembly.",
   "`match_table_and_ocr`'s two mismatched-flag branches are unreachable from `get_table_recognition_res`, which passes the same list twice. Handed different lists upstream raises KeyError, recorded under matching.unreachable_branch; this port takes one list so the branches cannot be reached at all.",
-  "Table cropping, the wired/wireless route, and running the four models in order are the rest of TABLEPIPE-001 and are not covered here."
+  "Table cropping, the wired/wireless route, cell NMS, and the detection threshold are covered as of schema v2. What is still not covered is running the four models in order against real artifacts, which needs the P9 artifact plumbing."
  ]
 }

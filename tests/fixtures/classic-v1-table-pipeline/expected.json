@@ -1,4 +1,110 @@
 {
+ "crop": [
+  {
+   "adjusted": [
+    [
+     10,
+     10,
+     100,
+     40
+    ]
+   ],
+   "case": "fully_inside",
+   "ocr_boxes": [
+    [
+     110,
+     60,
+     200,
+     90
+    ]
+   ],
+   "table_box": [
+    100,
+    50,
+    400,
+    250
+   ]
+  },
+  {
+   "adjusted": [],
+   "case": "crossing_the_left_edge",
+   "ocr_boxes": [
+    [
+     90,
+     60,
+     200,
+     90
+    ]
+   ],
+   "table_box": [
+    100,
+    50,
+    400,
+    250
+   ]
+  },
+  {
+   "adjusted": [],
+   "case": "crossing_the_bottom_edge",
+   "ocr_boxes": [
+    [
+     110,
+     60,
+     200,
+     300
+    ]
+   ],
+   "table_box": [
+    100,
+    50,
+    400,
+    250
+   ]
+  },
+  {
+   "adjusted": [
+    [
+     0,
+     0,
+     300,
+     200
+    ]
+   ],
+   "case": "exactly_on_the_boundary",
+   "ocr_boxes": [
+    [
+     100,
+     50,
+     400,
+     250
+    ]
+   ],
+   "table_box": [
+    100,
+    50,
+    400,
+    250
+   ]
+  },
+  {
+   "adjusted": [],
+   "case": "entirely_outside",
+   "ocr_boxes": [
+    [
+     500,
+     500,
+     520,
+     520
+    ]
+   ],
+   "table_box": [
+    100,
+    50,
+    400,
+    250
+   ]
+  }
+ ],
  "geometry": [
   {
    "case": "disjoint",
@@ -271,6 +377,177 @@
    "traceback_tail": "KeyError: 2"
   }
  },
+ "nms": [
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     20,
+     20,
+     30,
+     30
+    ]
+   ],
+   "case": "no_overlap",
+   "kept_boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     20,
+     20,
+     30,
+     30
+    ]
+   ],
+   "kept_scores": [
+    0.9,
+    0.8
+   ],
+   "scores": [
+    0.9,
+    0.8
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     1,
+     1,
+     11,
+     11
+    ],
+    [
+     40,
+     40,
+     50,
+     50
+    ]
+   ],
+   "case": "heavy_overlap_keeps_best",
+   "kept_boxes": [
+    [
+     1,
+     1,
+     11,
+     11
+    ],
+    [
+     40,
+     40,
+     50,
+     50
+    ]
+   ],
+   "kept_scores": [
+    0.95,
+    0.7
+   ],
+   "scores": [
+    0.6,
+    0.95,
+    0.7
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     100,
+     100,
+     110,
+     110
+    ]
+   ],
+   "case": "tied_scores",
+   "kept_boxes": [
+    [
+     100,
+     100,
+     110,
+     110
+    ],
+    [
+     0,
+     0,
+     10,
+     10
+    ]
+   ],
+   "kept_scores": [
+    0.5,
+    0.5
+   ],
+   "scores": [
+    0.5,
+    0.5
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     100,
+     100
+    ],
+    [
+     10,
+     10,
+     20,
+     20
+    ]
+   ],
+   "case": "containment",
+   "kept_boxes": [
+    [
+     10,
+     10,
+     20,
+     20
+    ],
+    [
+     0,
+     0,
+     100,
+     100
+    ]
+   ],
+   "kept_scores": [
+    0.9,
+    0.8
+   ],
+   "scores": [
+    0.8,
+    0.9
+   ]
+  }
+ ],
+ "route": {
+  "cell_detection_threshold": 0.3,
+  "cell_detection_threshold_source": "pipeline_v2.py passes threshold=0.3 explicitly, overriding the artifact's draw_threshold of 0.5",
+  "wired_label": "wired_table",
+  "wireless_label": "wireless_table"
+ },
  "row_starts": [
   {
    "case": "two_by_two",
@@ -364,7 +641,7 @@
    ]
   }
  ],
- "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v1",
+ "schema_version": "paddleocr-rust/table-pipeline-oracle-capture/v2",
  "sorting": {
   "input": [
    [

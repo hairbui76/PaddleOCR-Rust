@@ -1,17 +1,20 @@
-# Table Pipeline Contract — first slice
+# Table Pipeline Contract
 
 Roadmap item: `TABLEPIPE-001`
 Baselines: PaddleOCR `2661c7c0ef5c613e8f93c6e93b2e052399f0f854`, PaddleX `3.7.2`
-Status: **first slice implemented and matched**; the rest is `P9` plumbing
+Status: **composition, route, suppression, and cropping matched**; model
+orchestration is the remaining `P9` plumbing
 
 `TableRecognitionV2` turns three model outputs — structure tokens, cell boxes,
 and OCR boxes with text — into an HTML table. All three models are now ported,
 so what remained was the part that composes them.
 
-That part is **pure functions over boxes and token lists**. It needs no image,
-no artifact, and no inference session, which is why it is the first slice rather
-than the pipeline wiring: it is where the table actually gets built, and it is
-the cheapest part of the pipeline to pin exactly.
+Almost all of it is **pure functions over boxes and token lists** — no image, no
+artifact, no inference session — which is why it was portable ahead of the
+plumbing. It is where the table actually gets built, and it is the cheapest part
+of the pipeline to pin exactly.
+
+Sections 9 and 10 record what is matched and what is not.
 
 ## 1. The matcher's score is not IoU, and is not symmetric
 
@@ -89,23 +92,61 @@ caller's; this port names the parameter for what it receives and records why.
 - OCR boxes matching no cell are **dropped**. The corpus includes one such box
   so the drop is asserted.
 
-## 6. Oracle results
+## 6. The route, and a threshold the config does not carry
+
+`predict_single_table_recognition_res` branches on the classifier's label:
+`wired_table` selects the wired structure and cell models, `wireless_table` the
+wireless pair. There is **no `else`**. A third label leaves both predictions
+unbound and upstream raises `UnboundLocalError`; this port's `table_route`
+returns `None`, which is the same refusal expressed where a caller can act on it.
+
+The cell detector is then called with **`threshold=0.3`**, written into the
+pipeline with a comment saying it improves cell recall. The artifact's own
+`draw_threshold` is `0.5`. Taking the config value — the obvious thing to do
+after `TBLCELL-001` froze it — would silently drop cells the reference pipeline
+keeps, so the two constants are separate and a compile-time assertion holds them
+in order.
+
+## 7. NMS uses IoU, and therefore does not suppress containment
+
+`cells_det_results_nms` suppresses above an IoU of `0.3`. Because it is IoU and
+not the matcher's asymmetric score, a cell box **fully containing** another
+survives: the captured `containment` case keeps both boxes, at an IoU of `0.01`,
+where the matcher would have scored the same pair `1.0` in one direction.
+
+Two overlap measures with opposite behaviour on the same geometry, both in the
+same pipeline, both captured.
+
+Ties in the score sort go to the **higher** index — `argsort()[::-1]` on equal
+scores — which the `tied_scores` case pins.
+
+## 8. Cropping discards, it does not clip
+
+`get_region_ocr_det_boxes` keeps only boxes **fully** inside the table region and
+re-expresses them relative to its top-left corner. A box crossing any edge is
+**discarded entirely**, not clipped to the boundary. A box exactly on the
+boundary is kept: the comparison is inclusive on all four edges.
+
+The corpus covers inside, crossing left, crossing bottom, exactly on the
+boundary, and entirely outside.
+
+## 9. Oracle results
 
 Every captured case is reproduced: eight geometry cases across all three
 functions plus the swapped order, four token lists for row starts, the cell sort
-with its flags and their alignment, the cell-to-OCR matching, and **both HTML
-cases byte for byte**.
+with its flags and their alignment, the cell-to-OCR matching, **both HTML cases
+byte for byte**, four NMS cases, and five cropping cases.
 
 The capture executes the pinned PaddleX functions rather than transcribing
 them, and where upstream raises it records the exception instead of choosing
 kinder inputs.
 
-## 7. What is left
+## 10. What is left
 
-Cropping tables out of a page, choosing between the wired and wireless cell
-detectors from `TBLCLS-001`'s answer, and running the four models in order. Those
-need artifact plumbing — four models loaded at once, one of them `368 MB` — which
-is what `P9` is for.
+Running the four models in order against real artifacts. That needs artifact
+plumbing — four sessions live at once, one of them `368 MB` — which is what the
+rest of `P9` is for.
 
-So this row stays `In progress`: the composition logic is done and matched, and
-the orchestration around it is not.
+Everything around that is now done and matched: the composition logic, the
+route, the detection threshold, the cell suppression, and the cropping. So this
+row stays `In progress`, and what remains is plumbing rather than behaviour.

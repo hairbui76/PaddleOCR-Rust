@@ -45,7 +45,17 @@ from paddlex.inference.pipelines.table_recognition.table_recognition_post_proces
     sort_table_cells_boxes,
 )
 
-CAPTURE_SCHEMA_VERSION = "paddleocr-rust/table-pipeline-oracle-capture/v1"
+from paddlex.inference.pipelines.table_recognition.pipeline_v2 import (
+    _TableRecognitionPipelineV2 as TableRecognitionPipelineV2,
+)
+
+CAPTURE_SCHEMA_VERSION = "paddleocr-rust/table-pipeline-oracle-capture/v2"
+
+# `cells_det_results_nms` and `get_region_ocr_det_boxes` are methods but use no
+# instance state, so they are called unbound rather than by constructing a
+# pipeline -- which would demand four artifacts this capture does not need.
+NMS = TableRecognitionPipelineV2.cells_det_results_nms
+CROP = TableRecognitionPipelineV2.get_region_ocr_det_boxes
 
 # Box pairs chosen to cover: disjoint, touching edge-on, partial overlap,
 # containment either way, and identical.
@@ -229,6 +239,60 @@ def main() -> int:
         "row_start_index_full": row_start_index_full,
     }
 
+    # NMS over cell boxes. The pipeline calls this with its default threshold.
+    nms_cases = []
+    for name, boxes, scores in [
+        (
+            "no_overlap",
+            [[0, 0, 10, 10], [20, 20, 30, 30]],
+            [0.9, 0.8],
+        ),
+        (
+            "heavy_overlap_keeps_best",
+            [[0, 0, 10, 10], [1, 1, 11, 11], [40, 40, 50, 50]],
+            [0.6, 0.95, 0.7],
+        ),
+        (
+            "tied_scores",
+            [[0, 0, 10, 10], [100, 100, 110, 110]],
+            [0.5, 0.5],
+        ),
+        (
+            "containment",
+            [[0, 0, 100, 100], [10, 10, 20, 20]],
+            [0.8, 0.9],
+        ),
+    ]:
+        kept_boxes, kept_scores = NMS(None, boxes, scores)
+        nms_cases.append(
+            {
+                "case": name,
+                "boxes": boxes,
+                "scores": scores,
+                "kept_boxes": kept_boxes,
+                "kept_scores": kept_scores,
+            }
+        )
+
+    # Cropping OCR boxes into a table region's coordinate space.
+    crop_cases = []
+    table_box = [100, 50, 400, 250]
+    for name, ocr in [
+        ("fully_inside", [[110, 60, 200, 90]]),
+        ("crossing_the_left_edge", [[90, 60, 200, 90]]),
+        ("crossing_the_bottom_edge", [[110, 60, 200, 300]]),
+        ("exactly_on_the_boundary", [[100, 50, 400, 250]]),
+        ("entirely_outside", [[500, 500, 520, 520]]),
+    ]:
+        crop_cases.append(
+            {
+                "case": name,
+                "table_box": table_box,
+                "ocr_boxes": ocr,
+                "adjusted": CROP(None, ocr, table_box),
+            }
+        )
+
     document = {
         "schema_version": CAPTURE_SCHEMA_VERSION,
         "upstream": "paddlex 3.7.2 inference/pipelines/table_recognition/"
@@ -246,6 +310,14 @@ def main() -> int:
             "unreachable_branch": unreachable,
         },
         "html": html_cases,
+        "nms": nms_cases,
+        "crop": crop_cases,
+        "route": {
+            "wired_label": "wired_table",
+            "wireless_label": "wireless_table",
+            "cell_detection_threshold": 0.3,
+            "cell_detection_threshold_source": "pipeline_v2.py passes threshold=0.3 explicitly, overriding the artifact's draw_threshold of 0.5",
+        },
     }
     output.write_text(json.dumps(document, indent=1, sort_keys=True) + "\n")
     print(
