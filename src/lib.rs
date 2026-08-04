@@ -45,6 +45,8 @@ mod image;
 #[allow(dead_code)]
 mod min_area;
 #[allow(dead_code)]
+mod pipeline;
+#[allow(dead_code)]
 mod recognizer;
 #[allow(dead_code)]
 mod recognizer_batch;
