@@ -243,6 +243,37 @@ No endpoint rounding rule is involved at all, which is why all nine of those
 variants failed identically. The mean is then taken over the marked pixels of
 the ROI, matching `cv2.mean` with the mask.
 
+
+## `unclip` prototype findings
+
+An external prototype implemented Clipper's offset directly: `AddPath`
+truncation, `GetUnitNormal` with the reciprocal-then-multiply form, the step
+count `steps = pi / acos(1 - y / |delta|)` capped at `|delta| * pi`, the
+incremental `(m_cos, m_sin)` rotation, and `Round(v) = trunc(v +/- 0.5)`.
+
+It reproduces the **geometry** but not yet the emitted path. Two differences
+remain, and both come from Clipper's final union pass rather than from the
+offset arithmetic:
+
+1. **Starting vertex.** For every case that already has the right vertex count,
+   the prototype emits the same cycle rotated. For `axis-thin` at ratio `1.5`
+   it produced `[(0,4), (2,2), (14,2), (16,4), (16,7), (14,9), (2,9), (0,7)]`
+   where Clipper returns the same eight points beginning at `(16,4)`. The
+   union re-emits each polygon from its own chosen start.
+2. **Vertex count.** Where the prototype emits 12 points Clipper often returns
+   8. For a right-angle corner at `delta = 2.0` the step formula gives
+   `steps = 6.216`, `StepsPerRad = 0.9893`, and `Round(0.9893 * pi/2) = 2`, so
+   the round join emits two arc points plus the final normal point, three per
+   corner and twelve in total. Clipper's union then collapses duplicate and
+   collinear vertices down to eight.
+
+So the offset math appears correct and the missing component is the union with
+positive fill, which decides both the vertex reduction and the starting point.
+A Rust implementation should either reproduce that union or, more cheaply,
+normalise both sides before comparing: deduplicate, drop collinear vertices,
+and rotate to a canonical start. Which of those is acceptable is a contract
+decision, because the emitted order reaches `get_mini_boxes` unchanged.
+
 ## Fidelity hazards to settle before implementing
 
 1. Three different roundings coexist: `floor`/`ceil` in the score bounding box,
