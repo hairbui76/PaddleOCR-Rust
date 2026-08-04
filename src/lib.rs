@@ -46,6 +46,8 @@ mod resize;
 mod score;
 #[allow(dead_code)]
 mod tensor;
+#[allow(dead_code)]
+mod unclip;
 
 pub use error::{Error, InputViolation, ModelProblem, Result};
 pub use types::{

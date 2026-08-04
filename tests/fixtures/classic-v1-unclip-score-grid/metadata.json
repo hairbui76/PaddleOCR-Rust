@@ -38,9 +38,12 @@
     "sha256": "bcbace819d98c74b009aab4b7518119c567d48b47394909b8fc15a37e3df769c",
     "sha256_scope": "SHA-256 of the whole capture document; the score values are read from it by the consuming test."
   },
-  "tests": ["score::tests::classic_box_score_executes_every_captured_case"],
+  "tests": [
+    "score::tests::classic_box_score_executes_every_captured_case",
+    "unclip::tests::classic_unclip_executes_every_captured_case"
+  ],
   "limitations": [
-    "Only the score half is consumed by Rust. The recorded unclip paths have no Rust implementation yet and establish no equivalence claim.",
+    "Both halves are consumed by Rust. The unclip comparison normalises both sides by removing duplicate and collinear vertices and rotating to a canonical start, because this project deliberately does not implement Clipper's final union pass; src/unclip.rs records why that is unobservable in the M2 pipeline.",
     "The score is exact to 1e-9 for the eight recorded boxes in the recorded scalar OpenCV 5.0.0 environment, and nothing else.",
     "It does not establish detector output, model behaviour, or OCR compatibility."
   ]
