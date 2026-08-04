@@ -56,17 +56,16 @@ fn locked_packages() -> BTreeMap<String, (String, Option<String>)> {
     let mut version: Option<String> = None;
     let mut checksum: Option<String> = None;
 
-    let mut flush =
-        |name: &mut Option<String>,
-         version: &mut Option<String>,
-         checksum: &mut Option<String>,
-         packages: &mut BTreeMap<String, (String, Option<String>)>| {
-            if let (Some(name), Some(version)) = (name.take(), version.take()) {
-                packages.insert(name, (version, checksum.take()));
-            } else {
-                *checksum = None;
-            }
-        };
+    let flush = |name: &mut Option<String>,
+                 version: &mut Option<String>,
+                 checksum: &mut Option<String>,
+                 packages: &mut BTreeMap<String, (String, Option<String>)>| {
+        if let (Some(name), Some(version)) = (name.take(), version.take()) {
+            packages.insert(name, (version, checksum.take()));
+        } else {
+            *checksum = None;
+        }
+    };
 
     for line in LOCKFILE.lines() {
         let line = line.trim();
