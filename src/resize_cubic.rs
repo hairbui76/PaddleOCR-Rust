@@ -27,6 +27,26 @@
 //! rather than on integers, and dropping it is the classic off-by-half that
 //! produces an image which looks right and matches nothing.
 //!
+//! # A known residual divergence
+//!
+//! This reproduces all five committed cases byte for byte, and it does **not**
+//! reproduce OpenCV exactly at page scale. A `297x421` to `800x800` resize
+//! differs in `24` bytes out of `1,920,000` — roughly one pixel in eighty
+//! thousand, each off by one.
+//!
+//! The cause is that OpenCV's 8-bit cubic path is **fixed point**: coefficients
+//! are quantized to `i16` at `1 << 11` and accumulated in integers, the way
+//! `src/resize.rs` already reproduces for the linear kernel. Two attempts at
+//! that arithmetic here were **worse** than this float accumulator — `82,990`
+//! and `73,910` mismatching bytes — which means the pass structure was being
+//! guessed rather than read, and guessing is what this project's method exists
+//! to avoid.
+//!
+//! So the float version stands, with the divergence measured and stated rather
+//! than rounded away. It also stands as a warning about corpus size: the five
+//! committed cases total about `2,600` pixels, and a one-in-eighty-thousand
+//! defect cannot appear in `2,600` samples. Only a page-sized case found it.
+//!
 //! # Why nothing calls this yet
 //!
 //! `LAY-001` needs it and `LAY-001` has no implementation: the artifact is

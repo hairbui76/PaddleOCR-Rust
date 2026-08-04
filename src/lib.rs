@@ -63,6 +63,7 @@ pub mod document_pipeline;
 mod geometry;
 #[allow(dead_code)]
 mod image;
+mod layout;
 
 /// Bounded input acquisition: bytes, paths, and streams.
 pub mod input;

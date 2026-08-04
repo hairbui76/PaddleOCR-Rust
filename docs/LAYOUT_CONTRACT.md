@@ -135,16 +135,57 @@ fixed-point weights, and `src/crop.rs`'s cubic sampler is a projective warp for
 an arbitrary quadrilateral rather than the separable axis-aligned scale
 `cv2.resize` performs.
 
-## 6. Status
+## 6. A fifth reversal, and a correction to §5
+
+`ToBatch` reverses **again** what `Resize` computed:
+
+```python
+if key == "img_size":       img_sizes = [data[key][::-1] for data in datas]
+elif key == "scale_factors": scale_factors = [data.get(key, [1.0, 1.0])[::-1] ...]
+```
+
+So the model receives `im_shape` as `[h, w]` and `scale_factor` as
+`[h_scale, w_scale]`, where `Resize` produced `[w, h]` and `[w_scale, h_scale]`.
+
+This one a reading did not catch — a capture did. Passing the unreversed factor
+produced boxes reaching `y = 1021` on a `720`-tall page. **Coordinates outside
+the source image are the cheapest signal that a transform is wrong**, and the
+oracle test now asserts containment for exactly that reason.
+
+### The cubic resize does not match at page scale
+
+§5 said the cubic resize reproduces its captured cases byte for byte. That is
+true of the five committed cases and **false at page scale**: a `297x421` to
+`800x800` resize differs from OpenCV in `24` bytes out of `1,920,000`, each off
+by one.
+
+The cause is that OpenCV's 8-bit cubic path is fixed point — coefficients
+quantized to `i16` at `1 << 11`, accumulated in integers — as `src/resize.rs`
+already reproduces for the linear kernel. Two attempts at that arithmetic here
+were **worse** than the float accumulator, `82,990` and `73,910` mismatching
+bytes, which means the pass structure was being guessed rather than read. The
+float version stands with the divergence measured and stated.
+
+The corpus is the lesson. Five cases totalling about `2,600` pixels cannot
+exhibit a one-in-eighty-thousand defect; only a page-sized case could. A test
+suite that passes says nothing about the sizes it never tried.
+
+## 7. Status
 
 Contract frozen from the pinned PaddleX baseline, artifact provisioned and
 hashed, and the first operator it needs — the cubic non-aspect-preserving resize
 — implemented and matched byte for byte against a capture.
 
-The layout path itself is not built: the model is not run, there is no class map
-in code, and `scale_factors` are not carried anywhere. The resize is verified on
-its own so that when the path is built, its resize is not one of the things that
-could be wrong.
+`src/layout.rs` now builds the input tensor, computes the reversed scale factor,
+and decodes detections into source-page regions with the twenty-class map. Two of
+three captured tensors reproduce bit-identically; the third is recorded as
+`reproduced_exactly: false` in the fixture, and the test **bounds** its
+divergence — no sampled value off by more than one 8-bit step, no more than two
+differing samples — rather than hiding it behind a tolerance.
+
+The module is not wired into any pipeline. Composing layout with the classic path
+is `P9`'s subject, and exposing an API built on an operator that is knowingly one
+step off at page scale would sell a precision this port does not have.
 
 The pin earned itself here. `interp: 2` meaning bicubic, `norm_type: none`
 meaning `x/255`, and the reversed `target_size` are all in the source and none is
