@@ -195,8 +195,8 @@ fn unit_normal(from: (i64, i64), to: (i64, i64)) -> (f64, f64) {
 /// Offsets one source vertex along a normal and rounds like Clipper.
 fn offset_point(source: (i64, i64), normal: (f64, f64), distance: f64) -> (i64, i64) {
     (
-        clipper_round(source.0 as f64 + normal.0 * distance) as i64,
-        clipper_round(source.1 as f64 + normal.1 * distance) as i64,
+        clipper_round(source.0 as f64 + normal.0 * distance),
+        clipper_round(source.1 as f64 + normal.1 * distance),
     )
 }
 
