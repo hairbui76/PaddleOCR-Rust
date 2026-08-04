@@ -257,7 +257,7 @@ equivalence result, or support claim.
 Until then, the data in this file is discovery evidence and a rejection/acceptance
 checklist—not a supported model list.
 
-## Orientation candidates (`DOCORI-001`)
+## Document preprocessing candidates (`DOCORI-001`, `UNWARP-001`)
 
 Provisioned 2026-08-04, Apache-2.0, stored outside version control per
 `ADR_MODEL_DEC_001_ARTIFACT_POLICY.md`. Both are named by
@@ -267,6 +267,7 @@ Provisioned 2026-08-04, Apache-2.0, stored outside version control per
 |---|---|---|---|
 | `PP-LCNet_x1_0_textline_ori` | [`PaddlePaddle/PP-LCNet_x1_0_textline_ori_onnx`](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_textline_ori_onnx) | `7fdcf3cf7061163eda7183b224aa334bd33068f7` | `38aa97cd4be591e0ad304e659f07ba30d946f27a63315433f6659c69c8778345` / `6,777,816` |
 | `PP-LCNet_x1_0_doc_ori` | [`PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx`](https://huggingface.co/PaddlePaddle/PP-LCNet_x1_0_doc_ori_onnx) | `7330ab7039123e46af2dc03154b9969aa412c61d` | `af9a0a4f317ff0709ce752067807f819cb15d883f8ecad89f28df1c6ee2d9c92` / `6,788,069` |
+| `UVDoc` | [`PaddlePaddle/UVDoc_onnx`](https://huggingface.co/PaddlePaddle/UVDoc_onnx) | `3bcf535371727d11e783101f79a504c68848aae3` | `54cab30dc2cf347b4f3d6971c833b1c3d84f5ef17280f1f6d15796bff20e63d6` / `31,684,150` |
 
 Each repository also carries an `inference.yml` that holds the preprocessing and
 label contract; unlike the classic models, those values exist **only** in the

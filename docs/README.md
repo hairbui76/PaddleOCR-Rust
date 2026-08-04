@@ -48,6 +48,8 @@ only the discovery and authority entrypoints: [README](../README.md),
   office is rejected, why PDF waits, and what a renderer must prove first
 - [Model artifact policy](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md) — conversion,
   distribution, cache, integrity, provenance, and licensing decisions
+- [Unwarping contract](UNWARPING_CONTRACT.md) — why unwarping has no inverse,
+  and what that costs a caller
 - [Orientation contract](ORIENTATION_CONTRACT.md) — the frozen text-line
   classifier behaviour, and why document orientation cannot be specified yet
 - [User guide](USER_GUIDE.md) — building, provisioning, running, output schema,
