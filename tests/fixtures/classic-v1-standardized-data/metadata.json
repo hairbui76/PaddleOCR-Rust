@@ -1,0 +1,40 @@
+{
+ "fixture_id": "classic-v1-standardized-data",
+ "kind": "standardized_data_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/layout,regions,spans",
+  "sha256": "705aa7e6189939ad2ce4d96c682ff980b5b4ad804743dc9b4692a3c4f6d16007",
+  "sha256_scope": "No image input beyond a zero-filled shape. Every case is synthetic layout, region, and span specs written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_standardized_data_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py standardized_data",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py get_sub_regions_ocr_res, get_bbox_intersection, shrink_supplement_region_bbox",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/setting.py BLOCK_SETTINGS, REGION_SETTINGS, BLOCK_LABEL_MAP"
+  ],
+  "capture_method": "The pinned standardized_data was executed unbound over six synthetic scenarios with an explicit score threshold (so self is never touched) and a deterministic recognizer stub whose text and score depend only on the crop shape; its call log is recorded to pin the model-call order. Scenarios cover the footnote and lone-title relabels, hurdle replace/append/below-threshold, no-text and vision-skip re-recognition, the OCR fallback, region growth to a two-round fixpoint, supplement shrinking against a grown region, and per-mask-label supplementary regions.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "705aa7e6189939ad2ce4d96c682ff980b5b4ad804743dc9b4692a3c4f6d16007",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/standardized-data-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "structure_standardize::tests::the_captured_standardizations_are_reproduced"
+ ],
+ "limitations": [
+  "The recognizer is a shape-keyed stub, not a model; the real recognizer joins in the end-to-end slice. The stub is mirrored bit-for-bit in the Rust test.",
+  "convert_formula_res_to_ocr_format is not exercised: this port runs with formula recognition off, so the formula list is always empty and the call is a no-op.",
+  "Python set iteration over block indices is mirrored as ascending order, which holds for the contiguous 0-based index sets this function builds; the hurdle dict keeps literal insertion order in both implementations.",
+  "Crops are kept inside the image, so numpy's clamping and negative-index wrapping are never reached."
+ ]
+}

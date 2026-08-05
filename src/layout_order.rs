@@ -30,8 +30,11 @@
 //!   every input that does not crash upstream outright.
 //!
 //! Everything here is verified two ways: unit fixtures for the helpers with
-//! subtle boundaries, and twelve end-to-end page orderings captured from the
-//! executed upstream in `tests/fixtures/classic-v1-layout-order/`.
+//! subtle boundaries, and end-to-end page orderings captured from the
+//! executed upstream in `tests/fixtures/classic-v1-layout-order/`. The
+//! `region` label — a whole [`OrderPage`] ordered as one block inside a page
+//! of regions, built with [`OrderBlock::from_region_page`] — is covered by the
+//! nested orderings in `tests/fixtures/classic-v1-region-order/`.
 #![allow(dead_code)]
 
 use crate::reading_order::{
@@ -98,6 +101,9 @@ fn is_unordered(label: &str) -> bool {
 fn is_text(label: &str) -> bool {
     label == "text"
 }
+fn is_region(label: &str) -> bool {
+    label == "region"
+}
 
 /// One layout block in the arena.
 #[derive(Clone, Debug)]
@@ -132,6 +138,10 @@ pub struct OrderBlock {
     pub index: usize,
     /// Reading direction and its derived fields.
     pub direction: Dir,
+    /// `LayoutRegion.euclidean_distance`: only `region`-labelled blocks carry
+    /// a real value; plain blocks keep the infinite default and never reach
+    /// the comparisons that read it.
+    pub euclidean_distance: f64,
     /// Child arena indices, in append order.
     child_blocks: Vec<usize>,
 }
@@ -157,9 +167,25 @@ impl OrderBlock {
             text_line_width: 1.0,
             index: 0,
             direction: Dir::Horizontal,
+            euclidean_distance: f64::INFINITY,
             child_blocks: Vec::new(),
         };
         block.direction = block.bbox_direction();
+        block
+    }
+
+    /// Builds the `region`-labelled block a whole [`OrderPage`] becomes when
+    /// it is ordered inside a page of regions, the way `LayoutRegion` doubles
+    /// as a `LayoutBlock`: direction, text-line means, and the euclidean
+    /// distance come from the inner page, and `num_of_lines` is fixed at 10.
+    #[must_use]
+    pub fn from_region_page(inner: &OrderPage) -> Self {
+        let mut block = Self::new("region", inner.region.bbox);
+        block.direction = inner.region.direction;
+        block.num_of_lines = 10;
+        block.text_line_height = inner.region.text_line_height;
+        block.text_line_width = inner.region.text_line_width;
+        block.euclidean_distance = region_euclidean_distance(inner);
         block
     }
 
@@ -683,6 +709,29 @@ mod children {
         }
     }
 
+    /// `update_region_child_blocks`: any overlapped smaller region becomes a
+    /// `sub_region` child of the larger one.
+    pub(super) fn region(page: &mut OrderPage, block: usize) {
+        for candidate in 0..page.blocks.len() {
+            if candidate == block {
+                continue;
+            }
+            let iou = overlap_ratio(
+                page.blocks[block].heuristic_bbox(),
+                page.blocks[candidate].heuristic_bbox(),
+                false,
+            );
+            if iou > 0.0
+                && page.blocks[block].area > page.blocks[candidate].area
+                && !page.blocks[candidate].order_label_is("sub_region")
+            {
+                page.blocks[candidate].order_label = Some("sub_region".to_owned());
+                page.append_child(block, candidate);
+                page.region.normal_text_idxes.retain(|&i| i != candidate);
+            }
+        }
+    }
+
     pub(super) fn vision(page: &mut OrderPage, block: usize) {
         let refs: Vec<usize> = page
             .region
@@ -795,6 +844,8 @@ fn update_region_label(page: &mut OrderPage, block: usize) {
         "footer"
     } else if is_unordered(&label) {
         "unordered"
+    } else if is_region(&label) {
+        "region"
     } else {
         "normal_text"
     };
@@ -805,6 +856,7 @@ fn update_region_label(page: &mut OrderPage, block: usize) {
         "doc_title" => children::doc_title(page, block),
         "paragraph_title" => children::paragraph_title(page, block),
         "vision" => children::vision(page, block),
+        "region" => children::region(page, block),
         _ => {}
     }
 }
@@ -902,6 +954,7 @@ fn mark_cross_layout(page: &mut OrderPage, members: &mut [usize], region_directi
                     );
                     if second_match > 0.0 && ref_match == 0.0 && ref_secondary > 0.0 {
                         let qualified = page.blocks[block].order_label_is("vision")
+                            || page.blocks[block].order_label_is("region")
                             || (page.blocks[reference].order_label_is("normal_text")
                                 && page.blocks[second].order_label_is("normal_text")
                                 && page.blocks[reference].long_side()
@@ -946,6 +999,17 @@ mod insert {
             }
         }
         sorted.insert((nearest + 1).min(sorted.len()), block);
+    }
+
+    /// `euclidean_insert`: before the first sorted region whose distance to
+    /// the reference corner is strictly larger.
+    pub(super) fn euclidean(page: &OrderPage, block: usize, sorted: &mut Vec<usize>) {
+        let distance = page.blocks[block].euclidean_distance;
+        let position = sorted
+            .iter()
+            .position(|&candidate| page.blocks[candidate].euclidean_distance > distance)
+            .unwrap_or(sorted.len());
+        sorted.insert(position, block);
     }
 
     pub(super) fn manhattan(page: &OrderPage, block: usize, sorted: &mut Vec<usize>) {
@@ -1210,6 +1274,9 @@ fn pre_process(page: &mut OrderPage) -> Vec<Vec<usize>> {
         }
     }
 
+    // A page of regions forces the pre-cut path: every primary-direction gap
+    // becomes a cut, whatever the secondary projection looks like.
+    let is_region_page = is_region(&page.blocks[0].label);
     let secondary_boxes: Vec<[i64; 4]> = unmasked
         .iter()
         .copied()
@@ -1219,7 +1286,7 @@ fn pre_process(page: &mut OrderPage) -> Vec<Vec<usize>> {
     if !secondary_boxes.is_empty() {
         let (secondary_merged, _) =
             discontinuous_projection(&secondary_boxes, page.region.direction);
-        if secondary_merged.len() == 1 {
+        if secondary_merged.len() == 1 || is_region_page {
             if discontinuous.is_empty() {
                 discontinuous = discontinuous_projection(&all_boxes, cut_direction).0;
             }
@@ -1233,7 +1300,7 @@ fn pre_process(page: &mut OrderPage) -> Vec<Vec<usize>> {
                 .max(current.0);
             for &interval in &discontinuous[1..] {
                 let gap = interval.0 - current.1;
-                if gap as f64 >= page.region.text_line_height * 3.0 {
+                if gap as f64 >= page.region.text_line_height * 3.0 || is_region_page {
                     cut_coordinates.push(current.1);
                 } else if gap as f64 > page.region.text_line_height * 1.2 {
                     let pre = blocks_in_interval(
@@ -1340,10 +1407,16 @@ fn match_unsorted(page: &mut OrderPage, sorted: &mut Vec<usize>, unsorted: Vec<u
     );
     for (position, &slot) in order.iter().enumerate() {
         let block = unsorted[slot];
-        let role = page.blocks[block]
-            .order_label
-            .clone()
-            .unwrap_or_else(|| "other".to_owned());
+        // A `region`-labelled block is matched as a region regardless of the
+        // order label a cross-layout pass may have stamped on it.
+        let role = if is_region(&page.blocks[block].label) {
+            "region".to_owned()
+        } else {
+            page.blocks[block]
+                .order_label
+                .clone()
+                .unwrap_or_else(|| "other".to_owned())
+        };
         if position == 0 && role == "doc_title" {
             sorted.insert(0, block);
             continue;
@@ -1353,6 +1426,7 @@ fn match_unsorted(page: &mut OrderPage, sorted: &mut Vec<usize>, unsorted: Vec<u
                 insert::weighted(page, block, sorted);
             }
             "cross_reference" => insert::reference(page, block, sorted),
+            "region" => insert::euclidean(page, block, sorted),
             _ => insert::manhattan(page, block, sorted),
         }
     }
@@ -1366,6 +1440,21 @@ fn expand_children(page: &mut OrderPage, ordered: &mut Vec<usize>) {
         if !page.blocks[block].child_blocks.is_empty() {
             let mut family = page.take_children(block);
             family.push(block);
+            // `sort_child_blocks`: a family of regions sorts by euclidean
+            // distance; everything else by the coordinate keys.
+            if is_region(&page.blocks[family[0]].label) {
+                family.sort_by(|&a, &b| {
+                    page.blocks[a]
+                        .euclidean_distance
+                        .total_cmp(&page.blocks[b].euclidean_distance)
+                });
+                ordered[position] = family[0];
+                for (offset, &member) in family[1..].iter().enumerate() {
+                    ordered.insert(position + 1 + offset, member);
+                }
+                position += 1;
+                continue;
+            }
             let direction = page.blocks[family[0]].direction;
             family.sort_by(|&a, &b| {
                 let (ba, bb) = (&page.blocks[a], &page.blocks[b]);
@@ -1434,7 +1523,21 @@ pub fn xycut_enhanced_order(page: &mut OrderPage) -> Vec<usize> {
         let mut doc_titles: Vec<usize> = Vec::new();
         let mut xy_cut_members: Vec<usize> = Vec::new();
 
-        mark_cross_layout(page, &mut group, page.region.direction);
+        // A pre-cut group of regions only runs the cross-layout pass when the
+        // group is one primary-direction band; otherwise the group keeps its
+        // cut order (the pass would also re-sort it).
+        let group_is_regions = group
+            .first()
+            .is_some_and(|&i| is_region(&page.blocks[i].label));
+        if group_is_regions {
+            let bboxes: Vec<[i64; 4]> = group.iter().map(|&i| page.blocks[i].bbox).collect();
+            let (bands, _) = discontinuous_projection(&bboxes, page.region.direction);
+            if bands.len() == 1 {
+                mark_cross_layout(page, &mut group, page.region.direction);
+            }
+        } else {
+            mark_cross_layout(page, &mut group, page.region.direction);
+        }
 
         for &block in &group {
             let role = page.blocks[block].order_label.as_deref().unwrap_or("");
@@ -1520,6 +1623,15 @@ pub fn xycut_enhanced_order(page: &mut OrderPage) -> Vec<usize> {
         }
 
         match_unsorted(page, &mut sorted, doc_titles);
+        // Regions never wait for the cross-cut match at the end: they are
+        // matched (by euclidean distance) inside their own pre-cut.
+        if unsorted
+            .first()
+            .is_some_and(|&i| is_region(&page.blocks[i].label))
+        {
+            let regions = std::mem::take(&mut unsorted);
+            match_unsorted(page, &mut sorted, regions);
+        }
         sorted_by_pre_cuts.extend(sorted);
     }
 
@@ -1641,6 +1753,117 @@ mod tests {
                     "{name}: order_label of block {index}"
                 );
             }
+        }
+    }
+
+    const REGION_FIXTURE: &str =
+        include_str!("../tests/fixtures/classic-v1-region-order/expected.json");
+
+    fn build_spec_blocks(specs: &Value) -> Vec<OrderBlock> {
+        items(specs, "blocks")
+            .iter()
+            .map(|spec| {
+                let spec = items(spec, "spec");
+                let mut block =
+                    OrderBlock::new(spec[0].as_str().unwrap_or(""), read_i64_box(&spec[1]));
+                block.num_of_lines = spec[2].as_u64().unwrap_or(1) as u32;
+                block.text_line_height = spec[3].as_f64().unwrap_or(1.0);
+                block.text_line_width = spec[4].as_f64().unwrap_or(1.0);
+                block
+            })
+            .collect()
+    }
+
+    /// The nested `sort_layout_parsing_blocks` ordering: the page of regions
+    /// first, then each region's own blocks, flattened.
+    #[test]
+    fn the_captured_region_orders_are_reproduced() {
+        let fixture: Value = match serde_json::from_str(REGION_FIXTURE) {
+            Ok(value) => value,
+            Err(error) => panic!("region fixture: {error}"),
+        };
+        let cases = items(&fixture["cases"], "cases");
+        assert_eq!(cases.len(), 7);
+        for case in cases {
+            let name = case["case"].as_str().unwrap_or("?");
+
+            let mut inner_pages = Vec::new();
+            for region in items(&case["regions"], "regions") {
+                let bbox = read_i64_box(&region["bbox"]);
+                let page = OrderPage::new(bbox, build_spec_blocks(&region["blocks"]));
+                let direction = match page.region.direction {
+                    Dir::Horizontal => "horizontal",
+                    Dir::Vertical => "vertical",
+                };
+                assert_eq!(
+                    direction,
+                    region["direction"].as_str().unwrap_or(""),
+                    "{name}: region direction"
+                );
+                assert!(
+                    (page.region.text_line_height
+                        - region["text_line_height"].as_f64().unwrap_or(0.0))
+                    .abs()
+                        < 1e-9,
+                    "{name}: region line height"
+                );
+                assert!(
+                    (page.region.text_line_width
+                        - region["text_line_width"].as_f64().unwrap_or(0.0))
+                    .abs()
+                        < 1e-9,
+                    "{name}: region line width"
+                );
+                let block = OrderBlock::from_region_page(&page);
+                assert!(
+                    (block.euclidean_distance
+                        - region["euclidean_distance"].as_f64().unwrap_or(0.0))
+                    .abs()
+                        < 1e-9,
+                    "{name}: region euclidean distance"
+                );
+                inner_pages.push((page, block));
+            }
+
+            let page_bbox = read_i64_box(&case["page_bbox"]);
+            let region_blocks: Vec<OrderBlock> =
+                inner_pages.iter().map(|(_, block)| block.clone()).collect();
+            let mut outer = OrderPage::new(page_bbox, region_blocks);
+            let page_direction = match outer.region.direction {
+                Dir::Horizontal => "horizontal",
+                Dir::Vertical => "vertical",
+            };
+            assert_eq!(
+                page_direction,
+                case["page_direction"].as_str().unwrap_or(""),
+                "{name}: page direction"
+            );
+
+            let region_order = xycut_enhanced_order(&mut outer);
+            assert_eq!(
+                region_order,
+                read_usizes(&case["region_order"]),
+                "{name}: region order"
+            );
+
+            let mut flat: Vec<[usize; 2]> = Vec::new();
+            for &region_index in &region_order {
+                let mut inner = inner_pages[region_index].0.clone();
+                for block_index in xycut_enhanced_order(&mut inner) {
+                    flat.push([region_index, block_index]);
+                }
+            }
+            let expected_flat: Vec<[usize; 2]> = items(&case["flat_order"], "flat_order")
+                .iter()
+                .map(|pair| {
+                    let pair = items(pair, "pair");
+                    [
+                        pair[0].as_u64().unwrap_or(0) as usize,
+                        pair[1].as_u64().unwrap_or(0) as usize,
+                    ]
+                })
+                .collect();
+            assert_eq!(flat, expected_flat, "{name}: flat order");
         }
     }
 

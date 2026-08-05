@@ -1,0 +1,40 @@
+{
+ "fixture_id": "classic-v1-region-order",
+ "kind": "region_order_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/regions",
+  "sha256": "546cded7edacbd6d7f26321ae3e8ec491415ee631e0245bc6ef83a4aae98a31b",
+  "sha256_scope": "No image input. Every case is synthetic region and block specs written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_region_order_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py sort_layout_parsing_blocks, get_layout_parsing_objects (region grouping)",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/layout_objects.py LayoutRegion",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/xycuts.py pre_process, update_region_label, match_unsorted_blocks",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/utils.py euclidean_insert, update_region_child_blocks, sort_child_blocks"
+  ],
+  "capture_method": "Real LayoutBlock and LayoutRegion objects were constructed from seven synthetic multi-region pages, the page box was unioned with update_region_box, and xycut_enhanced was executed twice as sort_layout_parsing_blocks does: once over the page of regions, then inside each ordered region. The recorded values are each region's derived direction, text-line means, and euclidean distance, the region order, and the flattened (region, block) order.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "546cded7edacbd6d7f26321ae3e8ec491415ee631e0245bc6ef83a4aae98a31b",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/region-order-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "layout_order::tests::the_captured_region_orders_are_reproduced"
+ ],
+ "limitations": [
+  "Regions are synthetic axis-aligned specs, not model detections; the region detection model itself is exercised by the later end-to-end slice.",
+  "Every region is non-empty: get_layout_parsing_objects silently drops a detected region whose block list is empty, so an empty region never reaches the ordering.",
+  "The euclidean distance is recorded at construction time and never refreshed, matching upstream's single update_euclidean_distance call."
+ ]
+}

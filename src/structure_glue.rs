@@ -29,7 +29,12 @@
 pub type GlueBox = [f64; 4];
 
 /// `REGION_SETTINGS["match_block_overlap_ratio_threshold"]`.
-pub const MATCH_BLOCK_OVERLAP_RATIO_THRESHOLD: f64 = 0.8;
+///
+/// The value is `0.6`: every upstream lookup spells a `0.8` fallback, but the
+/// key exists in `REGION_SETTINGS`, so the fallback is dead. Pinned by the
+/// `shrink_band_discriminates` capture case, which puts a block inside the
+/// `(0.6, 0.8]` band the two readings disagree on.
+pub const MATCH_BLOCK_OVERLAP_RATIO_THRESHOLD: f64 = 0.6;
 /// `REGION_SETTINGS["split_block_overlap_ratio_threshold"]`.
 const SPLIT_BLOCK_OVERLAP_RATIO_THRESHOLD: f64 = 0.4;
 
@@ -115,7 +120,7 @@ pub struct GlueBlock {
 }
 
 /// `calculate_overlap_ratio` in the mode this module needs.
-fn overlap_ratio_small(a: GlueBox, b: GlueBox) -> f64 {
+pub(crate) fn overlap_ratio_small(a: GlueBox, b: GlueBox) -> f64 {
     let width = (a[2].min(b[2]) - a[0].max(b[0])).max(0.0);
     let height = (a[3].min(b[3]) - a[1].max(b[1])).max(0.0);
     let intersection = width * height;
@@ -128,7 +133,7 @@ fn overlap_ratio_small(a: GlueBox, b: GlueBox) -> f64 {
 }
 
 /// `calculate_overlap_ratio` union mode, for the supplement-overlap test.
-fn overlap_ratio_union(a: GlueBox, b: GlueBox) -> f64 {
+pub(crate) fn overlap_ratio_union(a: GlueBox, b: GlueBox) -> f64 {
     let width = (a[2].min(b[2]) - a[0].max(b[0])).max(0.0);
     let height = (a[3].min(b[3]) - a[1].max(b[1])).max(0.0);
     let intersection = width * height;

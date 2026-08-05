@@ -638,6 +638,53 @@
     200,
     200
    ]
+  },
+  {
+   "block_bboxes": {
+    "0": [
+     20,
+     140,
+     80,
+     340
+    ],
+    "1": [
+     120,
+     220,
+     180,
+     380
+    ]
+   },
+   "block_idxes": [
+    0,
+    1
+   ],
+   "case": "shrink_band_discriminates",
+   "image_size": [
+    400,
+    400
+   ],
+   "matched": [
+    0,
+    1
+   ],
+   "reference": [
+    0,
+    0,
+    200,
+    200
+   ],
+   "result_bbox": [
+    20.0,
+    140.0,
+    180.0,
+    380.0
+   ],
+   "supplement": [
+    0,
+    150,
+    200,
+    400
+   ]
   }
  ],
  "sub_regions": [

@@ -1,0 +1,741 @@
+{
+ "cases": [
+  {
+   "case": "two_regions_stacked",
+   "flat_order": [
+    [
+     0,
+     1
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "horizontal",
+   "region_order": [
+    0,
+    1
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      400,
+      280
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        20,
+        20,
+        190,
+        260
+       ],
+       12,
+       10,
+       150
+      ],
+      [
+       "text",
+       [
+        210,
+        20,
+        380,
+        260
+       ],
+       12,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 28.284271247461902,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      0,
+      300,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        20,
+        320,
+        380,
+        440
+       ],
+       6,
+       10,
+       300
+      ],
+      [
+       "text",
+       [
+        20,
+        460,
+        380,
+        580
+       ],
+       6,
+       10,
+       300
+      ]
+     ],
+     "direction": "horizontal",
+     "euclidean_distance": 320.62439083762797,
+     "text_line_height": 10.0,
+     "text_line_width": 300.0
+    }
+   ]
+  },
+  {
+   "case": "three_region_columns",
+   "flat_order": [
+    [
+     2,
+     0
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "vertical",
+   "region_order": [
+    2,
+    1,
+    0
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      130,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        10,
+        20,
+        120,
+        580
+       ],
+       30,
+       10,
+       100
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 22.360679774997898,
+     "text_line_height": 10.0,
+     "text_line_width": 100.0
+    },
+    {
+     "bbox": [
+      140,
+      0,
+      270,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        150,
+        20,
+        260,
+        580
+       ],
+       30,
+       10,
+       100
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 22.360679774997898,
+     "text_line_height": 10.0,
+     "text_line_width": 100.0
+    },
+    {
+     "bbox": [
+      280,
+      0,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        290,
+        20,
+        390,
+        580
+       ],
+       30,
+       10,
+       100
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 22.360679774997898,
+     "text_line_height": 10.0,
+     "text_line_width": 100.0
+    }
+   ]
+  },
+  {
+   "case": "nested_regions",
+   "flat_order": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     0
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "horizontal",
+   "region_order": [
+    0,
+    1
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        20,
+        20,
+        380,
+        200
+       ],
+       9,
+       10,
+       300
+      ],
+      [
+       "text",
+       [
+        20,
+        420,
+        380,
+        580
+       ],
+       8,
+       10,
+       300
+      ]
+     ],
+     "direction": "horizontal",
+     "euclidean_distance": 28.284271247461902,
+     "text_line_height": 10.0,
+     "text_line_width": 300.0
+    },
+    {
+     "bbox": [
+      60,
+      220,
+      340,
+      400
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        70,
+        230,
+        330,
+        390
+       ],
+       8,
+       10,
+       250
+      ]
+     ],
+     "direction": "horizontal",
+     "euclidean_distance": 240.41630560342617,
+     "text_line_height": 10.0,
+     "text_line_width": 250.0
+    }
+   ]
+  },
+  {
+   "case": "region_spans_columns",
+   "flat_order": [
+    [
+     1,
+     0
+    ],
+    [
+     2,
+     0
+    ],
+    [
+     0,
+     0
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    380
+   ],
+   "page_direction": "vertical",
+   "region_order": [
+    1,
+    2,
+    0
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      190,
+      380
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        10,
+        60,
+        180,
+        370
+       ],
+       16,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 60.8276253029822,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      210,
+      0,
+      400,
+      380
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        220,
+        60,
+        390,
+        370
+       ],
+       16,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 60.8276253029822,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      0,
+      0,
+      400,
+      50
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        10,
+        10,
+        390,
+        40
+       ],
+       2,
+       10,
+       300
+      ]
+     ],
+     "direction": "horizontal",
+     "euclidean_distance": 14.142135623730951,
+     "text_line_height": 10.0,
+     "text_line_width": 300.0
+    }
+   ]
+  },
+  {
+   "case": "vertical_regions",
+   "flat_order": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ],
+    [
+     1,
+     0
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "vertical",
+   "region_order": [
+    0,
+    1
+   ],
+   "regions": [
+    {
+     "bbox": [
+      210,
+      0,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        320,
+        20,
+        390,
+        580
+       ],
+       4,
+       12,
+       500
+      ],
+      [
+       "text",
+       [
+        220,
+        20,
+        300,
+        580
+       ],
+       4,
+       12,
+       500
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 22.360679774997898,
+     "text_line_height": 12.0,
+     "text_line_width": 500.0
+    },
+    {
+     "bbox": [
+      0,
+      0,
+      190,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        110,
+        20,
+        180,
+        580
+       ],
+       4,
+       12,
+       500
+      ],
+      [
+       "text",
+       [
+        10,
+        20,
+        100,
+        580
+       ],
+       4,
+       12,
+       500
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 22.360679774997898,
+     "text_line_height": 12.0,
+     "text_line_width": 500.0
+    }
+   ]
+  },
+  {
+   "case": "single_region",
+   "flat_order": [
+    [
+     0,
+     0
+    ],
+    [
+     0,
+     1
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "horizontal",
+   "region_order": [
+    0
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "doc_title",
+       [
+        60,
+        40,
+        340,
+        90
+       ],
+       1,
+       40,
+       280
+      ],
+      [
+       "text",
+       [
+        20,
+        140,
+        380,
+        400
+       ],
+       15,
+       10,
+       300
+      ]
+     ],
+     "direction": "horizontal",
+     "euclidean_distance": 72.11102550927978,
+     "text_line_height": 10.0,
+     "text_line_width": 300.0
+    }
+   ]
+  },
+  {
+   "case": "region_grid",
+   "flat_order": [
+    [
+     1,
+     0
+    ],
+    [
+     3,
+     0
+    ],
+    [
+     0,
+     0
+    ],
+    [
+     2,
+     0
+    ]
+   ],
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "page_direction": "vertical",
+   "region_order": [
+    1,
+    3,
+    0,
+    2
+   ],
+   "regions": [
+    {
+     "bbox": [
+      0,
+      0,
+      190,
+      280
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        10,
+        10,
+        180,
+        270
+       ],
+       13,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 14.142135623730951,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      210,
+      0,
+      400,
+      280
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        220,
+        10,
+        390,
+        270
+       ],
+       13,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 14.142135623730951,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      0,
+      300,
+      190,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        10,
+        310,
+        180,
+        590
+       ],
+       14,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 310.16124838541646,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      210,
+      300,
+      400,
+      600
+     ],
+     "blocks": [
+      [
+       "text",
+       [
+        220,
+        310,
+        390,
+        590
+       ],
+       14,
+       10,
+       150
+      ]
+     ],
+     "direction": "vertical",
+     "euclidean_distance": 310.16124838541646,
+     "text_line_height": 10.0,
+     "text_line_width": 150.0
+    }
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/region-order-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 layout_parsing: pipeline_v2.py sort_layout_parsing_blocks over LayoutRegion pages, xycut_enhanced/{xycuts,utils}.py region label path"
+}

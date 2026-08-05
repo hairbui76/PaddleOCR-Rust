@@ -217,6 +217,8 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-jpeg-delta-corpus".to_owned(),
         "classic-v1-structure-glue".to_owned(),
         "classic-v1-text-lines".to_owned(),
+        "classic-v1-region-order".to_owned(),
+        "classic-v1-standardized-data".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

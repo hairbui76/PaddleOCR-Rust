@@ -98,6 +98,7 @@ mod score;
 mod score_filter;
 mod structure_glue;
 pub mod structure_json;
+mod structure_standardize;
 mod table_cells;
 mod table_classification;
 #[cfg(feature = "onnxruntime")]

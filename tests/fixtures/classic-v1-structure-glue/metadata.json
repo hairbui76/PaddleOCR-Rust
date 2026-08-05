@@ -5,7 +5,7 @@
  "contains_personal_data": false,
  "input": {
   "path": "expected.json#/*/*/src,ref,spans,objects,blocks,first,second,boxes,supplement",
-  "sha256": "a7502343b677beb92246ede97b7e92b45722939f9b768c3acce8c2e32898b3e0",
+  "sha256": "773c55ddd77fc38b11a5d575fc347b452b40a486eb30bbe44dd2141cb7e7d7a9",
   "sha256_scope": "No image input. Every case is boxes and labels written out in the capture tool; the expected file is both the input record and the expected record.",
   "provenance": "Authored in tools/capture_structure_glue_oracle.py.",
   "license": "Apache-2.0"
@@ -21,7 +21,7 @@
  "artifacts": null,
  "expected": {
   "path": "expected.json",
-  "sha256": "a7502343b677beb92246ede97b7e92b45722939f9b768c3acce8c2e32898b3e0",
+  "sha256": "773c55ddd77fc38b11a5d575fc347b452b40a486eb30bbe44dd2141cb7e7d7a9",
   "sha256_scope": "Exact UTF-8 JSON file.",
   "schema_version": "paddleocr-rust/structure-glue-oracle-capture/v1",
   "comparison_profile": "m2-unit-v1"

@@ -130,6 +130,17 @@ SHRINK_CASES = [
         [],
         {},
     ),
+    # Block 0 overlaps the first probe region at exactly 0.7 — inside the
+    # (0.6, 0.8] band where the live REGION_SETTINGS value (0.6) and the dead
+    # `.get` fallback (0.8) disagree. Pins the threshold that is actually read.
+    (
+        "shrink_band_discriminates",
+        [0, 150, 200, 400],
+        [0, 0, 200, 200],
+        400, 400,
+        [0, 1],
+        {0: [20, 140, 80, 340], 1: [120, 220, 180, 380]},
+    ),
 ]
 
 
