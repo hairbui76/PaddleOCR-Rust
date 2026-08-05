@@ -1,0 +1,311 @@
+{
+ "cases": [
+  {
+   "case": "a4_default",
+   "max_pixels": 178956970,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 1684,
+    "pixels": 2003960,
+    "scale": 2.0,
+    "scale_bits": "4000000000000000",
+    "width": 1190
+   },
+   "page_size": [
+    595.0,
+    842.0
+   ],
+   "page_size_bits": [
+    "4082980000000000",
+    "408a500000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "letter_default",
+   "max_pixels": 178956970,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 1584,
+    "pixels": 1938816,
+    "scale": 2.0,
+    "scale_bits": "4000000000000000",
+    "width": 1224
+   },
+   "page_size": [
+    612.0,
+    792.0
+   ],
+   "page_size_bits": [
+    "4083200000000000",
+    "4088c00000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "a4_tight_budget",
+   "max_pixels": 1000000,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 1189,
+    "pixels": 999949,
+    "scale": 1.412114014043385,
+    "scale_bits": "3ff69804dd48a24c",
+    "width": 841
+   },
+   "page_size": [
+    595.0,
+    842.0
+   ],
+   "page_size_bits": [
+    "4082980000000000",
+    "408a500000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "letter_tiny_budget",
+   "max_pixels": 200000,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 508,
+    "pixels": 199644,
+    "scale": 0.6414141413023515,
+    "scale_bits": "3fe48676f302bc9a",
+    "width": 393
+   },
+   "page_size": [
+    612.0,
+    792.0
+   ],
+   "page_size_bits": [
+    "4083200000000000",
+    "4088c00000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "poster",
+   "max_pixels": 178956970,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 13377,
+    "pixels": 178944129,
+    "scale": 1.337699999819072,
+    "scale_bits": "3ff567381d71505d",
+    "width": 13377
+   },
+   "page_size": [
+    10000.0,
+    10000.0
+   ],
+   "page_size_bits": [
+    "40c3880000000000",
+    "40c3880000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "small_requested",
+   "max_pixels": 178956970,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 43,
+    "pixels": 1290,
+    "scale": 0.05,
+    "scale_bits": "3fa999999999999a",
+    "width": 30
+   },
+   "page_size": [
+    595.0,
+    842.0
+   ],
+   "page_size_bits": [
+    "4082980000000000",
+    "408a500000000000"
+   ],
+   "requested_scale": 0.05
+  },
+  {
+   "case": "fractional",
+   "max_pixels": 1500000,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 1456,
+    "pixels": 1499680,
+    "scale": 1.7294420885640298,
+    "scale_bits": "3ffbabcb77ab55c9",
+    "width": 1030
+   },
+   "page_size": [
+    595.276,
+    841.89
+   ],
+   "page_size_bits": [
+    "40829a353f7ced91",
+    "408a4f1eb851eb85"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "exact_fit",
+   "max_pixels": 40000,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 200,
+    "pixels": 40000,
+    "scale": 2.0,
+    "scale_bits": "4000000000000000",
+    "width": 200
+   },
+   "page_size": [
+    100.0,
+    100.0
+   ],
+   "page_size_bits": [
+    "4059000000000000",
+    "4059000000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "one_under",
+   "max_pixels": 39999,
+   "min_scale": 0.1,
+   "outcome": {
+    "height": 199,
+    "pixels": 39601,
+    "scale": 1.9899999998444455,
+    "scale_bits": "3fffd70a3d65f34c",
+    "width": 199
+   },
+   "page_size": [
+    100.0,
+    100.0
+   ],
+   "page_size_bits": [
+    "4059000000000000",
+    "4059000000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "min_scale_exceeds",
+   "max_pixels": 500000,
+   "min_scale": 0.1,
+   "outcome": {
+    "error": "render_size",
+    "height": 1000,
+    "pixel_count": 1000000,
+    "width": 1000
+   },
+   "page_size": [
+    10000.0,
+    10000.0
+   ],
+   "page_size_bits": [
+    "40c3880000000000",
+    "40c3880000000000"
+   ],
+   "requested_scale": 2.0
+  },
+  {
+   "case": "high_min_scale",
+   "max_pixels": 2000000,
+   "min_scale": 1.5,
+   "outcome": {
+    "height": 1682,
+    "pixels": 1999898,
+    "scale": 1.997624703081427,
+    "scale_bits": "3ffff6455216a9bc",
+    "width": 1189
+   },
+   "page_size": [
+    595.0,
+    842.0
+   ],
+   "page_size_bits": [
+    "4082980000000000",
+    "408a500000000000"
+   ],
+   "requested_scale": 4.0
+  }
+ ],
+ "defaults": {
+  "backend_max_pixels_default": null,
+  "bisection_iterations": 32,
+  "max_pixels": 178956970,
+  "min_scale": 0.1,
+  "requested_scale": 2.0
+ },
+ "estimates": [
+  {
+   "case": "a4_2x",
+   "height": 1684,
+   "page_size": [
+    595.0,
+    842.0
+   ],
+   "pixels": 2003960,
+   "scale": 2.0,
+   "width": 1190
+  },
+  {
+   "case": "ceil_engages",
+   "height": 201,
+   "page_size": [
+    100.4,
+    200.6
+   ],
+   "pixels": 20301,
+   "scale": 1.0,
+   "width": 101
+  },
+  {
+   "case": "ceil_exact",
+   "height": 300,
+   "page_size": [
+    100.0,
+    200.0
+   ],
+   "pixels": 45000,
+   "scale": 1.5,
+   "width": 150
+  },
+  {
+   "case": "tiny",
+   "height": 1,
+   "page_size": [
+    0.3,
+    0.7
+   ],
+   "pixels": 1,
+   "scale": 1.0,
+   "width": 1
+  }
+ ],
+ "invalid": [
+  {
+   "case": "zero_width",
+   "raises": "value_error"
+  },
+  {
+   "case": "negative_height",
+   "raises": "value_error"
+  },
+  {
+   "case": "zero_scale",
+   "raises": "value_error"
+  },
+  {
+   "case": "zero_min_scale",
+   "raises": "value_error"
+  },
+  {
+   "case": "zero_budget",
+   "raises": "value_error"
+  }
+ ],
+ "schema_version": "paddleocr-rust/pdf-scale-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 inference/utils/pdf_rendering.py"
+}

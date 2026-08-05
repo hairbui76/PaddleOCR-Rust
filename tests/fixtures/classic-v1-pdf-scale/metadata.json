@@ -1,0 +1,43 @@
+{
+ "fixture_id": "classic-v1-pdf-scale",
+ "kind": "pdf_scale_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/page_size_bits",
+  "sha256": "026e76f3341abad4979a5d48696b910dccd8cd234e30734705fed6155f9c170f",
+  "sha256_scope": "No image input. Every case is a page size in PDF points plus scale and budget parameters written out in the capture tool; the expected file is both the input record and the expected record. Page sizes are recorded as exact f64 hex bits because a decimal round-trip is not an oracle.",
+  "provenance": "Authored in tools/capture_pdf_scale_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/utils/pdf_rendering.py",
+   "paddlex 3.7.2: inference/utils/io/readers.py PDFReaderBackend",
+   "paddlex 3.7.2: utils/flags.py PDF_RENDER_SCALE, PDF_MIN_RENDER_SCALE"
+  ],
+  "capture_method": "The pinned scale planner was imported and executed over eleven parameter cases plus five invalid inputs; scales are recorded as exact f64 bits. No PDF was opened and no renderer ran.",
+  "environment": "python 3.12, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "026e76f3341abad4979a5d48696b910dccd8cd234e30734705fed6155f9c170f",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/pdf-scale-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "pdf_render_plan::tests::the_captured_scales_are_reproduced_bit_for_bit",
+  "pdf_render_plan::tests::the_captured_estimates_are_reproduced",
+  "pdf_render_plan::tests::invalid_inputs_are_refused",
+  "pdf_render_plan::tests::planned_scales_fit_their_budget"
+ ],
+ "limitations": [
+  "The planner only: pdfium rendering itself stays behind the five-part entry gate in docs/ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md, and no page is rasterized by this fixture.",
+  "Upstream's PDFReaderBackend defaults max_pixels=None, which bypasses the budget entirely; this port makes the budget mandatory and records the divergence deliberately.",
+  "The ResourceLimit error reports the pixel count at minimum scale, the figure upstream's PDFRenderSizeError carries; the per-axis extents in that error are not preserved.",
+  "Non-finite inputs cannot be expressed by the upstream capture (Python raises before them); the Rust refusals for NaN and infinity are asserted directly rather than captured."
+ ]
+}

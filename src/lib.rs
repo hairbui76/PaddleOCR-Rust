@@ -81,6 +81,7 @@ mod min_area;
 mod orientation;
 
 mod paddlex_detection;
+mod pdf_render_plan;
 #[allow(dead_code)]
 mod pipeline;
 mod reading_order;
