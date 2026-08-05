@@ -17,12 +17,13 @@ PaddleOCR replacement, and the table below says exactly where the line is.
 | Area | Current state |
 | --- | --- |
 | Classic OCR path | **Working.** Decode, resize, detect, DB postprocess, reading order, perspective crop, recognize, CTC decode, score filter. Reproduces all four committed end-to-end fixtures exactly, text and confidence. |
+| Documents | **PDF, behind the off-by-default `pdf` feature.** `OcrEngine::recognize_pdf` returns one outcome per page in document order — lines, or a typed error naming that page and why. The scan path reproduces the reference renderer bit-identically; vector and text pages agree closely but carry no pixel-identity claim. See [docs/PDF_ENTRY_GATE_EVIDENCE.md](docs/PDF_ENTRY_GATE_EVIDENCE.md). Office formats are rejected permanently. |
 | Input formats | **PNG and JPEG.** PNG is exact against the captured OpenCV oracle; JPEG decodes within the measured component tolerance the recorded `IMG-003` decision accepted (at most `36` on pathological few-pixel inputs, `1`–`3` on page-shaped content — see [docs/IMG_003_DELTA_MEASUREMENT.md](docs/IMG_003_DELTA_MEASUREMENT.md)). CMYK and 12-bit JPEG return typed `Unsupported` errors. |
 | Models | One pinned pair: `PP-OCRv6_medium` detector and recognizer, ONNX. No other model, family, or language has been tried. |
 | Backend | ONNX Runtime through `ort`, behind the off-by-default `onnxruntime` feature. The default build has no native dependency. |
 | Numerical fidelity | Each stage matches a recorded OpenCV or Clipper oracle: contours 18/18, `minAreaRect` 16/16, `box_score_fast` 8/8, `unclip` 16/16, resize 34/34, crop 72 cases, PNG decode 5/5. |
 | Resource budgets | **Measured and passing** on one reference host: cold CLI `4.2 s`, warm median `2.8 s`, peak memory `464 MiB`, stripped binary `812 KiB`, `0` bytes of model artifacts in the package. One synthetic 1280x720 page, single threaded; see [docs/G3_RESOURCE_EVIDENCE.md](docs/G3_RESOURCE_EVIDENCE.md) for what that does *not* establish. |
-| Not measured | Photographic or scanned input beyond one page sample. Concurrency and throughput. Cancellation and timeouts. Multi-page, PDF, tables, formulas, orientation classification. |
+| Not measured | Photographic or scanned input beyond one page sample. Throughput beyond the recorded benchmark. Formula, seal, chart, and key-information recognition, whose models publish no ONNX export. |
 | Not distributable yet | The supply-chain gate `G2` in [docs/ADR_RT004_RUNTIME_SELECTION.md](docs/ADR_RT004_RUNTIME_SELECTION.md) is open: the ONNX Runtime build is not hermetic and has no SBOM. |
 
 Treat a capability as supported only when its row in
@@ -125,9 +126,10 @@ without the HTML wrappers.
 `table` recognizes a single crop that is already a table, using the crop's own
 OCR to fill the cells, and emits `--format json|html`.
 
-Both take **exactly one** image. Joining several pages into one document is
-`concatenate_markdown_pages`, which needs the PDF renderer that has no approved
-gate yet; the classic invocation above still takes as many images as you like.
+Both take **exactly one** image; the classic invocation above still takes as many
+as you like. Joining several parsed pages into one Markdown document is
+implemented and verified against upstream (`concatenate_markdown_pages`) but not
+yet reachable from a command: there is no structure-over-PDF entry point.
 
 Formula, seal, chart, and key-information extraction stay **off**: those models
 have no published ONNX export, so this port cannot check itself against them.

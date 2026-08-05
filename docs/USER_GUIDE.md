@@ -258,10 +258,11 @@ paddleocr-rust table \
 to fill the cells.
 
 Both commands accept the same `--time-budget-ms`, `--orientation`, and digest
-flags as the classic invocation, and both take **exactly one** image: joining
-pages into one document is `concatenate_markdown_pages`, which needs the PDF
-renderer that has no approved gate yet. The classic invocation still takes as
-many images as you like.
+flags as the classic invocation, and both take **exactly one** image. The classic
+invocation still takes as many images as you like. Joining several parsed pages
+into one Markdown document is implemented and verified against upstream
+(`concatenate_markdown_pages`), but is not reachable from a command yet: there is
+no structure-over-PDF entry point, so nothing hands it more than one page.
 
 What stays off: formula, seal, chart, and key-information extraction. Those
 models have no published ONNX export, so this port has nothing to check itself
@@ -356,6 +357,42 @@ added without breaking your code — which is why the builders exist rather than
 struct literals. See
 [`STABLE_001_API_REVIEW.md`](STABLE_001_API_REVIEW.md).
 
+### A whole PDF
+
+Needs the `pdf` feature, which is off by default because it costs 32 packages
+most callers do not want. The result has one entry per page, and reading it means
+handling both cases — that is the point of it:
+
+```rust
+use paddleocr_rust::api::PdfPageRange;
+
+let result = engine.recognize_pdf(
+    &std::fs::read("scan.pdf")?,
+    PdfPageRange::all(),
+    &OcrOptions::default(),
+)?;
+
+println!("{} of {} pages read", result.recognized(), result.page_count);
+for page in &result.pages {
+    match &page.outcome {
+        Ok(parsed) => {
+            for line in &parsed.lines {
+                println!("p{}\t{:.6}\t{}", page.index, line.score, line.text);
+            }
+        }
+        // Not a document failure: this page and only this page.
+        Err(error) => eprintln!("p{}\t{error}", page.index),
+    }
+}
+```
+
+`page.index` is the **document's** page number, not the position in `pages`, so a
+range starting mid-document still tells you where each result came from.
+`PdfPageRange::from(first, count)` selects a contiguous slice; the count clamps at
+the last page, but a `first` past the end is an error rather than an empty
+success. Pages are processed in document order and nothing here spawns a thread —
+run one engine per thread over disjoint ranges if you want them in parallel.
+
 **Concurrency:** an `OcrEngine` is `!Sync`, and the compiler enforces it rather
 than the documentation. Load one engine per thread. A lock would turn that
 compile error into a hidden queue without removing the serialisation, so this
@@ -385,6 +422,10 @@ bytes; the network policy then stays where you can see it.
 | Detected regions | `1,000` |
 | Recognition crops | `1,000` |
 | Recognition batch | `6` crops per model call |
+| PDF document | `256 MiB` |
+| PDF pages | `4,096` |
+| PDF page pixels | `178,956,970` |
+| PDF XObject nesting | `16` levels, `4,096` nodes |
 
 Measured resource use on the reference host, against a `1280×720` page: cold CLI
 `4.23 s`, warm median `2.840 s`, peak resident `464.3 MiB`. Full conditions in
@@ -392,30 +433,62 @@ Measured resource use on the reference host, against a `1280×720` page: cold CL
 treat those figures as a lower bound on real scans rather than a representative
 one.
 
-**Failure is whole-input.** Any error from any stage abandons the entire request
-and returns that error; no partial line list is ever produced. The result
-document has no field marking a result as incomplete, so four lines returned from
-a nine-line page would be indistinguishable from a four-line page. An engine
-remains usable after a rejected input.
+**Failure is whole-input, for one image.** Any error from any stage abandons the
+entire request and returns that error; no partial line list is ever produced. The
+result document has no field marking a result as incomplete, so four lines
+returned from a nine-line page would be indistinguishable from a four-line page.
+An engine remains usable after a rejected input.
+
+**A PDF is the exception, deliberately.** A document is the first input where
+"some of it worked" is meaningful, so `recognize_pdf` returns one outcome per
+page: either that page's lines or a typed error naming the page index and the
+reason. A broken page does not fail the document and is never silently missing.
+The run control is checked **between** pages — a synchronous render cannot be
+interrupted from outside — so an exhausted budget yields the pages that finished
+plus one `TimedOut` entry rather than a failed document. Two failures are still
+whole-document, because they leave no pages to attribute anything to: a document
+that cannot be parsed, and one that is encrypted.
+
+The PDF bounds above include one this port owns rather than borrows. The chosen
+renderer does not bound recursive form XObjects, and a document that draws a
+form from inside itself exhausted `2 GiB` and aborted the process when measured.
+So before any page is handed over, its XObject reference graph is walked and a
+cycle is refused as `Unsupported`. A cycle in a page you care about is therefore
+a refusal, not a crash — and not a rendered page either.
 
 ## 8. Known differences from upstream PaddleOCR
 
 These are behavioural, not cosmetic. [`COMPATIBILITY.md`](COMPATIBILITY.md)
 carries the authoritative list; this is the part a user is most likely to hit.
 
-- **PNG only.** JPEG returns a typed `Unsupported` error rather than a
-  near-miss result. Every pure-Rust JPEG decoder evaluated differed from
-  OpenCV's by up to `36` in a component, which is a difference in the pixels the
-  model sees. See [`IMAGE_DECODER_DECISION.md`](IMAGE_DECODER_DECISION.md).
-- **No orientation classification.** Upstream can run a document- or
-  text-orientation model before recognition. This port does not, and the crop
-  stage's tall-crop rotation is not a substitute.
-- **No document preprocessing, PDF, tables, formulas, or structured output.**
-  The classic detect-and-recognize path is the whole of it. PDF is in scope
-  and deferred behind a stated entry gate; office formats are rejected
-  permanently, because their text is already present and OCR over a rendering
-  of one is strictly worse than reading it. See
+- **JPEG decodes within a measured tolerance, not exactly.** PNG is exact
+  against the captured OpenCV oracle. JPEG differs by at most `36` in a
+  component on pathological few-pixel inputs and `1`–`3` on page-shaped
+  content, a difference measured to change no decoded character; the recorded
+  decision accepted it. CMYK and 12-bit JPEG return typed `Unsupported`
+  errors. See [`IMAGE_DECODER_DECISION.md`](IMAGE_DECODER_DECISION.md) and
+  [`IMG_003_DELTA_MEASUREMENT.md`](IMG_003_DELTA_MEASUREMENT.md).
+- **PDF pixel fidelity is claimed only for the scan path.** A scanned page —
+  an image XObject through `FlateDecode` or `DCTDecode` — reproduces the
+  reference renderer bit-identically or within `4` components of 255. Vector
+  and text-heavy pages agree closely but **not** exactly, because
+  antialiasing and font substitution differ between renderers. A page using a
+  standard font it does not embed is the widest divergence, and even there the
+  recognized text was character-identical. See
+  [`PDF_ENTRY_GATE_EVIDENCE.md`](PDF_ENTRY_GATE_EVIDENCE.md).
+- **Formula, seal, chart, and key-information recognition are absent**, and
+  not by choice: those models publish no ONNX export, and this project's
+  artifact policy forbids converting one locally. Their labels still appear in
+  a parsed page, formatted through the plain image handler exactly as upstream
+  does when the corresponding `use_*` flag is off. See
+  [`P8_ARTIFACT_AVAILABILITY.md`](P8_ARTIFACT_AVAILABILITY.md).
+- **Office formats are rejected permanently**, because their text is already
+  present and OCR over a rendering of one is strictly worse than reading it.
+  See
   [`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md).
+- **No training, no VLM, no service, and no C ABI.** All four are out of
+  scope by recorded decision rather than unstarted; the release targets are
+  the Rust library and the CLI on desktop.
 - **One model pair.** A different `PP-OCR` version or language pack is
   unverified, will load, and can produce wrong answers silently. Declare digests.
 - **Reading order is the upstream sort**, top-to-bottom then left-to-right with
