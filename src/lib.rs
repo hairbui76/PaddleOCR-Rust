@@ -26,6 +26,8 @@ mod markdown;
 mod markdown_v2;
 pub mod metrics;
 mod multipage;
+#[cfg(feature = "pdf")]
+mod pdf;
 
 pub mod observability;
 /// The versioned JSON result document.

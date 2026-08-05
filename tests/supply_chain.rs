@@ -33,7 +33,7 @@ const ROOT: &str = "paddleocr-rust";
 /// The list is explicit rather than a permissive-by-pattern rule: a new
 /// expression should fail this test and be looked at, even when it is obviously
 /// fine, because "obviously fine" is the judgement the review exists to make.
-const REVIEWED_LICENSES: [&str; 9] = [
+const REVIEWED_LICENSES: [&str; 14] = [
     "MIT OR Apache-2.0",
     "Apache-2.0 OR MIT",
     "MIT/Apache-2.0",
@@ -43,6 +43,24 @@ const REVIEWED_LICENSES: [&str; 9] = [
     "MIT OR Zlib OR Apache-2.0",
     "Unlicense OR MIT",
     "(MIT OR Apache-2.0) AND Unicode-3.0",
+    // Added 2026-08-05 with the `pdf` feature; see docs/LIC_002_AUDIT.md
+    // section 2. All five are permissive and Apache-2.0 compatible, and the
+    // review that matters was done before the dependency was chosen rather
+    // than after this test failed.
+    //
+    // `Apache-2.0` alone is new because the renderer itself is Apache-2.0 —
+    // which is exactly why it was the candidate that could be taken as-is.
+    "Apache-2.0",
+    // The ICU-derived yoke/zerofrom family. Unicode-3.0 permits
+    // redistribution with its notice and imposes no reciprocal terms.
+    "Unicode-3.0",
+    // Zlib is permissive and compatible; both operand orders appear in the
+    // graph and an expression string is compared literally.
+    "Zlib OR Apache-2.0 OR MIT",
+    "MIT OR Apache-2.0 OR Zlib",
+    // BSD-3-Clause adds an attribution and a no-endorsement clause, both
+    // satisfied by the notice this project already ships.
+    "BSD-3-Clause OR Apache-2.0",
 ];
 
 /// Extracts `name -> (version, checksum)` from the lockfile.
@@ -227,4 +245,43 @@ fn every_direct_dependency_is_exactly_pinned() {
         loose.is_empty(),
         "dependencies without an exact pin: {loose:?}"
     );
+}
+
+/// Bundling a third-party binary carries an attribution obligation, and the
+/// obligation must not be able to vanish quietly.
+///
+/// `hayro`'s default `embed-fonts` feature compiles the Foxit standard PDF fonts
+/// into the binary. They are BSD 3-clause, which **requires** the copyright
+/// notice and disclaimer to be reproduced for binary redistribution. This
+/// project had never bundled a third-party binary before the `pdf` feature, so
+/// there was no habit protecting this: the check exists because the obligation
+/// was discovered during an audit rather than at the moment it was incurred.
+///
+/// If the renderer is ever dropped, or `embed-fonts` deliberately disabled, this
+/// test should be changed in the same commit — which is the point.
+#[test]
+fn bundling_the_renderer_keeps_its_font_attribution() {
+    const NOTICE: &str = include_str!("../NOTICE");
+
+    if !MANIFEST.contains("hayro") {
+        return;
+    }
+    assert!(
+        !MANIFEST.contains("default-features = false")
+            || !MANIFEST.contains("hayro = { version = \"=0.4.0\", default-features = false"),
+        "hayro's embed-fonts feature was disabled; see docs/LIC_002_AUDIT.md before \
+         relaxing this test, because a PDF referencing a non-embedded standard font \
+         then renders blank"
+    );
+    for required in [
+        "Copyright 2014 PDFium Authors",
+        "Foxit Software Inc.",
+        "Redistributions in binary form must reproduce the above",
+        "CGATS001Compat-v2-micro.icc",
+    ] {
+        assert!(
+            NOTICE.contains(required),
+            "NOTICE must reproduce {required:?} while the pdf feature bundles the Foxit fonts"
+        );
+    }
 }

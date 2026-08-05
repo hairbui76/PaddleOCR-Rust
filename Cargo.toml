@@ -9,6 +9,12 @@ fuzzing = []
 # ONNX Runtime library is still loaded at run time from an explicit path, never
 # downloaded or bundled, and no test requires it.
 onnxruntime = ["dep:ort"]
+# Off by default, like the runtime adapter, and for the same reason: the default
+# build should not carry a dependency most callers do not need. The measured cost
+# is 32 new packages, recorded in docs/PDF_ENTRY_GATE_EVIDENCE.md section 3 and
+# accepted by the user decision that resolved the entry gate. Still pure Rust:
+# nothing is downloaded, linked, or built through a C toolchain.
+pdf = ["dep:hayro", "dep:hayro-syntax"]
 
 [package]
 name = "paddleocr-rust"
@@ -63,6 +69,13 @@ ort = { version = "=2.0.0-rc.13", default-features = false, features = [
     "api-28",
 ], optional = true }
 jpeg-decoder = { version = "=0.3.2", default-features = false }
+# Selected by the user decision recorded in docs/ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md
+# after the measured entry gate in docs/PDF_ENTRY_GATE_EVIDENCE.md. `hayro-syntax`
+# is a dependency in its own right, not only through `hayro`: the port-owned
+# pre-flight walks the XObject reference graph with the same resolver the renderer
+# uses, which is what makes the refusal complete rather than best-effort.
+hayro = { version = "=0.4.0", optional = true }
+hayro-syntax = { version = "=0.4.0", optional = true }
 
 [lints.rust]
 unsafe_code = "forbid"

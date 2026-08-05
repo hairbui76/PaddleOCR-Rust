@@ -51,3 +51,49 @@ itself: preprocessing order and constants, DB postprocessing sequence, batching
 policy, CTC decoding, reading order, and result semantics. The pinned baseline
 revision is recorded in ROADMAP.md and in every fixture's metadata. No PaddleOCR
 source is copied into this repository.
+
+Bundled third-party binary assets, present only when the `pdf` feature is
+enabled. These are compiled into the binary through hayro's default
+`embed-fonts` feature, which this project keeps on deliberately: without it a
+PDF that references a standard font without embedding it renders blank, and a
+silently blank page is the "plausible wrong page" the PDF decision in
+docs/ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md exists to avoid.
+
+Foxit standard PDF fonts, via hayro-interpret's assets, extracted from PDFium
+(BSD 3-clause). Redistribution in binary form requires this notice:
+
+    Copyright 2014 PDFium Authors. All rights reserved.
+    Original code copyright 2014 Foxit Software Inc.
+    http://www.foxitsoftware.com
+
+    Redistribution and use in source and binary forms, with or without
+    modification, are permitted provided that the following conditions are
+    met:
+
+       * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+       * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following disclaimer
+    in the documentation and/or other materials provided with the
+    distribution.
+       * Neither the name of Google Inc. nor the names of its
+    contributors may be used to endorse or promote products derived from
+    this software without specific prior written permission.
+
+    THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+    "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+    LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+    A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+    OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+    SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+    LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+    DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+    THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+    (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+CGATS001Compat-v2-micro.icc, the compact CMYK profile from
+saucecontrol/Compact-ICC-Profiles, released under CC0-1.0. No attribution is
+required by that dedication; it is recorded here because an asset compiled into
+a distributed binary should be traceable regardless of whether its licence
+compels it.

@@ -34,6 +34,29 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "arrayvec",
+      "purl": "pkg:cargo/arrayvec@0.7.8",
+      "type": "library",
+      "version": "0.7.8"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
         }
       ],
@@ -115,6 +138,75 @@
       "purl": "pkg:cargo/block-buffer@0.10.4",
       "type": "library",
       "version": "0.10.4"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Zlib OR Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "bytemuck",
+      "purl": "pkg:cargo/bytemuck@1.25.2",
+      "type": "library",
+      "version": "1.25.2"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "f65693059b6b9c588b9f62fed1cedbf0a8b805631457ea162d68f0de186f3de5"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Zlib OR Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "bytemuck_derive",
+      "purl": "pkg:cargo/bytemuck_derive@1.11.0",
+      "type": "library",
+      "version": "1.11.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8f1fe948ff07f4bd06c30984e69f5b4899c516a3ef74f34df92a2df2ab535495"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Unlicense OR MIT"
+        }
+      ],
+      "name": "byteorder-lite",
+      "purl": "pkg:cargo/byteorder-lite@0.1.0",
+      "type": "library",
+      "version": "0.1.0"
     },
     {
       "externalReferences": [
@@ -241,6 +333,52 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "euclid",
+      "purl": "pkg:cargo/euclid@0.22.14",
+      "type": "library",
+      "version": "0.22.14"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "da7c62ceae207dd37ea5b845da6a0696c799f85e97da1ab5b7910be3c1c80223"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "fastrand",
+      "purl": "pkg:cargo/fastrand@2.5.0",
+      "type": "library",
+      "version": "2.5.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "1e6853b52649d4ac5c0bd02320cddc5ba956bdb407c4b75a2c6b75bf51500f8c"
         }
       ],
@@ -287,6 +425,29 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "39a654f404bbcbd48ea58c617c2993ee91d1cb63727a37bf2323a4edeed1b8c5"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "font-types",
+      "purl": "pkg:cargo/font-types@0.10.1",
+      "type": "library",
+      "version": "0.10.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "85649ca51fd72272d7821adaf274ad91c288277713d9c18820d8499a7ff69e9a"
         }
       ],
@@ -299,6 +460,121 @@
       "purl": "pkg:cargo/generic-array@0.14.7",
       "type": "library",
       "version": "0.14.7"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "048488ba88552bb0fb2a7e4001c64d5bed65d1a92167186a1bb9151571f32e60"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "hayro",
+      "purl": "pkg:cargo/hayro@0.4.0",
+      "type": "library",
+      "version": "0.4.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "10e7e97ce840a6a70e7901e240ec65ba61106b66b37a4a1b899a2ce484248463"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "hayro-font",
+      "purl": "pkg:cargo/hayro-font@0.3.0",
+      "type": "library",
+      "version": "0.3.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "56204c972d08e844f3db13b1e14be769f846e576699b46d4f4637cc4f8f70102"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "hayro-interpret",
+      "purl": "pkg:cargo/hayro-interpret@0.4.0",
+      "type": "library",
+      "version": "0.4.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3f9e5c7dbc0f11dc42775d1a6cc00f5f5137b90b6288dd7fe5f71d17b14d10be"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0"
+        }
+      ],
+      "name": "hayro-syntax",
+      "purl": "pkg:cargo/hayro-syntax@0.4.0",
+      "type": "library",
+      "version": "0.4.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "85ab80394333c02fe689eaf900ab500fbd0c2213da414687ebf995a65d5a6104"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "image",
+      "purl": "pkg:cargo/image@0.25.10",
+      "type": "library",
+      "version": "0.25.10"
     },
     {
       "externalReferences": [
@@ -356,6 +632,29 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "ce9729cc38c18d86123ab736fd2e7151763ba226ac2490ec092d1dd148825e32"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "kurbo",
+      "purl": "pkg:cargo/kurbo@0.12.0",
+      "type": "library",
+      "version": "0.12.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
         }
       ],
@@ -391,6 +690,29 @@
       "purl": "pkg:cargo/libloading@0.9.0",
       "type": "library",
       "version": "0.9.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "log",
+      "purl": "pkg:cargo/log@0.4.33",
+      "type": "library",
+      "version": "0.4.33"
     },
     {
       "externalReferences": [
@@ -460,6 +782,52 @@
       "purl": "pkg:cargo/miniz_oxide@0.8.9",
       "type": "library",
       "version": "0.8.9"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "ac9557c559cd6fc9867e122e20d2cbefc9ca29d80d027a8e39310920ed2f0a97"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause OR Apache-2.0"
+        }
+      ],
+      "name": "moxcms",
+      "purl": "pkg:cargo/moxcms@0.7.11",
+      "type": "library",
+      "version": "0.7.11"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "bb85c154ba489f01b25c0d36ae69a87e4a1c73a72631fc6c0eb6dde34a73e44b"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause OR Apache-2.0"
+        }
+      ],
+      "name": "moxcms",
+      "purl": "pkg:cargo/moxcms@0.8.1",
+      "type": "library",
+      "version": "0.8.1"
     },
     {
       "externalReferences": [
@@ -632,6 +1000,98 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "c1562dc717473dbaa4c1f85a36410e03c047b2e7df7f45ee938fbef64ae7fadf"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "phf",
+      "purl": "pkg:cargo/phf@0.13.1",
+      "type": "library",
+      "version": "0.13.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "135ace3a761e564ec88c03a77317a7c6b80bb7f7135ef2544dbe054243b89737"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "phf_generator",
+      "purl": "pkg:cargo/phf_generator@0.13.1",
+      "type": "library",
+      "version": "0.13.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "812f032b54b1e759ccd5f8b6677695d5268c588701effba24601f6932f8269ef"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "phf_macros",
+      "purl": "pkg:cargo/phf_macros@0.13.1",
+      "type": "library",
+      "version": "0.13.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "e57fef6bc5981e38c2ce2d63bfa546861309f875b8a75f092d1d54ae2d64f266"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "phf_shared",
+      "purl": "pkg:cargo/phf_shared@0.13.1",
+      "type": "library",
+      "version": "0.13.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
         }
       ],
@@ -747,6 +1207,29 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "d55d956fa96f5ec02be2e13af0e20391a5aa83d6a074e3ad368959d0fab299ea"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "BSD-3-Clause OR Apache-2.0"
+        }
+      ],
+      "name": "pxfm",
+      "purl": "pkg:cargo/pxfm@0.1.30",
+      "type": "library",
+      "version": "0.1.30"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "1fbf4db142a473a8d80c26bbf18454ed458bf8d26c8219c331daecfdbd079001"
         }
       ],
@@ -782,6 +1265,52 @@
       "purl": "pkg:cargo/rawpointer@0.2.1",
       "type": "library",
       "version": "0.2.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6717cf23b488adf64b9d711329542ba34de147df262370221940dfabc2c91358"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "read-fonts",
+      "purl": "pkg:cargo/read-fonts@0.35.0",
+      "type": "library",
+      "version": "0.35.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "6b1e7f9a428571be2dc5bc0505c13fb6bf936822b894ec87abf8a08a4e51742d"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "rustc-hash",
+      "purl": "pkg:cargo/rustc-hash@2.1.3",
+      "type": "library",
+      "version": "2.1.3"
     },
     {
       "externalReferences": [
@@ -931,6 +1460,52 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "8ee5873ec9cce0195efcb7a4e9507a04cd49aec9c83d0389df45b1ef7ba2e649"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT/Apache-2.0"
+        }
+      ],
+      "name": "siphasher",
+      "purl": "pkg:cargo/siphasher@1.0.3",
+      "type": "library",
+      "version": "1.0.3"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "8c31071dedf532758ecf3fed987cdb4bd9509f900e026ab684b4ecb81ea49841"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "skrifa",
+      "purl": "pkg:cargo/skrifa@0.37.0",
+      "type": "library",
+      "version": "0.37.0"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "8ed6a63f02c8539c91a8685a86f4099661ba3da017932f6ebbea6de3f0fa7c90"
         }
       ],
@@ -954,6 +1529,52 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "stable_deref_trait",
+      "purl": "pkg:cargo/stable_deref_trait@1.2.1",
+      "type": "library",
+      "version": "1.2.1"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "872831b642d1a07999a962a351ed35b955ea2cfc8f3862091e2a240a84f17297"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "syn",
+      "purl": "pkg:cargo/syn@2.0.119",
+      "type": "library",
+      "version": "2.0.119"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "53e9bae58849f64dfa4f5d5ae372c8341f7305f82a3868709269343628b659a3"
         }
       ],
@@ -966,6 +1587,29 @@
       "purl": "pkg:cargo/syn@3.0.3",
       "type": "library",
       "version": "3.0.3"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "728a70f3dbaf5bab7f0c4b1ac8d7ae5ea60a4b5549c8a5914361c99147a709d2"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT"
+        }
+      ],
+      "name": "synstructure",
+      "purl": "pkg:cargo/synstructure@0.13.2",
+      "type": "library",
+      "version": "0.13.2"
     },
     {
       "externalReferences": [
@@ -1115,6 +1759,98 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "709fe23a0424b6a435d82152b1bd3fdfb0833487d5fa90d05d42762a9891fef5"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Unicode-3.0"
+        }
+      ],
+      "name": "yoke",
+      "purl": "pkg:cargo/yoke@0.8.3",
+      "type": "library",
+      "version": "0.8.3"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "de844c262c8848816172cef550288e7dc6c7b7814b4ee56b3e1553f275f1858e"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Unicode-3.0"
+        }
+      ],
+      "name": "yoke-derive",
+      "purl": "pkg:cargo/yoke-derive@0.8.2",
+      "type": "library",
+      "version": "0.8.2"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "0ec05a11813ea801ff6d75110ad09cd0824ddba17dfe17128ea0d5f68e6c5272"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Unicode-3.0"
+        }
+      ],
+      "name": "zerofrom",
+      "purl": "pkg:cargo/zerofrom@0.1.8",
+      "type": "library",
+      "version": "0.1.8"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "11532158c46691caf0f2593ea8358fed6bbf68a0315e80aae9bd41fbade684a1"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Unicode-3.0"
+        }
+      ],
+      "name": "zerofrom-derive",
+      "purl": "pkg:cargo/zerofrom-derive@0.1.7",
+      "type": "library",
+      "version": "0.1.7"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
         }
       ],
@@ -1127,6 +1863,52 @@
       "purl": "pkg:cargo/zmij@1.0.23",
       "type": "library",
       "version": "1.0.23"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "3f423a2c17029964870cfaabb1f13dfab7d092a62a29a89264f4d36990ca414a"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0 OR Zlib"
+        }
+      ],
+      "name": "zune-core",
+      "purl": "pkg:cargo/zune-core@0.4.12",
+      "type": "library",
+      "version": "0.4.12"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "29ce2c8a9384ad323cf564b67da86e21d3cfdff87908bc1223ed5c99bc792713"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0 OR Zlib"
+        }
+      ],
+      "name": "zune-jpeg",
+      "purl": "pkg:cargo/zune-jpeg@0.4.21",
+      "type": "library",
+      "version": "0.4.21"
     }
   ],
   "metadata": {
