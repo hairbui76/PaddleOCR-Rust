@@ -1,0 +1,39 @@
+{
+ "fixture_id": "classic-v1-slow-score",
+ "kind": "slow_score_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/records/*/contour",
+  "sha256": "28c397b726d6c211d029faae23245b3a16599b1a1f9391c21d7c9a0ee87c794f",
+  "sha256_scope": "No image input. Every case is an integer contour written out in the capture tool (eleven named, forty from a seeded LCG), and the probability map is a closed form reproduced identically in the Rust test.",
+  "provenance": "Authored in tools/capture_slow_score_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "ppocr/postprocess/db_postprocess.py"
+  ],
+  "capture_method": "box_score_slow was loaded by file path with `paddle` stubbed (the module dereferences it at import for a code path this capture never reaches) and executed. The fillPoly masks are extracted alongside, because the score alone under-constrains the fill: a wrong mask can produce a right mean.",
+  "environment": "python 3.12, numpy 2.3.5, opencv-contrib-python 5.0.0.93 (cv2 5.0.0)"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "28c397b726d6c211d029faae23245b3a16599b1a1f9391c21d7c9a0ee87c794f",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/slow-score-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "score::tests::slow::the_captured_masks_and_scores_are_reproduced",
+  "score::tests::slow::the_slow_fill_leaves_a_concavity_empty",
+  "score::tests::slow::hostile_contours_are_refused_or_bounded"
+ ],
+ "limitations": [
+  "The eleven named cases derived the fill rules; the forty seeded polygons verify them on shapes that played no part in the derivation. All fifty-one match bit for bit.",
+  "Contour coordinates outside i32 are refused where upstream's astype('int32') would silently wrap them; recorded as an intentional difference.",
+  "The slow mode is unreachable from the frozen PP-OCRv6_medium_det configuration, whose score_mode defaults to fast. This fixture makes the mode available and verified, not selected."
+ ]
+}
