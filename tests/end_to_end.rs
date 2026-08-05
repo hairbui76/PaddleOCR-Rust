@@ -49,11 +49,11 @@ fn png_header(width: u32, height: u32) -> Vec<u8> {
 
 #[test]
 fn a_committed_png_reports_its_dimensions() {
-    match paddleocr_rust::api::decode_png(READING_ORDER) {
+    match paddleocr_rust::api::decode_image(READING_ORDER) {
         Ok((width, height)) => assert_eq!((width, height), (800, 320)),
         Err(error) => panic!("expected dimensions, got {error}"),
     }
-    match paddleocr_rust::api::decode_png(NO_TEXT) {
+    match paddleocr_rust::api::decode_image(NO_TEXT) {
         Ok((width, height)) => assert_eq!((width, height), (3, 2)),
         Err(error) => panic!("expected dimensions, got {error}"),
     }
@@ -72,7 +72,7 @@ fn corrupt_and_truncated_input_is_a_typed_error() {
         ),
     ];
     for (name, bytes) in cases {
-        let outcome = paddleocr_rust::api::decode_png(&bytes);
+        let outcome = paddleocr_rust::api::decode_image(&bytes);
         assert!(outcome.is_err(), "{name} must not decode");
         // Whatever the case, it must be a typed error and never a panic; the
         // assertion above already proves no panic occurred.
@@ -87,14 +87,14 @@ fn a_valid_png_with_corrupt_pixel_data_is_a_typed_error() {
     bytes.extend_from_slice(b"IDAT");
     bytes.extend_from_slice(&[0xde, 0xad, 0xbe, 0xef]);
     bytes.extend_from_slice(&0_u32.to_be_bytes());
-    assert!(paddleocr_rust::api::decode_png(&bytes).is_err());
+    assert!(paddleocr_rust::api::decode_image(&bytes).is_err());
 }
 
 #[test]
 fn oversized_input_is_rejected_by_its_declared_limit() {
     // Encoded byte count, checked before anything is parsed.
     let huge = vec![0_u8; MAX_ENCODED_IMAGE_BYTES + 1];
-    match paddleocr_rust::api::decode_png(&huge) {
+    match paddleocr_rust::api::decode_image(&huge) {
         Err(Error::ResourceLimit {
             resource, limit, ..
         }) => {
@@ -105,7 +105,7 @@ fn oversized_input_is_rejected_by_its_declared_limit() {
     }
 
     // Side length, from the declared header.
-    match paddleocr_rust::api::decode_png(&png_header(MAX_IMAGE_SIDE_LENGTH + 1, 4)) {
+    match paddleocr_rust::api::decode_image(&png_header(MAX_IMAGE_SIDE_LENGTH + 1, 4)) {
         Err(Error::ResourceLimit { resource, .. }) => {
             assert_eq!(resource, "image.width_pixels");
         }
@@ -116,7 +116,7 @@ fn oversized_input_is_rejected_by_its_declared_limit() {
     let side = 16_000_u32;
     assert!(side <= MAX_IMAGE_SIDE_LENGTH);
     assert!(u64::from(side) * u64::from(side) > MAX_IMAGE_PIXELS);
-    match paddleocr_rust::api::decode_png(&png_header(side, side)) {
+    match paddleocr_rust::api::decode_image(&png_header(side, side)) {
         Err(Error::ResourceLimit { resource, .. }) => {
             assert_eq!(resource, "image.total_pixels");
         }
@@ -261,35 +261,35 @@ mod provisioned {
         let options = OcrOptions::default();
 
         // No text: an empty result, never a fabricated line.
-        let empty = match engine.recognize_png(NO_TEXT, &options) {
+        let empty = match engine.recognize_image(NO_TEXT, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("no-text: {error}"),
         };
         assert!(empty.is_empty(), "no-text produced {:?}", texts(&empty));
 
         // Multiple lines in a stable reading order.
-        let many = match engine.recognize_png(READING_ORDER, &options) {
+        let many = match engine.recognize_image(READING_ORDER, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("reading-order: {error}"),
         };
         assert_eq!(texts(&many), ["Hello", "World", "Rust", "OCR"]);
 
         // A rotated, tall crop that the pipeline must turn upright.
-        let tall = match engine.recognize_png(TALL_CROP, &options) {
+        let tall = match engine.recognize_image(TALL_CROP, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("tall-crop: {error}"),
         };
         assert_eq!(texts(&tall), ["Rust"]);
 
         // A non-Latin script, with the exact scalars preserved.
-        let unicode = match engine.recognize_png(UNICODE, &options) {
+        let unicode = match engine.recognize_image(UNICODE, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("unicode: {error}"),
         };
         assert_eq!(texts(&unicode), ["\u{4f60}\u{597d}"]);
 
         // Mixed scripts on one page: Latin lines and a CJK line together.
-        let mixed = match engine.recognize_png(BENCHMARK_PAGE, &options) {
+        let mixed = match engine.recognize_image(BENCHMARK_PAGE, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("benchmark page: {error}"),
         };
@@ -306,7 +306,7 @@ mod provisioned {
         // Repeat runs are identical, which is the order guarantee stated as a
         // property rather than as one recorded answer.
         for _ in 0..3 {
-            let again = match engine.recognize_png(READING_ORDER, &options) {
+            let again = match engine.recognize_image(READING_ORDER, &options) {
                 Ok(lines) => lines,
                 Err(error) => panic!("repeat: {error}"),
             };
@@ -324,7 +324,7 @@ mod provisioned {
         let permissive = OcrOptions::default().with_drop_score(0.0);
         let impossible = OcrOptions::default().with_drop_score(1.0);
 
-        let kept = match engine.recognize_png(READING_ORDER, &permissive) {
+        let kept = match engine.recognize_image(READING_ORDER, &permissive) {
             Ok(lines) => lines,
             Err(error) => panic!("permissive: {error}"),
         };
@@ -333,7 +333,7 @@ mod provisioned {
         // A drop score above every achievable confidence removes everything.
         // Equality is retained, so this needs a threshold strictly above the
         // best score rather than equal to it.
-        let dropped = match engine.recognize_png(READING_ORDER, &impossible) {
+        let dropped = match engine.recognize_image(READING_ORDER, &impossible) {
             Ok(lines) => lines,
             Err(error) => panic!("impossible: {error}"),
         };
@@ -346,7 +346,7 @@ mod provisioned {
         // A box threshold above 1.0 cannot be met by any region, so detection
         // itself yields nothing and no crop is ever recognized.
         let no_boxes = OcrOptions::default().with_box_threshold(1.1);
-        let none = match engine.recognize_png(READING_ORDER, &no_boxes) {
+        let none = match engine.recognize_image(READING_ORDER, &no_boxes) {
             Ok(lines) => lines,
             Err(error) => panic!("box threshold: {error}"),
         };
@@ -400,7 +400,7 @@ mod provisioned {
         // It fails on first use, as a typed error rather than a wrong answer.
         assert!(
             swapped
-                .recognize_png(READING_ORDER, &OcrOptions::default())
+                .recognize_image(READING_ORDER, &OcrOptions::default())
                 .is_err(),
             "a swapped model pair must not produce a result"
         );
@@ -438,7 +438,7 @@ mod provisioned {
         // own engine and must agree on the same page.
         let expected = {
             let engine = engine(&library, &detector, &recognizer, &dictionary);
-            match engine.recognize_png(READING_ORDER, &OcrOptions::default()) {
+            match engine.recognize_image(READING_ORDER, &OcrOptions::default()) {
                 Ok(lines) => texts(&lines),
                 Err(error) => panic!("baseline: {error}"),
             }
@@ -451,7 +451,7 @@ mod provisioned {
                     let dictionary = &dictionary;
                     scope.spawn(move || {
                         let engine = engine(library, detector, recognizer, dictionary);
-                        match engine.recognize_png(READING_ORDER, &OcrOptions::default()) {
+                        match engine.recognize_image(READING_ORDER, &OcrOptions::default()) {
                             Ok(lines) => texts(&lines),
                             Err(error) => panic!("thread: {error}"),
                         }
@@ -486,7 +486,7 @@ mod provisioned {
         let dictionary = dictionary();
 
         let render = |engine: &OcrEngine| -> String {
-            let lines = match engine.recognize_png(READING_ORDER, &OcrOptions::default()) {
+            let lines = match engine.recognize_image(READING_ORDER, &OcrOptions::default()) {
                 Ok(lines) => lines,
                 Err(error) => panic!("run: {error}"),
             };
@@ -549,7 +549,7 @@ mod provisioned {
         };
 
         let rotated = std::fs::read(env("PADDLEOCR_RUST_ROTATED_PAGE")).unwrap_or_default();
-        let (width, height) = match paddleocr_rust::api::decode_png(&rotated) {
+        let (width, height) = match paddleocr_rust::api::decode_image(&rotated) {
             Ok(value) => value,
             Err(error) => panic!("rotated page: {error}"),
         };
@@ -604,10 +604,10 @@ mod provisioned {
             b"not a png".to_vec(),
             png_header(MAX_IMAGE_SIDE_LENGTH + 1, 4),
         ] {
-            assert!(engine.recognize_png(&bytes, &options).is_err());
+            assert!(engine.recognize_image(&bytes, &options).is_err());
         }
 
-        let after = match engine.recognize_png(READING_ORDER, &options) {
+        let after = match engine.recognize_image(READING_ORDER, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("the engine did not survive a rejected input: {error}"),
         };
@@ -826,11 +826,11 @@ mod detection_only {
         const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
         let options = OcrOptions::default();
 
-        let detected = match engine.detect_png(PAGE, &options) {
+        let detected = match engine.detect_image(PAGE, &options) {
             Ok(value) => value,
             Err(error) => panic!("detect: {error}"),
         };
-        let recognized = match engine.recognize_png(PAGE, &options) {
+        let recognized = match engine.recognize_image(PAGE, &options) {
             Ok(value) => value,
             Err(error) => panic!("recognize: {error}"),
         };
@@ -1003,7 +1003,7 @@ mod jpeg_delta_gate {
         const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
         let options = OcrOptions::default();
 
-        let baseline = match engine.recognize_png(PAGE, &options) {
+        let baseline = match engine.recognize_image(PAGE, &options) {
             Ok(value) => value,
             Err(error) => panic!("baseline: {error}"),
         };
@@ -1018,7 +1018,7 @@ mod jpeg_delta_gate {
             ("scattered +/-36", 36, Shape::Scattered),
         ] {
             let png = perturbed_png(PAGE, delta, shape);
-            let lines = match engine.recognize_png(&png, &options) {
+            let lines = match engine.recognize_image(&png, &options) {
                 Ok(value) => value,
                 Err(error) => panic!("{label}: {error}"),
             };
@@ -1053,7 +1053,7 @@ mod jpeg_delta_gate {
         // asserting a tolerance here would make it before the evidence is
         // recorded. The only assertion is that the baseline itself is stable,
         // without which none of the comparisons above mean anything.
-        let repeat = match engine.recognize_png(PAGE, &options) {
+        let repeat = match engine.recognize_image(PAGE, &options) {
             Ok(value) => value,
             Err(error) => panic!("repeat: {error}"),
         };
@@ -1115,7 +1115,7 @@ mod jpeg_delta_gate {
         ];
 
         for (page_name, page) in pages {
-            let baseline = match engine.recognize_png(page, &options) {
+            let baseline = match engine.recognize_image(page, &options) {
                 Ok(value) => value,
                 Err(error) => panic!("{page_name} baseline: {error}"),
             };
@@ -1133,7 +1133,7 @@ mod jpeg_delta_gate {
                 ("scattered +/-1", 1, Shape::Scattered),
             ] {
                 let png = perturbed_png(page, delta, shape);
-                let lines = match engine.recognize_png(&png, &options) {
+                let lines = match engine.recognize_image(&png, &options) {
                     Ok(value) => value,
                     Err(error) => panic!("{page_name} {label}: {error}"),
                 };
@@ -1176,7 +1176,7 @@ mod jpeg_delta_gate {
                 }
             }
 
-            let repeat = match engine.recognize_png(page, &options) {
+            let repeat = match engine.recognize_image(page, &options) {
                 Ok(value) => value,
                 Err(error) => panic!("{page_name} repeat: {error}"),
             };
@@ -1255,7 +1255,7 @@ mod document_boundary {
                 panic!("write: {error}");
             }
         }
-        match engine.recognize_png(&blank, &options) {
+        match engine.recognize_image(&blank, &options) {
             Ok(lines) => assert!(lines.is_empty(), "a blank page found {} lines", lines.len()),
             Err(error) => panic!("a blank page must succeed with no lines, got {error}"),
         }
@@ -1303,7 +1303,7 @@ mod document_boundary {
             ),
         ];
         for (name, bytes, kind) in corrupt {
-            let outcome = engine.recognize_png(&bytes, &options);
+            let outcome = engine.recognize_image(&bytes, &options);
             match (&outcome, kind) {
                 (Ok(lines), _) => panic!("{name}: expected a refusal, got {} lines", lines.len()),
                 (
@@ -1373,7 +1373,7 @@ mod document_boundary {
         );
     }
 
-    /// Unwarping through `recognize_png` is refused, not silently mapped.
+    /// Unwarping through `recognize_image` is refused, not silently mapped.
     ///
     /// This is the boundary `docs/UNWARPING_CONTRACT.md` section 3 names: an
     /// unwarped page's coordinates cannot return to the caller, and a signature
@@ -1386,16 +1386,16 @@ mod document_boundary {
             .with_document_preprocessing(DocumentPreprocessOptions::default().with_unwarping(true));
         const PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
 
-        match engine.recognize_png(PAGE, &options) {
+        match engine.recognize_image(PAGE, &options) {
             Err(Error::Unsupported { capability }) => {
                 assert!(capability.contains("unwarping"), "{capability}");
             }
             other => panic!("expected an unsupported refusal, got {other:?}"),
         }
-        // And `detect_png` refuses it for the same reason.
-        match engine.detect_png(PAGE, &options) {
+        // And `detect_image` refuses it for the same reason.
+        match engine.detect_image(PAGE, &options) {
             Err(Error::Unsupported { .. }) => {}
-            other => panic!("detect_png must refuse unwarping too, got {other:?}"),
+            other => panic!("detect_image must refuse unwarping too, got {other:?}"),
         }
     }
 }

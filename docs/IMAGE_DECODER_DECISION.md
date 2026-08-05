@@ -106,3 +106,72 @@ same time.
   unsafe/supply-chain audit remains `P13` work.
 - Reversing this decision means changing one module boundary: the decoder is
   private and no public API exposes it.
+
+---
+
+# Amendment (2026-08-05): JPEG adopted under the `IMG-003` decision
+
+Decision date: 2026-08-05
+Decided by: project user, choosing outcome 1 of the three `IMG-003` outcomes
+after being shown the corrected measurements
+Status: JPEG is supported with a measured tolerance; CMYK and 12-bit JPEG
+remain typed `Unsupported`
+
+## What changed since the original decision
+
+The original decision deferred JPEG because the recorded maximum component
+delta of `36` was **unmeasured in consequence**. `IMG-003` made measuring the
+consequence the precondition, and the two-stage measurement in
+[`IMG_003_DELTA_MEASUREMENT.md`](IMG_003_DELTA_MEASUREMENT.md) resolved it in
+both directions at once:
+
+- the `36` is an artifact of the `3x2`-pixel probe corpus — a single partial
+  MCU. On page-shaped JPEG content `jpeg-decoder 0.3.2` measures at most
+  **`1`** from the OpenCV oracle (~1% of pixels), and **`3`** on saturated
+  colour;
+- through the whole pipeline, perturbations at `+/-1` change **zero
+  characters** on the dense three-regime corpus, and `+/-3` changes one; the
+  pathological `36` applied with a decoder-realistic block-correlated shape
+  **does** destroy low-contrast detection, which is exactly why it matters
+  that it does not occur on page-shaped inputs.
+
+## Decision
+
+**JPEG input is decoded with `jpeg-decoder 0.3.2`, `default-features = false`
+(no `rayon` thread pool), under the tolerance profile the measurement
+established.** Concretely:
+
+- baseline and progressive scans decode; the committed ten-probe corpus is
+  compared against the recorded OpenCV bytes with a per-component bound of
+  `36` — the measured worst case for these few-pixel probes — and exact
+  shape;
+- **EXIF orientation is applied**, because the captured oracle proves modern
+  OpenCV applies it at decode: the eight committed orientation probes record
+  flipped bytes and transposed shapes, and this port reproduces all eight
+  within the tolerance. The orientation tag is parsed from the `APP1` segment
+  directly; a malformed or absent tag means no transform, as in OpenCV;
+- **CMYK and 12-bit (`L16`) JPEG are refused** as typed `Unsupported`: no
+  captured oracle pins a conversion, and a conversion whose constants nothing
+  pins would be a plausible wrong image;
+- grayscale JPEG replicates into BGR, mirroring the PNG convention;
+- the same declared-header resource checks run before pixel decode: project
+  side/pixel limits from the parsed SOF dimensions, and the shared `256 MiB`
+  allocation envelope covering samples plus output.
+
+The `_png`-named API functions are deprecated aliases of new `_image` names
+(`recognize_image`, `detect_image`, `decode_image`), exactly as
+[`STABLE_001_API_REVIEW.md`](STABLE_001_API_REVIEW.md) planned for this event:
+widening a function named `_png` silently would make its name a lie.
+
+## Consequences and non-claims
+
+- The compatibility vocabulary for JPEG is **tolerance, not exactness**, and
+  the tolerance is measured, not assumed: `36` on the committed probes, `1`-`3`
+  on page-shaped content, zero recognized-character changes at `+/-1` on the
+  committed dense corpus. No claim is made about real scans with a compression
+  history, which no synthetic corpus can close.
+- `jpeg-decoder 0.3.2` is `MIT OR Apache-2.0`, adds **no** transitive
+  dependencies with default features off, and contains no build script. The
+  crate keeps `unsafe_code = "forbid"`.
+- Reversing this amendment means removing one dispatch branch and one
+  dependency; the PNG path is untouched.

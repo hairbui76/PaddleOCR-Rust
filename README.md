@@ -17,7 +17,7 @@ PaddleOCR replacement, and the table below says exactly where the line is.
 | Area | Current state |
 | --- | --- |
 | Classic OCR path | **Working.** Decode, resize, detect, DB postprocess, reading order, perspective crop, recognize, CTC decode, score filter. Reproduces all four committed end-to-end fixtures exactly, text and confidence. |
-| Input formats | **PNG only.** JPEG returns a typed `Unsupported` error rather than a near-miss result; see [docs/IMAGE_DECODER_DECISION.md](docs/IMAGE_DECODER_DECISION.md). |
+| Input formats | **PNG and JPEG.** PNG is exact against the captured OpenCV oracle; JPEG decodes within the measured component tolerance the recorded `IMG-003` decision accepted (at most `36` on pathological few-pixel inputs, `1`–`3` on page-shaped content — see [docs/IMG_003_DELTA_MEASUREMENT.md](docs/IMG_003_DELTA_MEASUREMENT.md)). CMYK and 12-bit JPEG return typed `Unsupported` errors. |
 | Models | One pinned pair: `PP-OCRv6_medium` detector and recognizer, ONNX. No other model, family, or language has been tried. |
 | Backend | ONNX Runtime through `ort`, behind the off-by-default `onnxruntime` feature. The default build has no native dependency. |
 | Numerical fidelity | Each stage matches a recorded OpenCV or Clipper oracle: contours 18/18, `minAreaRect` 16/16, `box_score_fast` 8/8, `unclip` 16/16, resize 34/34, crop 72 cases, PNG decode 5/5. |

@@ -333,6 +333,29 @@
       "hashes": [
         {
           "alg": "SHA-256",
+          "content": "00810f1d8b74be64b13dbf3db89ac67740615d6c891f0e7b6179326533011a07"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT OR Apache-2.0"
+        }
+      ],
+      "name": "jpeg-decoder",
+      "purl": "pkg:cargo/jpeg-decoder@0.3.2",
+      "type": "library",
+      "version": "0.3.2"
+    },
+    {
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
           "content": "3eaf3ede3fee6db1a4c2ee091bf8a8b4dccdc6d17f656fb07896ee72867612f2"
         }
       ],

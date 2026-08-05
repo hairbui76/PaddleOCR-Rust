@@ -5,13 +5,15 @@
 //!
 //! This is the narrowest API that makes the implemented pipeline usable: point
 //! it at an explicitly provisioned detector, recognizer, dictionary, and ONNX
-//! Runtime library, hand it PNG bytes, and receive recognized lines in reading
-//! order.
+//! Runtime library, hand it encoded image bytes, and receive recognized lines
+//! in reading order.
 //!
 //! Scope is deliberately limited and stated rather than implied:
 //!
-//! - **PNG input only.** `docs/IMAGE_DECODER_DECISION.md` records why JPEG is
-//!   deferred; a JPEG here is a typed `Unsupported` error, not a near miss.
+//! - **PNG and JPEG input.** PNG is exact against the captured OpenCV oracle;
+//!   JPEG carries the measured component tolerance the recorded `IMG-003`
+//!   decision accepted (`docs/IMG_003_DELTA_MEASUREMENT.md`). Anything else
+//!   is a typed `Unsupported` error, not a near miss.
 //! - **Explicit local artifacts.** Nothing is downloaded, cached, or resolved
 //!   from an environment variable. Every path comes from the caller.
 //! - **Not yet validated against a real model.** Every stage matches a recorded
@@ -62,7 +64,7 @@ pub struct OcrOptions {
     ///
     /// Both default to off, matching upstream. Enabling unwarping makes the
     /// returned coordinates unmappable to the caller's page, which is why
-    /// [`OcrEngine::recognize_png`] refuses it and
+    /// [`OcrEngine::recognize_image`] refuses it and
     /// [`OcrEngine::recognize_document`] exists.
     pub document: crate::document_pipeline::DocumentPreprocessOptions,
     /// How the caller may abandon a run in progress.
@@ -197,14 +199,20 @@ pub fn parse_dictionary(contents: &str, appends_space: bool) -> Result<Dictionar
     })
 }
 
-/// Decodes PNG bytes into the pipeline's interleaved BGR representation.
+/// Decodes encoded image bytes into the pipeline's BGR representation.
 ///
 /// Exposed so a caller can validate an input before committing to a model run.
-pub fn decode_png(bytes: &[u8]) -> Result<(u32, u32)> {
+pub fn decode_image(bytes: &[u8]) -> Result<(u32, u32)> {
     let encoded = EncodedImage::new(bytes)?;
     let decoded = crate::image::decode_classic_bgr(encoded)?;
     let dimensions = decoded.dimensions();
     Ok((dimensions.width(), dimensions.height()))
+}
+
+/// The former name of [`decode_image`], kept as an alias.
+#[deprecated(note = "JPEG is accepted too now; use decode_image")]
+pub fn decode_png(bytes: &[u8]) -> Result<(u32, u32)> {
+    decode_image(bytes)
 }
 
 #[cfg(test)]
@@ -264,13 +272,15 @@ mod tests {
             Err(error) => panic!("corpus base64 is invalid: {error}"),
         };
 
-        match decode_png(&bytes) {
+        match decode_image(&bytes) {
             Ok((width, height)) => assert_eq!((width, height), (3, 2)),
             Err(error) => panic!("expected a decoded PNG, got {error}"),
         }
+        // A JPEG signature over a broken stream is a malformed JPEG now, not
+        // an unknown format.
         assert!(matches!(
-            decode_png(b"\xff\xd8\xff\xe0 not a png"),
-            Err(Error::Unsupported { .. })
+            decode_image(b"\xff\xd8\xff\xe0 not a jpeg"),
+            Err(Error::InvalidInput { .. })
         ));
     }
 }
@@ -411,7 +421,7 @@ impl<'a> Artifacts<'a> {
 /// Creating the two sessions costs roughly `1.4 s` on the reference host, which
 /// `docs/G3_RESOURCE_EVIDENCE.md` measures as the gap between the `4.2 s` cold
 /// run and the `2.8 s` warm one. A caller processing a directory of pages should
-/// pay that once. [`recognize_png`] pays it every call by construction, which is
+/// pay that once. [`recognize_image`] pays it every call by construction, which is
 /// correct for the one-image CLI and wrong for anything else.
 ///
 /// # Concurrency
@@ -672,7 +682,7 @@ impl OcrEngine {
     /// Recognizes text with document preprocessing, reporting the coordinate
     /// space the result is in.
     ///
-    /// Use this rather than [`OcrEngine::recognize_png`] when unwarping is
+    /// Use this rather than [`OcrEngine::recognize_image`] when unwarping is
     /// enabled: unwarping has no inverse, so the returned polygons describe the
     /// processed page rather than the caller's, and
     /// [`DocumentResult::coordinate_space`] is how that is stated rather than
@@ -682,7 +692,7 @@ impl OcrEngine {
         let decoded = crate::image::decode_classic_bgr(encoded)?;
         let preprocessed = self.preprocess_document(decoded, options)?;
         let space = preprocessed.coordinate_space();
-        let lines = self.recognize_image(preprocessed.image(), options)?;
+        let lines = self.recognize_decoded(preprocessed.image(), options)?;
 
         // Coordinates come back in the processed page's space. Where the chain
         // is invertible they are mapped home; where it is not, they are left as
@@ -713,7 +723,7 @@ impl OcrEngine {
         options: &OcrOptions,
     ) -> Result<Vec<TextLine>> {
         let bytes = crate::input::read_encoded_file(path)?;
-        self.recognize_png(&bytes, options)
+        self.recognize_image(&bytes, options)
     }
 
     /// Recognizes text in a PNG read from a stream.
@@ -726,11 +736,11 @@ impl OcrEngine {
         options: &OcrOptions,
     ) -> Result<Vec<TextLine>> {
         let bytes = crate::input::read_encoded_from(reader)?;
-        self.recognize_png(&bytes, options)
+        self.recognize_image(&bytes, options)
     }
 
     /// Runs the classic pipeline over an already decoded page.
-    fn recognize_image(
+    fn recognize_decoded(
         &self,
         image: &crate::crop::InterleavedImage,
         options: &OcrOptions,
@@ -765,26 +775,28 @@ impl OcrEngine {
             .collect())
     }
 
-    /// Recognizes text in one PNG image, reusing the loaded sessions.
+    /// Recognizes text in one encoded image, reusing the loaded sessions.
     ///
-    /// Each call is independent: no state carries between images, so the same
-    /// input always produces the same result, and a failed call leaves the
-    /// engine usable. `options` is taken by reference because it now carries the
-    /// cancellation flag, which a caller will usually want to keep.
-    pub fn recognize_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
+    /// The format is selected by content signature: PNG and JPEG are decoded,
+    /// anything else is a typed [`Error::Unsupported`]. Each call is
+    /// independent: no state carries between images, so the same input always
+    /// produces the same result, and a failed call leaves the engine usable.
+    /// `options` is taken by reference because it now carries the cancellation
+    /// flag, which a caller will usually want to keep.
+    pub fn recognize_image(&self, image: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
         // Unwarping would make the returned coordinates describe an image the
         // caller never supplied, and this signature has no way to say so.
         // Refusing is the only honest answer; `recognize_document` is the one
         // that can report a coordinate space.
         if options.document.unwarping {
             return Err(Error::Unsupported {
-                capability: "unwarping through recognize_png; use recognize_document",
+                capability: "unwarping through recognize_image; use recognize_document",
             });
         }
-        let encoded = EncodedImage::new(png)?;
+        let encoded = EncodedImage::new(image)?;
         let decoded = crate::image::decode_classic_bgr(encoded)?;
         let preprocessed = self.preprocess_document(decoded, options)?;
-        let lines = self.recognize_image(preprocessed.image(), options)?;
+        let lines = self.recognize_decoded(preprocessed.image(), options)?;
         let mut mapped = Vec::with_capacity(lines.len());
         for line in lines {
             mapped.push(map_line(&preprocessed, line)?);
@@ -792,12 +804,23 @@ impl OcrEngine {
         Ok(mapped)
     }
 
+    /// The former name of [`OcrEngine::recognize_image`], kept as an alias.
+    ///
+    /// It named the format when PNG was the only one supported; the `IMG-003`
+    /// decision added JPEG, and widening a function named `_png` silently
+    /// would make its name a lie — exactly the outcome
+    /// `docs/STABLE_001_API_REVIEW.md` planned this alias for.
+    #[deprecated(note = "JPEG is accepted too now; use recognize_image")]
+    pub fn recognize_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<TextLine>> {
+        self.recognize_image(png, options)
+    }
+
     /// Detects text regions without recognizing them.
     ///
     /// The detector and the reading-order sort run; cropping, orientation, and
     /// recognition do not. That makes this **cheaper than
-    /// [`OcrEngine::recognize_png`] by the recognizer's whole cost**, which on
-    /// a dense page is most of the run.
+    /// [`OcrEngine::recognize_image`] by the recognizer's whole cost**, which
+    /// on a dense page is most of the run.
     ///
     /// # What this deliberately does not do
     ///
@@ -806,20 +829,20 @@ impl OcrEngine {
     /// score to it instead would silently mean something else. `box_threshold`
     /// and `unclip_ratio` do apply, because they are the detector's own.
     ///
-    /// It refuses unwarping for the same reason `recognize_png` does: the
+    /// It refuses unwarping for the same reason `recognize_image` does: the
     /// returned coordinates would describe an image the caller never supplied.
     ///
     /// # Errors
     ///
     /// Returns [`Error::Unsupported`] when unwarping is requested, and the same
-    /// decode and model errors `recognize_png` returns.
-    pub fn detect_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<DetectedRegion>> {
+    /// decode and model errors `recognize_image` returns.
+    pub fn detect_image(&self, image: &[u8], options: &OcrOptions) -> Result<Vec<DetectedRegion>> {
         if options.document.unwarping {
             return Err(Error::Unsupported {
-                capability: "unwarping through detect_png; use recognize_document",
+                capability: "unwarping through detect_image; use recognize_document",
             });
         }
-        let encoded = EncodedImage::new(png)?;
+        let encoded = EncodedImage::new(image)?;
         let decoded = crate::image::decode_classic_bgr(encoded)?;
         let preprocessed = self.preprocess_document(decoded, options)?;
 
@@ -860,6 +883,15 @@ impl OcrEngine {
             });
         }
         Ok(sorted)
+    }
+
+    /// The former name of [`OcrEngine::detect_image`], kept as an alias.
+    ///
+    /// See [`OcrEngine::recognize_png`] for why the `_png` names are
+    /// deprecated rather than silently widened.
+    #[deprecated(note = "JPEG is accepted too now; use detect_image")]
+    pub fn detect_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<DetectedRegion>> {
+        self.detect_image(png, options)
     }
 }
 
@@ -982,19 +1014,32 @@ fn map_line(
     })
 }
 
-/// Recognizes text in one PNG image using explicitly provisioned artifacts.
+/// Recognizes text in one encoded image using explicitly provisioned
+/// artifacts.
 ///
 /// This loads both models, runs one image, and drops them. That is the right
 /// shape for a single-image invocation and the wrong one for a batch: use
 /// [`OcrEngine`] to pay session creation once across many images.
 #[cfg(feature = "onnxruntime")]
+pub fn recognize_image(
+    artifacts: &Artifacts<'_>,
+    dictionary: &Dictionary,
+    image: &[u8],
+    options: OcrOptions,
+) -> Result<Vec<TextLine>> {
+    OcrEngine::load(artifacts, dictionary)?.recognize_image(image, &options)
+}
+
+/// The former name of [`recognize_image`], kept as an alias.
+#[cfg(feature = "onnxruntime")]
+#[deprecated(note = "JPEG is accepted too now; use recognize_image")]
 pub fn recognize_png(
     artifacts: &Artifacts<'_>,
     dictionary: &Dictionary,
     png: &[u8],
     options: OcrOptions,
 ) -> Result<Vec<TextLine>> {
-    OcrEngine::load(artifacts, dictionary)?.recognize_png(png, &options)
+    recognize_image(artifacts, dictionary, png, options)
 }
 
 /// The placeholder recorded when a caller declares no expected digest.
@@ -1144,11 +1189,11 @@ mod engine_reuse {
         );
 
         for (name, png) in PAGES {
-            let reused = match engine.recognize_png(png, &options) {
+            let reused = match engine.recognize_image(png, &options) {
                 Ok(lines) => lines,
                 Err(error) => panic!("{name} reused: {error}"),
             };
-            let fresh = match recognize_png(&artifacts, &dictionary, png, options.clone()) {
+            let fresh = match recognize_image(&artifacts, &dictionary, png, options.clone()) {
                 Ok(lines) => lines,
                 Err(error) => panic!("{name} fresh: {error}"),
             };
@@ -1158,11 +1203,11 @@ mod engine_reuse {
 
         // Running the same page twice through one engine must also agree, which
         // is what "no state carries between images" means concretely.
-        let first = match engine.recognize_png(PAGES[0].1, &options) {
+        let first = match engine.recognize_image(PAGES[0].1, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("repeat: {error}"),
         };
-        let second = match engine.recognize_png(PAGES[0].1, &options) {
+        let second = match engine.recognize_image(PAGES[0].1, &options) {
             Ok(lines) => lines,
             Err(error) => panic!("repeat: {error}"),
         };

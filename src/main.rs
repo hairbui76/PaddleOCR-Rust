@@ -239,12 +239,12 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
         // honours the limit's letter and defeats its purpose.
         let bytes = paddleocr_rust::input::read_encoded_file(image)
             .map_err(|error| format!("{image}: {error}"))?;
-        let (width, height) =
-            paddleocr_rust::api::decode_png(&bytes).map_err(|error| format!("{image}: {error}"))?;
+        let (width, height) = paddleocr_rust::api::decode_image(&bytes)
+            .map_err(|error| format!("{image}: {error}"))?;
         eprintln!("image: {image} ({width}x{height} PNG)");
 
         let lines = engine
-            .recognize_png(&bytes, &options)
+            .recognize_image(&bytes, &options)
             .map_err(|error| format!("{image}: {error}"))?;
 
         if json {
