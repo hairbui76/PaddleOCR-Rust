@@ -1,0 +1,851 @@
+{
+ "cases": [
+  {
+   "blocks": [
+    {
+     "bbox": [
+      60,
+      40,
+      340,
+      90
+     ],
+     "content": "The Title ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 0,
+     "label": "doc_title",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 70.0,
+     "text_line_height": 30.0,
+     "text_line_width": 260.0
+    },
+    {
+     "bbox": [
+      20,
+      120,
+      380,
+      144
+     ],
+     "content": "Section one ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 1,
+     "label": "paragraph_title",
+     "num_of_lines": 1,
+     "order_index": 2,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 15.0,
+     "text_line_width": 340.0
+    },
+    {
+     "bbox": [
+      20,
+      160,
+      380,
+      400
+     ],
+     "content": "First paragraph line one and line two.",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 2,
+     "label": "text",
+     "num_of_lines": 2,
+     "order_index": 3,
+     "seg_end_coordinate": 370.0,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "single_column_text",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "doc_title",
+     [
+      60.2,
+      40.6,
+      340.8,
+      90.3
+     ],
+     0.98
+    ],
+    [
+     "paragraph_title",
+     [
+      20.4,
+      120.7,
+      380.2,
+      144.9
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      20.6,
+      160.2,
+      380.4,
+      400.8
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [],
+   "spans": [
+    [
+     [
+      70,
+      50,
+      330,
+      80
+     ],
+     "The Title"
+    ],
+    [
+     [
+      30,
+      125,
+      370,
+      140
+     ],
+     "Section one"
+    ],
+    [
+     [
+      30,
+      170,
+      370,
+      200
+     ],
+     "First paragraph line one"
+    ],
+    [
+     [
+      30,
+      210,
+      370,
+      240
+     ],
+     "and line two."
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "blocks": [
+    {
+     "bbox": [
+      20,
+      20,
+      380,
+      60
+     ],
+     "content": "before the table ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 0,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 20.0,
+     "text_line_width": 340.0
+    },
+    {
+     "bbox": [
+      40,
+      80,
+      360,
+      260
+     ],
+     "content": "<table><tr><td>cell</td></tr></table>",
+     "direction": "horizontal",
+     "image_path": "imgs/img_in_table_box_40_80_360_260.jpg",
+     "index": 1,
+     "label": "table",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": null,
+     "text_line_height": 1.0,
+     "text_line_width": 1.0
+    },
+    {
+     "bbox": [
+      60,
+      280,
+      340,
+      320
+     ],
+     "content": "E = mc^2",
+     "direction": "horizontal",
+     "image_path": "imgs/img_in_formula_box_60_280_340_320.jpg",
+     "index": 2,
+     "label": "formula",
+     "num_of_lines": 1,
+     "order_index": 2,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 70.0,
+     "text_line_height": 30.0,
+     "text_line_width": 260.0
+    },
+    {
+     "bbox": [
+      20,
+      340,
+      380,
+      420
+     ],
+     "content": "after the formula ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 3,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 3,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "table_and_formula",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "text",
+     [
+      20.3,
+      20.5,
+      380.7,
+      60.2
+     ],
+     0.97
+    ],
+    [
+     "table",
+     [
+      40.6,
+      80.4,
+      360.9,
+      260.8
+     ],
+     0.96
+    ],
+    [
+     "formula",
+     [
+      60.2,
+      280.6,
+      340.4,
+      320.9
+     ],
+     0.94
+    ],
+    [
+     "text",
+     [
+      20.8,
+      340.3,
+      380.1,
+      420.6
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      30,
+      370,
+      50
+     ],
+     "before the table"
+    ],
+    [
+     [
+      70,
+      285,
+      330,
+      315
+     ],
+     "E = mc^2"
+    ],
+    [
+     [
+      30,
+      350,
+      370,
+      380
+     ],
+     "after the formula"
+    ]
+   ],
+   "tables": [
+    "<table><tr><td>cell</td></tr></table>"
+   ],
+   "threshold": 0.5
+  },
+  {
+   "blocks": [
+    {
+     "bbox": [
+      60,
+      110,
+      340,
+      360
+     ],
+     "content": "",
+     "direction": "horizontal",
+     "image_path": "imgs/img_in_image_box_60_110_340_360.jpg",
+     "index": 0,
+     "label": "image",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": null,
+     "text_line_height": 1.0,
+     "text_line_width": 1.0
+    },
+    {
+     "bbox": [
+      150,
+      366,
+      250,
+      380
+     ],
+     "content": "Fig. 1",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 1,
+     "label": "vision_footnote",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 160.0,
+     "text_line_height": 10.0,
+     "text_line_width": 80.0
+    },
+    {
+     "bbox": [
+      20,
+      420,
+      380,
+      560
+     ],
+     "content": "body text after the figure ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 2,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "vision_footnote_relabel",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "image",
+     [
+      60.4,
+      110.2,
+      340.6,
+      360.8
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      150.3,
+      366.4,
+      250.7,
+      380.2
+     ],
+     0.9
+    ],
+    [
+     "text",
+     [
+      20.5,
+      420.6,
+      380.3,
+      560.9
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [],
+   "spans": [
+    [
+     [
+      160,
+      368,
+      240,
+      378
+     ],
+     "Fig. 1"
+    ],
+    [
+     [
+      30,
+      430,
+      370,
+      460
+     ],
+     "body text after the figure"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "blocks": [
+    {
+     "bbox": [
+      20,
+      5,
+      380,
+      25
+     ],
+     "content": "running header ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 0,
+     "label": "header",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 14.0,
+     "text_line_width": 340.0
+    },
+    {
+     "bbox": [
+      20,
+      60,
+      380,
+      500
+     ],
+     "content": "body ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 1,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    },
+    {
+     "bbox": [
+      20,
+      520,
+      380,
+      560
+     ],
+     "content": "a footnote ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 2,
+     "label": "footnote",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "masked_labels_no_order_index",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "header",
+     [
+      20.2,
+      5.4,
+      380.6,
+      25.8
+     ],
+     0.9
+    ],
+    [
+     "text",
+     [
+      20.4,
+      60.2,
+      380.8,
+      500.6
+     ],
+     0.97
+    ],
+    [
+     "footnote",
+     [
+      20.6,
+      520.3,
+      380.2,
+      560.7
+     ],
+     0.9
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      8,
+      370,
+      22
+     ],
+     "running header"
+    ],
+    [
+     [
+      30,
+      70,
+      370,
+      100
+     ],
+     "body"
+    ],
+    [
+     [
+      30,
+      525,
+      370,
+      555
+     ],
+     "a footnote"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "blocks": [
+    {
+     "bbox": [
+      20,
+      20,
+      190,
+      280
+     ],
+     "content": "left column ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 0,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      210,
+      20,
+      380,
+      280
+     ],
+     "content": "right column ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 1,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 2,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 220.0,
+     "text_line_height": 30.0,
+     "text_line_width": 150.0
+    },
+    {
+     "bbox": [
+      20,
+      320,
+      380,
+      560
+     ],
+     "content": "bottom band ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 2,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 3,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "two_detected_regions",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "text",
+     [
+      20.3,
+      20.6,
+      190.8,
+      280.4
+     ],
+     0.97
+    ],
+    [
+     "text",
+     [
+      210.5,
+      20.2,
+      380.9,
+      280.7
+     ],
+     0.97
+    ],
+    [
+     "text",
+     [
+      20.7,
+      320.4,
+      380.5,
+      560.2
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [
+    [
+     "Region",
+     [
+      15.2,
+      15.6,
+      390.4,
+      290.8
+     ],
+     0.9
+    ],
+    [
+     "Region",
+     [
+      15.8,
+      310.2,
+      390.6,
+      570.4
+     ],
+     0.9
+    ]
+   ],
+   "spans": [
+    [
+     [
+      30,
+      30,
+      180,
+      60
+     ],
+     "left column"
+    ],
+    [
+     [
+      220,
+      30,
+      370,
+      60
+     ],
+     "right column"
+    ],
+    [
+     [
+      30,
+      330,
+      370,
+      360
+     ],
+     "bottom band"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "blocks": [
+    {
+     "bbox": [
+      40,
+      40,
+      360,
+      220
+     ],
+     "content": "",
+     "direction": "horizontal",
+     "image_path": "imgs/img_in_table_box_40_40_360_220.jpg",
+     "index": 0,
+     "label": "table",
+     "num_of_lines": 1,
+     "order_index": null,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": null,
+     "text_line_height": 1.0,
+     "text_line_width": 1.0
+    },
+    {
+     "bbox": [
+      20,
+      240,
+      380,
+      400
+     ],
+     "content": "text under the bare table ",
+     "direction": "horizontal",
+     "image_path": null,
+     "index": 1,
+     "label": "text",
+     "num_of_lines": 1,
+     "order_index": 1,
+     "seg_end_coordinate": null,
+     "seg_start_coordinate": 30.0,
+     "text_line_height": 30.0,
+     "text_line_width": 340.0
+    }
+   ],
+   "case": "table_without_result",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "table",
+     [
+      40.2,
+      40.8,
+      360.6,
+      220.3
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      20.4,
+      240.6,
+      380.8,
+      400.2
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "model_calls": [],
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      250,
+      370,
+      280
+     ],
+     "text under the bare table"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  }
+ ],
+ "schema_version": "paddleocr-rust/layout-assembly-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 inference/pipelines/layout_parsing/pipeline_v2.py standardized_data + get_layout_parsing_objects + sort_layout_parsing_blocks + the order_index tail"
+}

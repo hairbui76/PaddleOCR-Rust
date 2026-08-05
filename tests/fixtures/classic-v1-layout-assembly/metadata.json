@@ -1,0 +1,39 @@
+{
+ "fixture_id": "classic-v1-layout-assembly",
+ "kind": "layout_assembly_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/layout,regions,spans,tables",
+  "sha256": "e6cf5e689ca852897edfcd5b35e9df84ae30e512f5f2ba8fea22056bff377941",
+  "sha256_scope": "No image input beyond a zero-filled shape. Every case is synthetic layout, region, span, and table-html specs written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_layout_assembly_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py standardized_data, get_layout_parsing_objects, sort_layout_parsing_blocks, get_layout_parsing_res (order_index tail)",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/layout_objects.py LayoutBlock, LayoutRegion",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/setting.py BLOCK_LABEL_MAP"
+  ],
+  "capture_method": "The pinned post-model chain was executed unbound over six synthetic scenarios: standardized_data into get_layout_parsing_objects into sort_layout_parsing_blocks into the order_index numbering with the pipeline's default markdown_ignore_labels. The same shape-keyed stub recognizer as the standardized-data capture stands in for the text model (never reached by text-labelled spans in the assembly stage; its call log is recorded). Scenarios cover table pred_html injection and its image-path stamp, the formula-label OCR re-matching, the vision_footnote relabel skipping order_index, masked labels ordered but unnumbered, two detected regions flattening in nested order, and a table block with no table results.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "e6cf5e689ca852897edfcd5b35e9df84ae30e512f5f2ba8fea22056bff377941",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/layout-assembly-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "structure_assembly::tests::the_captured_assemblies_are_reproduced"
+ ],
+ "limitations": [
+  "Seal and chart result lists are empty by construction: those recognizers are off in this port's supported mode, so their content branches are dead code upstream too.",
+  "The recognizer is the shape-keyed stub shared with classic-v1-standardized-data; real models join in the end-to-end slice.",
+  "block.image records only the path here; the actual pixel crop is an API-level concern outside this fixture."
+ ]
+}
