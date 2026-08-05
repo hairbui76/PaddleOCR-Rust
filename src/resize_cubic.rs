@@ -27,25 +27,44 @@
 //! rather than on integers, and dropping it is the classic off-by-half that
 //! produces an image which looks right and matches nothing.
 //!
-//! # A known residual divergence
+//! # The divergence, and what it turned out to be
 //!
-//! This reproduces all five committed cases byte for byte, and it does **not**
-//! reproduce OpenCV exactly at page scale. A `297x421` to `800x800` resize
-//! differs in `24` bytes out of `1,920,000` — roughly one pixel in eighty
-//! thousand, each off by one.
+//! This reproduces all five committed cases byte for byte and differs from the
+//! captured page-scale references by a handful of bytes — `18` of `1,920,000`
+//! at `297x421 → 800x800`, `7` of `1,228,800` at `640`, `0` in three other
+//! page-scale cases — each off by exactly one.
 //!
-//! The cause is that OpenCV's 8-bit cubic path is **fixed point**: coefficients
-//! are quantized to `i16` at `1 << 11` and accumulated in integers, the way
-//! `src/resize.rs` already reproduces for the linear kernel. Two attempts at
-//! that arithmetic here were **worse** than this float accumulator — `82,990`
-//! and `73,910` mismatching bytes — which means the pass structure was being
-//! guessed rather than read, and guessing is what this project's method exists
-//! to avoid.
+//! Seven implementation variants and five diagnostic probes went into
+//! explaining that residue, and the answer is not in this crate:
+//! **the capture is Intel IPP's cubic, not OpenCV's**. The `cv2` build the
+//! oracle ran on dispatches ordinary images to IPP, and
+//! `cv2.setUseOptimized(False)` — same build, same input — changes the output
+//! in `73,564` bytes. There are two upstream answers, and they disagree with
+//! each other three thousand times more than this port disagrees with either's
+//! nearest one.
 //!
-//! So the float version stands, with the divergence measured and stated rather
-//! than rounded away. It also stands as a warning about corpus size: the five
-//! committed cases total about `2,600` pixels, and a one-in-eighty-thousand
-//! defect cannot appear in `2,600` samples. Only a page-sized case found it.
+//! Three findings from the diagnosis, each checked by experiment:
+//!
+//! - **`resize.cpp` never ran.** An exact model of OpenCV's own 8-bit path —
+//!   `f32` cubic coefficients quantized to `i16` at `1 << 11` by `cvRound`,
+//!   integer accumulation, one descale by `22` — reproduces a degenerate
+//!   one-row resize **perfectly** (IPP rejects it, so the fallback runs) and
+//!   sits `~74,000` bytes from the captured page. The earlier fixed-point
+//!   attempts here were not wrong about the arithmetic; they were faithfully
+//!   implementing a code path the capture never took.
+//! - **The coefficients are float and exact.** Impulse-response probes — a
+//!   single `255` pixel resized through `cv2` — match this module's `f32`
+//!   weights value for value, and reject the `1 << 11` quantization.
+//! - **The last bytes are FMA contraction.** Accumulating both passes with
+//!   fused multiply-adds in reverse tap order — the shape a vectorizing
+//!   compiler gives `S0*b0 + S1*b1 + S2*b2 + S3*b3` — tightened `23` to `18`
+//!   without touching anything else. What remains is the distance to a
+//!   proprietary implementation with no source to read, and it is bounded by
+//!   tests rather than pursued further.
+//!
+//! It also stands as a warning about corpus size: the five committed cases
+//! total about `2,600` pixels, and a one-in-eighty-thousand defect cannot
+//! appear in `2,600` samples. Only a page-sized case found it.
 //!
 //! # Why nothing calls this yet
 //!
@@ -108,18 +127,18 @@ pub(crate) fn classic_cubic_resize(
                 let mut horizontal = [0.0_f32; 4];
                 for (tap, (sample_y, _)) in row_taps.iter().enumerate() {
                     let mut sum = 0.0_f32;
-                    for (sample_x, weight_x) in column_taps {
+                    for (sample_x, weight_x) in column_taps.iter().rev() {
                         let index = ((*sample_y as usize) * (source_width as usize)
                             + *sample_x as usize)
                             * channels
                             + channel;
-                        sum += weight_x * f32::from(source_pixels[index]);
+                        sum = weight_x.mul_add(f32::from(source_pixels[index]), sum);
                     }
                     horizontal[tap] = sum;
                 }
                 let mut accumulated = 0.0_f32;
-                for (tap, (_, weight_y)) in row_taps.iter().enumerate() {
-                    accumulated += horizontal[tap] * weight_y;
+                for (tap, (_, weight_y)) in row_taps.iter().enumerate().rev() {
+                    accumulated = horizontal[tap].mul_add(*weight_y, accumulated);
                 }
                 pixels.push(saturate(accumulated));
             }
@@ -287,7 +306,7 @@ mod tests {
         let height = document["height"].as_u64().unwrap_or(421) as u32;
         let side = document["target"].as_u64().unwrap_or(800) as u32;
         let seed = document["seed"].as_u64().unwrap_or(1) as usize;
-        let bound = document["bound"].as_u64().unwrap_or(23) as usize;
+        let bound = document["bound"].as_u64().unwrap_or(18) as usize;
 
         let source = synthetic(seed, width, height);
         let target = match ImageDimensions::new(side, side) {

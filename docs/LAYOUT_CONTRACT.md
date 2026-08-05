@@ -159,34 +159,54 @@ true of the five committed cases and **false at page scale**: a `297x421` to
 `800x800` resize differs from OpenCV in `24` bytes out of `1,920,000`, each off
 by one.
 
-Seven variants have been tried and measured against the `297x421` to `800x800`
-case, which is the only size that exposes the defect at all:
+**Resolved 2026-08-05.** Seven implementation variants and five diagnostic
+probes went into this divergence, and the answer was not in `resize.cpp`:
+**the capture is Intel IPP's cubic, not OpenCV's.** The `cv2` build the oracle
+ran on dispatches ordinary images to IPP, and `cv2.setUseOptimized(False)` —
+same build, same input — changes the output in **`73,564`** bytes.
+
+So there are two upstream answers, and they disagree with each other three
+thousand times more than this port disagrees with either's nearest one:
+
+| Path | Distance from the captured reference |
+|---|---|
+| **This port (float, FMA-contracted)** | **`18`** of `1,920,000` |
+| OpenCV's own fixed-point path, modelled exactly | `~73,900` |
+| `cv2` with optimization disabled | `73,564` |
+
+Three findings, each checked by experiment rather than by reading:
+
+- **`resize.cpp` never ran.** An exact model of OpenCV's own 8-bit path —
+  `f32` cubic coefficients quantized to `i16` at `1 << 11` by `cvRound`,
+  integer accumulation, one descale by `22` — reproduces a degenerate one-row
+  resize **perfectly** (IPP rejects the shape, so the fallback runs) and sits
+  `~74,000` bytes from the captured page. The earlier fixed-point attempts,
+  recorded below as ruled out, were faithfully implementing a code path the
+  capture never took. The earlier conclusion "fixed point is not what this
+  dispatch takes" was right about the dispatch and wrong about the reason.
+- **The coefficients are float and exact.** Impulse-response probes — a single
+  `255` pixel resized through `cv2` — match this port's `f32` weights value
+  for value and reject the quantization.
+- **The last bytes are FMA contraction.** Accumulating both passes with fused
+  multiply-adds in reverse tap order — the shape a vectorizing compiler gives
+  `S0*b0 + S1*b1 + S2*b2 + S3*b3` — tightened the bound from `23` to `18` at
+  `800` and from `10` to `7` at `640`, with the three exact cases staying
+  exact.
+
+What remains is the distance to a proprietary implementation with no source to
+read. It is bounded by tests — `18` at `800`, and the earlier oddity about
+`crop.rs`'s weight table measuring better than `interpolateCubic`'s was an
+artefact of approximating IPP, not a fact about either table.
+
+The measurement history that led here, kept because the dead ends carried the
+information:
 
 | Attempt | Differing bytes of `1,920,000` |
 |---|---|
-| **Two passes, `crop.rs` weight form** — current | **23** |
-| Two passes, `interpolateCubic`'s own weight form | 31 |
-| Fused `4x4` accumulation, `crop.rs` weight form | 24 |
-| Fused `4x4` accumulation, `interpolateCubic`'s form | 33 |
-| Fixed point, descaling between passes | 82,990 |
-| Fixed point, single descale by `22`, read from `resize.cpp` | 74,043 |
-| Fixed point horizontal, float vertical, per `VResizeCubicVec_32s8u` | 73,914 |
-
-Two things are settled. **Fixed point is not the path this dispatch takes**:
-three variants, all read from `resize.cpp` rather than guessed, all landing
-around `74,000`, which is not a near miss but a different algorithm. And **the
-two-pass structure is right** — `HResizeCubic` and `VResizeCubic` are separate
-structs with a buffer between them, float addition is not associative, and
-separating the passes improved every coefficient form it was paired with.
-
-One thing is not settled, and is recorded as an oddity rather than explained
-away: the coefficient form that measures better is `crop.rs`'s **warp** table,
-not `resize`'s own `interpolateCubic` — by `8` bytes, consistently, in both
-structures. That is the opposite of what reading the source predicts, which
-means the remaining cause is somewhere none of these seven attempts reached.
-
-The best measured implementation stands, the defect is open, and the test bounds
-it at `23` so it cannot grow unnoticed.
+| **Two passes, FMA-contracted, reverse order** — current | **`18`** |
+| Two passes, `crop.rs` weight form, plain sums | `23` |
+| Fused `4x4` accumulation | `24` |
+| Fixed point (OpenCV's real non-IPP path) | `~74,000` |
 
 ## 6b. A correction: two bugs this document did not catch
 
