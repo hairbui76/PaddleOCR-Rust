@@ -220,7 +220,48 @@ def zero_pages() -> bytes:
     return pdf.serialize(root)
 
 
+def mixed_pages() -> bytes:
+    """Two pages: one that renders, one that cannot.
+
+    The document that makes the partial-failure policy testable. Page one is a
+    plain filled rectangle; page two draws a form XObject that draws itself, the
+    case measured to abort the bare renderer. A per-page policy must return a
+    result for page one and a typed error for page two — an all-or-nothing
+    implementation would return neither, and a best-effort one would return page
+    one and say nothing about page two.
+    """
+    pdf = Pdf()
+    first_contents = pdf.stream("", b"0.1 0.1 0.1 rg 20 20 160 160 re f\n")
+    form = pdf.reserve()
+    body = b"q 0.99 0 0 0.99 1 1 cm /Fm0 Do Q\n0 0 0 rg 0 0 10 10 re f\n"
+    head = (
+        f"<< /Type /XObject /Subtype /Form /BBox [0 0 100 100] "
+        f"/Resources << /XObject << /Fm0 {form} 0 R >> >> /Length {len(body)} >>\n"
+        f"stream\n"
+    ).encode("latin-1")
+    pdf.put(form, head + body + b"\nendstream")
+    second_contents = pdf.stream("", b"q /Fm0 Do Q\n")
+
+    pages = pdf.reserve()
+    first = pdf.add(
+        f"<< /Type /Page /Parent {pages} 0 R /MediaBox [0 0 200 200] "
+        f"/Resources << >> /Contents {first_contents} 0 R >>".encode("latin-1")
+    )
+    second = pdf.add(
+        f"<< /Type /Page /Parent {pages} 0 R /MediaBox [0 0 200 200] "
+        f"/Resources << /XObject << /Fm0 {form} 0 R >> >> "
+        f"/Contents {second_contents} 0 R >>".encode("latin-1")
+    )
+    pdf.put(
+        pages,
+        f"<< /Type /Pages /Kids [{first} 0 R {second} 0 R] /Count 2 >>".encode("latin-1"),
+    )
+    root = pdf.add(f"<< /Type /Catalog /Pages {pages} 0 R >>".encode("latin-1"))
+    return pdf.serialize(root)
+
+
 CASES = {
+    "mixed_pages": mixed_pages,
     "truncated_header": truncated_header,
     "truncated_body": truncated_body,
     "no_xref": no_xref,
