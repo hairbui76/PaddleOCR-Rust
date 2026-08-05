@@ -284,8 +284,312 @@ pub(crate) fn simplify_table(table_html: &str) -> String {
     format!("\n{stripped}")
 }
 
+/// One ordered block of a parsed document: a label and its text content.
+#[derive(Clone, Debug)]
+pub struct DocumentBlock {
+    /// The layout label, deciding which formatter runs.
+    pub label: String,
+    /// The block's recognized text.
+    pub content: String,
+}
+
+/// The geometry `paragraph_continues` reads, in page coordinates.
+///
+/// `seg_*` are the first and last **text segment** edges inside the block,
+/// where `start`/`end` are the block's own; the difference between them is
+/// what distinguishes a full last line from a short one.
+#[derive(Clone, Copy, Debug)]
+pub struct BlockGeometry {
+    /// The block's left edge.
+    pub start: f64,
+    /// The block's right edge.
+    pub end: f64,
+    /// The first text segment's left edge.
+    pub seg_start: f64,
+    /// The last text segment's right edge.
+    pub seg_end: f64,
+    /// How many text lines the block holds.
+    pub lines: u32,
+    /// The block's width.
+    pub width: f64,
+}
+
+/// Upstream's `get_seg_flag`: does this block continue the previous paragraph?
+///
+/// Returns `(starts_new_segment, ends_segment)`. A `false` start is what makes
+/// [`assemble_markdown`] join two `text` blocks without a separator. The `10`
+/// pixel tolerances and the multi-line requirement are upstream's own.
+#[must_use]
+pub fn paragraph_continues(block: BlockGeometry, previous: Option<BlockGeometry>) -> (bool, bool) {
+    let mut start_flag = true;
+    let mut context_left = block.start;
+    let mut context_right = block.end;
+
+    match previous {
+        Some(prev) => {
+            let mut prev_end_space_small = (prev.end - prev.seg_end).abs() < 10.0;
+            let overlap = context_left < prev.end && context_right > prev.start;
+            let edge_distance = if overlap {
+                context_left = prev.start.min(context_left);
+                context_right = prev.end.max(context_right);
+                prev_end_space_small = (context_right - prev.seg_end).abs() < 10.0;
+                0.0
+            } else {
+                (block.start - prev.end).abs()
+            };
+            let current_start_space_small = block.seg_start - context_left < 10.0;
+            if prev_end_space_small
+                && current_start_space_small
+                && prev.lines > 1
+                && edge_distance < prev.width.max(block.width)
+            {
+                start_flag = false;
+            }
+        }
+        None => {
+            if block.seg_start - context_left < 10.0 {
+                start_flag = false;
+            }
+        }
+    }
+    let end_flag = context_right - block.seg_end >= 10.0;
+    (start_flag, end_flag)
+}
+
+/// `merge_formula_and_number`: a formula and its equation number, as LaTeX.
+///
+/// The `$$` wrapper is stripped before re-wrapping, so an already-wrapped and
+/// a bare formula come out identically.
+#[must_use]
+pub fn merge_formula_and_number(formula: &str, number: &str) -> String {
+    let inner = formula.replace("$$", "");
+    let inner = inner.trim();
+    format!("$${inner} \\tag*{{{number}}}$$")
+}
+
+/// Formats one block through the label map this port implements.
+///
+/// Returns `None` for a label with no handler — image, chart, formula, and
+/// seal are artifact-blocked, and an unknown label is upstream's own skip.
+#[must_use]
+pub fn format_block(block: &DocumentBlock) -> Option<String> {
+    let content = block.content.as_str();
+    Some(match block.label.as_str() {
+        "paragraph_title" => format_paragraph_title(content, None),
+        "abstract_title" | "reference_title" | "content_title" => format_title(content),
+        "doc_title" => collapse_soft_newlines(&format!("# {content}")),
+        "table_title" | "figure_title" | "chart_title" | "vision_footnote" | "text" | "ocr"
+        | "vertical_text" | "reference_content" => normalize_newlines(content),
+        "abstract" => format_first_line(content, &["摘要", "abstract"], "## ", "\n", " "),
+        "content" => content.replace("-\n", "  \n").replace('\n', "  \n"),
+        // The reference handler splits on newlines, so a heading is only
+        // rewritten when it sits alone on the first line.
+        "reference" => format_first_line(content, &["参考文献", "references"], "## ", "", "\n"),
+        _ => return None,
+    })
+}
+
+/// Assembles ordered blocks into one Markdown document.
+///
+/// Upstream's `MarkdownConverter.convert`: each block is formatted by its
+/// label's handler and appended with a blank line between blocks — except that
+/// a `text` block directly after a `text` block whose geometry says the
+/// paragraph continues is appended with **no** separator. Blocks with no
+/// handler contribute nothing, including no separator.
+#[must_use]
+pub fn assemble_markdown(blocks: &[(DocumentBlock, Option<BlockGeometry>)]) -> String {
+    let mut markdown = String::new();
+    let mut last_label: Option<&str> = None;
+    let mut previous_geometry: Option<BlockGeometry> = None;
+
+    for (block, geometry) in blocks {
+        let Some(formatted) = format_block(block) else {
+            continue;
+        };
+        let continues = match geometry {
+            Some(geometry) => {
+                let (start, _) = paragraph_continues(*geometry, previous_geometry);
+                previous_geometry = Some(*geometry);
+                !start
+            }
+            None => false,
+        };
+        // A continuing text paragraph and the document's first block both
+        // append bare; the cases are distinct upstream and share a body here.
+        let joined_text = block.label == "text" && last_label == Some("text") && continues;
+        if !joined_text && !markdown.is_empty() {
+            markdown.push_str("\n\n");
+        }
+        markdown.push_str(&formatted);
+        last_label = Some(block.label.as_str());
+    }
+    markdown
+}
+
 #[cfg(test)]
 mod tests {
+    mod assembly {
+        use super::super::*;
+
+        use serde_json::Value;
+
+        const FIXTURE: &str = include_str!("../tests/fixtures/classic-v1-assembly/expected.json");
+
+        fn fixture() -> Value {
+            match serde_json::from_str(FIXTURE) {
+                Ok(value) => value,
+                Err(error) => panic!("fixture: {error}"),
+            }
+        }
+
+        /// Every captured document, byte for byte.
+        #[test]
+        fn the_captured_assemblies_are_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["assembly"].as_array() {
+                Some(value) => value,
+                None => panic!("assembly"),
+            };
+            assert_eq!(cases.len(), 5);
+            for case in cases {
+                let name = case["case"].as_str().unwrap_or("?");
+                let blocks: Vec<(DocumentBlock, Option<BlockGeometry>)> =
+                    match case["blocks"].as_array() {
+                        Some(values) => values
+                            .iter()
+                            .map(|entry| {
+                                let entry = match entry.as_array() {
+                                    Some(value) => value,
+                                    None => panic!("{name}: block"),
+                                };
+                                (
+                                    DocumentBlock {
+                                        label: entry[0].as_str().unwrap_or_default().to_owned(),
+                                        content: entry[1].as_str().unwrap_or_default().to_owned(),
+                                    },
+                                    None,
+                                )
+                            })
+                            .collect(),
+                        None => panic!("{name}: blocks"),
+                    };
+                assert_eq!(
+                    assemble_markdown(&blocks),
+                    case["markdown"].as_str().unwrap_or_default(),
+                    "{name}"
+                );
+            }
+        }
+
+        /// The continuity rule joins or separates exactly as captured.
+        #[test]
+        fn the_captured_continuity_is_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["continuity"].as_array() {
+                Some(value) => value,
+                None => panic!("continuity"),
+            };
+            assert_eq!(cases.len(), 2);
+            for case in cases {
+                let name = case["case"].as_str().unwrap_or("?");
+                let geometry = |key: &str| -> BlockGeometry {
+                    let g = &case[key];
+                    BlockGeometry {
+                        start: g["start_coordinate"].as_f64().unwrap_or(0.0),
+                        end: g["end_coordinate"].as_f64().unwrap_or(0.0),
+                        seg_start: g["seg_start_coordinate"].as_f64().unwrap_or(0.0),
+                        seg_end: g["seg_end_coordinate"].as_f64().unwrap_or(0.0),
+                        lines: g["num_of_lines"].as_u64().unwrap_or(1) as u32,
+                        width: g["width"].as_f64().unwrap_or(0.0),
+                    }
+                };
+                let (first, second) = (geometry("first"), geometry("second"));
+                let (start, end) = paragraph_continues(second, Some(first));
+                assert_eq!(
+                    start,
+                    case["seg_start"].as_bool().unwrap_or(true),
+                    "{name}: start flag"
+                );
+                assert_eq!(
+                    end,
+                    case["seg_end"].as_bool().unwrap_or(true),
+                    "{name}: end flag"
+                );
+
+                let blocks = vec![
+                    (
+                        DocumentBlock {
+                            label: "text".to_owned(),
+                            content: "first para".to_owned(),
+                        },
+                        Some(first),
+                    ),
+                    (
+                        DocumentBlock {
+                            label: "text".to_owned(),
+                            content: "second para".to_owned(),
+                        },
+                        Some(second),
+                    ),
+                ];
+                assert_eq!(
+                    assemble_markdown(&blocks),
+                    case["markdown"].as_str().unwrap_or_default(),
+                    "{name}: assembled"
+                );
+            }
+        }
+
+        /// The captured formula merges, byte for byte.
+        #[test]
+        fn the_captured_formula_merges_are_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["formula_merges"].as_array() {
+                Some(value) => value,
+                None => panic!("formula_merges"),
+            };
+            assert_eq!(cases.len(), 3);
+            for case in cases {
+                assert_eq!(
+                    merge_formula_and_number(
+                        case["formula"].as_str().unwrap_or_default(),
+                        case["number"].as_str().unwrap_or_default(),
+                    ),
+                    case["merged"].as_str().unwrap_or_default()
+                );
+            }
+        }
+
+        /// A label with no handler contributes nothing, including no separator.
+        #[test]
+        fn an_unhandled_label_leaves_no_trace() {
+            let blocks = vec![
+                (
+                    DocumentBlock {
+                        label: "text".to_owned(),
+                        content: "Before.".to_owned(),
+                    },
+                    None,
+                ),
+                (
+                    DocumentBlock {
+                        label: "image".to_owned(),
+                        content: "artifact-blocked".to_owned(),
+                    },
+                    None,
+                ),
+                (
+                    DocumentBlock {
+                        label: "text".to_owned(),
+                        content: "After.".to_owned(),
+                    },
+                    None,
+                ),
+            ];
+            assert_eq!(assemble_markdown(&blocks), "Before.\n\nAfter.");
+        }
+    }
+
     use super::*;
 
     use serde_json::Value;

@@ -1,0 +1,42 @@
+{
+ "fixture_id": "classic-v1-assembly",
+ "kind": "assembly_and_table_metric_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/assembly,#/structure_metric,#/continuity",
+  "sha256": "abe430aefbf1729c084bd505e665f054975c158b1c82c506909d500dd908178c",
+  "sha256_scope": "No image input. Every case is token lists, labelled text blocks, or block geometry written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_assembly_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "ppocr/metrics/table_metric.py",
+   "paddlex 3.7.2: inference/common/result/converter/markdown_converter.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py"
+  ],
+  "capture_method": "TableStructureMetric was loaded from the pinned file with only its unused DetMetric import replaced, and executed; MarkdownConverter.convert, get_seg_flag, and merge_formula_and_number were imported from the pinned paddlex and executed.",
+  "environment": "python 3.12, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "abe430aefbf1729c084bd505e665f054975c158b1c82c506909d500dd908178c",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/assembly-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "markdown::tests::assembly::the_captured_assemblies_are_reproduced",
+  "markdown::tests::assembly::the_captured_continuity_is_reproduced",
+  "markdown::tests::assembly::the_captured_formula_merges_are_reproduced",
+  "metrics::tests::the_captured_table_structure_metric_is_reproduced"
+ ],
+ "limitations": [
+  "The assembly handler map holds only the labels whose formatters this port implements; image, chart, formula, and seal handlers are artifact-blocked, and blocks with those labels are skipped exactly as an unknown label is.",
+  "The structure metric compares concatenated token strings, so two different token lists can compare equal; the concat_hides_a_difference case pins that hazard rather than repairing it.",
+  "get_seg_flag is exercised on two geometry cases, one per branch of the continuity decision; the ten-pixel tolerances are upstream's."
+ ]
+}

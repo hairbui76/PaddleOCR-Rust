@@ -285,6 +285,45 @@ pub fn combine_results(counts: &[ImageCounts]) -> DetectionMetrics {
     }
 }
 
+/// `TableStructureMetric`'s epsilon — `1e-6`, **not** `RecMetric`'s `1e-5`.
+///
+/// Two metrics in the same upstream directory use two different epsilons, and
+/// mixing them up shifts every reported accuracy in the fifth decimal.
+pub const TABLE_METRIC_EPS: f64 = 1e-6;
+
+/// Exact-match accuracy over table structure token sequences.
+///
+/// Upstream compares `"".join(tokens)`, so two **different** token lists can
+/// compare equal — `["<td>", "</td>"]` and `["<td>", "</", "td>"]` concatenate
+/// identically. The captured `concat_hides_a_difference` case pins that hazard
+/// rather than repairing it: a metric that disagrees with the reference is not
+/// one this project can compare against.
+///
+/// `del_thead_tbody` strips the four section tags from **both** strings before
+/// comparing, which upstream exposes for evaluations that only care about the
+/// cell grid.
+#[must_use]
+pub fn table_structure_accuracy(
+    pairs: &[(Vec<String>, Vec<String>)],
+    del_thead_tbody: bool,
+) -> f64 {
+    let mut correct = 0_usize;
+    for (prediction, target) in pairs {
+        let mut predicted: String = prediction.concat();
+        let mut expected: String = target.concat();
+        if del_thead_tbody {
+            for tag in ["<thead>", "</thead>", "<tbody>", "</tbody>"] {
+                predicted = predicted.replace(tag, "");
+                expected = expected.replace(tag, "");
+            }
+        }
+        if predicted == expected {
+            correct += 1;
+        }
+    }
+    correct as f64 / (pairs.len() as f64 + TABLE_METRIC_EPS)
+}
+
 /// How `RecMetric` normalises a pair before comparing.
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 #[non_exhaustive]
@@ -614,6 +653,87 @@ mod tests {
             .abs()
                 < 1e-9
         );
+    }
+
+    /// The captured table-structure metric cases, exactly.
+    #[test]
+    fn the_captured_table_structure_metric_is_reproduced() {
+        const ASSEMBLY: &str = include_str!("../tests/fixtures/classic-v1-assembly/expected.json");
+        let fixture: Value = match serde_json::from_str(ASSEMBLY) {
+            Ok(value) => value,
+            Err(error) => panic!("fixture: {error}"),
+        };
+        let cases = match fixture["structure_metric"].as_array() {
+            Some(value) => value,
+            None => panic!("structure_metric"),
+        };
+        assert_eq!(cases.len(), 7);
+        let strings = |value: &Value| -> Vec<String> {
+            match value.as_array() {
+                Some(values) => values
+                    .iter()
+                    .map(|entry| entry.as_str().unwrap_or_default().to_owned())
+                    .collect(),
+                None => panic!("tokens"),
+            }
+        };
+        let mut corpus = Vec::new();
+        for case in cases {
+            let name = case["case"].as_str().unwrap_or("?");
+            let pair = (strings(&case["prediction"]), strings(&case["target"]));
+            let strip = case["del_thead_tbody"].as_bool().unwrap_or(false);
+            let accuracy = table_structure_accuracy(std::slice::from_ref(&pair), strip);
+            let expected = case["acc"].as_f64().unwrap_or(f64::NAN);
+            assert!(
+                (accuracy - expected).abs() < 1e-12,
+                "{name}: {accuracy} vs {expected}"
+            );
+            if !strip {
+                corpus.push(pair);
+            }
+        }
+        let corpus_accuracy = table_structure_accuracy(&corpus, false);
+        let expected = fixture["structure_metric_corpus"]["acc"]
+            .as_f64()
+            .unwrap_or(f64::NAN);
+        assert!(
+            (corpus_accuracy - expected).abs() < 1e-12,
+            "corpus: {corpus_accuracy} vs {expected}"
+        );
+    }
+
+    /// Concatenation can hide a real difference, and the fixture proves it.
+    ///
+    /// The two lists differ, their concatenations do not, and the metric counts
+    /// them correct. Pinned as a hazard rather than repaired: a metric that
+    /// disagrees with the reference is not one this project can compare
+    /// against.
+    #[test]
+    fn concatenation_hides_a_token_boundary_difference() {
+        let pair = (
+            vec![
+                "<tr>".to_owned(),
+                "<td></td>".to_owned(),
+                "</tr>".to_owned(),
+            ],
+            vec![
+                "<tr>".to_owned(),
+                "<td>".to_owned(),
+                "</td>".to_owned(),
+                "</tr>".to_owned(),
+            ],
+        );
+        assert_ne!(pair.0, pair.1, "the token lists genuinely differ");
+        let accuracy = table_structure_accuracy(&[pair], false);
+        assert!(accuracy > 0.999, "the metric counts them equal: {accuracy}");
+    }
+
+    /// The two epsilons are different numbers, deliberately.
+    #[test]
+    fn the_table_epsilon_is_not_the_recognition_epsilon() {
+        assert!((TABLE_METRIC_EPS - 1e-6).abs() < 1e-18);
+        assert!((METRIC_EPS - 1e-5).abs() < 1e-18);
+        assert_ne!(TABLE_METRIC_EPS, METRIC_EPS);
     }
 
     /// The epsilon means a perfect run does not score `1.0`.

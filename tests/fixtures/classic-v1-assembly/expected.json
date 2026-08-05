@@ -1,0 +1,268 @@
+{
+ "assembly": [
+  {
+   "blocks": [
+    [
+     "doc_title",
+     "A Study of Things"
+    ],
+    [
+     "text",
+     "First paragraph."
+    ],
+    [
+     "text",
+     "Second paragraph."
+    ],
+    [
+     "paragraph_title",
+     "1.2 Methods"
+    ],
+    [
+     "text",
+     "Body."
+    ]
+   ],
+   "case": "plain_document",
+   "markdown": "# A Study of Things\n\nFirst paragraph.\n\nSecond paragraph.\n\n### 1.2 Methods\n\nBody."
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     "Before."
+    ],
+    [
+     "mystery_label",
+     "This has no handler."
+    ],
+    [
+     "text",
+     "After."
+    ]
+   ],
+   "case": "unknown_label_is_skipped",
+   "markdown": "Before.\n\nAfter."
+  },
+  {
+   "blocks": [
+    [
+     "abstract",
+     "abstract This paper does things."
+    ],
+    [
+     "reference",
+     "references [1] someone"
+    ]
+   ],
+   "case": "abstract_and_reference",
+   "markdown": "## abstract\n This paper does things.\n\nreferences [1] someone"
+  },
+  {
+   "blocks": [],
+   "case": "empty_document",
+   "markdown": ""
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     "Only."
+    ]
+   ],
+   "case": "single_block",
+   "markdown": "Only."
+  }
+ ],
+ "continuity": [
+  {
+   "case": "continues",
+   "first": {
+    "bbox": [
+     0,
+     0,
+     100,
+     10
+    ],
+    "end_coordinate": 100,
+    "num_of_lines": 2,
+    "seg_end_coordinate": 95,
+    "seg_start_coordinate": 0,
+    "start_coordinate": 0,
+    "width": 100
+   },
+   "markdown": "first parasecond para",
+   "second": {
+    "bbox": [
+     0,
+     12,
+     100,
+     22
+    ],
+    "end_coordinate": 100,
+    "num_of_lines": 1,
+    "seg_end_coordinate": 40,
+    "seg_start_coordinate": 0,
+    "start_coordinate": 0,
+    "width": 100
+   },
+   "seg_end": true,
+   "seg_start": false
+  },
+  {
+   "case": "new_paragraph",
+   "first": {
+    "bbox": [
+     0,
+     0,
+     100,
+     10
+    ],
+    "end_coordinate": 100,
+    "num_of_lines": 1,
+    "seg_end_coordinate": 40,
+    "seg_start_coordinate": 0,
+    "start_coordinate": 0,
+    "width": 100
+   },
+   "markdown": "first para\n\nsecond para",
+   "second": {
+    "bbox": [
+     0,
+     12,
+     100,
+     22
+    ],
+    "end_coordinate": 100,
+    "num_of_lines": 1,
+    "seg_end_coordinate": 90,
+    "seg_start_coordinate": 20,
+    "start_coordinate": 0,
+    "width": 100
+   },
+   "seg_end": true,
+   "seg_start": true
+  }
+ ],
+ "formula_merges": [
+  {
+   "formula": "$$E = mc^2$$",
+   "merged": "$$E = mc^2 \\tag*{(1)}$$",
+   "number": "(1)"
+  },
+  {
+   "formula": "E = mc^2",
+   "merged": "$$E = mc^2 \\tag*{(2)}$$",
+   "number": "(2)"
+  },
+  {
+   "formula": "$$x$$",
+   "merged": "$$x \\tag*{}$$",
+   "number": ""
+  }
+ ],
+ "schema_version": "paddleocr-rust/assembly-oracle-capture/v1",
+ "structure_metric": [
+  {
+   "acc": 0.9999990000010001,
+   "case": "identical",
+   "del_thead_tbody": false,
+   "prediction": [
+    "<tr>",
+    "<td></td>",
+    "</tr>"
+   ],
+   "target": [
+    "<tr>",
+    "<td></td>",
+    "</tr>"
+   ]
+  },
+  {
+   "acc": 0.0,
+   "case": "differs",
+   "del_thead_tbody": false,
+   "prediction": [
+    "<tr>",
+    "<td></td>",
+    "</tr>"
+   ],
+   "target": [
+    "<tr>",
+    "<td></td>",
+    "<td></td>",
+    "</tr>"
+   ]
+  },
+  {
+   "acc": 0.9999990000010001,
+   "case": "concat_hides_a_difference",
+   "del_thead_tbody": false,
+   "prediction": [
+    "<tr>",
+    "<td></td>",
+    "</tr>"
+   ],
+   "target": [
+    "<tr>",
+    "<td>",
+    "</td>",
+    "</tr>"
+   ]
+  },
+  {
+   "acc": 0.9999990000010001,
+   "case": "concat_equal",
+   "del_thead_tbody": false,
+   "prediction": [
+    "<tr>",
+    "<td>"
+   ],
+   "target": [
+    "<tr><td>"
+   ]
+  },
+  {
+   "acc": 0.9999990000010001,
+   "case": "thead_stripped",
+   "del_thead_tbody": true,
+   "prediction": [
+    "<thead>",
+    "<tr>",
+    "</tr>",
+    "</thead>"
+   ],
+   "target": [
+    "<tr>",
+    "</tr>"
+   ]
+  },
+  {
+   "acc": 0.0,
+   "case": "thead_kept",
+   "del_thead_tbody": false,
+   "prediction": [
+    "<thead>",
+    "<tr>",
+    "</tr>",
+    "</thead>"
+   ],
+   "target": [
+    "<tr>",
+    "</tr>"
+   ]
+  },
+  {
+   "acc": 0.9999990000010001,
+   "case": "both_empty",
+   "del_thead_tbody": false,
+   "prediction": [],
+   "target": []
+  }
+ ],
+ "structure_metric_corpus": {
+  "acc": 0.6666665555555741,
+  "eps": 1e-06
+ },
+ "upstream": "PaddleOCR ppocr/metrics/table_metric.py; paddlex 3.7.2 inference/common/result/converter/markdown_converter.py and inference/pipelines/layout_parsing/utils.py get_seg_flag"
+}
