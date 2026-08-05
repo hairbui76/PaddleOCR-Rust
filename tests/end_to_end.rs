@@ -1399,3 +1399,232 @@ mod document_boundary {
         }
     }
 }
+
+/// The StructureV3 engine over explicitly provisioned models.
+///
+/// ```sh
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_DETECTOR_ONNX=<detector.onnx> \
+/// PADDLEOCR_RUST_RECOGNIZER_ONNX=<recognizer.onnx> \
+/// PADDLEOCR_RUST_DICTIONARY=<dict.txt> \
+/// PADDLEOCR_RUST_LAYOUT_ONNX=<PP-DocLayout_plus-L/inference.onnx> \
+/// PADDLEOCR_RUST_TABLE_CLS_ONNX=<PP-LCNet_x1_0_table_cls/inference.onnx> \
+/// PADDLEOCR_RUST_TABLE_CELL_ONNX=<RT-DETR-L_wired_table_cell_det/inference.onnx> \
+/// PADDLEOCR_RUST_TABLE_STRUCTURE_ONNX=<SLANeXt_wired/inference.onnx> \
+///   cargo test --features onnxruntime --test end_to_end -- --ignored --nocapture
+/// ```
+///
+/// The three table variables are optional as a trio: absent, the engine runs
+/// with table recognition off and table blocks render as image references.
+#[cfg(feature = "onnxruntime")]
+mod structure_provisioned {
+    use paddleocr_rust::api::{Artifacts, Dictionary, OcrOptions, parse_dictionary};
+    use paddleocr_rust::structure_engine::{StructureArtifacts, StructureEngine, StructureOptions};
+    use paddleocr_rust::table_engine::TableArtifacts;
+    use paddleocr_rust::table_pipeline::TableRoute;
+
+    const BENCHMARK_PAGE: &[u8] = include_bytes!("fixtures/classic-v1-benchmark-page/input.png");
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    fn dictionary() -> Dictionary {
+        let text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        }
+    }
+
+    /// Layout ordering, numbering, and Markdown are stable across two runs of
+    /// the same page, and the numbered blocks count only visualized labels.
+    #[test]
+    #[ignore = "STRUCT-001: needs explicitly provisioned models"]
+    fn the_structure_engine_parses_the_benchmark_page_deterministically() {
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let layout = env("PADDLEOCR_RUST_LAYOUT_ONNX");
+        let table_vars = (
+            std::env::var("PADDLEOCR_RUST_TABLE_CLS_ONNX"),
+            std::env::var("PADDLEOCR_RUST_TABLE_CELL_ONNX"),
+            std::env::var("PADDLEOCR_RUST_TABLE_STRUCTURE_ONNX"),
+        );
+        let table_paths = match table_vars {
+            (Ok(classifier), Ok(cells), Ok(structure)) => Some((classifier, cells, structure)),
+            _ => None,
+        };
+
+        let dictionary = dictionary();
+        let mut artifacts =
+            StructureArtifacts::new(Artifacts::new(&library, &detector, &recognizer), &layout);
+        if let Some((classifier, cells, structure)) = table_paths.as_ref() {
+            artifacts = artifacts.with_table(TableArtifacts::new(
+                &library,
+                classifier,
+                cells,
+                structure,
+                TableRoute::Wired,
+            ));
+        }
+        let engine = match StructureEngine::load(&artifacts, &dictionary) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        let options = StructureOptions::new(OcrOptions::default());
+        let first = match engine.parse_image(BENCHMARK_PAGE, &options) {
+            Ok(result) => result,
+            Err(error) => panic!("parse: {error}"),
+        };
+        let second = match engine.parse_image(BENCHMARK_PAGE, &options) {
+            Ok(result) => result,
+            Err(error) => panic!("parse again: {error}"),
+        };
+
+        assert!(!first.blocks.is_empty(), "the benchmark page has blocks");
+        assert_eq!(first.blocks, second.blocks, "blocks are deterministic");
+        assert_eq!(first.markdown, second.markdown, "markdown is deterministic");
+        assert!(!first.markdown.is_empty(), "the page renders some markdown");
+
+        // order_index is one-based, strictly increasing, and gap-free over
+        // the numbered blocks in reading order.
+        let numbered: Vec<u32> = first
+            .blocks
+            .iter()
+            .filter_map(|block| block.order_index)
+            .collect();
+        for (position, value) in numbered.iter().enumerate() {
+            assert_eq!(*value as usize, position + 1, "order_index sequence");
+        }
+        for block in &first.blocks {
+            assert!(
+                block.bbox[0] <= block.bbox[2] && block.bbox[1] <= block.bbox[3],
+                "block bbox is ordered: {:?}",
+                block.bbox
+            );
+        }
+
+        println!(
+            "structure: {} blocks ({} numbered), page {:?}, table={}, continuation {:?}",
+            first.blocks.len(),
+            numbered.len(),
+            first.page_size,
+            table_paths.is_some(),
+            first.continuation_flags,
+        );
+        for block in &first.blocks {
+            println!(
+                "  [{}] {:?} {} {:?} {:.60}",
+                block.index,
+                block.order_index,
+                block.label,
+                block.bbox,
+                block.content.replace('\n', "\\n"),
+            );
+        }
+        println!("markdown:\n{}", &first.markdown);
+    }
+}
+
+/// The same engine over a caller-supplied page, for local smoke runs.
+///
+/// Reads `PADDLEOCR_RUST_STRUCTURE_PAGE` (a PNG or JPEG path) on top of the
+/// variables above; without it the test reports itself as skipped and
+/// passes, so the `--ignored` sweep stays green on hosts that only
+/// provision models.
+#[cfg(feature = "onnxruntime")]
+mod structure_supplied_page {
+    use paddleocr_rust::api::{Artifacts, OcrOptions, parse_dictionary};
+    use paddleocr_rust::structure_engine::{StructureArtifacts, StructureEngine, StructureOptions};
+    use paddleocr_rust::table_engine::TableArtifacts;
+    use paddleocr_rust::table_pipeline::TableRoute;
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    #[test]
+    #[ignore = "STRUCT-001: needs explicitly provisioned models"]
+    fn the_structure_engine_parses_a_supplied_page() {
+        let Ok(page_path) = std::env::var("PADDLEOCR_RUST_STRUCTURE_PAGE") else {
+            println!("skipped: PADDLEOCR_RUST_STRUCTURE_PAGE is not set");
+            return;
+        };
+        let page = match std::fs::read(&page_path) {
+            Ok(bytes) => bytes,
+            Err(error) => panic!("read {page_path}: {error}"),
+        };
+
+        let library = env("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let layout = env("PADDLEOCR_RUST_LAYOUT_ONNX");
+        let dictionary_text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&dictionary_text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+
+        let mut artifacts =
+            StructureArtifacts::new(Artifacts::new(&library, &detector, &recognizer), &layout);
+        let table_vars = (
+            std::env::var("PADDLEOCR_RUST_TABLE_CLS_ONNX"),
+            std::env::var("PADDLEOCR_RUST_TABLE_CELL_ONNX"),
+            std::env::var("PADDLEOCR_RUST_TABLE_STRUCTURE_ONNX"),
+        );
+        let table_paths = match table_vars {
+            (Ok(classifier), Ok(cells), Ok(structure)) => Some((classifier, cells, structure)),
+            _ => None,
+        };
+        if let Some((classifier, cells, structure)) = table_paths.as_ref() {
+            artifacts = artifacts.with_table(TableArtifacts::new(
+                &library,
+                classifier,
+                cells,
+                structure,
+                TableRoute::Wired,
+            ));
+        }
+        let engine = match StructureEngine::load(&artifacts, &dictionary) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        let options = StructureOptions::new(OcrOptions::default());
+        let result = match engine.parse_image(&page, &options) {
+            Ok(result) => result,
+            Err(error) => panic!("parse: {error}"),
+        };
+        println!(
+            "structure({page_path}): {} blocks, page {:?}, continuation {:?}",
+            result.blocks.len(),
+            result.page_size,
+            result.continuation_flags,
+        );
+        for block in &result.blocks {
+            println!(
+                "  [{}] {:?} {} {:?} {:.60}",
+                block.index,
+                block.order_index,
+                block.label,
+                block.bbox,
+                block.content.replace('\n', "\\n"),
+            );
+        }
+        println!("markdown:\n{}", &result.markdown);
+    }
+}

@@ -637,7 +637,7 @@ impl OcrEngine {
     /// caller enabled without supplying its artifact is a typed error rather
     /// than a silent skip — an option that quietly does nothing is worse than
     /// one that refuses.
-    fn preprocess_document(
+    pub(crate) fn preprocess_document(
         &self,
         page: crate::crop::InterleavedImage,
         options: &OcrOptions,
@@ -737,6 +737,34 @@ impl OcrEngine {
     ) -> Result<Vec<TextLine>> {
         let bytes = crate::input::read_encoded_from(reader)?;
         self.recognize_image(&bytes, options)
+    }
+
+    /// The loaded models as the classic pipeline consumes them, for the
+    /// structure engine to compose without re-loading sessions.
+    pub(crate) fn classic_models(&self) -> crate::pipeline::ClassicModels<'_> {
+        crate::pipeline::ClassicModels {
+            detector: (&self.detector, &self.detector_contract),
+            recognizer: (&self.recognizer, &self.recognizer_contract),
+            dictionary: &self.dictionary,
+            orientation: self.orientation.as_ref().map(|(backend, contract)| {
+                (backend as &dyn crate::backend::InferenceBackend, contract)
+            }),
+        }
+    }
+
+    /// The recognizer alone, for the structure engine's crop re-recognition.
+    pub(crate) fn recognizer_parts(
+        &self,
+    ) -> (
+        &dyn crate::backend::InferenceBackend,
+        &crate::backend::ModelContract,
+        &CtcDictionary,
+    ) {
+        (
+            &self.recognizer,
+            &self.recognizer_contract,
+            &self.dictionary,
+        )
     }
 
     /// Runs the classic pipeline over an already decoded page.

@@ -98,6 +98,10 @@ mod score;
 #[allow(dead_code)]
 mod score_filter;
 mod structure_assembly;
+/// PP-StructureV3 over the provisioned models; off by default with the
+/// inference backend.
+#[cfg(feature = "onnxruntime")]
+pub mod structure_engine;
 mod structure_glue;
 pub mod structure_json;
 mod structure_standardize;
