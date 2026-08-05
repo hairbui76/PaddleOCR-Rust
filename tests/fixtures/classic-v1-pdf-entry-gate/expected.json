@@ -244,6 +244,10 @@
    "bytes": 641,
    "sha256": "edc6a19cac515b11ef9b75681162a4b8d26cd59f84d2b3e6e527b8d98d746bbe"
   },
+  "malformed/mixed_pages.pdf": {
+   "bytes": 932,
+   "sha256": "40ce7bc5fd838897b34b4295c52299f90385aa0b257cb6fb1eb1c28107edf2cc"
+  },
   "malformed/negative_dimensions.pdf": {
    "bytes": 467,
    "sha256": "2fc54ab1f6c09978e3a553fabf7662965a6a3b9a8623948a23feadaeecfb7b0f"

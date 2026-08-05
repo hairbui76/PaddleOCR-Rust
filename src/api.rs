@@ -219,6 +219,46 @@ pub fn decode_png(bytes: &[u8]) -> Result<(u32, u32)> {
 mod tests {
     use super::*;
 
+    /// `PdfPageRange` resolves to document-order indices, clamping the end and
+    /// refusing a start past it.
+    ///
+    /// The asymmetry is deliberate and worth pinning: a caller chunking a
+    /// document into fixed slices should be able to ask for the last chunk
+    /// without knowing the page count, so an over-long `count` clamps. A `first`
+    /// past the end selects nothing, which is an error rather than an empty
+    /// success, because an empty document result reads as "no text found".
+    #[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+    #[test]
+    fn a_page_range_resolves_in_document_order() {
+        assert_eq!(
+            PdfPageRange::all().resolve(3).unwrap_or_default(),
+            vec![0, 1, 2]
+        );
+        assert_eq!(
+            PdfPageRange::from(1, 1).resolve(3).unwrap_or_default(),
+            vec![1]
+        );
+        // Clamped, not refused.
+        assert_eq!(
+            PdfPageRange::from(1, 99).resolve(3).unwrap_or_default(),
+            vec![1, 2]
+        );
+        assert!(matches!(
+            PdfPageRange::from(3, 1).resolve(3),
+            Err(Error::InvalidInput {
+                field: "pdf.page_range.first",
+                ..
+            })
+        ));
+        assert!(matches!(
+            PdfPageRange::from(0, 0).resolve(3),
+            Err(Error::InvalidInput {
+                field: "pdf.page_range.count",
+                violation: InputViolation::Empty
+            })
+        ));
+    }
+
     #[test]
     fn a_dictionary_parses_one_entry_per_line() {
         let dictionary = match parse_dictionary("a\nb\nc\n", true) {
@@ -920,6 +960,222 @@ impl OcrEngine {
     #[deprecated(note = "JPEG is accepted too now; use detect_image")]
     pub fn detect_png(&self, png: &[u8], options: &OcrOptions) -> Result<Vec<DetectedRegion>> {
         self.detect_image(png, options)
+    }
+
+    /// `MPAGE-001`: recognizes a whole PDF, one result per page.
+    ///
+    /// The failure policy is the user's recorded decision: **one entry per
+    /// page**, each either recognized lines or a typed error naming why that
+    /// page stopped. A broken page does not fail the document and is never
+    /// silently missing, so a caller can decide whether a partial document is
+    /// useful — which is a judgement this library cannot make for them.
+    ///
+    /// Pages are processed in **document order**, and the order of
+    /// [`PdfDocumentResult::pages`] is that order, always. Nothing here spawns a
+    /// thread: `CONC-001` records that this project has no worker pool and no
+    /// scheduler, and a multipage loop is not the place to acquire one. A caller
+    /// who wants pages in parallel runs one engine per thread over disjoint
+    /// ranges, which [`PdfPageRange`] exists to express.
+    ///
+    /// The run control is checked **between pages**, which is the only place it
+    /// can be checked: a synchronous render cannot be interrupted from outside,
+    /// so the honest bound is one that refuses to start the next page rather than
+    /// one that pretends to stop the current one. A budget exhausted mid-document
+    /// therefore yields the pages that finished plus a `TimedOut` entry, not a
+    /// failed document.
+    #[cfg(feature = "pdf")]
+    pub fn recognize_pdf(
+        &self,
+        pdf: &[u8],
+        range: PdfPageRange,
+        options: &OcrOptions,
+    ) -> Result<PdfDocumentResult> {
+        let limits = crate::pdf::PdfLimits::default();
+        // Opening is a whole-document operation: a document that cannot be
+        // parsed, or is encrypted, has no pages to report failures against.
+        let document = crate::pdf::open(pdf.to_vec(), limits)?;
+        let page_count = document.page_count();
+        let selected = range.resolve(page_count)?;
+
+        let schedule = options.control.begin();
+        let mut pages = Vec::with_capacity(selected.len());
+        for index in selected {
+            // Before the page, not during it. A page that is refused here was
+            // never rendered, so nothing was allocated for it.
+            if let Err(error) = schedule.check("pdf.page") {
+                pages.push(PdfPageOutcome {
+                    index,
+                    outcome: Err(error),
+                });
+                // One stop reason per document: continuing would append the same
+                // error for every remaining page and say nothing more.
+                break;
+            }
+            pages.push(PdfPageOutcome {
+                index,
+                outcome: self.recognize_pdf_page(&document, index, options),
+            });
+        }
+
+        Ok(PdfDocumentResult { page_count, pages })
+    }
+
+    /// One page, rendered and recognized, with its metadata.
+    #[cfg(feature = "pdf")]
+    fn recognize_pdf_page(
+        &self,
+        document: &crate::pdf::PdfDocument,
+        index: u32,
+        options: &OcrOptions,
+    ) -> Result<PdfPage> {
+        let size = document.page_size(index)?;
+        let rendered = document.render_page(index)?;
+        let dimensions = rendered.image.dimensions();
+        let lines = self.recognize_decoded(&rendered.image, options)?;
+        Ok(PdfPage {
+            lines,
+            width_points: size.width,
+            height_points: size.height,
+            width_pixels: dimensions.width(),
+            height_pixels: dimensions.height(),
+            scale: rendered.scale,
+        })
+    }
+}
+
+/// Which pages of a document to process, and in which order.
+///
+/// A range rather than a page list, because the two useful shapes are "all of
+/// it" and "this contiguous slice" — the second being how a caller splits a
+/// document across threads, since this library will not do that for them. An
+/// explicit arbitrary page list would also make the result order a question, and
+/// document order is the answer this port wants to keep giving.
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct PdfPageRange {
+    /// First page, zero-based.
+    first: u32,
+    /// Number of pages, or `None` for "to the end".
+    count: Option<u32>,
+}
+
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+impl PdfPageRange {
+    /// Every page, in document order.
+    #[must_use]
+    pub fn all() -> Self {
+        Self::default()
+    }
+
+    /// `count` pages starting at `first`, zero-based.
+    ///
+    /// A range extending past the last page is **clamped**, not refused: a
+    /// caller slicing a document into fixed chunks should not have to know the
+    /// page count to ask for the last chunk. A `first` past the end is a
+    /// different thing — it selects nothing, and that is an error rather than an
+    /// empty success, because an empty document result reads as "no text".
+    #[must_use]
+    pub fn from(first: u32, count: u32) -> Self {
+        Self {
+            first,
+            count: Some(count),
+        }
+    }
+
+    /// Resolves to the concrete page indices, in document order.
+    fn resolve(self, page_count: u32) -> Result<Vec<u32>> {
+        if self.first >= page_count {
+            return Err(Error::InvalidInput {
+                field: "pdf.page_range.first",
+                violation: InputViolation::OutOfRange,
+            });
+        }
+        let available = page_count - self.first;
+        let count = match self.count {
+            Some(0) => {
+                return Err(Error::InvalidInput {
+                    field: "pdf.page_range.count",
+                    violation: InputViolation::Empty,
+                });
+            }
+            Some(count) => count.min(available),
+            None => available,
+        };
+        Ok((self.first..self.first + count).collect())
+    }
+}
+
+/// One page of a recognized document.
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+#[derive(Clone, Debug, PartialEq)]
+#[non_exhaustive]
+pub struct PdfPage {
+    /// The recognized lines, in this port's reading order.
+    ///
+    /// Coordinates are in the **rendered** page's pixels, which `scale` relates
+    /// to the PDF's points. There is no unwarping in this path, so no
+    /// coordinate space can be lost.
+    pub lines: Vec<TextLine>,
+    /// Page width in PDF points, before scaling.
+    pub width_points: f64,
+    /// Page height in PDF points, before scaling.
+    pub height_points: f64,
+    /// Rendered width in pixels.
+    pub width_pixels: u32,
+    /// Rendered height in pixels.
+    pub height_pixels: u32,
+    /// The scale actually rendered at, which the pixel budget may have reduced.
+    pub scale: f64,
+}
+
+/// One page's outcome: recognized, or a typed reason it was not.
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct PdfPageOutcome {
+    /// Zero-based page index in the document, not in `pages`.
+    ///
+    /// Separate from the position in [`PdfDocumentResult::pages`] because a
+    /// range need not start at zero, and a caller correlating results with a
+    /// document needs the document's own numbering.
+    pub index: u32,
+    /// The page, or why it stopped.
+    pub outcome: Result<PdfPage>,
+}
+
+/// A recognized PDF: one outcome per selected page, in document order.
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct PdfDocumentResult {
+    /// How many pages the document has, whatever was selected.
+    pub page_count: u32,
+    /// One entry per selected page, in document order.
+    ///
+    /// Shorter than the selection only when the run control stopped it, in which
+    /// case the last entry says so.
+    pub pages: Vec<PdfPageOutcome>,
+}
+
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+impl PdfDocumentResult {
+    /// How many selected pages were recognized.
+    #[must_use]
+    pub fn recognized(&self) -> usize {
+        self.pages
+            .iter()
+            .filter(|page| page.outcome.is_ok())
+            .count()
+    }
+
+    /// How many selected pages failed.
+    ///
+    /// Present so a caller can answer "was this document fully read?" without
+    /// walking the entries, which is the question the per-page policy makes
+    /// worth asking.
+    #[must_use]
+    pub fn failed(&self) -> usize {
+        self.pages.len() - self.recognized()
     }
 }
 

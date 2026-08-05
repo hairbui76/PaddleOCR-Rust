@@ -1766,3 +1766,268 @@ mod command_line {
         assert_eq!(stdout, again, "the CLI must be deterministic");
     }
 }
+
+/// `MPAGE-001` and `DOC-E2E-001`: whole PDFs through the engine.
+///
+/// Gated on models like every other end-to-end module here, and additionally on
+/// the `pdf` feature. It covers the two cases `DOC-E2E-001` had left open —
+/// **multipage** and **password** — plus the partial-failure policy, which only
+/// becomes observable once real recognition runs over a document with a page
+/// that cannot render.
+///
+/// ```text
+/// PADDLEOCR_RUST_ORT_DYLIB=<libonnxruntime.so> \
+/// PADDLEOCR_RUST_DETECTOR_ONNX=<detector.onnx> \
+/// PADDLEOCR_RUST_RECOGNIZER_ONNX=<recognizer.onnx> \
+/// PADDLEOCR_RUST_DICTIONARY=<dict.txt> \
+///   cargo test --features onnxruntime,pdf --test end_to_end -- --ignored pdf_ --nocapture
+/// ```
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+mod pdf_documents {
+    use std::sync::Arc;
+    use std::sync::atomic::AtomicBool;
+    use std::time::Duration;
+
+    use paddleocr_rust::api::{
+        Artifacts, Dictionary, OcrEngine, OcrOptions, PdfPageRange, parse_dictionary,
+    };
+    use paddleocr_rust::control::RunControl;
+    use paddleocr_rust::error::Error;
+
+    const CORPUS: &str = "tests/fixtures/classic-v1-pdf-entry-gate";
+
+    fn env(name: &str) -> String {
+        match std::env::var(name) {
+            Ok(value) => value,
+            Err(_) => panic!("set {name}"),
+        }
+    }
+
+    fn corpus(relative: &str) -> Vec<u8> {
+        let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join(CORPUS)
+            .join(relative);
+        match std::fs::read(&path) {
+            Ok(bytes) => bytes,
+            Err(error) => panic!("{relative}: {error}"),
+        }
+    }
+
+    fn engine() -> OcrEngine {
+        let text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary: Dictionary = match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let (library, detector, recognizer) = (
+            env("PADDLEOCR_RUST_ORT_DYLIB"),
+            env("PADDLEOCR_RUST_DETECTOR_ONNX"),
+            env("PADDLEOCR_RUST_RECOGNIZER_ONNX"),
+        );
+        let artifacts = Artifacts::new(&library, &detector, &recognizer);
+        match OcrEngine::load(&artifacts, &dictionary) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        }
+    }
+
+    /// A text-bearing page comes back with its text and its metadata.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_single_page_recognizes_and_reports_its_geometry() {
+        let engine = engine();
+        let options = OcrOptions::default();
+        let result = match engine.recognize_pdf(
+            &corpus("fidelity/standard_font.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_pdf: {error}"),
+        };
+
+        assert_eq!(result.page_count, 1);
+        assert_eq!(result.pages.len(), 1);
+        assert_eq!(result.failed(), 0, "the page failed: {:?}", result.pages);
+
+        let page = match &result.pages[0].outcome {
+            Ok(page) => page,
+            Err(error) => panic!("page 0: {error}"),
+        };
+        // The page is 400x400 points at the default scale of 2.0.
+        assert_eq!((page.width_points, page.height_points), (400.0, 400.0));
+        assert_eq!((page.width_pixels, page.height_pixels), (800, 800));
+        assert_eq!(page.scale, 2.0);
+
+        let text: Vec<&str> = page.lines.iter().map(|line| line.text.as_str()).collect();
+        println!("standard_font.pdf -> {text:?}");
+        assert!(
+            text.iter().any(|line| line.contains("Hello World")),
+            "expected the rendered text, got {text:?}"
+        );
+        // Every quadrilateral must land inside the rendered page, which is the
+        // property that shows the render scale and the detector agree.
+        for line in &page.lines {
+            for point in line.quadrilateral.points() {
+                assert!(
+                    point.x() >= 0.0 && point.x() <= page.width_pixels as f32,
+                    "x out of page: {point:?}"
+                );
+                assert!(
+                    point.y() >= 0.0 && point.y() <= page.height_pixels as f32,
+                    "y out of page: {point:?}"
+                );
+            }
+        }
+    }
+
+    /// The multipage case: one entry per page, in document order.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_multipage_returns_one_outcome_per_page_in_order() {
+        let engine = engine();
+        let options = OcrOptions::default();
+        let result = match engine.recognize_pdf(
+            &corpus("malformed/mixed_pages.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_pdf: {error}"),
+        };
+
+        assert_eq!(result.page_count, 2);
+        assert_eq!(result.pages.len(), 2);
+        let indices: Vec<u32> = result.pages.iter().map(|page| page.index).collect();
+        assert_eq!(indices, vec![0, 1], "pages must be in document order");
+
+        // The decided policy, end to end: page one is a result, page two is a
+        // typed error, and the document is neither failed nor silently short.
+        assert!(result.pages[0].outcome.is_ok(), "page 0 should have parsed");
+        assert!(matches!(
+            result.pages[1].outcome,
+            Err(Error::Unsupported {
+                capability: "pdf.recursive_xobject"
+            })
+        ));
+        assert_eq!(result.recognized(), 1);
+        assert_eq!(result.failed(), 1);
+    }
+
+    /// A page range selects a slice and keeps the document's own numbering.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_a_page_range_selects_a_slice() {
+        let engine = engine();
+        let options = OcrOptions::default();
+        let result = match engine.recognize_pdf(
+            &corpus("malformed/mixed_pages.pdf"),
+            PdfPageRange::from(1, 1),
+            &options,
+        ) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_pdf: {error}"),
+        };
+        assert_eq!(
+            result.page_count, 2,
+            "the count is the document's, not the range's"
+        );
+        assert_eq!(result.pages.len(), 1);
+        assert_eq!(result.pages[0].index, 1, "the index is the document's");
+    }
+
+    /// The password case: an encrypted document is refused as a whole.
+    ///
+    /// A whole-document refusal rather than a per-page one, because a document
+    /// that cannot be decrypted has no pages to attribute failures to.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_an_encrypted_document_is_refused_before_any_page() {
+        let engine = engine();
+        let options = OcrOptions::default();
+        match engine.recognize_pdf(
+            &corpus("malformed/encrypted_stub.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Err(Error::Unsupported { capability }) => assert_eq!(capability, "pdf.encrypted"),
+            Err(other) => panic!("wrong error: {other}"),
+            Ok(result) => panic!("an encrypted document was read: {result:?}"),
+        }
+    }
+
+    /// Cancellation stops the document at a page boundary and says so.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_cancellation_stops_at_a_page_boundary() {
+        let engine = engine();
+        let flag = Arc::new(AtomicBool::new(true));
+        let options =
+            OcrOptions::default().with_control(RunControl::unbounded().with_cancel_flag(flag));
+        let result = match engine.recognize_pdf(
+            &corpus("malformed/mixed_pages.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_pdf: {error}"),
+        };
+        // Already cancelled, so the first page never starts — and the reason is
+        // recorded against a page rather than lost.
+        assert_eq!(result.pages.len(), 1);
+        assert_eq!(result.pages[0].index, 0);
+        assert!(matches!(result.pages[0].outcome, Err(Error::Cancelled)));
+    }
+
+    /// An exhausted budget reports the page it stopped before.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_an_exhausted_budget_stops_the_document() {
+        let engine = engine();
+        let options = OcrOptions::default()
+            .with_control(RunControl::unbounded().with_time_budget(Duration::from_nanos(1)));
+        std::thread::sleep(Duration::from_millis(1));
+        let result = match engine.recognize_pdf(
+            &corpus("malformed/mixed_pages.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Ok(result) => result,
+            Err(error) => panic!("recognize_pdf: {error}"),
+        };
+        assert_eq!(result.pages.len(), 1);
+        assert!(matches!(
+            result.pages[0].outcome,
+            Err(Error::TimedOut { stage: "pdf.page" })
+        ));
+    }
+
+    /// The same document twice gives the same text, page for page.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_recognition_is_deterministic() {
+        let engine = engine();
+        let options = OcrOptions::default();
+        let bytes = corpus("fidelity/standard_font.pdf");
+        let text = |result: &paddleocr_rust::api::PdfDocumentResult| -> Vec<String> {
+            result
+                .pages
+                .iter()
+                .filter_map(|page| page.outcome.as_ref().ok())
+                .flat_map(|page| page.lines.iter().map(|line| line.text.clone()))
+                .collect()
+        };
+        let first = match engine.recognize_pdf(&bytes, PdfPageRange::all(), &options) {
+            Ok(result) => result,
+            Err(error) => panic!("first: {error}"),
+        };
+        let second = match engine.recognize_pdf(&bytes, PdfPageRange::all(), &options) {
+            Ok(result) => result,
+            Err(error) => panic!("second: {error}"),
+        };
+        assert_eq!(text(&first), text(&second));
+    }
+}

@@ -99,7 +99,7 @@ mod tests {
         };
         // The gate names four page kinds plus the malformed corpus; a shrunken
         // corpus would still pass a per-file loop.
-        assert_eq!(files.len(), 22, "the corpus changed size");
+        assert_eq!(files.len(), 23, "the corpus changed size");
 
         for (name, entry) in files {
             let path = root.join(name);
@@ -129,7 +129,7 @@ mod tests {
             .filter(|name| name.starts_with("malformed/"))
             .count();
         assert_eq!(fidelity, 8, "fidelity corpus size");
-        assert_eq!(malformed, 14, "malformed corpus size");
+        assert_eq!(malformed, 15, "malformed corpus size");
 
         // The recorded measurement must name the case whose renderer bit-identically
         // reproduced the reference, since that is the claim the evidence rests on.

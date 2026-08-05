@@ -6,9 +6,10 @@ Current delivery state: classic OCR, document preprocessing, layout detection,
 the three-model table pipeline, and the `PP-StructureV3` orchestration all run
 end to end over explicitly provisioned local ONNX artifacts, behind a typed Rust
 API, three frozen JSON schemas, and a CLI with three commands. Bounded PDF
-rendering is the one capability with open implementable work, unblocked by the
-user decision of 2026-08-05; every other remaining capability needs an external
-artifact or hardware, or is closed by a recorded decision.
+rendering and multipage execution landed on 2026-08-05 after the user resolved
+the entry gate. **No roadmap row is `In progress` or `Planned`**: every remaining
+capability needs an external artifact or hardware, or is closed by a recorded
+decision.
 
 ## How to use this handoff
 
@@ -33,16 +34,16 @@ quality.
 
 ## Exact stop point
 
-P0 through P6 are complete. P7 has two items in progress and one planned. P8 through P14 are
+P0 through P7 are complete. P8 through P14 are
 complete for every row whose dependencies exist; what is left in them is
-enumerated below. As of 2026-08-05 the item rows stand at `103` `Done`, `12`
-`Blocked`, `29` `Blocked by decision`, `4` `Superseded`, `2` `In progress`, `1`
-`Planned`, and `1` `Answered`.
+enumerated below. As of 2026-08-05 the item rows stand at `106` `Done`, `12`
+`Blocked`, `29` `Blocked by decision`, `4` `Superseded`, and `1` `Answered` —
+with nothing `In progress` and nothing `Planned`.
 
-The active critical path is `PDF-001`, unblocked by the user decision of
-2026-08-05: bounded PDF rendering with `hayro 0.4.0` under a port-owned resource
-bound, then `MPAGE-001`, then `DOC-E2E-001`'s last two cases. Everything else
-left needs an external artifact or hardware — see
+There is again no active critical path this repository can execute alone. The
+`PDF-001`/`MPAGE-001`/`DOC-E2E-001` chain was the last of it and closed on
+2026-08-05; the next real move is an external artifact, hardware, or a user
+decision — see
 [Where the next move has to come from](#where-the-next-move-has-to-come-from).
 
 ### What is delivered
@@ -98,7 +99,7 @@ already route through the image handler, the modules cannot be exposed without
 artifacts, and a postprocessor with nothing behind it is code that must be
 maintained and can never be reached.
 
-### 2. The PDF renderer — **no longer blocked**, this is the open work
+### 2. The PDF renderer — resolved and delivered
 
 The five-part entry gate in
 [`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md) was
@@ -109,24 +110,17 @@ this port**, because the measurement found the renderer aborts on a
 self-referential form XObject where the reference renderer bounds it. Part 5 is
 decided: per-page results with typed per-page failures.
 
-So this is where the remaining implementable work is: `PDF-001`, then
-`MPAGE-001`, then `DOC-E2E-001`'s last two cases. The pieces that already exist
-are the render-scale planner in `src/pdf_render_plan.rs` with its contract in
-[`PDF_RENDER_CONTRACT.md`](PDF_RENDER_CONTRACT.md), and the document-assembly
-functions in `src/multipage.rs`, verified and waiting to become reachable.
+All three rows are now `Done`. `src/pdf.rs` renders pages under a pre-flight that
+turns the renderer's one measured abort into a typed error, and
+`OcrEngine::recognize_pdf` returns one outcome per page in document order.
+`DOC-E2E-001`'s last two cases — multipage and password — run in
+`tests/end_to_end.rs`. Office formats remain decided against, not pending.
 
-`DOC-E2E-001`'s blank,
-corrupt, oversized, rotated, and unwarp-refusal cases pass in
-`tests/end_to_end.rs`; its multipage and password cases need that renderer.
-Office formats are decided against, not pending.
-
-What the renderer does **not** block: the document-assembly functions
-themselves. `src/multipage.rs` ports `concatenate_markdown_pages` and
-`merge_text_across_page` and matches twelve captured cases, because both are
-pure over per-page Markdown, continuation flags, and blocks. They are verified
-and not reachable — a distinction worth keeping, since the row would otherwise
-read as though the renderer were the only thing standing between this port and
-multipage documents.
+One piece is still verified rather than reachable: the document-assembly
+functions in `src/multipage.rs`, which join per-page **Markdown**. They belong to
+the `PP-StructureV3` path, and a structure-over-PDF entry point does not exist
+yet — `recognize_pdf` produces text lines, not parsed pages. That is a gap in
+reach, not in correctness: twelve captured cases match.
 
 ### 3. Hardware this project does not have (`2` rows)
 

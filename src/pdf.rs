@@ -491,7 +491,7 @@ mod tests {
     /// luck. A panic or an abort fails the test by killing it.
     #[test]
     fn the_malformed_corpus_is_answered_rather_than_survived() {
-        let expected: [(&str, Option<&str>); 14] = [
+        let expected: [(&str, Option<&str>); 15] = [
             ("truncated_header.pdf", Some("invalid input")),
             ("truncated_body.pdf", Some("invalid input")),
             ("missing_root.pdf", Some("invalid input")),
@@ -506,6 +506,8 @@ mod tests {
             ("javascript_openaction.pdf", None),
             ("embedded_file.pdf", None),
             ("deep_nesting.pdf", Some("unsupported")),
+            // Page 0 of this one renders; the sweep only ever asks about page 0.
+            ("mixed_pages.pdf", None),
         ];
 
         for (name, refusal) in expected {
@@ -655,6 +657,37 @@ mod tests {
             document.render_page(0),
             Err(Error::ResourceLimit { .. })
         ));
+    }
+
+    /// A two-page document where one page renders and the other cannot.
+    ///
+    /// This is the per-page failure policy at the level it can be tested without
+    /// a model: the outcome is per page, so page one must come back and page two
+    /// must come back as a typed error. An all-or-nothing implementation would
+    /// lose page one, and one that stopped at the first failure would never
+    /// report page two.
+    #[test]
+    fn a_failing_page_does_not_take_the_document_with_it() {
+        let document = match open(corpus(MALFORMED, "mixed_pages.pdf"), PdfLimits::default()) {
+            Ok(document) => document,
+            Err(error) => panic!("open: {error}"),
+        };
+        assert_eq!(document.page_count(), 2);
+
+        let first = document.render_page(0);
+        assert!(first.is_ok(), "the good page did not render: {first:?}");
+
+        match document.render_page(1) {
+            Err(Error::Unsupported { capability }) => {
+                assert_eq!(capability, "pdf.recursive_xobject");
+            }
+            Err(other) => panic!("wrong error for the bad page: {other}"),
+            Ok(_) => panic!("the recursive page rendered"),
+        }
+
+        // And the order does not matter: the bad page does not poison the good
+        // one, which a shared cache keyed carelessly could have caused.
+        assert!(document.render_page(0).is_ok());
     }
 
     /// Rendering the same page twice gives the same bytes.
