@@ -19,13 +19,29 @@ fn usage() -> &'static str {
      \x20                 [--orientation <textline_ori.onnx> [--orientation-sha256 <hex>]] \\\n\
      \x20                 [--detector-sha256 <hex>] [--recognizer-sha256 <hex>] <image.png>...\n\
      \n\
-     All paths are explicit. Only PNG input is supported; see \n\
-     docs/IMAGE_DECODER_DECISION.md for why JPEG is deferred.\n\
+     All paths are explicit. PNG and JPEG input are supported.\n\
      \n\
      Several images may be given. The models are loaded once and reused, which \n\
      is the whole reason to pass them together rather than running this per \n\
      file. With more than one image the text output gains a leading path \n\
-     column, as grep does, and --json emits one JSON document per line.\n"
+     column, as grep does, and --json emits one JSON document per line.\n\
+     \n\
+     Two further commands take the same model flags and one image:\n\
+     \n\
+     \x20 paddleocr-rust structure --layout <layout.onnx> \\\n\
+     \x20     [--table-classifier <cls.onnx> --table-cells <cell.onnx> \\\n\
+     \x20      --table-structure <str.onnx> [--route wired|wireless]] \\\n\
+     \x20     [--format markdown|json|text] [--plain] [--id <text>] <page.png>\n\
+     \n\
+     \x20 paddleocr-rust table --table-classifier <cls.onnx> \\\n\
+     \x20     --table-cells <cell.onnx> --table-structure <str.onnx> \\\n\
+     \x20     [--route wired|wireless] [--format json|html] [--id <text>] <crop.png>\n\
+     \n\
+     structure parses a page into ordered blocks and Markdown; the three table \n\
+     flags are all-or-none and turn table recognition on. table recognizes one \n\
+     crop, using the crop's own OCR to fill the cells. Both take exactly one \n\
+     image: joining pages into one document needs the PDF renderer that has no \n\
+     approved gate yet.\n"
 }
 
 fn main() -> ExitCode {
@@ -38,9 +54,19 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
 
+    // A leading `structure` or `table` selects the newer commands; anything
+    // else is the classic path this binary has always run, unchanged. The
+    // check is on the first argument only, so a *file* named `table` still
+    // reaches the classic path when it is not first — and a caller who does
+    // lead with such a file gets a message rather than silence.
+    let subcommand = arguments
+        .first()
+        .map(String::as_str)
+        .filter(|first| matches!(*first, "structure" | "table"));
+
     #[cfg(not(feature = "onnxruntime"))]
     {
-        let _ = arguments;
+        let _ = (&arguments, subcommand);
         eprintln!(
             "paddleocr-rust: this build has no inference backend compiled in.\n\
              Rebuild with `--features onnxruntime` to run the classic pipeline."
@@ -51,7 +77,11 @@ fn main() -> ExitCode {
 
     #[cfg(feature = "onnxruntime")]
     {
-        match run(&arguments) {
+        let outcome = match subcommand {
+            Some(name) => structured::run(name, &arguments[1..]),
+            None => run(&arguments),
+        };
+        match outcome {
             Ok(code) => code,
             Err(message) => {
                 eprintln!("paddleocr-rust: {message}");
@@ -276,4 +306,608 @@ fn run(arguments: &[String]) -> Result<ExitCode, String> {
         }
     }
     Ok(ExitCode::SUCCESS)
+}
+
+/// The `structure` and `table` commands.
+///
+/// Kept apart from the classic path above rather than folded into it: that
+/// path has a stable, documented invocation with no subcommand, and threading
+/// three more optional models through its flag loop would put every new
+/// failure mode in front of callers who never asked for one. The parsing here
+/// is pure and unit-tested; only the running needs a backend.
+///
+/// Without the inference feature nothing but the tests calls the parser, so
+/// the allowance is scoped to that build rather than blanket: with a backend
+/// compiled in, genuinely unreachable code here still fails the lint.
+#[cfg_attr(not(feature = "onnxruntime"), allow(dead_code))]
+mod structured {
+    /// Which command was asked for.
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Kind {
+        /// Parse a page into ordered blocks and Markdown.
+        Structure,
+        /// Recognize one table crop.
+        Table,
+    }
+
+    /// How the result is written.
+    #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+    pub enum Format {
+        /// The frozen JSON document.
+        Json,
+        /// The page's Markdown.
+        Markdown,
+        /// Block contents, one per line.
+        Text,
+        /// The table's assembled HTML.
+        Html,
+    }
+
+    /// One parsed invocation.
+    #[derive(Clone, Debug, Eq, PartialEq)]
+    pub struct Request {
+        pub kind: Kind,
+        pub library: String,
+        pub detector: String,
+        pub recognizer: String,
+        pub dictionary: String,
+        pub orientation: Option<String>,
+        pub detector_sha256: Option<String>,
+        pub recognizer_sha256: Option<String>,
+        pub orientation_sha256: Option<String>,
+        pub layout: Option<String>,
+        pub table: Option<[String; 3]>,
+        pub wired: bool,
+        pub format: Format,
+        pub pretty: bool,
+        pub id: Option<String>,
+        pub time_budget_ms: Option<u64>,
+        pub image: String,
+    }
+
+    fn take(
+        slot: &mut Option<String>,
+        flag: &str,
+        arguments: &[String],
+        index: usize,
+    ) -> Result<(), String> {
+        if slot.is_some() {
+            return Err(format!("{flag} was given more than once"));
+        }
+        let value = arguments
+            .get(index + 1)
+            .ok_or_else(|| format!("{flag} needs a value"))?;
+        *slot = Some(value.clone());
+        Ok(())
+    }
+
+    /// Parses one `structure` or `table` invocation, excluding the command word.
+    pub fn parse(name: &str, arguments: &[String]) -> Result<Request, String> {
+        let kind = match name {
+            "structure" => Kind::Structure,
+            "table" => Kind::Table,
+            other => return Err(format!("unknown command {other}")),
+        };
+
+        let mut library = None;
+        let mut detector = None;
+        let mut recognizer = None;
+        let mut dictionary = None;
+        let mut orientation = None;
+        let mut detector_sha256 = None;
+        let mut recognizer_sha256 = None;
+        let mut orientation_sha256 = None;
+        let mut layout = None;
+        let mut classifier = None;
+        let mut cells = None;
+        let mut structure = None;
+        let mut route = None;
+        let mut format = None;
+        let mut identifier = None;
+        let mut time_budget = None;
+        let mut plain = false;
+        let mut image: Option<String> = None;
+
+        let mut index = 0;
+        while index < arguments.len() {
+            let argument = arguments[index].as_str();
+            if argument == "--plain" {
+                if plain {
+                    return Err("--plain was given more than once".to_owned());
+                }
+                plain = true;
+                index += 1;
+                continue;
+            }
+            let slot = match argument {
+                "--ort-dylib" => &mut library,
+                "--detector" => &mut detector,
+                "--recognizer" => &mut recognizer,
+                "--dictionary" => &mut dictionary,
+                "--orientation" => &mut orientation,
+                "--detector-sha256" => &mut detector_sha256,
+                "--recognizer-sha256" => &mut recognizer_sha256,
+                "--orientation-sha256" => &mut orientation_sha256,
+                "--layout" => &mut layout,
+                "--table-classifier" => &mut classifier,
+                "--table-cells" => &mut cells,
+                "--table-structure" => &mut structure,
+                "--route" => &mut route,
+                "--format" => &mut format,
+                "--id" => &mut identifier,
+                "--time-budget-ms" => &mut time_budget,
+                other if other.starts_with("--") => {
+                    return Err(format!("unknown option {other}"));
+                }
+                other => {
+                    if image.is_some() {
+                        return Err(format!(
+                            "{name} takes exactly one image, and {other} is a second"
+                        ));
+                    }
+                    image = Some(other.to_owned());
+                    index += 1;
+                    continue;
+                }
+            };
+            take(slot, argument, arguments, index)?;
+            index += 2;
+        }
+
+        let required = |slot: Option<String>, flag: &str| -> Result<String, String> {
+            slot.ok_or_else(|| format!("{flag} is required"))
+        };
+        let image = image.ok_or_else(|| format!("{name} needs one image"))?;
+
+        let wired = match route.as_deref() {
+            None | Some("wired") => true,
+            Some("wireless") => false,
+            Some(other) => return Err(format!("--route must be wired or wireless, got {other}")),
+        };
+        let table = match (classifier, cells, structure) {
+            (Some(classifier), Some(cells), Some(structure)) => {
+                Some([classifier, cells, structure])
+            }
+            (None, None, None) => None,
+            _ => {
+                return Err(
+                    "--table-classifier, --table-cells, and --table-structure must be given \
+                     together"
+                        .to_owned(),
+                );
+            }
+        };
+        let time_budget_ms =
+            match time_budget {
+                Some(value) => Some(value.parse::<u64>().map_err(|_| {
+                    format!("--time-budget-ms needs a whole number, got {value:?}")
+                })?),
+                None => None,
+            };
+
+        let format = match (kind, format.as_deref()) {
+            (Kind::Structure, None | Some("markdown")) => Format::Markdown,
+            (Kind::Structure, Some("json")) => Format::Json,
+            (Kind::Structure, Some("text")) => Format::Text,
+            (Kind::Structure, Some(other)) => {
+                return Err(format!(
+                    "structure --format must be markdown, json, or text, got {other}"
+                ));
+            }
+            (Kind::Table, None | Some("json")) => Format::Json,
+            (Kind::Table, Some("html")) => Format::Html,
+            (Kind::Table, Some(other)) => {
+                return Err(format!("table --format must be json or html, got {other}"));
+            }
+        };
+
+        let layout = match kind {
+            Kind::Structure => Some(required(layout, "--layout")?),
+            Kind::Table => {
+                if layout.is_some() {
+                    return Err("--layout does not apply to table".to_owned());
+                }
+                None
+            }
+        };
+        if kind == Kind::Table && table.is_none() {
+            return Err(
+                "table needs --table-classifier, --table-cells, and --table-structure".to_owned(),
+            );
+        }
+        if kind == Kind::Table && plain {
+            return Err("--plain does not apply to table".to_owned());
+        }
+
+        Ok(Request {
+            kind,
+            library: required(library, "--ort-dylib")?,
+            detector: required(detector, "--detector")?,
+            recognizer: required(recognizer, "--recognizer")?,
+            dictionary: required(dictionary, "--dictionary")?,
+            orientation,
+            detector_sha256,
+            recognizer_sha256,
+            orientation_sha256,
+            layout,
+            table,
+            wired,
+            format,
+            pretty: !plain,
+            id: identifier,
+            time_budget_ms,
+            image,
+        })
+    }
+
+    #[cfg(feature = "onnxruntime")]
+    pub use execute::run;
+
+    #[cfg(feature = "onnxruntime")]
+    mod execute {
+        use std::process::ExitCode;
+
+        use paddleocr_rust::api::{Artifacts, OcrEngine, OcrOptions};
+        use paddleocr_rust::structure_engine::{
+            StructureArtifacts, StructureEngine, StructureOptions,
+        };
+        use paddleocr_rust::table_engine::{TableArtifacts, TableEngine, TableImage};
+        use paddleocr_rust::table_pipeline::TableRoute;
+
+        use super::{Format, Kind, Request, parse};
+
+        /// Parses and runs one `structure` or `table` invocation.
+        pub fn run(name: &str, arguments: &[String]) -> Result<ExitCode, String> {
+            let request = parse(name, arguments)?;
+            let dictionary_text = std::fs::read_to_string(&request.dictionary)
+                .map_err(|error| format!("cannot read the dictionary: {error}"))?;
+            let dictionary = paddleocr_rust::api::parse_dictionary(&dictionary_text, true)
+                .map_err(|error| format!("{error}"))?;
+            eprintln!("dictionary: {} entries", dictionary.len());
+
+            let bytes = paddleocr_rust::input::read_encoded_file(&request.image)
+                .map_err(|error| format!("{}: {error}", request.image))?;
+            let (width, height) = paddleocr_rust::api::decode_image(&bytes)
+                .map_err(|error| format!("{}: {error}", request.image))?;
+            eprintln!("image: {} ({width}x{height})", request.image);
+
+            let mut options = OcrOptions::default();
+            if let Some(milliseconds) = request.time_budget_ms {
+                options.control = paddleocr_rust::control::RunControl::unbounded()
+                    .with_time_budget(std::time::Duration::from_millis(milliseconds));
+            }
+
+            let output = match request.kind {
+                Kind::Structure => run_structure(&request, &dictionary, &bytes, options)?,
+                Kind::Table => run_table(&request, &dictionary, &bytes, options)?,
+            };
+            println!("{output}");
+            Ok(ExitCode::SUCCESS)
+        }
+
+        fn artifacts_of(request: &Request) -> Artifacts<'_> {
+            let mut artifacts =
+                Artifacts::new(&request.library, &request.detector, &request.recognizer);
+            if let Some(digest) = request.detector_sha256.as_deref() {
+                artifacts = artifacts.with_detector_sha256(digest);
+            }
+            if let Some(digest) = request.recognizer_sha256.as_deref() {
+                artifacts = artifacts.with_recognizer_sha256(digest);
+            }
+            if let Some(path) = request.orientation.as_deref() {
+                artifacts = artifacts.with_orientation(path);
+            }
+            if let Some(digest) = request.orientation_sha256.as_deref() {
+                artifacts = artifacts.with_orientation_sha256(digest);
+            }
+            artifacts
+        }
+
+        fn table_artifacts<'a>(request: &'a Request, table: &'a [String; 3]) -> TableArtifacts<'a> {
+            TableArtifacts::new(
+                &request.library,
+                &table[0],
+                &table[1],
+                &table[2],
+                if request.wired {
+                    TableRoute::Wired
+                } else {
+                    TableRoute::Wireless
+                },
+            )
+        }
+
+        fn run_structure(
+            request: &Request,
+            dictionary: &paddleocr_rust::api::Dictionary,
+            bytes: &[u8],
+            options: OcrOptions,
+        ) -> Result<String, String> {
+            let layout = request
+                .layout
+                .as_deref()
+                .ok_or_else(|| "--layout is required".to_owned())?;
+            let mut artifacts = StructureArtifacts::new(artifacts_of(request), layout);
+            if let Some(table) = &request.table {
+                artifacts = artifacts.with_table(table_artifacts(request, table));
+            }
+            let engine = StructureEngine::load(&artifacts, dictionary)
+                .map_err(|error| format!("cannot load the structure models: {error}"))?;
+
+            let mut structure_options = StructureOptions::new(options);
+            structure_options.pretty = request.pretty;
+            let result = engine
+                .parse_image(bytes, &structure_options)
+                .map_err(|error| format!("{}: {error}", request.image))?;
+            eprintln!("blocks: {}", result.blocks.len());
+
+            Ok(match request.format {
+                Format::Json => result.to_json(request.id.as_deref()),
+                Format::Text => result
+                    .blocks
+                    .iter()
+                    .map(|block| block.content.as_str())
+                    .filter(|content| !content.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+                _ => result.markdown,
+            })
+        }
+
+        fn run_table(
+            request: &Request,
+            dictionary: &paddleocr_rust::api::Dictionary,
+            bytes: &[u8],
+            options: OcrOptions,
+        ) -> Result<String, String> {
+            let table = request
+                .table
+                .as_ref()
+                .ok_or_else(|| "the table models are required".to_owned())?;
+
+            // The crop's own OCR fills the cells: a table recognized without
+            // text would be a structure of empty cells, which reads as "these
+            // cells are blank" rather than "recognition did not run".
+            let ocr = OcrEngine::load(&artifacts_of(request), dictionary)
+                .map_err(|error| format!("cannot load the OCR models: {error}"))?;
+            let lines = ocr
+                .recognize_image(bytes, &options)
+                .map_err(|error| format!("{}: {error}", request.image))?;
+
+            let bgr =
+                TableImage::decode(bytes).map_err(|error| format!("{}: {error}", request.image))?;
+            let rgb = bgr
+                .with_swapped_channels()
+                .map_err(|error| format!("{error}"))?;
+            let dimensions = bgr.dimensions();
+            let (width, height) = (dimensions.width(), dimensions.height());
+
+            let mut boxes = Vec::with_capacity(lines.len());
+            let mut texts = Vec::with_capacity(lines.len());
+            for line in &lines {
+                let mut bbox = [
+                    f64::INFINITY,
+                    f64::INFINITY,
+                    f64::NEG_INFINITY,
+                    f64::NEG_INFINITY,
+                ];
+                for point in line.quadrilateral.points() {
+                    bbox[0] = bbox[0].min(f64::from(point.x()));
+                    bbox[1] = bbox[1].min(f64::from(point.y()));
+                    bbox[2] = bbox[2].max(f64::from(point.x()));
+                    bbox[3] = bbox[3].max(f64::from(point.y()));
+                }
+                boxes.push(bbox);
+                texts.push(line.text.clone());
+            }
+
+            let engine = TableEngine::load(&table_artifacts(request, table))
+                .map_err(|error| format!("cannot load the table models: {error}"))?;
+            let result = engine
+                .recognize_table(
+                    &rgb,
+                    &bgr,
+                    [0.0, 0.0, f64::from(width), f64::from(height)],
+                    &boxes,
+                    &texts,
+                )
+                .map_err(|error| format!("{}: {error}", request.image))?;
+
+            Ok(match request.format {
+                Format::Html => result.html,
+                _ => result.to_json(width, height, request.id.as_deref()),
+            })
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        fn parse_words(name: &str, line: &str) -> Result<Request, String> {
+            let arguments: Vec<String> = line.split_whitespace().map(str::to_owned).collect();
+            parse(name, &arguments)
+        }
+
+        const MODELS: &str =
+            "--ort-dylib lib.so --detector det.onnx --recognizer rec.onnx --dictionary dict.txt";
+
+        #[test]
+        fn structure_collects_its_models_and_defaults_to_pretty_markdown() {
+            let request = match parse_words("structure", &format!("{MODELS} --layout l.onnx p.png"))
+            {
+                Ok(request) => request,
+                Err(error) => panic!("{error}"),
+            };
+            assert_eq!(request.kind, Kind::Structure);
+            assert_eq!(request.library, "lib.so");
+            assert_eq!(request.layout.as_deref(), Some("l.onnx"));
+            assert_eq!(request.image, "p.png");
+            assert_eq!(request.format, Format::Markdown);
+            assert!(request.pretty);
+            assert_eq!(request.table, None);
+        }
+
+        /// The flag vocabulary is the classic path's, not a second one.
+        #[test]
+        fn the_library_flag_keeps_its_existing_name() {
+            let error = match parse_words(
+                "structure",
+                "--library lib.so --detector d --recognizer r --dictionary x --layout l p.png",
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("--library"), "{error}");
+        }
+
+        #[test]
+        fn a_missing_or_repeated_flag_names_itself() {
+            let error = match parse_words("structure", &format!("{MODELS} p.png")) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("--layout"), "{error}");
+
+            let error = match parse_words(
+                "structure",
+                &format!("{MODELS} --layout a.onnx --layout b.onnx p.png"),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("more than once"), "{error}");
+        }
+
+        #[test]
+        fn the_table_trio_is_all_or_none() {
+            let error = match parse_words(
+                "structure",
+                &format!("{MODELS} --layout l.onnx --table-cells c.onnx p.png"),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("together"), "{error}");
+
+            let request = match parse_words(
+                "structure",
+                &format!(
+                    "{MODELS} --layout l.onnx --table-classifier a --table-cells b \
+                     --table-structure c p.png"
+                ),
+            ) {
+                Ok(request) => request,
+                Err(error) => panic!("{error}"),
+            };
+            assert_eq!(
+                request.table,
+                Some(["a".to_owned(), "b".to_owned(), "c".to_owned()])
+            );
+            assert!(request.wired, "the default route is wired");
+        }
+
+        #[test]
+        fn table_requires_its_trio_and_refuses_layout() {
+            let error = match parse_words("table", &format!("{MODELS} crop.png")) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("--table-classifier"), "{error}");
+
+            let error = match parse_words(
+                "table",
+                &format!(
+                    "{MODELS} --layout l.onnx --table-classifier a --table-cells b \
+                     --table-structure c crop.png"
+                ),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("--layout"), "{error}");
+        }
+
+        /// One image, because joining pages needs the renderer gate.
+        #[test]
+        fn exactly_one_image_is_accepted() {
+            let error = match parse_words(
+                "structure",
+                &format!("{MODELS} --layout l.onnx a.png b.png"),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("exactly one image"), "{error}");
+
+            let error = match parse_words("structure", &format!("{MODELS} --layout l.onnx")) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("needs one image"), "{error}");
+        }
+
+        #[test]
+        fn formats_and_routes_are_validated_per_command() {
+            let error = match parse_words(
+                "structure",
+                &format!("{MODELS} --layout l.onnx --format html p.png"),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("markdown"), "{error}");
+
+            let error = match parse_words(
+                "table",
+                &format!(
+                    "{MODELS} --table-classifier a --table-cells b --table-structure c \
+                     --format markdown crop.png"
+                ),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("json or html"), "{error}");
+
+            let error = match parse_words(
+                "table",
+                &format!(
+                    "{MODELS} --table-classifier a --table-cells b --table-structure c \
+                     --route sideways crop.png"
+                ),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("wired or wireless"), "{error}");
+        }
+
+        #[test]
+        fn the_time_budget_and_digests_carry_over_from_the_classic_path() {
+            let request = match parse_words(
+                "structure",
+                &format!(
+                    "{MODELS} --layout l.onnx --time-budget-ms 5000 --detector-sha256 abc \
+                     --orientation o.onnx --id page p.png"
+                ),
+            ) {
+                Ok(request) => request,
+                Err(error) => panic!("{error}"),
+            };
+            assert_eq!(request.time_budget_ms, Some(5_000));
+            assert_eq!(request.detector_sha256.as_deref(), Some("abc"));
+            assert_eq!(request.orientation.as_deref(), Some("o.onnx"));
+            assert_eq!(request.id.as_deref(), Some("page"));
+
+            let error = match parse_words(
+                "structure",
+                &format!("{MODELS} --layout l.onnx --time-budget-ms soon p.png"),
+            ) {
+                Err(error) => error,
+                Ok(request) => panic!("expected a failure, got {request:?}"),
+            };
+            assert!(error.contains("whole number"), "{error}");
+        }
+    }
 }

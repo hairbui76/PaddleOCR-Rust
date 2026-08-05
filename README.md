@@ -100,6 +100,40 @@ input extent, each quadrilateral in source coordinates, the text, and the
 confidence. Field order and numeric formatting are fixed, so the bytes are
 deterministic for a given result.
 
+### Parsing a page's structure
+
+`structure` runs the layout detector over a page, orders the blocks the way
+`PP-StructureV3` does, and emits Markdown or the versioned
+`paddleocr-rust/parsing-result/v1` document. It takes the same model flags as
+above, plus the layout model:
+
+```sh
+paddleocr-rust structure \
+  --ort-dylib   /path/to/libonnxruntime.so.1.28.0 \
+  --detector    /path/to/det/inference.onnx \
+  --recognizer  /path/to/rec/inference.onnx \
+  --dictionary  /path/to/dict.txt \
+  --layout      /path/to/PP-DocLayout_plus-L/inference.onnx \
+  page.png
+```
+
+Adding `--table-classifier`, `--table-cells`, and `--table-structure` — all
+three or none — turns table recognition on, so a table block carries HTML
+instead of an image reference. `--format json|text`, `--plain` for Markdown
+without the HTML wrappers.
+
+`table` recognizes a single crop that is already a table, using the crop's own
+OCR to fill the cells, and emits `--format json|html`.
+
+Both take **exactly one** image. Joining several pages into one document is
+`concatenate_markdown_pages`, which needs the PDF renderer that has no approved
+gate yet; the classic invocation above still takes as many images as you like.
+
+Formula, seal, chart, and key-information extraction stay **off**: those models
+have no published ONNX export, so this port cannot check itself against them.
+That is upstream's own `use_*` flag configuration, not a partial imitation of
+it.
+
 ### Verifying the models you load
 
 `--detector-sha256` and `--recognizer-sha256` check an artifact's SHA-256 by

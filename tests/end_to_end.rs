@@ -1628,3 +1628,141 @@ mod structure_supplied_page {
         println!("markdown:\n{}", &result.markdown);
     }
 }
+
+/// The command-line binary itself.
+///
+/// A binary that cannot print its own usage is broken in a way no library
+/// test would notice, and the exit codes are part of the interface a script
+/// depends on.
+mod command_line {
+    use std::process::Command;
+
+    const BINARY: &str = env!("CARGO_BIN_EXE_paddleocr-rust");
+
+    fn run(arguments: &[&str]) -> (i32, String, String) {
+        let output = match Command::new(BINARY).args(arguments).output() {
+            Ok(output) => output,
+            Err(error) => panic!("cannot run {BINARY}: {error}"),
+        };
+        (
+            output.status.code().unwrap_or(-1),
+            String::from_utf8_lossy(&output.stdout).into_owned(),
+            String::from_utf8_lossy(&output.stderr).into_owned(),
+        )
+    }
+
+    /// The usage text covers the classic invocation and both newer commands.
+    #[test]
+    fn the_usage_text_documents_every_command() {
+        let (code, stdout, _) = run(&["--help"]);
+        assert_eq!(code, 0, "--help must succeed");
+        for expected in [
+            "--ort-dylib",
+            "paddleocr-rust structure",
+            "paddleocr-rust table",
+            "--layout",
+            "exactly one",
+        ] {
+            assert!(stdout.contains(expected), "usage omits {expected}");
+        }
+    }
+
+    /// The classic invocation keeps its shape: no subcommand, and the newer
+    /// commands are additions rather than a replacement.
+    #[cfg(feature = "onnxruntime")]
+    #[test]
+    fn a_usage_error_names_its_flag_and_exits_two() {
+        // Classic: unchanged message for missing models.
+        let (code, _, stderr) = run(&["page.png"]);
+        assert_eq!(code, 2, "the classic path reports missing arguments");
+        assert!(stderr.contains("missing required arguments"), "{stderr}");
+
+        // structure: the layout model is named specifically.
+        let (code, stdout, stderr) = run(&[
+            "structure",
+            "--ort-dylib",
+            "lib.so",
+            "--detector",
+            "det.onnx",
+            "--recognizer",
+            "rec.onnx",
+            "--dictionary",
+            "dict.txt",
+            "page.png",
+        ]);
+        assert_eq!(code, 2, "a missing flag is a usage error");
+        assert!(stdout.is_empty(), "usage errors must not write to stdout");
+        assert!(stderr.contains("--layout"), "{stderr}");
+
+        // A second image is refused rather than silently ignored.
+        let (code, _, stderr) = run(&[
+            "structure",
+            "--ort-dylib",
+            "lib.so",
+            "--detector",
+            "det.onnx",
+            "--recognizer",
+            "rec.onnx",
+            "--dictionary",
+            "dict.txt",
+            "--layout",
+            "lay.onnx",
+            "one.png",
+            "two.png",
+        ]);
+        assert_eq!(code, 2);
+        assert!(stderr.contains("exactly one image"), "{stderr}");
+    }
+
+    /// `structure` over the provisioned models, through the binary.
+    #[test]
+    #[ignore = "SPECAPI-001: needs explicitly provisioned models"]
+    fn the_binary_parses_a_page_deterministically() {
+        fn env_var(name: &str) -> String {
+            match std::env::var(name) {
+                Ok(value) => value,
+                Err(_) => panic!("set {name}"),
+            }
+        }
+        let library = env_var("PADDLEOCR_RUST_ORT_DYLIB");
+        let detector = env_var("PADDLEOCR_RUST_DETECTOR_ONNX");
+        let recognizer = env_var("PADDLEOCR_RUST_RECOGNIZER_ONNX");
+        let dictionary = env_var("PADDLEOCR_RUST_DICTIONARY");
+        let layout = env_var("PADDLEOCR_RUST_LAYOUT_ONNX");
+        let page = concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/tests/fixtures/classic-v1-benchmark-page/input.png"
+        );
+
+        let arguments = [
+            "structure",
+            "--ort-dylib",
+            &library,
+            "--detector",
+            &detector,
+            "--recognizer",
+            &recognizer,
+            "--dictionary",
+            &dictionary,
+            "--layout",
+            &layout,
+            "--format",
+            "json",
+            "--id",
+            "page",
+            page,
+        ];
+        let (code, stdout, stderr) = run(&arguments);
+        assert_eq!(code, 0, "structure failed: {stderr}");
+        assert!(
+            stdout.contains("\"schema_version\":\"paddleocr-rust/parsing-result/v1\""),
+            "{stdout}"
+        );
+        assert!(stdout.contains("\"id\":\"page\""), "{stdout}");
+
+        // The same command twice writes the same bytes.
+        let (code, again, _) = run(&arguments);
+        assert_eq!(code, 0);
+        assert_eq!(stdout, again, "the CLI must be deterministic");
+    }
+}

@@ -219,6 +219,55 @@ paddleocr-rust: time budget exhausted before crop
 Overshoot is bounded by one detector run or one recognition batch of six crops.
 If you need a hard wall-clock bound, enforce it out of process.
 
+### Parsing a page's structure
+
+```sh
+paddleocr-rust structure \
+  --ort-dylib   /path/to/libonnxruntime.so.1.28.0 \
+  --detector    /path/to/det/inference.onnx \
+  --recognizer  /path/to/rec/inference.onnx \
+  --dictionary  /path/to/dict.txt \
+  --layout      /path/to/PP-DocLayout_plus-L/inference.onnx \
+  page.png
+```
+
+This is `PP-StructureV3`'s document-parsing path: layout detection, full-page
+OCR, block assembly, the reading-order sort, and the Markdown rendering. The
+default output is Markdown; `--format json` emits the versioned
+`paddleocr-rust/parsing-result/v1` document and `--format text` emits block
+contents one per line. `--plain` renders Markdown without upstream's HTML
+wrappers.
+
+Supplying `--table-classifier`, `--table-cells`, and `--table-structure` — all
+three or none — turns table recognition on, so a table block carries recognized
+HTML rather than an image reference. `--route wireless` selects the other model
+pair; the classifier's verdict must agree with the pair you loaded, and a
+mismatch is refused rather than run against a model that was not trained for
+it.
+
+```sh
+paddleocr-rust table \
+  --ort-dylib ... --detector ... --recognizer ... --dictionary ... \
+  --table-classifier /path/to/cls/inference.onnx \
+  --table-cells      /path/to/cell/inference.onnx \
+  --table-structure  /path/to/str/inference.onnx \
+  --format html crop.png
+```
+
+`table` recognizes one crop that is already a table, using the crop's own OCR
+to fill the cells.
+
+Both commands accept the same `--time-budget-ms`, `--orientation`, and digest
+flags as the classic invocation, and both take **exactly one** image: joining
+pages into one document is `concatenate_markdown_pages`, which needs the PDF
+renderer that has no approved gate yet. The classic invocation still takes as
+many images as you like.
+
+What stays off: formula, seal, chart, and key-information extraction. Those
+models have no published ONNX export, so this port has nothing to check itself
+against; the configuration is upstream's own `use_*` flags set to `false`, not
+a partial imitation of those stages.
+
 ### Exit codes
 
 | Code | Meaning |
@@ -437,8 +486,10 @@ digests and the swap is refused before the runtime sees a byte.
 unsupported capability: image format
 ```
 
-Only PNG is supported, and the format is decided by the file's content, not its
-extension. A `.png` that is really a JPEG produces this.
+PNG and JPEG are supported, and the format is decided by the file's content,
+not its extension — so a `.png` that is really a bitmap produces this, while a
+`.png` that is really a JPEG is decoded correctly. Other formats are refused
+rather than guessed at.
 
 ### It says a resource limit was exceeded
 

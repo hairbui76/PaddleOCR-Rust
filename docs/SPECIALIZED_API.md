@@ -156,8 +156,27 @@ the model and what to do with the answer", not "this port detects tables well".
 
 ## 6. CLI
 
-Not yet. `src/main.rs` is a flat-flag design built for one pipeline, and adding
-a second mode to it means choosing between more flags and a subcommand
-restructure. That choice belongs with `STRUCT-001`, which will decide whether
-there is one structured entry point or several — a CLI shaped around the table
-pipeline alone would likely be wrong within one roadmap item.
+Delivered, and shaped by the answer `STRUCT-001` produced: there are **three**
+typed entry points — `OcrEngine`, `TableEngine`, `StructureEngine` — so the
+binary grew two subcommands rather than a mode flag.
+
+The classic invocation is unchanged. `paddleocr-rust --ort-dylib … page.png`
+still means what it meant, still takes several images, and still honours every
+flag it did; the recorded decision was to extend in place rather than
+restructure, so no documented invocation broke. `structure` and `table` are
+additional first words, sharing the same flag vocabulary — `--ort-dylib`, not a
+second spelling of it — and adding only what they need: `--layout`, the table
+trio, `--route`, `--format`, `--plain`.
+
+Two boundaries are worth stating because they are choices, not omissions:
+
+- **Exactly one image** for the two new commands. Joining pages is
+  `concatenate_markdown_pages`, which needs `PDF-001`'s renderer gate; a
+  subcommand that quietly concatenated would be inventing a document boundary.
+- **The table trio is all-or-none.** Two of three would load an engine that
+  cannot answer, and that is reported at parse time rather than after a session
+  has opened.
+
+The argument model is pure and unit-tested in the default build, without the
+inference feature and without artifacts. That is where argument handling
+belongs: a CLI's most common failure is a mistyped flag, not a mis-run model.
