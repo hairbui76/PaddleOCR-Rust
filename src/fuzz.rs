@@ -47,6 +47,7 @@ pub fn exercise(input: &[u8]) {
     exercise_geometry_and_crop_kernels(&mut reader);
     exercise_structured_kernels(&mut reader);
     exercise_layout_order(&mut reader);
+    exercise_structure_orchestration(&mut reader);
     exercise_parsers(input);
 }
 
@@ -148,6 +149,241 @@ fn exercise_layout_order(reader: &mut ByteReader<'_>) {
     assert_eq!(seen.len(), order.len(), "no block may be ordered twice");
     let again = crate::layout_order::xycut_enhanced_order(&mut replay);
     assert_eq!(order, again, "the ordering must be deterministic");
+}
+
+/// Drives the whole StructureV3 orchestration chain over one arbitrary page.
+///
+/// `standardized_data` → `assemble_layout_parsing` → `convert_markdown_page`
+/// is now pure end to end (the two recognition sites are a trait, served here
+/// by a deterministic stub), so a whole document can be driven from bytes.
+/// The risks this targets are the ones no fixture can reach:
+///
+/// - **Termination.** The supplement-region loop consumes a block set until it
+///   is empty and the region-growth loop iterates to a fixpoint. Both are
+///   argued to terminate; a hang here is the argument being wrong.
+/// - **Partitioning.** No layout block may land in two regions, and the
+///   document may not grow blocks — either would duplicate content.
+/// - **Parallel OCR arrays.** Re-recognition appends across five vectors, and
+///   `dt_polys` is deliberately *not* one of them; assembly indexes them by
+///   position, so a length that drifts the wrong way is an out-of-bounds.
+/// - **UTF-8 boundaries.** The text-line machinery inspects the last and
+///   second-to-last character of a line, so the corpus includes multi-byte
+///   text: byte-indexing there would panic rather than mis-format.
+fn exercise_structure_orchestration(reader: &mut ByteReader<'_>) {
+    use crate::structure_standardize::{OcrData, TextRecognizer, standardized_data};
+
+    /// Deterministic stand-in for the recognition model.
+    struct StubRecognizer;
+
+    impl TextRecognizer for StubRecognizer {
+        fn recognize(&mut self, crop: [i64; 4]) -> (String, f64) {
+            let height = crop[3].saturating_sub(crop[1]);
+            let width = crop[2].saturating_sub(crop[0]);
+            let score = f64::from((height.rem_euclid(97) + width.rem_euclid(31)) as u32) / 128.0;
+            (format!("rec-{height}x{width}"), score)
+        }
+    }
+
+    const LABELS: [&str; 12] = [
+        "text",
+        "doc_title",
+        "paragraph_title",
+        "table",
+        "formula",
+        "image",
+        "seal",
+        "header",
+        "footer",
+        "footnote",
+        "reference",
+        "abstract",
+    ];
+    // Multi-byte text belongs here: `format_line` and the paragraph-joining
+    // rules read the last and second-to-last character of a line.
+    const TEXTS: [&str; 8] = [
+        "",
+        "word ",
+        "hyphen-",
+        "第一行的中文内容",
+        "1.2 Methods",
+        "abstract",
+        "  spaced  ",
+        "ends,",
+    ];
+
+    let coordinate = |reader: &mut ByteReader<'_>| -> [f64; 4] {
+        let left = f64::from(reader.next_byte()) * 4.0;
+        let top = f64::from(reader.next_byte()) * 4.0;
+        // Degenerate and inverted rectangles are deliberately reachable: a
+        // zero-area block never matches a region and must still be consumed.
+        let width = f64::from(reader.next_byte()) - 8.0;
+        let height = f64::from(reader.next_byte()) - 8.0;
+        [left, top, left + width, top + height]
+    };
+
+    let layout_count = usize::from(reader.next_byte() % 6);
+    let mut layout_boxes = Vec::with_capacity(layout_count);
+    for _ in 0..layout_count {
+        layout_boxes.push(crate::structure_glue::GlueBlock {
+            label: LABELS[usize::from(reader.next_byte()) % LABELS.len()].to_owned(),
+            coordinate: coordinate(reader),
+            score: f64::from(reader.next_byte()) / 255.0,
+        });
+    }
+
+    let region_count = usize::from(reader.next_byte() % 3);
+    let mut region_boxes = Vec::with_capacity(region_count);
+    for _ in 0..region_count {
+        region_boxes.push(crate::structure_glue::GlueBlock {
+            label: "Region".to_owned(),
+            coordinate: coordinate(reader),
+            score: 1.0,
+        });
+    }
+
+    let span_count = usize::from(reader.next_byte() % 8);
+    let mut ocr = OcrData::default();
+    for _ in 0..span_count {
+        let bbox = coordinate(reader);
+        let corners = [
+            [bbox[0], bbox[1]],
+            [bbox[2], bbox[1]],
+            [bbox[2], bbox[3]],
+            [bbox[0], bbox[3]],
+        ];
+        ocr.dt_polys.push(corners);
+        ocr.rec_polys.push(corners);
+        ocr.rec_boxes.push(bbox);
+        ocr.rec_texts
+            .push(TEXTS[usize::from(reader.next_byte()) % TEXTS.len()].to_owned());
+        ocr.rec_scores.push(f64::from(reader.next_byte()) / 255.0);
+        ocr.rec_labels.push("text".to_owned());
+    }
+
+    let threshold = f64::from(reader.next_byte()) / 255.0;
+    let page_width = f64::from(reader.next_byte()) * 8.0 + 1.0;
+    let page_height = f64::from(reader.next_byte()) * 8.0 + 1.0;
+
+    let mut stub = StubRecognizer;
+    let standardized = standardized_data(
+        page_width,
+        page_height,
+        &layout_boxes,
+        &region_boxes,
+        ocr.clone(),
+        &mut stub,
+        threshold,
+    );
+
+    // No block may belong to two regions: a document that placed one block in
+    // two regions would emit its content twice.
+    let mut placed: Vec<usize> = standardized
+        .region_to_block_map
+        .values()
+        .flatten()
+        .copied()
+        .collect();
+    let total_placed = placed.len();
+    placed.sort_unstable();
+    placed.dedup();
+    assert_eq!(
+        placed.len(),
+        total_placed,
+        "no layout block may be placed in two regions"
+    );
+    assert!(
+        placed
+            .iter()
+            .all(|index| *index < standardized.layout_boxes.len()),
+        "every placed index must name a layout block"
+    );
+
+    // The five vectors assembly indexes by position must stay in step.
+    // `dt_polys` is deliberately excluded: the no-text branch appends to the
+    // others without it, so it may only fall behind.
+    let spans = standardized.ocr.rec_texts.len();
+    assert_eq!(standardized.ocr.rec_boxes.len(), spans, "rec_boxes length");
+    assert_eq!(standardized.ocr.rec_polys.len(), spans, "rec_polys length");
+    assert_eq!(
+        standardized.ocr.rec_scores.len(),
+        spans,
+        "rec_scores length"
+    );
+    assert_eq!(
+        standardized.ocr.rec_labels.len(),
+        spans,
+        "rec_labels length"
+    );
+    assert!(
+        standardized.ocr.dt_polys.len() <= spans,
+        "dt_polys may only fall behind the recognition arrays"
+    );
+    for indices in standardized.block_to_ocr_map.values() {
+        assert!(
+            indices.iter().all(|index| *index < spans),
+            "every mapped span index must exist"
+        );
+    }
+
+    let table_html: Vec<String> = (0..usize::from(reader.next_byte() % 3))
+        .map(|index| format!("<table><tr><td>{index}</td></tr></table>"))
+        .collect();
+    let ignore = crate::structure_assembly::DEFAULT_MARKDOWN_IGNORE_LABELS;
+    let assembled =
+        crate::structure_assembly::assemble_layout_parsing(&standardized, &table_html, &ignore);
+
+    // Assembly may drop a block whose ordering refused it, but it may never
+    // invent one.
+    assert!(
+        assembled.len() <= standardized.layout_boxes.len(),
+        "assembly must not grow the document"
+    );
+    let mut expected_order_index = 1_u32;
+    for (position, block) in assembled.iter().enumerate() {
+        assert_eq!(block.index, position, "block indices must be sequential");
+        if let Some(order_index) = block.order_index {
+            assert_eq!(
+                order_index, expected_order_index,
+                "reading numbers must be gap-free"
+            );
+            expected_order_index += 1;
+        }
+    }
+
+    for pretty in [true, false] {
+        let options = crate::markdown_v2::MarkdownOptions {
+            pretty,
+            use_table_recognition: !table_html.is_empty(),
+            original_image_width: page_width as i64,
+            markdown_ignore_labels: &ignore,
+        };
+        let page = crate::markdown_v2::convert_markdown_page(&assembled, &options);
+        let again = crate::markdown_v2::convert_markdown_page(&assembled, &options);
+        assert_eq!(page, again, "the Markdown page must be deterministic");
+        let mut paths = page.image_paths.clone();
+        let total_paths = paths.len();
+        paths.sort_unstable();
+        paths.dedup();
+        assert_eq!(paths.len(), total_paths, "image paths must be unique");
+    }
+
+    // The whole chain, replayed: same bytes in, same document out.
+    let mut replay_stub = StubRecognizer;
+    let replayed = standardized_data(
+        page_width,
+        page_height,
+        &layout_boxes,
+        &region_boxes,
+        ocr,
+        &mut replay_stub,
+        threshold,
+    );
+    let replayed_blocks =
+        crate::structure_assembly::assemble_layout_parsing(&replayed, &table_html, &ignore);
+    assert_eq!(
+        assembled, replayed_blocks,
+        "the orchestration must be deterministic"
+    );
 }
 
 /// Drives the structured-document kernels: reading order, Markdown, and table
