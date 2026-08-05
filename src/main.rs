@@ -26,7 +26,7 @@ fn usage() -> &'static str {
      file. With more than one image the text output gains a leading path \n\
      column, as grep does, and --json emits one JSON document per line.\n\
      \n\
-     Two further commands take the same model flags and one image:\n\
+     Three further commands take the same model flags:\n\
      \n\
      \x20 paddleocr-rust structure --layout <layout.onnx> \\\n\
      \x20     [--table-classifier <cls.onnx> --table-cells <cell.onnx> \\\n\
@@ -37,18 +37,32 @@ fn usage() -> &'static str {
      \x20     --table-cells <cell.onnx> --table-structure <str.onnx> \\\n\
      \x20     [--route wired|wireless] [--format json|html] [--id <text>] <crop.png>\n\
      \n\
+     \x20 paddleocr-rust pdf [--json] [--first-page <n>] [--pages <n>] \\\n\
+     \x20     <document.pdf>\n\
+     \n\
      structure parses a page into ordered blocks and Markdown; the three table \n\
      flags are all-or-none and turn table recognition on. table recognizes one \n\
      crop, using the crop's own OCR to fill the cells. Both take exactly one \n\
-     image: joining pages into one document needs the PDF renderer that has no \n\
-     approved gate yet.\n"
+     image.\n\
+     \n\
+     pdf reads a whole document, one result per page, and needs a build with \n\
+     --features onnxruntime,pdf. A page that cannot be read is reported on \n\
+     stderr and does not stop the run; the exit code is 1 if any page failed. \n\
+     Run `paddleocr-rust pdf --help` for its own options.\n"
 }
 
 fn main() -> ExitCode {
     let arguments: Vec<String> = std::env::args().skip(1).collect();
-    if arguments
-        .iter()
-        .any(|value| value == "--help" || value == "-h")
+    // A subcommand documents its own options, so `pdf --help` must reach `pdf`
+    // rather than printing the top-level usage over it. Only a --help with no
+    // subcommand in front of it is answered here.
+    let leads_with_subcommand = arguments
+        .first()
+        .is_some_and(|first| matches!(first.as_str(), "structure" | "table" | "pdf"));
+    if !leads_with_subcommand
+        && arguments
+            .iter()
+            .any(|value| value == "--help" || value == "-h")
     {
         print!("{}", usage());
         return ExitCode::SUCCESS;
@@ -62,7 +76,7 @@ fn main() -> ExitCode {
     let subcommand = arguments
         .first()
         .map(String::as_str)
-        .filter(|first| matches!(*first, "structure" | "table"));
+        .filter(|first| matches!(*first, "structure" | "table" | "pdf"));
 
     #[cfg(not(feature = "onnxruntime"))]
     {
@@ -78,6 +92,20 @@ fn main() -> ExitCode {
     #[cfg(feature = "onnxruntime")]
     {
         let outcome = match subcommand {
+            // A build without the `pdf` feature must say so rather than treat
+            // the word as a filename and fail with a confusing decode error.
+            Some("pdf") => {
+                #[cfg(feature = "pdf")]
+                {
+                    documents::run(&arguments[1..])
+                }
+                #[cfg(not(feature = "pdf"))]
+                {
+                    Err("this build has no PDF support compiled in; rebuild with \
+                         `--features onnxruntime,pdf`"
+                        .to_owned())
+                }
+            }
             Some(name) => structured::run(name, &arguments[1..]),
             None => run(&arguments),
         };
@@ -909,5 +937,180 @@ mod structured {
             };
             assert!(error.contains("whole number"), "{error}");
         }
+    }
+}
+
+/// The `pdf` command.
+///
+/// Deliberately closer to the classic path than to `structure`: it needs the
+/// same detector, recognizer, and dictionary and nothing else, so it reuses that
+/// flag vocabulary rather than inventing one.
+///
+/// Output reuses the **frozen** `paddleocr-rust/ocr-result/v1` document, one per
+/// page, exactly as the classic path already does for several images. A
+/// per-document PDF schema would need its own contract under `API-DEC-001`, and
+/// minting an unfrozen one to save a wrapper would be the wrong trade.
+///
+/// A failed page goes to stderr with its page index and does **not** stop the
+/// run, which is the recorded per-page policy surfaced at the command line. The
+/// exit code is `1` when any page failed and `0` when none did, so a script can
+/// tell a fully-read document from a partly-read one without parsing anything.
+#[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+mod documents {
+    use std::process::ExitCode;
+
+    use paddleocr_rust::api::{Artifacts, OcrEngine, OcrOptions, PdfPageRange, parse_dictionary};
+
+    pub fn usage() -> &'static str {
+        "usage: paddleocr-rust pdf --ort-dylib <libonnxruntime.so> \\\n\
+         \x20        --detector <detector.onnx> --recognizer <recognizer.onnx> \\\n\
+         \x20        --dictionary <dict.txt> [--json] [--time-budget-ms <n>] \\\n\
+         \x20        [--first-page <n>] [--pages <n>] <document.pdf>\n\
+         \n\
+         Pages are numbered from 1 on the command line and reported the same way.\n\
+         One `ocr-result/v1` document per page with --json. A page that cannot be\n\
+         read is reported on stderr and does not stop the run; the exit code is 1\n\
+         if any page failed.\n"
+    }
+
+    pub fn run(arguments: &[String]) -> Result<ExitCode, String> {
+        let mut library = None;
+        let mut detector = None;
+        let mut recognizer = None;
+        let mut dictionary = None;
+        let mut document = None;
+        let mut json = false;
+        let mut time_budget = None;
+        let mut first_page = None;
+        let mut pages = None;
+
+        let mut rest = arguments.iter();
+        while let Some(argument) = rest.next() {
+            let mut value = |name: &str| -> Result<String, String> {
+                rest.next()
+                    .cloned()
+                    .ok_or_else(|| format!("{name} needs a value"))
+            };
+            match argument.as_str() {
+                "--ort-dylib" => library = Some(value("--ort-dylib")?),
+                "--detector" => detector = Some(value("--detector")?),
+                "--recognizer" => recognizer = Some(value("--recognizer")?),
+                "--dictionary" => dictionary = Some(value("--dictionary")?),
+                "--time-budget-ms" => time_budget = Some(value("--time-budget-ms")?),
+                "--first-page" => first_page = Some(value("--first-page")?),
+                "--pages" => pages = Some(value("--pages")?),
+                "--json" => json = true,
+                "--help" | "-h" => {
+                    print!("{}", usage());
+                    return Ok(ExitCode::SUCCESS);
+                }
+                other if other.starts_with("--") => {
+                    return Err(format!("unknown option {other}"));
+                }
+                other => {
+                    if document.replace(other.to_owned()).is_some() {
+                        return Err("pdf takes exactly one document".to_owned());
+                    }
+                }
+            }
+        }
+
+        let (Some(library), Some(detector), Some(recognizer), Some(dictionary), Some(document)) =
+            (library, detector, recognizer, dictionary, document)
+        else {
+            return Err(format!(
+                "pdf needs --ort-dylib, --detector, --recognizer, --dictionary, and one document\n\n{}",
+                usage()
+            ));
+        };
+
+        // One-based on the command line, zero-based inside: a page number a
+        // human types should match the one their viewer shows.
+        let first = match first_page.as_deref() {
+            Some(value) => match value.parse::<u32>() {
+                Ok(0) | Err(_) => return Err("--first-page must be 1 or greater".to_owned()),
+                Ok(number) => number - 1,
+            },
+            None => 0,
+        };
+        let range = match pages.as_deref() {
+            Some(value) => match value.parse::<u32>() {
+                Ok(0) | Err(_) => return Err("--pages must be 1 or greater".to_owned()),
+                Ok(count) => PdfPageRange::from(first, count),
+            },
+            None if first == 0 => PdfPageRange::all(),
+            None => PdfPageRange::from(first, u32::MAX),
+        };
+
+        let text = std::fs::read_to_string(&dictionary)
+            .map_err(|error| format!("{dictionary}: {error}"))?;
+        let parsed = parse_dictionary(&text, true).map_err(|error| format!("{error}"))?;
+        eprintln!("dictionary: {} entries", parsed.len());
+
+        let mut options = OcrOptions::default();
+        if let Some(value) = time_budget.as_deref() {
+            let millis = value
+                .parse::<u64>()
+                .map_err(|_| "--time-budget-ms must be a whole number".to_owned())?;
+            options = options.with_control(
+                paddleocr_rust::control::RunControl::unbounded()
+                    .with_time_budget(std::time::Duration::from_millis(millis)),
+            );
+        }
+
+        let engine = OcrEngine::load(&Artifacts::new(&library, &detector, &recognizer), &parsed)
+            .map_err(|error| format!("{error}"))?;
+
+        // Bounded during the read, like every other input this binary takes.
+        let bytes = paddleocr_rust::input::read_encoded_file(&document)
+            .map_err(|error| format!("{document}: {error}"))?;
+        let result = engine
+            .recognize_pdf(&bytes, range, &options)
+            .map_err(|error| format!("{document}: {error}"))?;
+        eprintln!(
+            "document: {document} ({} pages, {} selected)",
+            result.page_count,
+            result.pages.len()
+        );
+
+        for page in &result.pages {
+            let number = page.index + 1;
+            match &page.outcome {
+                Ok(parsed_page) => {
+                    if json {
+                        let id = format!("{document}#page={number}");
+                        println!(
+                            "{}",
+                            paddleocr_rust::result_json::result_to_json(
+                                &parsed_page.lines,
+                                parsed_page.width_pixels,
+                                parsed_page.height_pixels,
+                                Some(&id),
+                                None,
+                            )
+                        );
+                    } else {
+                        for line in &parsed_page.lines {
+                            println!("{number}\t{:.6}\t{}", line.score, line.text);
+                        }
+                        if parsed_page.lines.is_empty() {
+                            eprintln!("page {number}: no text detected");
+                        }
+                    }
+                }
+                // Reported, never swallowed, and never fatal to the rest.
+                Err(error) => eprintln!("page {number}: {error}"),
+            }
+        }
+
+        if result.failed() > 0 {
+            eprintln!(
+                "{} of {} selected page(s) could not be read",
+                result.failed(),
+                result.pages.len()
+            );
+            return Ok(ExitCode::from(1));
+        }
+        Ok(ExitCode::SUCCESS)
     }
 }

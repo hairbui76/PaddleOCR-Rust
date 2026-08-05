@@ -131,6 +131,16 @@ as you like. Joining several parsed pages into one Markdown document is
 implemented and verified against upstream (`concatenate_markdown_pages`) but not
 yet reachable from a command: there is no structure-over-PDF entry point.
 
+```sh
+paddleocr-rust pdf --ort-dylib … --detector … --recognizer … --dictionary … \
+  [--json] [--first-page 3] [--pages 10] scan.pdf
+```
+
+`pdf` reads a whole document and prints one result per page, page numbers
+one-based as a viewer shows them. A page that cannot be read is reported on
+stderr and does not stop the run; the exit code is `1` if any selected page
+failed. Needs `--features onnxruntime,pdf`.
+
 Formula, seal, chart, and key-information extraction stay **off**: those models
 have no published ONNX export, so this port cannot check itself against them.
 That is upstream's own `use_*` flag configuration, not a partial imitation of

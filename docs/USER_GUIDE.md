@@ -269,6 +269,41 @@ models have no published ONNX export, so this port has nothing to check itself
 against; the configuration is upstream's own `use_*` flags set to `false`, not
 a partial imitation of those stages.
 
+### A whole PDF
+
+Needs a build with `--features onnxruntime,pdf`; a build without it says so
+rather than reading `pdf` as a filename.
+
+```sh
+paddleocr-rust pdf \
+  --ort-dylib /path/to/libonnxruntime.so \
+  --detector  /path/to/detector/inference.onnx \
+  --recognizer /path/to/recognizer/inference.onnx \
+  --dictionary /path/to/ppocrv6_dict.txt \
+  [--json] [--time-budget-ms 30000] \
+  [--first-page 3] [--pages 10] \
+  scan.pdf
+```
+
+Page numbers are **one-based** on the command line and in the output, matching
+what a PDF viewer shows. Text output gains a leading page column; `--json` emits
+one frozen `ocr-result/v1` document per page, whose `input.id` is
+`<document>#page=<n>` so a page's document survives being piped somewhere.
+
+A page that cannot be read is reported on stderr and **does not stop the run**:
+
+```text
+1	0.999980	Hello World
+page 2: unsupported capability: pdf.recursive_xobject
+1 of 2 selected page(s) could not be read
+```
+
+The exit code is `1` when any selected page failed and `0` when none did, so a
+script can tell a fully-read document from a partly-read one without parsing
+anything. Two failures are still whole-document and exit `2`, because they leave
+no pages to report against: a document that cannot be parsed, and one that is
+encrypted.
+
 ### Exit codes
 
 | Code | Meaning |

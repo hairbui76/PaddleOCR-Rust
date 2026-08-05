@@ -1660,11 +1660,101 @@ mod command_line {
             "--ort-dylib",
             "paddleocr-rust structure",
             "paddleocr-rust table",
+            "paddleocr-rust pdf",
             "--layout",
             "exactly one",
         ] {
             assert!(stdout.contains(expected), "usage omits {expected}");
         }
+    }
+
+    /// `pdf --help` reaches the `pdf` command, not the top-level usage.
+    ///
+    /// The top level answers `--help` before dispatching, so a subcommand's own
+    /// help had to be excluded explicitly. Without this test that regression is
+    /// invisible: the binary still exits `0` and still prints *a* usage.
+    ///
+    /// Only meaningful in a build with a backend. Without one the binary refuses
+    /// every invocation with exit `2` before any dispatch happens, which is its
+    /// documented behaviour and not this test's subject.
+    #[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+    #[test]
+    fn a_subcommand_help_reaches_the_subcommand() {
+        let (code, stdout, _) = run(&["pdf", "--help"]);
+        assert_eq!(code, 0);
+        assert!(
+            stdout.contains("paddleocr-rust pdf --ort-dylib"),
+            "{stdout}"
+        );
+        assert!(stdout.contains("--first-page"), "{stdout}");
+        assert!(
+            !stdout.contains("Three further commands"),
+            "the top-level usage was printed instead: {stdout}"
+        );
+    }
+
+    /// A build without the `pdf` feature says so rather than failing obscurely.
+    ///
+    /// The failure mode this prevents is specific: `pdf` would otherwise be read
+    /// as an input filename and reported as an unreadable image, which tells the
+    /// caller nothing about the feature they are missing.
+    #[cfg(all(feature = "onnxruntime", not(feature = "pdf")))]
+    #[test]
+    fn a_build_without_pdf_support_says_so() {
+        let (code, stdout, stderr) = run(&["pdf", "document.pdf"]);
+        assert_eq!(code, 2);
+        assert!(stdout.is_empty());
+        assert!(stderr.contains("no PDF support"), "{stderr}");
+    }
+
+    /// The `pdf` command validates its own flags before loading anything.
+    #[cfg(all(feature = "onnxruntime", feature = "pdf"))]
+    #[test]
+    fn the_pdf_command_reports_its_own_usage_errors() {
+        // No document and no models.
+        let (code, stdout, stderr) = run(&["pdf"]);
+        assert_eq!(code, 2);
+        assert!(stdout.is_empty(), "usage errors must not write to stdout");
+        assert!(stderr.contains("--ort-dylib"), "{stderr}");
+
+        // Page numbers are one-based on the command line, so zero is an error
+        // rather than a silent alias for the first page.
+        let (code, _, stderr) = run(&[
+            "pdf",
+            "--ort-dylib",
+            "lib.so",
+            "--detector",
+            "det.onnx",
+            "--recognizer",
+            "rec.onnx",
+            "--dictionary",
+            "dict.txt",
+            "--first-page",
+            "0",
+            "doc.pdf",
+        ]);
+        assert_eq!(code, 2);
+        assert!(
+            stderr.contains("--first-page must be 1 or greater"),
+            "{stderr}"
+        );
+
+        // Two documents is a usage error, not a silently ignored argument.
+        let (code, _, stderr) = run(&[
+            "pdf",
+            "--ort-dylib",
+            "lib.so",
+            "--detector",
+            "det.onnx",
+            "--recognizer",
+            "rec.onnx",
+            "--dictionary",
+            "dict.txt",
+            "a.pdf",
+            "b.pdf",
+        ]);
+        assert_eq!(code, 2);
+        assert!(stderr.contains("exactly one document"), "{stderr}");
     }
 
     /// The classic invocation keeps its shape: no subcommand, and the newer
