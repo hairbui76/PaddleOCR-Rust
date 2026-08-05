@@ -42,9 +42,17 @@
 //!
 //! # What is not here
 //!
-//! The image, chart, formula, and seal formatters. They depend on P8 modules
-//! with **no published ONNX export**, so a port of them would have nothing to
-//! check against — see `docs/P8_ARTIFACT_AVAILABILITY.md`.
+//! The **recognition-on** content variants of the image, chart, formula, and
+//! seal handlers: the chart-to-table conversion, `$$`-wrapped formula content,
+//! and a seal's image-plus-text pair. Those read a model's output, and the
+//! models publish **no ONNX export** — see `docs/P8_ARTIFACT_AVAILABILITY.md`.
+//!
+//! Their recognition-**off** forms are not missing. With those flags off — this
+//! port's supported mode — upstream routes all four labels through the plain
+//! image handler, which needs no artifact, and `markdown_v2.rs` implements and
+//! matches it. [`format_block`] here is the leaf-level dispatch that predates
+//! that page and returns `None` for them; `convert_markdown_page` is the one on
+//! the shipped path.
 #![allow(dead_code)]
 
 /// The CJK numerals the numbering pattern accepts.

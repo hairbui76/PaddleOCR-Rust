@@ -367,6 +367,24 @@ fn exercise_structure_orchestration(reader: &mut ByteReader<'_>) {
         assert_eq!(paths.len(), total_paths, "image paths must be unique");
     }
 
+    // The cross-page merge, over the fuzzed page repeated. Merging can only
+    // ever drop blocks and move their text into an earlier block, so the block
+    // count must fall and no block may be invented — a merge that grew the
+    // document would mean text was duplicated rather than moved.
+    let document = [assembled.clone(), assembled.clone()];
+    let merged = crate::multipage::merge_text_across_page(&document);
+    assert_eq!(merged.len(), 2, "merging must preserve the page count");
+    let survivors: usize = merged.iter().map(Vec::len).sum();
+    assert!(
+        survivors <= assembled.len() * 2,
+        "merging must not invent blocks"
+    );
+    assert_eq!(
+        merged,
+        crate::multipage::merge_text_across_page(&document),
+        "the cross-page merge must be deterministic"
+    );
+
     // The whole chain, replayed: same bytes in, same document out.
     let mut replay_stub = StubRecognizer;
     let replayed = standardized_data(
@@ -484,6 +502,32 @@ fn exercise_structured_kernels(reader: &mut ByteReader<'_>) {
     let _ = crate::markdown::normalize_newlines(&text);
     let _ = crate::markdown::simplify_table(&text);
     let _ = crate::markdown::format_first_line(&text, &["abstract"], "## ", "", " ");
+
+    // The multipage concatenation, over arbitrary page text and flags. The
+    // interesting input is the *join*: the two facing characters decide the
+    // separator, so a lossy UTF-8 tail is exactly the case that could index a
+    // byte inside a character.
+    let pages: Vec<crate::markdown_v2::MarkdownPage> = (0..3)
+        .map(|_| crate::markdown_v2::MarkdownPage {
+            markdown: String::from_utf8_lossy(&[
+                reader.next_byte(),
+                reader.next_byte(),
+                reader.next_byte(),
+            ])
+            .into_owned(),
+            image_paths: Vec::new(),
+            continuation_flags: (
+                reader.next_byte().is_multiple_of(2),
+                reader.next_byte().is_multiple_of(2),
+            ),
+        })
+        .collect();
+    let joined = crate::multipage::concatenate_markdown_pages(&pages);
+    assert_eq!(
+        joined,
+        crate::multipage::concatenate_markdown_pages(&pages),
+        "the page concatenation must be deterministic"
+    );
 
     // Determinism, asserted rather than documented.
     let regions: Vec<crate::layout::LayoutRegion> = Vec::new();

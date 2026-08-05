@@ -103,6 +103,14 @@ corrupt, oversized, rotated, and unwarp-refusal cases pass in
 `tests/end_to_end.rs`; its multipage and password cases need that renderer.
 Office formats are decided against, not pending.
 
+What the renderer does **not** block: the document-assembly functions
+themselves. `src/multipage.rs` ports `concatenate_markdown_pages` and
+`merge_text_across_page` and matches twelve captured cases, because both are
+pure over per-page Markdown, continuation flags, and blocks. They are verified
+and not reachable — a distinction worth keeping, since the row would otherwise
+read as though the renderer were the only thing standing between this port and
+multipage documents.
+
 ### 3. Hardware this project does not have (`2` rows)
 
 `ACCEL-001` needs a GPU or accelerator to qualify a backend through the raw

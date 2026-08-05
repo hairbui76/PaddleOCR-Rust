@@ -1,0 +1,612 @@
+{
+ "cases_that_merged": [
+  "text_runs_across_the_break",
+  "cjk_across_the_break",
+  "three_pages_running_text"
+ ],
+ "concatenations": [
+  {
+   "case": "paragraph_break",
+   "markdown_texts": "\n\nFirst page text.\n\nSecond page text.",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      true
+     ],
+     "markdown_texts": "First page text."
+    },
+    {
+     "continuation_flags": [
+      true,
+      true
+     ],
+     "markdown_texts": "Second page text."
+    }
+   ]
+  },
+  {
+   "case": "continuation_ascii",
+   "markdown_texts": "\n\na sentence that runs across the page break",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      false
+     ],
+     "markdown_texts": "a sentence that runs"
+    },
+    {
+     "continuation_flags": [
+      false,
+      true
+     ],
+     "markdown_texts": "across the page break"
+    }
+   ]
+  },
+  {
+   "case": "continuation_cjk_left",
+   "markdown_texts": "\n\n这是中文across the page break",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      false
+     ],
+     "markdown_texts": "这是中文"
+    },
+    {
+     "continuation_flags": [
+      false,
+      true
+     ],
+     "markdown_texts": "across the page break"
+    }
+   ]
+  },
+  {
+   "case": "continuation_cjk_right",
+   "markdown_texts": "\n\na sentence that runs继续中文内容",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      false
+     ],
+     "markdown_texts": "a sentence that runs"
+    },
+    {
+     "continuation_flags": [
+      false,
+      true
+     ],
+     "markdown_texts": "继续中文内容"
+    }
+   ]
+  },
+  {
+   "case": "continuation_empty_page",
+   "markdown_texts": "\n\na sentence that runs ",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      false
+     ],
+     "markdown_texts": "a sentence that runs"
+    },
+    {
+     "continuation_flags": [
+      false,
+      true
+     ],
+     "markdown_texts": ""
+    }
+   ]
+  },
+  {
+   "case": "single_page",
+   "markdown_texts": "\n\nOnly page.",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      true
+     ],
+     "markdown_texts": "Only page."
+    }
+   ]
+  },
+  {
+   "case": "three_pages_mixed",
+   "markdown_texts": "\n\npage one tail page two whole page three head",
+   "pages": [
+    {
+     "continuation_flags": [
+      true,
+      false
+     ],
+     "markdown_texts": "page one tail"
+    },
+    {
+     "continuation_flags": [
+      false,
+      false
+     ],
+     "markdown_texts": "page two whole"
+    },
+    {
+     "continuation_flags": [
+      false,
+      true
+     ],
+     "markdown_texts": "page three head"
+    }
+   ]
+  },
+  {
+   "case": "empty_document",
+   "markdown_texts": "",
+   "pages": []
+  }
+ ],
+ "merges": [
+  {
+   "block_counts_before_merge": [
+    2,
+    1
+   ],
+   "case": "text_runs_across_the_break",
+   "image_size": [
+    400,
+    600
+   ],
+   "merged_pages": [
+    [
+     {
+      "content": "The Title ",
+      "group_id": 0,
+      "label": "doc_title"
+     },
+     {
+      "content": "a paragraph that keeps going past the end of  this first page and onto the second one.\n",
+      "group_id": 1,
+      "label": "text"
+     }
+    ],
+    []
+   ],
+   "pages": [
+    {
+     "layout": [
+      [
+       "doc_title",
+       [
+        60.2,
+        40.6,
+        340.8,
+        90.3
+       ],
+       0.98
+      ],
+      [
+       "text",
+       [
+        20.6,
+        160.2,
+        380.4,
+        400.8
+       ],
+       0.97
+      ]
+     ],
+     "spans": [
+      [
+       [
+        70,
+        50,
+        330,
+        80
+       ],
+       "The Title"
+      ],
+      [
+       [
+        22,
+        170,
+        378,
+        200
+       ],
+       "a paragraph that keeps"
+      ],
+      [
+       [
+        22,
+        210,
+        300,
+        240
+       ],
+       "going past the end of"
+      ]
+     ],
+     "threshold": 0.5
+    },
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.4,
+        60.2,
+        380.6,
+        300.4
+       ],
+       0.96
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        70,
+        378,
+        100
+       ],
+       "this first page and onto"
+      ],
+      [
+       [
+        22,
+        110,
+        250,
+        140
+       ],
+       "the second one."
+      ]
+     ],
+     "threshold": 0.5
+    }
+   ]
+  },
+  {
+   "block_counts_before_merge": [
+    1,
+    1
+   ],
+   "case": "cjk_across_the_break",
+   "image_size": [
+    400,
+    600
+   ],
+   "merged_pages": [
+    [
+     {
+      "content": "an English tail before the break 继续的中文内容第二行\n",
+      "group_id": 0,
+      "label": "text"
+     }
+    ],
+    []
+   ],
+   "pages": [
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.6,
+        160.2,
+        380.4,
+        400.8
+       ],
+       0.97
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        170,
+        378,
+        200
+       ],
+       "an English tail"
+      ],
+      [
+       [
+        22,
+        210,
+        300,
+        240
+       ],
+       "before the break"
+      ]
+     ],
+     "threshold": 0.5
+    },
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.4,
+        60.2,
+        380.6,
+        300.4
+       ],
+       0.96
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        70,
+        378,
+        100
+       ],
+       "继续的中文内容"
+      ],
+      [
+       [
+        22,
+        110,
+        250,
+        140
+       ],
+       "第二行"
+      ]
+     ],
+     "threshold": 0.5
+    }
+   ]
+  },
+  {
+   "block_counts_before_merge": [
+    1,
+    2
+   ],
+   "case": "title_blocks_the_merge",
+   "image_size": [
+    400,
+    600
+   ],
+   "merged_pages": [
+    [
+     {
+      "content": "a paragraph that keeps going past the end ",
+      "group_id": 0,
+      "label": "text"
+     }
+    ],
+    [
+     {
+      "content": "A New Section ",
+      "group_id": 1,
+      "label": "paragraph_title"
+     },
+     {
+      "content": "with its own paragraph ",
+      "group_id": 2,
+      "label": "text"
+     }
+    ]
+   ],
+   "pages": [
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.6,
+        160.2,
+        380.4,
+        400.8
+       ],
+       0.97
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        170,
+        378,
+        200
+       ],
+       "a paragraph that keeps"
+      ],
+      [
+       [
+        22,
+        210,
+        300,
+        240
+       ],
+       "going past the end"
+      ]
+     ],
+     "threshold": 0.5
+    },
+    {
+     "layout": [
+      [
+       "paragraph_title",
+       [
+        20.4,
+        60.2,
+        380.6,
+        90.4
+       ],
+       0.95
+      ],
+      [
+       "text",
+       [
+        20.4,
+        120.2,
+        380.6,
+        300.4
+       ],
+       0.96
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        65,
+        378,
+        85
+       ],
+       "A New Section"
+      ],
+      [
+       [
+        22,
+        130,
+        378,
+        160
+       ],
+       "with its own paragraph"
+      ]
+     ],
+     "threshold": 0.5
+    }
+   ]
+  },
+  {
+   "block_counts_before_merge": [
+    1,
+    1,
+    1
+   ],
+   "case": "three_pages_running_text",
+   "image_size": [
+    400,
+    600
+   ],
+   "merged_pages": [
+    [
+     {
+      "content": "page one line one page one line two  page two line one page two line two  page three line one page three line two ",
+      "group_id": 0,
+      "label": "text"
+     }
+    ],
+    [],
+    []
+   ],
+   "pages": [
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.6,
+        160.2,
+        380.4,
+        400.8
+       ],
+       0.97
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        170,
+        378,
+        200
+       ],
+       "page one line one"
+      ],
+      [
+       [
+        22,
+        210,
+        300,
+        240
+       ],
+       "page one line two"
+      ]
+     ],
+     "threshold": 0.5
+    },
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.4,
+        60.2,
+        380.6,
+        300.4
+       ],
+       0.96
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        70,
+        378,
+        100
+       ],
+       "page two line one"
+      ],
+      [
+       [
+        22,
+        110,
+        250,
+        140
+       ],
+       "page two line two"
+      ]
+     ],
+     "threshold": 0.5
+    },
+    {
+     "layout": [
+      [
+       "text",
+       [
+        20.4,
+        60.2,
+        380.6,
+        300.4
+       ],
+       0.96
+      ]
+     ],
+     "spans": [
+      [
+       [
+        22,
+        70,
+        378,
+        100
+       ],
+       "page three line one"
+      ],
+      [
+       [
+        22,
+        110,
+        250,
+        140
+       ],
+       "page three line two"
+      ]
+     ],
+     "threshold": 0.5
+    }
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/multipage-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 layout_parsing/pipeline_v2.py concatenate_markdown_pages and merge_text_across_page"
+}

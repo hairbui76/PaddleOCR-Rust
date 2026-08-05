@@ -92,22 +92,57 @@ The alternation order is preserved because it is load-bearing: `I` is tried
 before `II`, and only the required trailing `.`-or-space makes the longer Roman
 forms reachable.
 
-## 7. What is deliberately absent
+## 7. Document assembly: the two multipage functions
 
-The **image**, **chart**, **formula**, and **seal** formatters.
+Above the page converter sit two functions in `pipeline_v2.py`, ported in
+`src/multipage.rs` and captured in `classic-v1-multipage`. Neither renders,
+decodes, or infers anything, which is why they are frozen while `PDF-001` has no
+approved renderer: a renderer is what makes several pages *reachable*, not what
+makes these functions *correct*.
 
-They depend on P8 modules with no published ONNX export
-(`docs/P8_ARTIFACT_AVAILABILITY.md`). Porting them would produce code with
-nothing to check it against, which this project has five recorded bugs' worth of
-reason not to do.
+`concatenate_markdown_pages` reads exactly two values per page — the
+continuation flags and the Markdown text — so a pair of booleans and a string is
+its complete input, not a stand-in for one.
+
+Four behaviours are captured because a reasonable reimplementation gets each
+one wrong:
+
+1. **Every document begins with a blank line.** The loop seeds the previous
+   page's end flag to `true`, so the first page takes the separator branch. Code
+   that joins *between* pages would differ on every document upstream produces.
+2. **One CJK side is enough to drop the joining space.** The test is `or`, not
+   `and`: a Chinese tail followed by English prose is joined with no separator.
+3. **An empty continuing page still contributes a space.** With no character on
+   one side, neither side tests as CJK, so upstream appends `" "` and then
+   nothing.
+4. **The merge separator keys on the raw last character.** Block contents
+   already end in a space, so a merged paragraph gets *two*. Upstream does not
+   trim, so neither does this port.
+
+`merge_text_across_page` moves a paragraph that runs past a page break into the
+last *surviving* block, dropping it from its own page — so a page can come back
+empty, and several consecutive pages can collapse into one paragraph. The start
+flag is computed against the previous block **on the same page**, which means a
+page's first block is measured against nothing and `get_seg_flag`'s no-previous
+branch decides it: the flag clears when the block's first text segment begins
+within ten pixels of the block's own leading edge. That branch is the reason a
+cross-page merge can happen at all.
+
+The capture records which cases actually dropped a block, and a test asserts the
+list is non-empty, because a corpus where nothing merged would be passed by an
+implementation that never merges.
 
 ## 8. What is left
 
-Assembling a whole document: walking ordered blocks, dispatching each to its
-formatter, and joining the results — including the pretty-versus-plain switch
-and the header/footer special cases.
+Only the **recognition-on** content variants of the image, chart, formula, and
+seal handlers: the chart-to-table conversion, `$$`-wrapped formula content, and
+a seal's image-plus-text pair. Those read a model's output, and the models
+publish no ONNX export (`docs/P8_ARTIFACT_AVAILABILITY.md`). Porting them would
+produce code with nothing to check it against, which this project has five
+recorded bugs' worth of reason not to do.
 
-That step needs a block type with a label and content, which is
-`STRUCT-001`'s to define, and `STRUCT-001` is itself blocked on the four missing
-artifacts. So `RECON-001` stays `In progress` with the formatters done and the
-assembly waiting on a decision above it.
+Their recognition-**off** forms are not absent. With those flags off — this
+port's supported mode — upstream routes all four labels through the plain image
+handler, and `src/markdown_v2.rs` implements and matches it. An earlier revision
+of this document said the four formatters were missing outright; that was true of
+the leaf dispatch in `src/markdown.rs` and never true of the page converter.

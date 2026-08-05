@@ -155,7 +155,7 @@ fn handle_block(block: &AssembledBlock, options: &MarkdownOptions<'_>) -> Option
 }
 
 /// The continuity geometry `get_seg_flag` reads from a block.
-fn geometry_of(block: &AssembledBlock) -> BlockGeometry {
+pub(crate) fn geometry_of(block: &AssembledBlock) -> BlockGeometry {
     let (start, end) = match block.direction {
         Dir::Horizontal => (block.bbox[0], block.bbox[2]),
         Dir::Vertical => (block.bbox[1], block.bbox[3]),

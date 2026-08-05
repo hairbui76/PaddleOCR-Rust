@@ -1,0 +1,41 @@
+{
+ "fixture_id": "classic-v1-multipage",
+ "kind": "multipage_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/concatenations/*/pages and #/merges/*/pages",
+  "sha256": "fd563a22c3ef618427dbc89fee0cd5ae8d1af01db104a2e0818975d17eed0067",
+  "sha256_scope": "No image input beyond a zero-filled shape. The concatenation cases are synthetic page dicts, which are the function's complete input; the merge cases are synthetic layout/span specs in the style of classic-v1-layout-assembly. The expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_multipage_oracle.py, importing the page-building constants and stubs from tools/capture_layout_assembly_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py concatenate_markdown_pages",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/pipeline_v2.py merge_text_across_page",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py get_seg_flag"
+  ],
+  "capture_method": "Both functions were executed as unbound methods against a DummySelf, which neither touches. concatenate_markdown_pages ran over eight synthetic page lists covering every branch: the paragraph break, the ASCII inline join, a CJK character on each side, an empty continuing page, a single page, flag propagation across three pages, and the empty list. merge_text_across_page ran over four multipage block lists, each page built by the executed post-model chain (standardized_data, get_layout_parsing_objects, sort_layout_parsing_blocks, the order_index tail). Recorded per merge case: the block count per page before merging, and the surviving blocks with label, content, and group_id.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x, opencv-contrib-python 5.x (IO backend only)"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "fd563a22c3ef618427dbc89fee0cd5ae8d1af01db104a2e0818975d17eed0067",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/multipage-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "multipage::tests::the_captured_concatenations_are_reproduced",
+  "multipage::tests::the_captured_cross_page_merges_are_reproduced",
+  "multipage::tests::the_capture_contains_a_merge_that_fired"
+ ],
+ "limitations": [
+  "The concatenation cases supply page dicts directly rather than running whole pages through _to_markdown first. That is deliberate: the function reads only page_continuation_flags and markdown_texts, so a synthetic pair is the complete input, and classic-v1-markdown-v2 already checks that this port produces those two values correctly.",
+  "cases_that_merged records which merge cases actually dropped a block, so a reimplementation that never merges cannot pass by reproducing only the no-merge case.",
+  "Neither function is reachable from a real multipage input in this port: PDF-001 has no approved renderer, so these are unit-level guarantees over the document assembly, not an end-to-end multipage claim."
+ ]
+}
