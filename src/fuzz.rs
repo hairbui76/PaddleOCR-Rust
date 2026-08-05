@@ -46,7 +46,108 @@ pub fn exercise(input: &[u8]) {
     exercise_ctc_kernel(&mut reader);
     exercise_geometry_and_crop_kernels(&mut reader);
     exercise_structured_kernels(&mut reader);
+    exercise_layout_order(&mut reader);
     exercise_parsers(input);
+}
+
+/// Drives the layout ordering object model end to end.
+///
+/// `xycut_enhanced_order` is pure arithmetic over caller-supplied blocks, so
+/// the properties under test are structural: no panic on absurd coordinates
+/// (the projection histogram inside refuses extents over its bound, and the
+/// refusal must surface as the identity fallback rather than an allocation),
+/// no index emitted twice — a duplicate would duplicate content in a
+/// reconstructed document — and determinism, asserted by ordering a cloned
+/// page and requiring the same order and the same `order_label`s.
+fn exercise_layout_order(reader: &mut ByteReader<'_>) {
+    const LABELS: [&str; 12] = [
+        "text",
+        "doc_title",
+        "paragraph_title",
+        "image",
+        "table",
+        "seal",
+        "header",
+        "footer",
+        "footnote",
+        "table_title",
+        "reference",
+        "abstract",
+    ];
+    let count = usize::from(reader.next_byte() % 8);
+    let mut blocks = Vec::with_capacity(count);
+    for _ in 0..count {
+        let label = LABELS[usize::from(reader.next_byte()) % LABELS.len()];
+        let mut block = crate::layout_order::OrderBlock::new(
+            label,
+            [
+                i64::from(reader.next_u32() as i32),
+                i64::from(reader.next_u32() as i32),
+                i64::from(reader.next_u32() as i32),
+                i64::from(reader.next_u32() as i32),
+            ],
+        );
+        block.num_of_lines = u32::from(reader.next_byte());
+        block.text_line_height = f64::from(reader.next_byte()) / 4.0;
+        block.text_line_width = f64::from(reader.next_byte()) / 2.0;
+        blocks.push(block);
+    }
+    let page_bbox = [
+        0,
+        0,
+        i64::from(reader.next_u32() % 4_096) + 1,
+        i64::from(reader.next_u32() % 4_096) + 1,
+    ];
+    let mut page = crate::layout_order::OrderPage::new(page_bbox, blocks);
+    let mut replay = page.clone();
+
+    let order = crate::layout_order::xycut_enhanced_order(&mut page);
+    let mut seen = order.clone();
+    seen.sort_unstable();
+    seen.dedup();
+    assert_eq!(seen.len(), order.len(), "no block may be ordered twice");
+    assert!(
+        order.iter().all(|index| *index < page.blocks.len()),
+        "every emitted index must be one that was supplied"
+    );
+
+    let again = crate::layout_order::xycut_enhanced_order(&mut replay);
+    assert_eq!(order, again, "the ordering must be deterministic");
+    for (block, replayed) in page.blocks.iter().zip(&replay.blocks) {
+        assert_eq!(
+            block.order_label, replayed.order_label,
+            "order labels must be deterministic"
+        );
+    }
+
+    // A second page with page-plausible coordinates. Arbitrary `i32`s almost
+    // never form boxes that overlap or sit near each other, so the child
+    // matchers, pre-cuts, and insert functions would go unexercised without a
+    // corpus where blocks actually share a page.
+    let count = usize::from(reader.next_byte() % 8);
+    let mut blocks = Vec::with_capacity(count);
+    for _ in 0..count {
+        let label = LABELS[usize::from(reader.next_byte()) % LABELS.len()];
+        let left = i64::from(reader.next_byte()) * 4;
+        let top = i64::from(reader.next_byte()) * 4;
+        let width = i64::from(reader.next_byte()) + 1;
+        let height = i64::from(reader.next_byte()) + 1;
+        let mut block =
+            crate::layout_order::OrderBlock::new(label, [left, top, left + width, top + height]);
+        block.num_of_lines = u32::from(reader.next_byte() % 24);
+        block.text_line_height = f64::from(reader.next_byte() % 32) / 2.0 + 0.5;
+        block.text_line_width = f64::from(reader.next_byte() % 64) + 1.0;
+        blocks.push(block);
+    }
+    let mut page = crate::layout_order::OrderPage::new([0, 0, 1_100, 1_100], blocks);
+    let mut replay = page.clone();
+    let order = crate::layout_order::xycut_enhanced_order(&mut page);
+    let mut seen = order.clone();
+    seen.sort_unstable();
+    seen.dedup();
+    assert_eq!(seen.len(), order.len(), "no block may be ordered twice");
+    let again = crate::layout_order::xycut_enhanced_order(&mut replay);
+    assert_eq!(order, again, "the ordering must be deterministic");
 }
 
 /// Drives the structured-document kernels: reading order, Markdown, and table
