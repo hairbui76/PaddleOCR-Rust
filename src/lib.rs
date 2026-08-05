@@ -106,6 +106,7 @@ pub mod table_pipeline;
 mod table_structure;
 #[allow(dead_code)]
 mod tensor;
+mod text_lines;
 #[allow(dead_code)]
 mod unclip;
 mod unwarp;

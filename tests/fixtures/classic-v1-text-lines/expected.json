@@ -1,0 +1,541 @@
+{
+ "cases": [
+  {
+   "bbox": [
+    10,
+    10,
+    310,
+    70
+   ],
+   "case": "english_paragraph",
+   "content": "The quick brown fox jumps over the lazy dog and keeps going.\n",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 3,
+   "seg_end_coordinate": 150.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      300.0,
+      26.0
+     ],
+     "The quick brown fox jumps"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      305.0,
+      46.0
+     ],
+     "over the lazy dog and keeps"
+    ],
+    [
+     [
+      12.0,
+      52.0,
+      150.0,
+      66.0
+     ],
+     "going."
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 239.66666666666666
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    310,
+    50
+   ],
+   "case": "multi_span_line",
+   "content": "Left part right part second line ",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 200.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      120.0,
+      26.0
+     ],
+     "Left part"
+    ],
+    [
+     [
+      130.0,
+      13.0,
+      300.0,
+      27.0
+     ],
+     "right part"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      200.0,
+      46.0
+     ],
+     "second line"
+    ]
+   ],
+   "text_line_height": 14.5,
+   "text_line_width": 238.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    310,
+    70
+   ],
+   "case": "cjk_paragraph",
+   "content": "第一行的中文内容测试第二行内容继续下去，结束。\n",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 3,
+   "seg_end_coordinate": 100.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      300.0,
+      26.0
+     ],
+     "第一行的中文内容测试"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      308.0,
+      46.0
+     ],
+     "第二行内容继续下去，"
+    ],
+    [
+     [
+      12.0,
+      52.0,
+      100.0,
+      66.0
+     ],
+     "结束。"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 224.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    210,
+    50
+   ],
+   "case": "hyphenated_line",
+   "content": "hyphenation \n",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 100.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      205.0,
+      26.0
+     ],
+     "hyphen-"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      100.0,
+      46.0
+     ],
+     "ation"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 140.5
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    70
+   ],
+   "case": "short_last_line_breaks",
+   "content": "a full width first line of text here stub \nand a full width third line again ok ",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 3,
+   "seg_end_coordinate": 390.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      395.0,
+      26.0
+     ],
+     "a full width first line of text here"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      80.0,
+      46.0
+     ],
+     "stub"
+    ],
+    [
+     [
+      12.0,
+      52.0,
+      390.0,
+      66.0
+     ],
+     "and a full width third line again ok"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 276.3333333333333
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    70
+   ],
+   "case": "indented_continuation",
+   "content": "ends early,\ndeeply indented line ",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 395.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      200.0,
+      26.0
+     ],
+     "ends early,"
+    ],
+    [
+     [
+      150.0,
+      32.0,
+      395.0,
+      46.0
+     ],
+     "deeply indented line"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 216.5
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    70
+   ],
+   "case": "reference_block",
+   "content": "[1] someone, somewhere [2] someone else ",
+   "direction": "horizontal",
+   "label": "reference",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 300.0,
+   "seg_start_coordinate": 40.0,
+   "spans": [
+    [
+     [
+      40.0,
+      12.0,
+      395.0,
+      26.0
+     ],
+     "[1] someone, somewhere"
+    ],
+    [
+     [
+      40.0,
+      32.0,
+      300.0,
+      46.0
+     ],
+     "[2] someone else"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 307.5
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    70
+   ],
+   "case": "doc_title_delimiter",
+   "content": "A Study  of Things \n",
+   "direction": "horizontal",
+   "label": "doc_title",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 200.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      395.0,
+      40.0
+     ],
+     "A Study"
+    ],
+    [
+     [
+      12.0,
+      42.0,
+      200.0,
+      68.0
+     ],
+     "of Things"
+    ]
+   ],
+   "text_line_height": 27.0,
+   "text_line_width": 285.5
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    70
+   ],
+   "case": "content_delimiter",
+   "content": "Chapter 1 .......... 1\nChapter 2 .......... 9",
+   "direction": "horizontal",
+   "label": "content",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 395.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      395.0,
+      26.0
+     ],
+     "Chapter 1 .......... 1"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      395.0,
+      46.0
+     ],
+     "Chapter 2 .......... 9"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 383.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    70,
+    310
+   ],
+   "case": "vertical_block",
+   "content": "縦書きの一行目二行目の内容",
+   "direction": "vertical",
+   "label": "text",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 30.0,
+   "seg_start_coordinate": 40.0,
+   "spans": [
+    [
+     [
+      40.0,
+      12.0,
+      56.0,
+      300.0
+     ],
+     "縦書きの一行目"
+    ],
+    [
+     [
+      14.0,
+      12.0,
+      30.0,
+      280.0
+     ],
+     "二行目の内容"
+    ]
+   ],
+   "text_line_height": 16.0,
+   "text_line_width": 278.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    100,
+    310
+   ],
+   "case": "vertical_tall_line_filtered",
+   "content": "一二三\n",
+   "direction": "vertical",
+   "label": "text",
+   "num_of_lines": 3,
+   "seg_end_coordinate": 30.0,
+   "seg_start_coordinate": 70.0,
+   "spans": [
+    [
+     [
+      70.0,
+      12.0,
+      86.0,
+      300.0
+     ],
+     "一"
+    ],
+    [
+     [
+      44.0,
+      12.0,
+      60.0,
+      290.0
+     ],
+     "二"
+    ],
+    [
+     [
+      14.0,
+      12.0,
+      30.0,
+      60.0
+     ],
+     "三"
+    ]
+   ],
+   "text_line_height": 16.0,
+   "text_line_width": 204.66666666666666
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    100,
+    40
+   ],
+   "case": "empty_spans",
+   "content": "",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 1,
+   "seg_end_coordinate": null,
+   "seg_start_coordinate": null,
+   "spans": [],
+   "text_line_height": 1.0,
+   "text_line_width": 1.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    40
+   ],
+   "case": "single_line",
+   "content": "only line here \n\n",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 1,
+   "seg_end_coordinate": null,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      200.0,
+      26.0
+     ],
+     "only line here"
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 188.0
+  },
+  {
+   "bbox": [
+    10,
+    10,
+    400,
+    50
+   ],
+   "case": "numeric_tail_keeps_line",
+   "content": "total 42\ncontinues on the next line.",
+   "direction": "horizontal",
+   "label": "text",
+   "num_of_lines": 2,
+   "seg_end_coordinate": 390.0,
+   "seg_start_coordinate": 12.0,
+   "spans": [
+    [
+     [
+      12.0,
+      12.0,
+      200.0,
+      26.0
+     ],
+     "total 42"
+    ],
+    [
+     [
+      12.0,
+      32.0,
+      390.0,
+      46.0
+     ],
+     "continues on the next line."
+    ]
+   ],
+   "text_line_height": 14.0,
+   "text_line_width": 283.0
+  }
+ ],
+ "schema_version": "paddleocr-rust/text-lines-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 inference/pipelines/layout_parsing/layout_objects.py LayoutBlock.update_text_content and the TextLine machinery beneath it"
+}

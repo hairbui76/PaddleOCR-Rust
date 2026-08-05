@@ -1,0 +1,40 @@
+{
+ "fixture_id": "classic-v1-text-lines",
+ "kind": "text_lines_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/spans",
+  "sha256": "d9556fac76eb6c166b204880582c346e6bd0d5d24dbcbd3d8513bd78981dcfb4",
+  "sha256_scope": "No image input. Every case is span boxes and texts written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_text_lines_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/layout_objects.py LayoutBlock.update_text_content, TextLine, group_boxes_into_lines, format_line",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py is_english_letter, is_numeric, is_non_breaking_punctuation",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/setting.py LINE_SETTINGS"
+  ],
+  "capture_method": "Real LayoutBlock objects were constructed and update_text_content executed over fourteen span corpora: English and CJK paragraphs, multi-span lines, hyphenation, indent-gap continuation, the reference coordinate override, both delimiter labels, vertical blocks including the tall-line filter, and the empty and single-line edge cases. Every span is text-labelled, so the formula re-recognition branch is never reached and no model runs.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "d9556fac76eb6c166b204880582c346e6bd0d5d24dbcbd3d8513bd78981dcfb4",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/text-lines-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "text_lines::tests::the_captured_block_texts_are_reproduced"
+ ],
+ "limitations": [
+  "Text-labelled spans only: the formula-span re-splitting path (split_boxes_by_projection plus a recognition-model call) belongs to the formula sub-pipeline, which is artifact-blocked, and is deliberately absent rather than stubbed.",
+  "A single-line block never sets seg_end (upstream's elif), and an empty block keeps its constructed num_of_lines of 1; both quirks are pinned, not repaired.",
+  "is_numeric approximates Python's Unicode \\d with char::is_numeric, which additionally accepts Nl/No characters; no recorded case reaches the difference.",
+  "No model is run and no page is decoded."
+ ]
+}
