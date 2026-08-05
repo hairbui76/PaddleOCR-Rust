@@ -1083,6 +1083,14 @@ impl PdfPageRange {
     }
 
     /// Resolves to the concrete page indices, in document order.
+    ///
+    /// Crate-visible under a second name so the structure engine can share the
+    /// resolution rather than reimplement the clamping and the two refusals.
+    pub(crate) fn resolve_pages(self, page_count: u32) -> Result<Vec<u32>> {
+        self.resolve(page_count)
+    }
+
+    /// Resolves to the concrete page indices, in document order.
     fn resolve(self, page_count: u32) -> Result<Vec<u32>> {
         if self.first >= page_count {
             return Err(Error::InvalidInput {

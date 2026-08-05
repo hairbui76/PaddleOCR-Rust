@@ -2095,6 +2095,74 @@ mod pdf_documents {
         ));
     }
 
+    /// `StructureEngine::parse_pdf`: a document's pages into one Markdown file.
+    ///
+    /// This is what made `concatenate_markdown_pages` reachable. It needs the
+    /// layout model on top of the classic pair, so it is gated on one more
+    /// variable than its siblings.
+    #[test]
+    #[ignore = "requires explicitly provisioned models"]
+    fn pdf_structure_parses_a_document_into_one_markdown_file() {
+        use paddleocr_rust::structure_engine::{
+            StructureArtifacts, StructureEngine, StructureOptions,
+        };
+
+        let text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let dictionary = match parse_dictionary(&text, true) {
+            Ok(value) => value,
+            Err(error) => panic!("dictionary: {error}"),
+        };
+        let (library, detector, recognizer, layout) = (
+            env("PADDLEOCR_RUST_ORT_DYLIB"),
+            env("PADDLEOCR_RUST_DETECTOR_ONNX"),
+            env("PADDLEOCR_RUST_RECOGNIZER_ONNX"),
+            env("PADDLEOCR_RUST_LAYOUT_ONNX"),
+        );
+        let artifacts =
+            StructureArtifacts::new(Artifacts::new(&library, &detector, &recognizer), &layout);
+        let engine = match StructureEngine::load(&artifacts, &dictionary) {
+            Ok(engine) => engine,
+            Err(error) => panic!("load: {error}"),
+        };
+
+        let options = StructureOptions::new(OcrOptions::default());
+        let document = match engine.parse_pdf(
+            &corpus("malformed/mixed_pages.pdf"),
+            PdfPageRange::all(),
+            &options,
+        ) {
+            Ok(document) => document,
+            Err(error) => panic!("parse_pdf: {error}"),
+        };
+
+        assert_eq!(document.page_count, 2);
+        assert_eq!(document.pages.len(), 2);
+        assert!(
+            document.pages[0].outcome.is_ok(),
+            "page 0 should have parsed"
+        );
+        // The per-page policy again, one level up: the failing page is named and
+        // the document still exists.
+        assert!(matches!(
+            document.pages[1].outcome,
+            Err(Error::Unsupported {
+                capability: "pdf.recursive_xobject"
+            })
+        ));
+
+        // Upstream's own separator rule, reproduced rather than tidied: a
+        // document begins with a blank line.
+        assert!(
+            document.markdown.starts_with("\n\n") || document.markdown.is_empty(),
+            "unexpected document opening: {:?}",
+            document.markdown.chars().take(8).collect::<String>()
+        );
+        println!("document markdown:\n{}", document.markdown);
+    }
+
     /// The same document twice gives the same text, page for page.
     #[test]
     #[ignore = "requires explicitly provisioned models"]

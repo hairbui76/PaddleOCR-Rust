@@ -38,11 +38,15 @@
 //! already end in a space, so a merged paragraph gets *two* — upstream does not
 //! trim, and neither does this.
 //!
-//! # Not yet on a shipped path
+//! # Reach
 //!
-//! Nothing in the public API calls either function, because a caller cannot get
-//! two pages into this port until `PDF-001` has an approved renderer. They are
-//! verified rather than reachable, so the module allows dead code the way
+//! `concatenate_markdown_pages` is reached through `StructureEngine::parse_pdf`
+//! under the `pdf` feature, which is what closed the gap these functions spent
+//! their first day in: verified against captures, with no way for a caller to
+//! hand them two pages. `merge_text_across_page` is still verified rather than
+//! reached — joining paragraphs across a page break changes block content, and
+//! doing that behind a caller's back is a decision the document API has not been
+//! asked to make. The module allows dead code for that reason, the way
 //! `markdown.rs` does; the fuzz driver exercises both under the `fuzzing`
 //! feature.
 #![allow(dead_code)]

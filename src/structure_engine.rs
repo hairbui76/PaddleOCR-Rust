@@ -313,6 +313,81 @@ impl StructureEngine {
     pub fn parse_image(&self, image: &[u8], options: &StructureOptions) -> Result<StructureResult> {
         let encoded = crate::types::EncodedImage::new(image)?;
         let decoded = crate::image::decode_classic_bgr(encoded)?;
+        self.parse_decoded(decoded, options)
+    }
+
+    /// `STRUCT-001`'s multipage document: several pages into one Markdown file.
+    ///
+    /// Behind the `pdf` feature. Per page the same chain `parse_image` runs, then
+    /// the two upstream document-assembly functions that had been verified
+    /// against captures without being reachable from anywhere:
+    /// `merge_text_across_page` joins a paragraph that runs past a page break,
+    /// and `concatenate_markdown_pages` produces the document's Markdown.
+    ///
+    /// The failure policy is the one recorded for `MPAGE-001`: one outcome per
+    /// page, each either a parsed page or a typed error naming why that page
+    /// stopped. A page that fails contributes **nothing** to the document
+    /// Markdown rather than a gap — the alternative would be a document that
+    /// looks whole and is not, which is what the per-page policy exists to avoid.
+    #[cfg(feature = "pdf")]
+    pub fn parse_pdf(
+        &self,
+        pdf: &[u8],
+        range: crate::api::PdfPageRange,
+        options: &StructureOptions,
+    ) -> Result<StructureDocument> {
+        let document = crate::pdf::open(pdf.to_vec(), crate::pdf::PdfLimits::default())?;
+        let page_count = document.page_count();
+        let selected = range.resolve_pages(page_count)?;
+
+        let schedule = options.ocr.control.begin();
+        let mut pages = Vec::with_capacity(selected.len());
+        for index in selected {
+            if let Err(error) = schedule.check("pdf.page") {
+                pages.push(StructurePageOutcome {
+                    index,
+                    outcome: Err(error),
+                });
+                break;
+            }
+            let outcome = document
+                .render_page(index)
+                .and_then(|rendered| self.parse_decoded(rendered.image, options));
+            pages.push(StructurePageOutcome { index, outcome });
+        }
+
+        // Only the pages that parsed take part in the document. A failed page
+        // contributes nothing rather than an empty placeholder, because a
+        // placeholder would be indistinguishable from a genuinely blank page.
+        let parsed: Vec<crate::markdown_v2::MarkdownPage> = pages
+            .iter()
+            .filter_map(|page| page.outcome.as_ref().ok())
+            .map(|page| crate::markdown_v2::MarkdownPage {
+                markdown: page.markdown.clone(),
+                image_paths: Vec::new(),
+                continuation_flags: page.continuation_flags,
+            })
+            .collect();
+        let markdown = crate::multipage::concatenate_markdown_pages(&parsed);
+
+        Ok(StructureDocument {
+            page_count,
+            pages,
+            markdown,
+        })
+    }
+
+    /// Parses one already-decoded page.
+    ///
+    /// Split out of [`Self::parse_image`] so a PDF page, which arrives as pixels
+    /// rather than as an encoded file, does not have to be re-encoded to be
+    /// parsed. The split point is the decode and nothing else: every stage below
+    /// is the same code the image path runs.
+    fn parse_decoded(
+        &self,
+        decoded: crate::crop::InterleavedImage,
+        options: &StructureOptions,
+    ) -> Result<StructureResult> {
         let preprocessed = self.ocr.preprocess_document(decoded, &options.ocr)?;
         let page_bgr = preprocessed.image();
         let page_rgb = swap_channels(page_bgr)?;
@@ -477,4 +552,32 @@ impl StructureEngine {
             assembled,
         })
     }
+}
+
+/// One page's structure outcome: parsed, or a typed reason it was not.
+#[cfg(feature = "pdf")]
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct StructurePageOutcome {
+    /// Zero-based page index in the document, not in `pages`.
+    pub index: u32,
+    /// The parsed page, or why it stopped.
+    pub outcome: Result<StructureResult>,
+}
+
+/// A parsed multipage document.
+#[cfg(feature = "pdf")]
+#[derive(Debug)]
+#[non_exhaustive]
+pub struct StructureDocument {
+    /// How many pages the document has, whatever was selected.
+    pub page_count: u32,
+    /// One entry per selected page, in document order.
+    pub pages: Vec<StructurePageOutcome>,
+    /// The pages that parsed, joined by upstream's own rules.
+    ///
+    /// Begins with a blank line, because upstream's loop seeds the previous
+    /// page's end flag to `true` and the first page therefore takes the
+    /// separator branch. Reproduced rather than tidied: see `src/multipage.rs`.
+    pub markdown: String,
 }

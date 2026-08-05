@@ -116,11 +116,11 @@ turns the renderer's one measured abort into a typed error, and
 `DOC-E2E-001`'s last two cases — multipage and password — run in
 `tests/end_to_end.rs`. Office formats remain decided against, not pending.
 
-One piece is still verified rather than reachable: the document-assembly
-functions in `src/multipage.rs`, which join per-page **Markdown**. They belong to
-the `PP-StructureV3` path, and a structure-over-PDF entry point does not exist
-yet — `recognize_pdf` produces text lines, not parsed pages. That is a gap in
-reach, not in correctness: twelve captured cases match.
+`StructureEngine::parse_pdf` closed the last reach gap: `src/multipage.rs`'s
+`concatenate_markdown_pages` now runs over a real document's pages.
+`merge_text_across_page` beside it stays verified rather than reached, and
+deliberately — joining paragraphs across a page break rewrites block content, and
+the document API has not been asked to do that behind a caller's back.
 
 ### 3. Hardware this project does not have (`2` rows)
 
