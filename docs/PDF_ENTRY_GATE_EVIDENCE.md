@@ -305,5 +305,24 @@ implementation:
    Vector and text-heavy pages agree closely but not exactly, and no
    pixel-identity claim should be made for them.
 
-`PDF-001` stays `Blocked`. Parts 1, 2, and 3 are recorded and pass; part 4 fails
-on one measured case with a named remedy; part 5 needs a user decision.
+## 8. Resolution (user decision, 2026-08-05)
+
+The user was shown this packet — the passing parts, the one failing case, and the
+`32`-package cost — and decided:
+
+1. **Proceed with `hayro 0.4.0`**, accepting the dependency cost, with the
+   resource bound **owned by this port**. Part 4 is satisfied by the composite of
+   renderer plus a pre-flight refusal, not waived: a document whose form XObject
+   graph contains a cycle is refused *before* the renderer is handed it, which is
+   what "checked before allocation" means when the allocation happens inside a
+   library.
+2. **Partial-page failure: option 2**, per-page results with typed per-page
+   failures.
+3. Separately, **no postprocessor-only slices** for the artifact-blocked P8
+   modules; `FORM-001`, `SEAL-001`, `CHART-001`, `KIE-001`, and `SR-001` stay
+   `Blocked` rather than accumulating code that can never be exposed.
+
+So `PDF-001` is no longer blocked. Parts 1, 2, and 3 passed as measured; part 4's
+failure became the implementation's first requirement rather than a stop; part 5
+is decided. The four consequences in section 7 are now binding requirements on
+the implementation, not observations.

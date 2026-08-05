@@ -35,6 +35,22 @@ recorded. So the deferral stands, but it is no longer a deferral for lack of
 evidence — the sentence above about this decision resting on licensing rather
 than measurement is now true only of the original decision, not of its gate.
 
+**Resolved 2026-08-05 by user decision, and the deferral ends.** Presented with
+the measured packet — including the one failing part and the `32`-package cost —
+the user chose to **proceed with `hayro 0.4.0`**, on the terms the measurement
+itself dictated: the resource bound is **owned by this port**, not delegated to
+the renderer. That is what makes part 4's failure survivable rather than
+overridden. A library that recurses without a depth bound cannot honour "limits
+checked before allocation" from the inside, so this port refuses such a document
+**before** handing it over; section 5's part 4 is satisfied by the composite of
+renderer plus pre-flight, and no clause of it is waived.
+
+The user also settled part 5: **per-page results with typed per-page failures**,
+option 2 of the three recorded in `PDF_ENTRY_GATE_EVIDENCE.md` section 6. A
+document result carries one entry per page, each either a parsed page or a
+structured error naming the page index and the reason. Nothing is silently
+missing, and no result looks complete while it is not.
+
 ## 1. Office formats — rejected
 
 **Decision.** `.docx`, `.xlsx`, `.pptx`, and their legacy binary predecessors

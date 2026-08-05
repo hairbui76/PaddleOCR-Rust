@@ -5,9 +5,10 @@ Canonical authority: [`ROADMAP.md`](../ROADMAP.md)
 Current delivery state: classic OCR, document preprocessing, layout detection,
 the three-model table pipeline, and the `PP-StructureV3` orchestration all run
 end to end over explicitly provisioned local ONNX artifacts, behind a typed Rust
-API, three frozen JSON schemas, and a CLI with three commands. Every remaining
-capability is blocked on something outside this repository, or closed by a
-recorded decision.
+API, three frozen JSON schemas, and a CLI with three commands. Bounded PDF
+rendering is the one capability with open implementable work, unblocked by the
+user decision of 2026-08-05; every other remaining capability needs an external
+artifact or hardware, or is closed by a recorded decision.
 
 ## How to use this handoff
 
@@ -32,15 +33,17 @@ quality.
 
 ## Exact stop point
 
-P0 through P6 are complete. P7 has one item in progress. P8 through P14 are
+P0 through P6 are complete. P7 has two items in progress and one planned. P8 through P14 are
 complete for every row whose dependencies exist; what is left in them is
-enumerated below. As of 2026-08-05 the item rows stand at `103` `Done`, `14`
-`Blocked`, `29` `Blocked by decision`, `4` `Superseded`, `1` `In progress`, and
-`1` `Answered`.
+enumerated below. As of 2026-08-05 the item rows stand at `103` `Done`, `12`
+`Blocked`, `29` `Blocked by decision`, `4` `Superseded`, `2` `In progress`, `1`
+`Planned`, and `1` `Answered`.
 
-There is no active critical path that this repository can execute alone. The
-next real move is a **user decision or an external artifact**, not more code —
-see [Where the next move has to come from](#where-the-next-move-has-to-come-from).
+The active critical path is `PDF-001`, unblocked by the user decision of
+2026-08-05: bounded PDF rendering with `hayro 0.4.0` under a port-owned resource
+bound, then `MPAGE-001`, then `DOC-E2E-001`'s last two cases. Everything else
+left needs an external artifact or hardware — see
+[Where the next move has to come from](#where-the-next-move-has-to-come-from).
 
 ### What is delivered
 
@@ -69,7 +72,8 @@ retroactively relabelled as passing, stays in
 
 ## Where the next move has to come from
 
-Four blocker classes, and none of them is effort inside this repository.
+Four classes. Only the second is effort inside this repository, and only since
+the user resolved its gate.
 
 ### 1. Upstream publishes no ONNX export (`5` rows, plus `4` that depend on them)
 
@@ -88,17 +92,30 @@ appeared.
 
 To unblock any of these, an ONNX export must become available from upstream, or
 the user must change `MODEL-DEC-001`. Do not convert a model locally to make a
-row move.
+row move. On 2026-08-05 the user also **rejected** porting these modules' pure
+postprocessing halves without their models: in the supported mode those labels
+already route through the image handler, the modules cannot be exposed without
+artifacts, and a postprocessor with nothing behind it is code that must be
+maintained and can never be reached.
 
-### 2. The PDF renderer has no approved entry gate (`2` rows, plus `1` in progress)
+### 2. The PDF renderer — **no longer blocked**, this is the open work
 
-`PDF-001` and `MPAGE-001` wait on the five-part entry gate in
-[`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md).
-Only the piece needing no renderer exists: the render-scale planner in
-`src/pdf_render_plan.rs`, with the renderer contract measured in
-[`PDF_RENDER_CONTRACT.md`](PDF_RENDER_CONTRACT.md).
+The five-part entry gate in
+[`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md) was
+measured on 2026-08-05 and resolved by user decision; see
+[`PDF_ENTRY_GATE_EVIDENCE.md`](PDF_ENTRY_GATE_EVIDENCE.md). `PDF-001` proceeds
+with `hayro 0.4.0` — pure Rust, Apache-2.0 — and the **resource bound is owned by
+this port**, because the measurement found the renderer aborts on a
+self-referential form XObject where the reference renderer bounds it. Part 5 is
+decided: per-page results with typed per-page failures.
 
-This is the **only** `In progress` row in the roadmap: `DOC-E2E-001`'s blank,
+So this is where the remaining implementable work is: `PDF-001`, then
+`MPAGE-001`, then `DOC-E2E-001`'s last two cases. The pieces that already exist
+are the render-scale planner in `src/pdf_render_plan.rs` with its contract in
+[`PDF_RENDER_CONTRACT.md`](PDF_RENDER_CONTRACT.md), and the document-assembly
+functions in `src/multipage.rs`, verified and waiting to become reachable.
+
+`DOC-E2E-001`'s blank,
 corrupt, oversized, rotated, and unwarp-refusal cases pass in
 `tests/end_to_end.rs`; its multipage and password cases need that renderer.
 Office formats are decided against, not pending.
