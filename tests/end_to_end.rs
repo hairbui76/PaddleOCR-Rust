@@ -902,14 +902,28 @@ mod jpeg_delta_gate {
         }
     }
 
+    /// How a perturbation is distributed over the page.
+    #[derive(Clone, Copy)]
+    enum Shape {
+        /// Every component shifted by the same amount: the worst case a
+        /// bounded delta permits.
+        Uniform,
+        /// Deterministic per-component shift within the bound: uncorrelated
+        /// noise.
+        Scattered,
+        /// One deterministic shift per `8x8` block, every pixel in the block
+        /// moved together — the spatial correlation a real IDCT disagreement
+        /// has, which scattered noise lacks because it averages out under the
+        /// detector's resize.
+        BlockDc,
+        /// The block shift concentrated at block boundaries (full at the
+        /// border ring, halved inside), where blocking artifacts and decoder
+        /// disagreements cluster.
+        BlockEdge,
+    }
+
     /// Re-encodes a decoded page as a PNG with every component perturbed.
-    ///
-    /// `uniform` shifts every component by the same amount, which is the worst
-    /// case a bounded delta permits. `scattered` varies per component within the
-    /// bound, which is closer to what a decoder difference actually looks like.
-    /// Both are measured, because the worst case decides what is safe and the
-    /// realistic case decides what is likely.
-    fn perturbed_png(source: &[u8], delta: i16, scattered: bool) -> Vec<u8> {
+    fn perturbed_png(source: &[u8], delta: i16, shape: Shape) -> Vec<u8> {
         let decoder = png::Decoder::new(std::io::Cursor::new(source));
         let mut reader = match decoder.read_info() {
             Ok(value) => value,
@@ -922,15 +936,27 @@ mod jpeg_delta_gate {
         };
         let (width, height) = (info.width, info.height);
         let bytes = &mut buffer[..info.buffer_size()];
+        let samples = info.color_type.samples();
 
+        // Deterministic and spread across the whole range, so the measurement
+        // is repeatable.
+        let bounded = |seed: u64| -> i16 {
+            let mixed = seed.wrapping_mul(2_654_435_761) >> 13;
+            (mixed % (2 * delta as u64 + 1)) as i16 - delta
+        };
         for (index, component) in bytes.iter_mut().enumerate() {
-            let shift = if scattered {
-                // Deterministic and spread across the whole range, so the
-                // measurement is repeatable.
-                let mixed = (index as u64).wrapping_mul(2_654_435_761) >> 13;
-                (mixed % (2 * delta as u64 + 1)) as i16 - delta
-            } else {
-                delta
+            let pixel = index / samples;
+            let (x, y) = (pixel % width as usize, pixel / width as usize);
+            let block_seed = ((y / 8) * ((width as usize).div_ceil(8) + 1) + x / 8) as u64;
+            let shift = match shape {
+                Shape::Uniform => delta,
+                Shape::Scattered => bounded(index as u64),
+                Shape::BlockDc => bounded(block_seed),
+                Shape::BlockEdge => {
+                    let on_border = x % 8 == 0 || x % 8 == 7 || y % 8 == 0 || y % 8 == 7;
+                    let base = bounded(block_seed);
+                    if on_border { base } else { base / 2 }
+                }
             };
             *component = (i16::from(*component) + shift).clamp(0, 255) as u8;
         }
@@ -984,14 +1010,14 @@ mod jpeg_delta_gate {
         let baseline_text: Vec<String> = baseline.iter().map(|l| l.text.clone()).collect();
         println!("baseline: {} lines {baseline_text:?}", baseline.len());
 
-        for (label, delta, scattered) in [
-            ("uniform +1", 1_i16, false),
-            ("uniform +4", 4, false),
-            ("uniform +16", 16, false),
-            ("uniform +36", 36, false),
-            ("scattered +/-36", 36, true),
+        for (label, delta, shape) in [
+            ("uniform +1", 1_i16, Shape::Uniform),
+            ("uniform +4", 4, Shape::Uniform),
+            ("uniform +16", 16, Shape::Uniform),
+            ("uniform +36", 36, Shape::Uniform),
+            ("scattered +/-36", 36, Shape::Scattered),
         ] {
-            let png = perturbed_png(PAGE, delta, scattered);
+            let png = perturbed_png(PAGE, delta, shape);
             let lines = match engine.recognize_png(&png, &options) {
                 Ok(value) => value,
                 Err(error) => panic!("{label}: {error}"),
@@ -1036,6 +1062,130 @@ mod jpeg_delta_gate {
             baseline_text,
             "the unperturbed baseline must be reproducible"
         );
+    }
+
+    /// The dense-corpus extension the first measurement prescribed for itself.
+    ///
+    /// `docs/IMG_003_DELTA_MEASUREMENT.md` named two limits: one page, and a
+    /// perturbation whose shape does not match a decoder difference. This runs
+    /// three regimes the detector's threshold is most sensitive to — dense
+    /// small text, low contrast, thin strokes — under block-structured
+    /// perturbations (correlated per `8x8` block, and concentrated at block
+    /// boundaries) alongside the original shapes, at both the pathological
+    /// bound of `36` and the `3` actually measured on page-shaped JPEG content.
+    #[test]
+    #[ignore = "IMG-003: needs explicitly provisioned models"]
+    fn the_dense_corpus_is_measured_through_the_models() {
+        let engine = {
+            let text = match std::fs::read_to_string(env("PADDLEOCR_RUST_DICTIONARY")) {
+                Ok(value) => value,
+                Err(error) => panic!("dictionary: {error}"),
+            };
+            let dictionary = match parse_dictionary(&text, true) {
+                Ok(value) => value,
+                Err(error) => panic!("dictionary: {error}"),
+            };
+            match OcrEngine::load(
+                &Artifacts::new(
+                    &env("PADDLEOCR_RUST_ORT_DYLIB"),
+                    &env("PADDLEOCR_RUST_DETECTOR_ONNX"),
+                    &env("PADDLEOCR_RUST_RECOGNIZER_ONNX"),
+                ),
+                &dictionary,
+            ) {
+                Ok(value) => value,
+                Err(error) => panic!("load: {error}"),
+            }
+        };
+        let options = paddleocr_rust::api::OcrOptions::default();
+
+        let pages: [(&str, &[u8]); 3] = [
+            (
+                "dense-small",
+                include_bytes!("fixtures/classic-v1-jpeg-delta-corpus/dense-small.png"),
+            ),
+            (
+                "low-contrast",
+                include_bytes!("fixtures/classic-v1-jpeg-delta-corpus/low-contrast.png"),
+            ),
+            (
+                "thin-strokes",
+                include_bytes!("fixtures/classic-v1-jpeg-delta-corpus/thin-strokes.png"),
+            ),
+        ];
+
+        for (page_name, page) in pages {
+            let baseline = match engine.recognize_png(page, &options) {
+                Ok(value) => value,
+                Err(error) => panic!("{page_name} baseline: {error}"),
+            };
+            let baseline_text: Vec<String> = baseline.iter().map(|l| l.text.clone()).collect();
+            println!("{page_name}: baseline {} lines", baseline.len());
+
+            for (label, delta, shape) in [
+                ("uniform +36", 36_i16, Shape::Uniform),
+                ("scattered +/-36", 36, Shape::Scattered),
+                ("block-dc +/-36", 36, Shape::BlockDc),
+                ("block-edge +/-36", 36, Shape::BlockEdge),
+                ("block-dc +/-3", 3, Shape::BlockDc),
+                ("scattered +/-3", 3, Shape::Scattered),
+                ("block-dc +/-1", 1, Shape::BlockDc),
+                ("scattered +/-1", 1, Shape::Scattered),
+            ] {
+                let png = perturbed_png(page, delta, shape);
+                let lines = match engine.recognize_png(&png, &options) {
+                    Ok(value) => value,
+                    Err(error) => panic!("{page_name} {label}: {error}"),
+                };
+                let texts: Vec<String> = lines.iter().map(|l| l.text.clone()).collect();
+                let same_count = lines.len() == baseline.len();
+                let same_text = texts == baseline_text;
+                let changed = if same_count {
+                    texts
+                        .iter()
+                        .zip(&baseline_text)
+                        .filter(|(a, b)| a != b)
+                        .count()
+                } else {
+                    usize::MAX
+                };
+                let mut worst_corner = 0.0_f32;
+                if same_count {
+                    for (a, b) in baseline.iter().zip(&lines) {
+                        for (p, q) in a
+                            .quadrilateral
+                            .points()
+                            .iter()
+                            .zip(b.quadrilateral.points())
+                        {
+                            worst_corner = worst_corner
+                                .max((p.x() - q.x()).abs())
+                                .max((p.y() - q.y()).abs());
+                        }
+                    }
+                }
+                println!(
+                    "{page_name:<13} {label:<17} lines {:>2} (same_count {same_count}) \
+                     same_text {same_text} changed_lines {changed} worst_corner_px {worst_corner}",
+                    lines.len()
+                );
+                if same_count && !same_text {
+                    for (a, b) in baseline_text.iter().zip(&texts).filter(|(a, b)| a != b) {
+                        println!("{page_name:<13} {label:<17}   {a:?} -> {b:?}");
+                    }
+                }
+            }
+
+            let repeat = match engine.recognize_png(page, &options) {
+                Ok(value) => value,
+                Err(error) => panic!("{page_name} repeat: {error}"),
+            };
+            assert_eq!(
+                repeat.iter().map(|l| l.text.clone()).collect::<Vec<_>>(),
+                baseline_text,
+                "{page_name}: the unperturbed baseline must be reproducible"
+            );
+        }
     }
 }
 

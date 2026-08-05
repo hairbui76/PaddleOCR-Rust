@@ -734,6 +734,53 @@ mod tests {
         );
     }
 
+    /// The `IMG-003` dense-corpus pages, pinned the same way as the benchmark
+    /// page: by the digest of their decoded BGR bytes. The pages are grayscale
+    /// PNGs, so this also exercises the gray-replication path at page size.
+    #[test]
+    fn the_jpeg_delta_corpus_decodes_to_the_recorded_bgr_digests() {
+        let pages: [(&str, &[u8], u32, u32, &str); 3] = [
+            (
+                "dense-small",
+                include_bytes!("../tests/fixtures/classic-v1-jpeg-delta-corpus/dense-small.png"),
+                640,
+                632,
+                "d452d0de9ba4d36829529f6efbbd4b68651ca65a0471ebb582f052de4560b352",
+            ),
+            (
+                "low-contrast",
+                include_bytes!("../tests/fixtures/classic-v1-jpeg-delta-corpus/low-contrast.png"),
+                640,
+                566,
+                "f400d792466b471dc8ed6c3e51618bec994e75261d7225a1be69da5aced8a18d",
+            ),
+            (
+                "thin-strokes",
+                include_bytes!("../tests/fixtures/classic-v1-jpeg-delta-corpus/thin-strokes.png"),
+                640,
+                632,
+                "2df3f71b0886c07961ed8f50e5191d785b5d5d50fad2088c618369bb57ae9f71",
+            ),
+        ];
+        let mut actual = Vec::new();
+        for (name, bytes, width, height, _) in pages {
+            let input = match EncodedImage::new(bytes) {
+                Ok(input) => input,
+                Err(error) => panic!("{name} rejected as encoded input: {error}"),
+            };
+            let decoded = match decode_classic_bgr(input) {
+                Ok(decoded) => decoded,
+                Err(error) => panic!("{name} failed to decode: {error}"),
+            };
+            assert_eq!(decoded.dimensions().width(), width, "{name}: width");
+            assert_eq!(decoded.dimensions().height(), height, "{name}: height");
+            assert_eq!(decoded.channels(), BGR_CHANNELS, "{name}: channels");
+            actual.push(crate::digest::sha256_hex(decoded.pixels()));
+        }
+        let expected: Vec<String> = pages.iter().map(|page| page.4.to_owned()).collect();
+        assert_eq!(actual, expected, "corpus decoded BGR bytes changed");
+    }
+
     #[test]
     fn non_png_signatures_are_reported_as_unsupported() {
         for bytes in [

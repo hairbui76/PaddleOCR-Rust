@@ -1,0 +1,28 @@
+{
+ "schema_version": "paddleocr-rust/jpeg-delta-corpus/v1",
+ "channels": 3,
+ "layout": "bgr",
+ "pages": [
+  {
+   "name": "dense-small",
+   "path": "dense-small.png",
+   "width": 640,
+   "height": 632,
+   "bgr_sha256": "d452d0de9ba4d36829529f6efbbd4b68651ca65a0471ebb582f052de4560b352"
+  },
+  {
+   "name": "low-contrast",
+   "path": "low-contrast.png",
+   "width": 640,
+   "height": 566,
+   "bgr_sha256": "f400d792466b471dc8ed6c3e51618bec994e75261d7225a1be69da5aced8a18d"
+  },
+  {
+   "name": "thin-strokes",
+   "path": "thin-strokes.png",
+   "width": 640,
+   "height": 632,
+   "bgr_sha256": "2df3f71b0886c07961ed8f50e5191d785b5d5d50fad2088c618369bb57ae9f71"
+  }
+ ]
+}
