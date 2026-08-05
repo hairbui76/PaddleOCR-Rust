@@ -1,0 +1,769 @@
+{
+ "areas": [
+  {
+   "area": 12.75,
+   "bbox": [
+    1.5,
+    2.5,
+    10.0,
+    4.0
+   ]
+  },
+  {
+   "area": 18.0,
+   "bbox": [
+    10,
+    4,
+    1,
+    2
+   ]
+  }
+ ],
+ "enclosing": [
+  {
+   "boxes": [
+    [
+     10,
+     10,
+     30,
+     20
+    ],
+    [
+     5,
+     15,
+     25,
+     40
+    ]
+   ],
+   "case": "two",
+   "enclosing": [
+    5.0,
+    10.0,
+    30.0,
+    40.0
+   ]
+  },
+  {
+   "boxes": [
+    [
+     3,
+     4,
+     5,
+     6
+    ]
+   ],
+   "case": "one",
+   "enclosing": [
+    3.0,
+    4.0,
+    5.0,
+    6.0
+   ]
+  }
+ ],
+ "intersections": [
+  {
+   "bbox": [
+    5.0,
+    5.0,
+    10.0,
+    10.0
+   ],
+   "case": "plain",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "poly": [
+    [
+     5,
+     5
+    ],
+    [
+     10,
+     5
+    ],
+    [
+     10,
+     10
+    ],
+    [
+     5,
+     10
+    ]
+   ],
+   "second": [
+    5,
+    5,
+    15,
+    15
+   ]
+  },
+  {
+   "bbox": null,
+   "case": "disjoint",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "poly": null,
+   "second": [
+    20,
+    20,
+    30,
+    30
+   ]
+  },
+  {
+   "bbox": null,
+   "case": "touching_edge",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "poly": null,
+   "second": [
+    10,
+    0,
+    20,
+    10
+   ]
+  },
+  {
+   "bbox": [
+    2.0,
+    2.0,
+    12.0,
+    8.0
+   ],
+   "case": "poly_from_quad",
+   "first": [
+    [
+     0,
+     0
+    ],
+    [
+     12,
+     0
+    ],
+    [
+     12,
+     8
+    ],
+    [
+     0,
+     8
+    ]
+   ],
+   "poly": [
+    [
+     2,
+     2
+    ],
+    [
+     12,
+     2
+    ],
+    [
+     12,
+     8
+    ],
+    [
+     2,
+     8
+    ]
+   ],
+   "second": [
+    2,
+    2,
+    20,
+    20
+   ]
+  }
+ ],
+ "overlap_idx": [
+  {
+   "case": "basic",
+   "indices": [],
+   "ref": [
+    [
+     5,
+     5,
+     30,
+     8
+    ]
+   ],
+   "src": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     20,
+     0,
+     40,
+     10
+    ],
+    [
+     0,
+     20,
+     10,
+     40
+    ]
+   ]
+  },
+  {
+   "case": "exactly_three",
+   "indices": [],
+   "ref": [
+    [
+     7,
+     7,
+     20,
+     20
+    ]
+   ],
+   "src": [
+    [
+     0,
+     0,
+     10,
+     10
+    ]
+   ]
+  },
+  {
+   "case": "just_over_three",
+   "indices": [
+    0
+   ],
+   "ref": [
+    [
+     7,
+     7,
+     20,
+     20
+    ]
+   ],
+   "src": [
+    [
+     0,
+     0,
+     11,
+     11
+    ]
+   ]
+  },
+  {
+   "case": "several_refs",
+   "indices": [
+    0,
+    1
+   ],
+   "ref": [
+    [
+     0,
+     0,
+     9,
+     9
+    ],
+    [
+     49,
+     49,
+     61,
+     61
+    ]
+   ],
+   "src": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     50,
+     50,
+     60,
+     60
+    ]
+   ]
+  },
+  {
+   "case": "empty_refs",
+   "indices": [],
+   "ref": [],
+   "src": [
+    [
+     0,
+     0,
+     10,
+     10
+    ]
+   ]
+  }
+ ],
+ "region_updates": [
+  {
+   "bbox": [
+    10,
+    5,
+    40,
+    50
+   ],
+   "region": [
+    20,
+    20,
+    30,
+    30
+   ],
+   "updated": [
+    10,
+    5,
+    40,
+    50
+   ]
+  },
+  {
+   "bbox": [
+    10.6,
+    5.4,
+    40.9,
+    50.1
+   ],
+   "region": [
+    65535,
+    65535,
+    0,
+    0
+   ],
+   "updated": [
+    10,
+    5,
+    40,
+    50
+   ]
+  }
+ ],
+ "remove_overlap": [
+  {
+   "blocks": [
+    {
+     "coordinate": [
+      0,
+      0,
+      100,
+      100
+     ],
+     "label": "text",
+     "score": 0.9
+    },
+    {
+     "coordinate": [
+      10,
+      10,
+      50,
+      50
+     ],
+     "label": "text",
+     "score": 0.8
+    }
+   ],
+   "case": "smaller_dropped",
+   "kept": [
+    {
+     "coordinate": [
+      0.0,
+      0.0,
+      100.0,
+      100.0
+     ],
+     "label": "text"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "coordinate": [
+      0,
+      0,
+      100,
+      100
+     ],
+     "label": "image",
+     "score": 0.9
+    },
+    {
+     "coordinate": [
+      10,
+      10,
+      50,
+      50
+     ],
+     "label": "text",
+     "score": 0.8
+    }
+   ],
+   "case": "image_dropped_even_when_larger",
+   "kept": [
+    {
+     "coordinate": [
+      10.0,
+      10.0,
+      50.0,
+      50.0
+     ],
+     "label": "text"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "coordinate": [
+      0,
+      0,
+      40,
+      40
+     ],
+     "label": "text",
+     "score": 0.9
+    },
+    {
+     "coordinate": [
+      50,
+      50,
+      90,
+      90
+     ],
+     "label": "text",
+     "score": 0.8
+    }
+   ],
+   "case": "disjoint_kept",
+   "kept": [
+    {
+     "coordinate": [
+      0.0,
+      0.0,
+      40.0,
+      40.0
+     ],
+     "label": "text"
+    },
+    {
+     "coordinate": [
+      50.0,
+      50.0,
+      90.0,
+      90.0
+     ],
+     "label": "text"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "coordinate": [
+      0,
+      0,
+      60,
+      60
+     ],
+     "label": "text",
+     "score": 0.9
+    },
+    {
+     "coordinate": [
+      5,
+      5,
+      55,
+      55
+     ],
+     "label": "text",
+     "score": 0.8
+    },
+    {
+     "coordinate": [
+      8,
+      8,
+      52,
+      52
+     ],
+     "label": "text",
+     "score": 0.7
+    }
+   ],
+   "case": "chain_first_pair_wins",
+   "kept": [
+    {
+     "coordinate": [
+      0.0,
+      0.0,
+      60.0,
+      60.0
+     ],
+     "label": "text"
+    }
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/structure-glue-oracle-capture/v1",
+ "shrinks": [
+  {
+   "block_bboxes": {
+    "0": [
+     20,
+     220,
+     80,
+     300
+    ],
+    "1": [
+     120,
+     220,
+     180,
+     380
+    ]
+   },
+   "block_idxes": [
+    0,
+    1
+   ],
+   "case": "shrinks_toward_reference",
+   "image_size": [
+    400,
+    400
+   ],
+   "matched": [
+    0,
+    1
+   ],
+   "reference": [
+    0,
+    0,
+    200,
+    200
+   ],
+   "result_bbox": [
+    20.0,
+    220.0,
+    180.0,
+    380.0
+   ],
+   "supplement": [
+    0,
+    150,
+    200,
+    400
+   ]
+  },
+  {
+   "block_bboxes": {
+    "0": [
+     10,
+     120,
+     90,
+     190
+    ],
+    "1": [
+     110,
+     120,
+     190,
+     190
+    ]
+   },
+   "block_idxes": [
+    0,
+    1
+   ],
+   "case": "degenerate_first_probe",
+   "image_size": [
+    400,
+    400
+   ],
+   "matched": [],
+   "reference": [
+    0,
+    0,
+    200,
+    100
+   ],
+   "result_bbox": [
+    0.0,
+    0.0,
+    200.0,
+    200.0
+   ],
+   "supplement": [
+    0,
+    0,
+    200,
+    200
+   ]
+  },
+  {
+   "block_bboxes": {},
+   "block_idxes": [],
+   "case": "no_blocks",
+   "image_size": [
+    400,
+    400
+   ],
+   "matched": [],
+   "reference": [
+    0,
+    0,
+    200,
+    100
+   ],
+   "result_bbox": [
+    0.0,
+    0.0,
+    200.0,
+    200.0
+   ],
+   "supplement": [
+    0,
+    0,
+    200,
+    200
+   ]
+  }
+ ],
+ "sub_regions": [
+  {
+   "case": "within_and_without_within_True",
+   "flag_within": true,
+   "kept_texts": [
+    "t0"
+   ],
+   "match_indices": [
+    0
+   ],
+   "objects": [
+    [
+     0,
+     0,
+     40,
+     20
+    ]
+   ],
+   "spans": [
+    [
+     2,
+     2,
+     30,
+     12
+    ],
+    [
+     2,
+     40,
+     30,
+     50
+    ],
+    [
+     70,
+     2,
+     90,
+     12
+    ]
+   ]
+  },
+  {
+   "case": "within_and_without_within_False",
+   "flag_within": false,
+   "kept_texts": [
+    "t1",
+    "t2"
+   ],
+   "match_indices": [
+    0
+   ],
+   "objects": [
+    [
+     0,
+     0,
+     40,
+     20
+    ]
+   ],
+   "spans": [
+    [
+     2,
+     2,
+     30,
+     12
+    ],
+    [
+     2,
+     40,
+     30,
+     50
+    ],
+    [
+     70,
+     2,
+     90,
+     12
+    ]
+   ]
+  },
+  {
+   "case": "nothing_matches_within_True",
+   "flag_within": true,
+   "kept_texts": [],
+   "match_indices": [],
+   "objects": [
+    [
+     100,
+     100,
+     140,
+     120
+    ]
+   ],
+   "spans": [
+    [
+     2,
+     2,
+     30,
+     12
+    ]
+   ]
+  },
+  {
+   "case": "nothing_matches_within_False",
+   "flag_within": false,
+   "kept_texts": [
+    "t0"
+   ],
+   "match_indices": [],
+   "objects": [
+    [
+     100,
+     100,
+     140,
+     120
+    ]
+   ],
+   "spans": [
+    [
+     2,
+     2,
+     30,
+     12
+    ]
+   ]
+  }
+ ],
+ "upstream": "paddlex 3.7.2 inference/pipelines/layout_parsing/utils.py"
+}

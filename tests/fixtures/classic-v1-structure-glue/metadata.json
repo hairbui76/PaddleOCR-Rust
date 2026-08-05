@@ -1,0 +1,42 @@
+{
+ "fixture_id": "classic-v1-structure-glue",
+ "kind": "structure_glue_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/*/*/src,ref,spans,objects,blocks,first,second,boxes,supplement",
+  "sha256": "a7502343b677beb92246ede97b7e92b45722939f9b768c3acce8c2e32898b3e0",
+  "sha256_scope": "No image input. Every case is boxes and labels written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_structure_glue_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py"
+  ],
+  "capture_method": "The pinned geometry helpers were imported and executed over synthetic box corpora covering every branch: the strict >3px overlap test, both membership polarities, the image-label drop exception, the touching-edge non-intersection, the int16 poly cast, and both the successful and degenerate paths of the recursive region shrinker.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "a7502343b677beb92246ede97b7e92b45722939f9b768c3acce8c2e32898b3e0",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/structure-glue-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "structure_glue::tests::the_captured_overlap_indices_are_reproduced",
+  "structure_glue::tests::the_captured_sub_region_filters_are_reproduced",
+  "structure_glue::tests::the_captured_overlap_removals_are_reproduced",
+  "structure_glue::tests::the_captured_intersections_are_reproduced",
+  "structure_glue::tests::the_captured_enclosings_updates_areas_and_shrinks_are_reproduced"
+ ],
+ "limitations": [
+  "Phase A of the orchestration slice: geometry only. The text-line machinery (group_boxes_into_lines, update_text_content), standardized_data's control flow, and the nested region ordering are later phases with their own captures.",
+  "Upstream iterates block-index sets in CPython set order; this port iterates ascending, which matches every recorded case and every reachable call site (the sets hold small consecutive integers).",
+  "shrink_supplement_region_bbox's stale-index re-read (position taken from the original distance list after removing from a copy) is preserved, not repaired.",
+  "No model is run and no page is decoded."
+ ]
+}

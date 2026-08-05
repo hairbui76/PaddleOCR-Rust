@@ -96,6 +96,7 @@ mod resize_cubic;
 mod score;
 #[allow(dead_code)]
 mod score_filter;
+mod structure_glue;
 pub mod structure_json;
 mod table_cells;
 mod table_classification;
