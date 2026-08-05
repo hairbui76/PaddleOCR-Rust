@@ -158,6 +158,19 @@ PAGES = {
             ["text", [30, 40, 150, 560], 8, 12, 500],
         ],
     },
+    # Detector-style float coordinates: LayoutBlock truncates the bbox to
+    # ints but freezes width/height/area — and the derived direction — from
+    # the floats. The last block is 100.4 wide by 100.6 tall: vertical from
+    # the floats, square from the truncated ints.
+    "fractional_coordinates": {
+        "bbox": [0, 0, 400, 700],
+        "blocks": [
+            ["text", [20.3, 60.7, 380.6, 120.2], 3, 10.5, 300.2],
+            ["text", [20.5, 160.2, 190.8, 480.9], 16, 10.2, 150.4],
+            ["text", [210.1, 160.6, 380.4, 480.3], 16, 10.8, 150.1],
+            ["text", [150.2, 500.3, 250.6, 600.9], 5, 10.0, 90.7],
+        ],
+    },
 }
 
 

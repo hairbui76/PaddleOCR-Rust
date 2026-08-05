@@ -147,11 +147,21 @@ pub struct OrderBlock {
 }
 
 impl OrderBlock {
-    /// Builds a block from a spec; the arena assigns `index`.
+    /// Builds a block from integer coordinates; the arena assigns `index`.
     #[must_use]
     pub fn new(label: &str, bbox: [i64; 4]) -> Self {
-        let width = (bbox[2] - bbox[0]) as f64;
-        let height = (bbox[3] - bbox[1]) as f64;
+        Self::from_detection(label, bbox.map(|v| v as f64))
+    }
+
+    /// Builds a block from the float coordinates a detector emits, the way
+    /// `LayoutBlock.__init__` does: the bbox is truncated to integers, but
+    /// `width`, `height`, `area` — and the direction derived from them —
+    /// freeze from the floats *before* the cast.
+    #[must_use]
+    pub fn from_detection(label: &str, coordinate: [f64; 4]) -> Self {
+        let bbox = coordinate.map(|v| v.trunc() as i64);
+        let width = coordinate[2] - coordinate[0];
+        let height = coordinate[3] - coordinate[1];
         let mut block = Self {
             label: label.to_owned(),
             order_label: None,
@@ -1681,6 +1691,30 @@ mod tests {
         items(value, "boxes").iter().map(read_i64_box).collect()
     }
 
+    fn read_f64_box(value: &Value) -> [f64; 4] {
+        let b = items(value, "box");
+        [
+            b[0].as_f64().unwrap_or(0.0),
+            b[1].as_f64().unwrap_or(0.0),
+            b[2].as_f64().unwrap_or(0.0),
+            b[3].as_f64().unwrap_or(0.0),
+        ]
+    }
+
+    /// One capture-tool block: detector-style float coordinates through
+    /// `from_detection`, with the tool's explicit float segment coordinates.
+    fn build_spec_block(spec: &Value) -> OrderBlock {
+        let spec = items(spec, "spec");
+        let coordinate = read_f64_box(&spec[1]);
+        let mut block = OrderBlock::from_detection(spec[0].as_str().unwrap_or(""), coordinate);
+        block.num_of_lines = spec[2].as_u64().unwrap_or(1) as u32;
+        block.text_line_height = spec[3].as_f64().unwrap_or(1.0);
+        block.text_line_width = spec[4].as_f64().unwrap_or(1.0);
+        block.seg_start = coordinate[0];
+        block.seg_end = coordinate[2];
+        block
+    }
+
     fn read_usizes(value: &Value) -> Vec<usize> {
         items(value, "indices")
             .iter()
@@ -1700,15 +1734,7 @@ mod tests {
         let bbox = read_i64_box(&case["page_bbox"]);
         let blocks = items(&case["blocks"], "blocks")
             .iter()
-            .map(|spec| {
-                let spec = items(spec, "spec");
-                let mut block =
-                    OrderBlock::new(spec[0].as_str().unwrap_or(""), read_i64_box(&spec[1]));
-                block.num_of_lines = spec[2].as_u64().unwrap_or(1) as u32;
-                block.text_line_height = spec[3].as_f64().unwrap_or(1.0);
-                block.text_line_width = spec[4].as_f64().unwrap_or(1.0);
-                block
-            })
+            .map(build_spec_block)
             .collect();
         OrderPage::new(bbox, blocks)
     }
@@ -1718,7 +1744,7 @@ mod tests {
     fn the_captured_page_orders_are_reproduced() {
         let fixture = fixture();
         let pages = items(&fixture["pages"], "pages");
-        assert_eq!(pages.len(), 14);
+        assert_eq!(pages.len(), 15);
         for case in pages {
             let name = case["case"].as_str().unwrap_or("?");
             let mut page = build_page(case);
@@ -1762,15 +1788,7 @@ mod tests {
     fn build_spec_blocks(specs: &Value) -> Vec<OrderBlock> {
         items(specs, "blocks")
             .iter()
-            .map(|spec| {
-                let spec = items(spec, "spec");
-                let mut block =
-                    OrderBlock::new(spec[0].as_str().unwrap_or(""), read_i64_box(&spec[1]));
-                block.num_of_lines = spec[2].as_u64().unwrap_or(1) as u32;
-                block.text_line_height = spec[3].as_f64().unwrap_or(1.0);
-                block.text_line_width = spec[4].as_f64().unwrap_or(1.0);
-                block
-            })
+            .map(build_spec_block)
             .collect()
     }
 
