@@ -24,6 +24,17 @@ Where a claim is about a licence or a dependency's nature, it is checkable and
 stated as fact. Where it is about behaviour or performance, it is marked as
 unmeasured.
 
+**Updated 2026-08-05**: the entry gate in section 5 has now been measured, and
+[`PDF_ENTRY_GATE_EVIDENCE.md`](PDF_ENTRY_GATE_EVIDENCE.md) records the result.
+Parts 1, 2, and 3 pass — `hayro 0.4.0` is a pure-Rust, Apache-2.0 rasterizer, the
+scanned-page path reproduces the reference renderer **bit-identically**, and the
+tree contains no C or C++ at the cost of `32` new packages. Part 4 **fails on one
+case**: a self-referential form XObject exhausts memory where the reference
+renderer bounds it. Part 5 remains a user decision, with a recommendation
+recorded. So the deferral stands, but it is no longer a deferral for lack of
+evidence — the sentence above about this decision resting on licensing rather
+than measurement is now true only of the original decision, not of its gate.
+
 ## 1. Office formats — rejected
 
 **Decision.** `.docx`, `.xlsx`, `.pptx`, and their legacy binary predecessors

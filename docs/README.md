@@ -15,6 +15,8 @@ only the discovery and authority entrypoints: [README](../README.md),
 - [Remaining roadmap and next-agent handoff](REMAINING_ROADMAP.md) — what is
   delivered, and the four classes of blocker that are left; a summary of
   [ROADMAP](../ROADMAP.md) section 10, never a substitute for it
+- [PDF-001 entry-gate evidence](PDF_ENTRY_GATE_EVIDENCE.md) — the measured
+  five-part gate: what passes, the one case that fails, and the decision left
 - [P0 decisions](P0_DECISIONS.md)
 - [Scope proposal](SCOPE_PROPOSAL.md) and [scope classification](SCOPE_CLASSIFICATION.md)
 - [Inventory](INVENTORY.md) and [PaddleX baseline](PADDLEX_BASELINE.md)

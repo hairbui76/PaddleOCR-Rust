@@ -1,0 +1,269 @@
+{
+ "fidelity_measurement": {
+  "cases": [
+   {
+    "candidate_ink_pixels": 16255,
+    "case": "cid_font",
+    "comparable": true,
+    "components": 480000,
+    "ink_disagreement_share": 0.00235625,
+    "ink_intersection_over_union": 0.9769433062198031,
+    "max_component_difference": 198,
+    "mean_component_difference": 0.69926875,
+    "reference_ink_pixels": 16070,
+    "shape": [
+     400,
+     400,
+     3
+    ],
+    "share_above_0": 0.0080125,
+    "share_above_1": 0.0071,
+    "share_above_128": 0.00233125,
+    "share_above_254": 0.0,
+    "share_above_32": 0.00611875,
+    "share_above_64": 0.0044875,
+    "share_above_8": 0.00665
+   },
+   {
+    "candidate_ink_pixels": 19500,
+    "case": "form_xobject",
+    "comparable": true,
+    "components": 480000,
+    "ink_disagreement_share": 0.0,
+    "ink_intersection_over_union": 1.0,
+    "max_component_difference": 32,
+    "mean_component_difference": 0.06285,
+    "reference_ink_pixels": 19500,
+    "shape": [
+     400,
+     400,
+     3
+    ],
+    "share_above_0": 0.04115208333333333,
+    "share_above_1": 0.00340625,
+    "share_above_128": 0.0,
+    "share_above_254": 0.0,
+    "share_above_32": 0.0,
+    "share_above_64": 0.0,
+    "share_above_8": 0.0010895833333333332
+   },
+   {
+    "candidate_ink_pixels": 51200,
+    "case": "scanned_flate",
+    "comparable": true,
+    "components": 230400,
+    "ink_disagreement_share": 0.0,
+    "ink_intersection_over_union": 1.0,
+    "max_component_difference": 0,
+    "mean_component_difference": 0.0,
+    "reference_ink_pixels": 51200,
+    "shape": [
+     320,
+     240,
+     3
+    ],
+    "share_above_0": 0.0,
+    "share_above_1": 0.0,
+    "share_above_128": 0.0,
+    "share_above_254": 0.0,
+    "share_above_32": 0.0,
+    "share_above_64": 0.0,
+    "share_above_8": 0.0
+   },
+   {
+    "candidate_ink_pixels": 51248,
+    "case": "scanned_jpeg",
+    "comparable": true,
+    "components": 230400,
+    "ink_disagreement_share": 0.00020833333333333335,
+    "ink_intersection_over_union": 0.9996878901373284,
+    "max_component_difference": 4,
+    "mean_component_difference": 0.28381944444444446,
+    "reference_ink_pixels": 51264,
+    "shape": [
+     320,
+     240,
+     3
+    ],
+    "share_above_0": 0.20375,
+    "share_above_1": 0.07875,
+    "share_above_128": 0.0,
+    "share_above_254": 0.0,
+    "share_above_32": 0.0,
+    "share_above_64": 0.0,
+    "share_above_8": 0.0
+   },
+   {
+    "candidate_ink_pixels": 37060,
+    "case": "shading",
+    "comparable": true,
+    "components": 480000,
+    "ink_disagreement_share": 0.0,
+    "ink_intersection_over_union": 1.0,
+    "max_component_difference": 29,
+    "mean_component_difference": 0.08895833333333333,
+    "reference_ink_pixels": 37060,
+    "shape": [
+     400,
+     400,
+     3
+    ],
+    "share_above_0": 0.07904166666666666,
+    "share_above_1": 0.000875,
+    "share_above_128": 0.0,
+    "share_above_254": 0.0,
+    "share_above_32": 0.0,
+    "share_above_64": 0.0,
+    "share_above_8": 0.0002916666666666667
+   },
+   {
+    "candidate_ink_pixels": 22230,
+    "case": "standard_font",
+    "comparable": true,
+    "components": 1920000,
+    "ink_disagreement_share": 0.0064265625,
+    "ink_intersection_over_union": 0.8312892243324173,
+    "max_component_difference": 255,
+    "mean_component_difference": 1.77039375,
+    "reference_ink_pixels": 22415,
+    "shape": [
+     800,
+     800,
+     3
+    ],
+    "share_above_0": 0.0200203125,
+    "share_above_1": 0.0195765625,
+    "share_above_128": 0.004984375,
+    "share_above_254": 0.00116875,
+    "share_above_32": 0.0138640625,
+    "share_above_64": 0.01034375,
+    "share_above_8": 0.0178953125
+   },
+   {
+    "candidate_ink_pixels": 47194,
+    "case": "vector",
+    "comparable": true,
+    "components": 480000,
+    "ink_disagreement_share": 0.0004875,
+    "ink_intersection_over_union": 0.9983499746149941,
+    "max_component_difference": 80,
+    "mean_component_difference": 0.14018958333333334,
+    "reference_ink_pixels": 47272,
+    "shape": [
+     400,
+     400,
+     3
+    ],
+    "share_above_0": 0.05724375,
+    "share_above_1": 0.0043375,
+    "share_above_128": 0.0,
+    "share_above_254": 0.0,
+    "share_above_32": 0.00075,
+    "share_above_64": 5.4166666666666664e-05,
+    "share_above_8": 0.0029520833333333335
+   }
+  ],
+  "ink_level": 128,
+  "schema_version": "paddleocr-rust/pdf-fidelity-measurement/v1",
+  "thresholds": [
+   0,
+   1,
+   8,
+   32,
+   64,
+   128,
+   254
+  ]
+ },
+ "files": {
+  "fidelity/cid_font.pdf": {
+   "bytes": 1826,
+   "sha256": "5e8ef8c91606b3e0529d5eae2c996d76fdd28f26cb5648ad66f38fd53ed77701"
+  },
+  "fidelity/form_xobject.pdf": {
+   "bytes": 726,
+   "sha256": "170b6c4afc6120359cea407ce9afd0aef625f184b05578c039d3d8ff2678ab4f"
+  },
+  "fidelity/gate-test-font.ttf": {
+   "bytes": 648,
+   "sha256": "4b5055a24e7422f1017bac35f66e21454a4ab24b8682c8944325b85d5c87ae9c"
+  },
+  "fidelity/scanned_flate.pdf": {
+   "bytes": 4077,
+   "sha256": "63aa9dae6836a976b7e380015699b8297d448560cf0d045d9ec08c6eaf44195f"
+  },
+  "fidelity/scanned_jpeg.pdf": {
+   "bytes": 2039,
+   "sha256": "24f3838387953fb83f87e14478755b63d709ba4480619477bc03ca509f9873bd"
+  },
+  "fidelity/shading.pdf": {
+   "bytes": 738,
+   "sha256": "37ed7a3f1c79b13f1cf53632b7b5cb7fa1af15444d25afa3f8e7fa050409c996"
+  },
+  "fidelity/standard_font.pdf": {
+   "bytes": 680,
+   "sha256": "d9c855840a7781118fcee9e8c7d74fd0b5aae458920ecaef3e52dd59422a2964"
+  },
+  "fidelity/vector.pdf": {
+   "bytes": 631,
+   "sha256": "ebbfc96ec0a82d9446a4385edbb71565a744475246b6b66a02a5377e23676aea"
+  },
+  "malformed/bad_xref_offsets.pdf": {
+   "bytes": 670,
+   "sha256": "2882f07ae29fd0343c95cc367277bfc6c9fa208a064289cd60858e7dfb4d38b1"
+  },
+  "malformed/circular_pages.pdf": {
+   "bytes": 485,
+   "sha256": "89baedcb25e52b9ffcaa212617dbab4c69176c1314f66ee6c365a5d6496bb396"
+  },
+  "malformed/deep_nesting.pdf": {
+   "bytes": 697,
+   "sha256": "5cbb83fc5abfaad559a72d66e972a4f82ca277f27823c8c1fb846b98971b6ce7"
+  },
+  "malformed/embedded_file.pdf": {
+   "bytes": 798,
+   "sha256": "e1d121fd6609022bb14d4afaa99b976c8d3c3b003e430bb2d004fcad9d1c98e6"
+  },
+  "malformed/encrypted_stub.pdf": {
+   "bytes": 768,
+   "sha256": "fd5d9df78bb7fc0ca5c09da01d028dec66be6f983a722a9c8a72ad9fcd389d41"
+  },
+  "malformed/huge_declared_length.pdf": {
+   "bytes": 644,
+   "sha256": "bbbfbffd551ff5957e798da5a6c8b0aa45b0167a909c18c2ab5c1d7789da1fd3"
+  },
+  "malformed/huge_image_dimensions.pdf": {
+   "bytes": 701,
+   "sha256": "0668541690a64fa5b347841b70edf9e0bc830a6ca334782df1f376175ded06e8"
+  },
+  "malformed/javascript_openaction.pdf": {
+   "bytes": 737,
+   "sha256": "4c2ea00550a8120fca6bbfdd90a2a8cdef6a00d0af32a039abb362039952568f"
+  },
+  "malformed/missing_root.pdf": {
+   "bytes": 641,
+   "sha256": "edc6a19cac515b11ef9b75681162a4b8d26cd59f84d2b3e6e527b8d98d746bbe"
+  },
+  "malformed/negative_dimensions.pdf": {
+   "bytes": 467,
+   "sha256": "2fc54ab1f6c09978e3a553fabf7662965a6a3b9a8623948a23feadaeecfb7b0f"
+  },
+  "malformed/no_xref.pdf": {
+   "bytes": 622,
+   "sha256": "7c3ff486244482bb413ee54595a97a42910c7689d02a5ec11e84827f18dce982"
+  },
+  "malformed/truncated_body.pdf": {
+   "bytes": 315,
+   "sha256": "e267b6f700946ce3043b991dd4366e3c4a09970060bacd97fdaa934a1d924cd0"
+  },
+  "malformed/truncated_header.pdf": {
+   "bytes": 204,
+   "sha256": "5fde23a06c5e342f3ebb79ee12fccf580f2af987229f29f97c523b441739636e"
+  },
+  "malformed/zero_pages.pdf": {
+   "bytes": 239,
+   "sha256": "190076163e15c7e272c71c6c6f92219c252190574dcc3ebf272fc720b25350d7"
+  }
+ },
+ "schema_version": "paddleocr-rust/pdf-entry-gate-corpus/v1"
+}
