@@ -1,0 +1,44 @@
+{
+ "fixture_id": "classic-v1-layout-order",
+ "kind": "layout_order_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/pages/*/blocks",
+  "sha256": "c5bfd76b9b09b26de0e25bcef43189cd29c10b21c0cfd28ccd66ce01ef079d71",
+  "sha256_scope": "No image input. Every page is a list of (label, bbox, num_of_lines, text_line_height, text_line_width) specs written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_layout_order_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/layout_objects.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/xycuts.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/utils.py"
+  ],
+  "capture_method": "Real LayoutBlock/LayoutRegion objects were constructed and the pinned xycut_enhanced was executed end to end over fourteen synthetic pages; the helpers with subtle boundaries were additionally executed as unit cases. Nothing was transcribed.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "c5bfd76b9b09b26de0e25bcef43189cd29c10b21c0cfd28ccd66ce01ef079d71",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/layout-order-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "layout_order::tests::the_captured_page_orders_are_reproduced",
+  "layout_order::tests::the_captured_projections_are_reproduced",
+  "layout_order::tests::the_captured_shrinks_are_reproduced",
+  "layout_order::tests::the_captured_reference_inserts_are_reproduced",
+  "layout_order::tests::the_captured_minima_and_overlaps_are_reproduced"
+ ],
+ "limitations": [
+  "Synthetic pages only: the corpus covers single/two column, doc_title and paragraph_title children, vision title and footnote children, header/footer, seal, centered pre-cut, cross-layout spans, vertical regions, references, and an abstract, but not multi-region pages ('region'-labeled blocks and euclidean_insert are out of scope until region-level orchestration lands).",
+  "reference_insert is pinned as a unit fixture because no synthetic page reliably reaches its cross_reference path end to end; its stale-distance quirk is reproduced, its NameError crash (first sorted block not above the reference) is refused rather than ported.",
+  "Upstream width/height/area freeze at construction and update_region_label resets a vision block's num_of_lines; both quirks are preserved, not repaired.",
+  "No model is run and no page is decoded."
+ ]
+}

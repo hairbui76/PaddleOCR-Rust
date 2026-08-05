@@ -1,0 +1,1340 @@
+{
+ "discontinuous_projections": [
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     0,
+     20,
+     10,
+     30
+    ],
+    [
+     0,
+     5,
+     10,
+     12
+    ]
+   ],
+   "case": "two_bands",
+   "counts": [
+    2,
+    1
+   ],
+   "direction": "vertical",
+   "intervals": [
+    [
+     0,
+     12
+    ],
+    [
+     20,
+     30
+    ]
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     10,
+     10
+    ],
+    [
+     10,
+     0,
+     20,
+     10
+    ]
+   ],
+   "case": "touching",
+   "counts": [
+    2
+   ],
+   "direction": "horizontal",
+   "intervals": [
+    [
+     0,
+     20
+    ]
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     100,
+     10
+    ],
+    [
+     10,
+     0,
+     20,
+     10
+    ],
+    [
+     200,
+     0,
+     210,
+     10
+    ]
+   ],
+   "case": "nested",
+   "counts": [
+    2,
+    1
+   ],
+   "direction": "horizontal",
+   "intervals": [
+    [
+     0,
+     100
+    ],
+    [
+     200,
+     210
+    ]
+   ]
+  }
+ ],
+ "local_minima": [
+  {
+   "case": "valley",
+   "regions": [
+    [
+     6,
+     6
+    ]
+   ],
+   "values": [
+    3,
+    3,
+    1,
+    1,
+    2,
+    2,
+    1,
+    3
+   ]
+  },
+  {
+   "case": "flat",
+   "regions": null,
+   "values": [
+    2,
+    2,
+    2
+   ]
+  },
+  {
+   "case": "empty",
+   "regions": [],
+   "values": []
+  },
+  {
+   "case": "two_valleys",
+   "regions": [
+    [
+     3,
+     3
+    ]
+   ],
+   "values": [
+    5,
+    1,
+    5,
+    2,
+    5
+   ]
+  }
+ ],
+ "overlap_ratios": [
+  {
+   "case": "partial_union",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "mode": "union",
+   "ratio": 0.14285714285714285,
+   "second": [
+    5,
+    5,
+    15,
+    15
+   ]
+  },
+  {
+   "case": "partial_small",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "mode": "small",
+   "ratio": 0.25,
+   "second": [
+    5,
+    5,
+    15,
+    15
+   ]
+  },
+  {
+   "case": "contained_small",
+   "first": [
+    0,
+    0,
+    100,
+    100
+   ],
+   "mode": "small",
+   "ratio": 1.0,
+   "second": [
+    10,
+    10,
+    20,
+    20
+   ]
+  },
+  {
+   "case": "disjoint",
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "mode": "union",
+   "ratio": 0.0,
+   "second": [
+    20,
+    20,
+    30,
+    30
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      100,
+      380,
+      200
+     ],
+     5,
+     10,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      220,
+      380,
+      320
+     ],
+     5,
+     10,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      340,
+      380,
+      440
+     ],
+     5,
+     10,
+     300
+    ]
+   ],
+   "case": "single_column",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "normal_text",
+    "2": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      100,
+      190,
+      300
+     ],
+     10,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      210,
+      100,
+      380,
+      300
+     ],
+     10,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      20,
+      320,
+      190,
+      520
+     ],
+     10,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      210,
+      320,
+      380,
+      520
+     ],
+     10,
+     10,
+     150
+    ]
+   ],
+   "case": "two_column",
+   "order": [
+    1,
+    0,
+    3,
+    2
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "normal_text",
+    "2": "normal_text",
+    "3": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 150.0
+  },
+  {
+   "blocks": [
+    [
+     "doc_title",
+     [
+      60,
+      40,
+      340,
+      90
+     ],
+     1,
+     40,
+     280
+    ],
+    [
+     "text",
+     [
+      120,
+      96,
+      280,
+      112
+     ],
+     1,
+     12,
+     160
+    ],
+    [
+     "text",
+     [
+      20,
+      140,
+      380,
+      400
+     ],
+     15,
+     10,
+     300
+    ]
+   ],
+   "case": "doc_title_with_subtitle",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "order_labels": {
+    "0": "doc_title",
+    "1": "doc_title_text",
+    "2": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 11.0,
+   "region_text_line_width": 230.0
+  },
+  {
+   "blocks": [
+    [
+     "paragraph_title",
+     [
+      20,
+      100,
+      380,
+      124
+     ],
+     1,
+     18,
+     300
+    ],
+    [
+     "paragraph_title",
+     [
+      20,
+      130,
+      380,
+      150
+     ],
+     1,
+     14,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      160,
+      380,
+      400
+     ],
+     12,
+     10,
+     300
+    ]
+   ],
+   "case": "title_chain",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "order_labels": {
+    "0": "paragraph_title",
+    "1": "sub_paragraph_title",
+    "2": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "table_title",
+     [
+      80,
+      80,
+      320,
+      100
+     ],
+     1,
+     12,
+     200
+    ],
+    [
+     "image",
+     [
+      60,
+      110,
+      340,
+      360
+     ],
+     1,
+     10,
+     200
+    ],
+    [
+     "text",
+     [
+      150,
+      366,
+      250,
+      380
+     ],
+     1,
+     10,
+     100
+    ],
+    [
+     "text",
+     [
+      20,
+      420,
+      380,
+      560
+     ],
+     8,
+     10,
+     300
+    ]
+   ],
+   "case": "vision_with_title_and_footnote",
+   "order": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "order_labels": {
+    "0": "vision_title",
+    "1": "vision",
+    "2": "vision_footnote",
+    "3": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 200.0
+  },
+  {
+   "blocks": [
+    [
+     "header",
+     [
+      20,
+      10,
+      380,
+      30
+     ],
+     1,
+     10,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      60,
+      380,
+      500
+     ],
+     20,
+     10,
+     300
+    ],
+    [
+     "footer",
+     [
+      20,
+      560,
+      380,
+      580
+     ],
+     1,
+     10,
+     300
+    ]
+   ],
+   "case": "header_and_footer",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "order_labels": {
+    "0": "header",
+    "1": "normal_text",
+    "2": "footer"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      60,
+      380,
+      300
+     ],
+     12,
+     10,
+     300
+    ],
+    [
+     "seal",
+     [
+      280,
+      320,
+      380,
+      420
+     ],
+     1,
+     10,
+     80
+    ],
+    [
+     "text",
+     [
+      20,
+      320,
+      260,
+      560
+     ],
+     12,
+     10,
+     220
+    ]
+   ],
+   "case": "seal_is_unordered",
+   "order": [
+    0,
+    2,
+    1
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "unordered",
+    "2": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 260.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      40,
+      190,
+      200
+     ],
+     8,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      210,
+      40,
+      380,
+      200
+     ],
+     8,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      40,
+      260,
+      360,
+      300
+     ],
+     2,
+     10,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      360,
+      190,
+      560
+     ],
+     8,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      210,
+      360,
+      380,
+      560
+     ],
+     8,
+     10,
+     150
+    ]
+   ],
+   "case": "centered_pre_cut",
+   "order": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "normal_text",
+    "2": "normal_text",
+    "3": "normal_text",
+    "4": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 180.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      60,
+      380,
+      120
+     ],
+     3,
+     10,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      160,
+      190,
+      480
+     ],
+     16,
+     10,
+     150
+    ],
+    [
+     "text",
+     [
+      210,
+      160,
+      380,
+      480
+     ],
+     16,
+     10,
+     150
+    ],
+    [
+     "image",
+     [
+      100,
+      250,
+      300,
+      380
+     ],
+     1,
+     10,
+     200
+    ]
+   ],
+   "case": "cross_layout_span",
+   "order": [
+    0,
+    2,
+    3,
+    1
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "normal_text",
+    "2": "normal_text",
+    "3": "cross_layout"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 200.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      60,
+      380,
+      500
+     ],
+     20,
+     10,
+     300
+    ]
+   ],
+   "case": "single_block",
+   "order": [
+    0
+   ],
+   "order_labels": {
+    "0": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "doc_title",
+     [
+      60,
+      30,
+      340,
+      80
+     ],
+     1,
+     40,
+     280
+    ],
+    [
+     "abstract",
+     [
+      40,
+      100,
+      360,
+      180
+     ],
+     4,
+     10,
+     300
+    ],
+    [
+     "paragraph_title",
+     [
+      20,
+      200,
+      380,
+      224
+     ],
+     1,
+     18,
+     300
+    ],
+    [
+     "text",
+     [
+      20,
+      234,
+      380,
+      500
+     ],
+     14,
+     10,
+     300
+    ]
+   ],
+   "case": "abstract_between_titles",
+   "order": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "order_labels": {
+    "0": "doc_title",
+    "1": "normal_text",
+    "2": "paragraph_title",
+    "3": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "horizontal",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "text",
+     [
+      20,
+      60,
+      380,
+      460
+     ],
+     20,
+     10,
+     300
+    ],
+    [
+     "footnote",
+     [
+      20,
+      500,
+      380,
+      560
+     ],
+     3,
+     8,
+     300
+    ]
+   ],
+   "case": "footnote_page",
+   "order": [
+    0,
+    1
+   ],
+   "order_labels": {
+    "0": "normal_text",
+    "1": "footer"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 300.0
+  },
+  {
+   "blocks": [
+    [
+     "reference_title",
+     [
+      20,
+      40,
+      380,
+      64
+     ],
+     1,
+     18,
+     300
+    ],
+    [
+     "reference",
+     [
+      20,
+      80,
+      190,
+      400
+     ],
+     16,
+     10,
+     150
+    ],
+    [
+     "reference",
+     [
+      210,
+      80,
+      380,
+      400
+     ],
+     16,
+     10,
+     150
+    ],
+    [
+     "reference",
+     [
+      20,
+      420,
+      380,
+      560
+     ],
+     7,
+     10,
+     300
+    ]
+   ],
+   "case": "reference_columns",
+   "order": [
+    0,
+    2,
+    1,
+    3
+   ],
+   "order_labels": {
+    "0": "paragraph_title",
+    "1": "normal_text",
+    "2": "normal_text",
+    "3": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 10.0,
+   "region_text_line_width": 200.0
+  },
+  {
+   "blocks": [
+    [
+     "doc_title",
+     [
+      300,
+      40,
+      360,
+      560
+     ],
+     1,
+     40,
+     500
+    ],
+    [
+     "text",
+     [
+      160,
+      40,
+      280,
+      560
+     ],
+     8,
+     12,
+     500
+    ],
+    [
+     "text",
+     [
+      30,
+      40,
+      150,
+      560
+     ],
+     8,
+     12,
+     500
+    ]
+   ],
+   "case": "vertical_doc_title",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "order_labels": {
+    "0": "doc_title",
+    "1": "normal_text",
+    "2": "normal_text"
+   },
+   "page_bbox": [
+    0,
+    0,
+    400,
+    600
+   ],
+   "region_direction": "vertical",
+   "region_text_line_height": 12.0,
+   "region_text_line_width": 500.0
+  }
+ ],
+ "reference_inserts": [
+  {
+   "block": [
+    10,
+    200,
+    100,
+    240
+   ],
+   "case": "below_all",
+   "result": [
+    0,
+    1,
+    2
+   ],
+   "sorted": [
+    [
+     10,
+     10,
+     100,
+     50
+    ],
+    [
+     10,
+     60,
+     100,
+     90
+    ]
+   ]
+  },
+  {
+   "block": [
+    10,
+    100,
+    100,
+    140
+   ],
+   "case": "stale_skips_middle",
+   "result": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "sorted": [
+    [
+     10,
+     10,
+     100,
+     50
+    ],
+    [
+     10,
+     300,
+     100,
+     340
+    ],
+    [
+     10,
+     60,
+     100,
+     90
+    ]
+   ]
+  },
+  {
+   "block": [
+    10,
+    200,
+    200,
+    240
+   ],
+   "case": "widest_wins",
+   "result": [
+    0,
+    2,
+    1
+   ],
+   "sorted": [
+    [
+     10,
+     10,
+     200,
+     50
+    ],
+    [
+     10,
+     60,
+     100,
+     90
+    ]
+   ]
+  },
+  {
+   "block": [
+    10,
+    60,
+    100,
+    90
+   ],
+   "case": "single",
+   "result": [
+    0,
+    1
+   ],
+   "sorted": [
+    [
+     10,
+     10,
+     100,
+     50
+    ]
+   ]
+  }
+ ],
+ "schema_version": "paddleocr-rust/layout-order-oracle-capture/v1",
+ "shrinks": [
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     100,
+     50
+    ],
+    [
+     0,
+     50,
+     100,
+     100
+    ]
+   ],
+   "case": "vertical_touching",
+   "direction": "vertical",
+   "shrunk": [
+    [
+     0,
+     0,
+     100,
+     49
+    ],
+    [
+     0,
+     51,
+     100,
+     100
+    ]
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     100,
+     52
+    ],
+    [
+     0,
+     48,
+     100,
+     100
+    ]
+   ],
+   "case": "vertical_overlap",
+   "direction": "vertical",
+   "shrunk": [
+    [
+     0,
+     0,
+     100,
+     49
+    ],
+    [
+     0,
+     51,
+     100,
+     100
+    ]
+   ]
+  },
+  {
+   "boxes": [
+    [
+     0,
+     0,
+     50,
+     100
+    ],
+    [
+     52,
+     0,
+     100,
+     100
+    ]
+   ],
+   "case": "horizontal_near",
+   "direction": "horizontal",
+   "shrunk": [
+    [
+     0,
+     0,
+     50,
+     100
+    ],
+    [
+     52,
+     0,
+     100,
+     100
+    ]
+   ]
+  }
+ ],
+ "upstream": "paddlex 3.7.2 layout_parsing: layout_objects.py, xycut_enhanced/{xycuts,utils}.py"
+}

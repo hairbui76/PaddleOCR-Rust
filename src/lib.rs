@@ -72,6 +72,7 @@ mod geometry;
 #[allow(dead_code)]
 mod image;
 mod layout;
+mod layout_order;
 
 /// Bounded input acquisition: bytes, paths, and streams.
 pub mod input;

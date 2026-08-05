@@ -223,7 +223,7 @@ pub(crate) fn recursive_yx_cut(
             .map(|slot| band_indices[*slot])
             .collect();
 
-        let Some((x_starts, x_ends)) =
+        let Some((mut x_starts, mut x_ends)) =
             split_profile(&projection(&column_boxes, Axis::Horizontal)?, 0, 1)
         else {
             continue;
@@ -232,6 +232,14 @@ pub(crate) fn recursive_yx_cut(
         if x_starts.len() == 1 {
             result.extend_from_slice(&column_indices);
             continue;
+        }
+        // Negated coordinates — a vertical region flipped for right-to-left
+        // reading. The histogram was built from absolute values, so the
+        // columns come out left to right; upstream flips the interval list to
+        // visit them right to left.
+        if column_boxes.iter().any(|entry| entry[0] < 0) {
+            x_starts.reverse();
+            x_ends.reverse();
         }
 
         for (x_start, x_end) in x_starts.iter().zip(&x_ends) {
@@ -273,10 +281,16 @@ pub(crate) fn recursive_xy_cut(
     let sorted: Vec<OrderBox> = order.iter().map(|slot| boxes[*slot]).collect();
     let sorted_indices: Vec<usize> = order.iter().map(|slot| indices[*slot]).collect();
 
-    let Some((x_starts, x_ends)) = split_profile(&projection(&sorted, Axis::Horizontal)?, 0, 1)
+    let Some((mut x_starts, mut x_ends)) =
+        split_profile(&projection(&sorted, Axis::Horizontal)?, 0, 1)
     else {
         return Ok(());
     };
+    // See `recursive_yx_cut`: negated x means right-to-left column order.
+    if sorted.iter().any(|entry| entry[0] < 0) {
+        x_starts.reverse();
+        x_ends.reverse();
+    }
 
     for (x_start, x_end) in x_starts.iter().zip(&x_ends) {
         let column: Vec<usize> = (0..sorted.len())
