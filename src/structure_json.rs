@@ -46,6 +46,70 @@ pub const DETECTION_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/detection-resu
 /// The frozen table result schema version.
 pub const TABLE_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/table-result/v1";
 
+/// The frozen layout-parsing result schema version.
+///
+/// Separate from `layout-result/v1`, which carries **detections**: a parsed
+/// page's blocks have been relabelled by the ordering pass, carry assembled
+/// content, and are numbered. A consumer reading a detection score off one of
+/// these would be reading a field that no longer means what it did.
+pub const PARSING_RESULT_SCHEMA_VERSION: &str = "paddleocr-rust/parsing-result/v1";
+
+/// Serialises a parsed page's ordered blocks as one versioned JSON document.
+///
+/// The Markdown rendering is deliberately **not** a field here. It is a
+/// different representation of the same blocks, produced by a separate
+/// documented conversion, and carrying both in one document would invite a
+/// consumer to treat them as independently authoritative.
+#[must_use]
+pub(crate) fn parsing_to_json(
+    blocks: &[crate::structure_assembly::AssembledBlock],
+    width: u32,
+    height: u32,
+    id: Option<&str>,
+) -> String {
+    let mut out = String::new();
+    out.push_str("{\"schema_version\":\"");
+    out.push_str(PARSING_RESULT_SCHEMA_VERSION);
+    out.push_str("\",\"input\":{\"id\":");
+    push_id(&mut out, id);
+    out.push_str(",\"page_index\":null,\"width\":");
+    out.push_str(&width.to_string());
+    out.push_str(",\"height\":");
+    out.push_str(&height.to_string());
+    out.push_str("},\"blocks\":[");
+    for (position, block) in blocks.iter().enumerate() {
+        if position > 0 {
+            out.push(',');
+        }
+        out.push_str("{\"index\":");
+        out.push_str(&block.index.to_string());
+        out.push_str(",\"order_index\":");
+        match block.order_index {
+            Some(order_index) => out.push_str(&order_index.to_string()),
+            None => out.push_str("null"),
+        }
+        out.push_str(",\"label\":");
+        push_json_string(&mut out, &block.label);
+        out.push_str(",\"bbox\":[");
+        for (axis, value) in block.bbox.iter().enumerate() {
+            if axis > 0 {
+                out.push(',');
+            }
+            out.push_str(&value.to_string());
+        }
+        out.push_str("],\"content\":");
+        push_json_string(&mut out, &block.content);
+        out.push_str(",\"image_path\":");
+        match &block.image_path {
+            Some(path) => push_json_string(&mut out, path),
+            None => out.push_str("null"),
+        }
+        out.push('}');
+    }
+    out.push_str("]}");
+    out
+}
+
 /// Serialises detected layout regions as one versioned JSON document.
 ///
 /// Boxes are in the source page's coordinates, which is what
@@ -351,6 +415,93 @@ mod tests {
         assert!(!json.contains("confidence"), "{json}");
         let with_region = detection_to_json(&[([(0.0_f32, 0.0_f32); 4], 0.5_f64)], 1, 1, None);
         assert!(with_region.contains("\"detector_score\""), "{with_region}");
+    }
+
+    fn parsed_blocks() -> Vec<crate::structure_assembly::AssembledBlock> {
+        use crate::layout_order::Dir;
+        use crate::structure_assembly::AssembledBlock;
+        vec![
+            AssembledBlock {
+                label: "doc_title".to_owned(),
+                bbox: [10, 20, 110, 60],
+                content: "A \"quoted\" title".to_owned(),
+                index: 0,
+                order_index: Some(1),
+                num_of_lines: 1,
+                direction: Dir::Horizontal,
+                seg_start: 12.0,
+                seg_end: f64::NEG_INFINITY,
+                text_line_height: 30.0,
+                text_line_width: 90.0,
+                width: 100.0,
+                image_path: None,
+            },
+            AssembledBlock {
+                label: "image".to_owned(),
+                bbox: [0, 70, 200, 300],
+                content: String::new(),
+                index: 1,
+                order_index: None,
+                num_of_lines: 1,
+                direction: Dir::Horizontal,
+                seg_start: f64::INFINITY,
+                seg_end: f64::NEG_INFINITY,
+                text_line_height: 1.0,
+                text_line_width: 1.0,
+                width: 200.0,
+                image_path: Some("imgs/img_in_image_box_0_70_200_300.jpg".to_owned()),
+            },
+        ]
+    }
+
+    /// The parsing document, byte for byte and twice.
+    #[test]
+    fn the_parsing_document_is_exact_and_deterministic() {
+        let json = parsing_to_json(&parsed_blocks(), 486, 423, Some("scan"));
+        assert_eq!(
+            json,
+            "{\"schema_version\":\"paddleocr-rust/parsing-result/v1\",\
+             \"input\":{\"id\":\"scan\",\"page_index\":null,\"width\":486,\"height\":423},\
+             \"blocks\":[\
+             {\"index\":0,\"order_index\":1,\"label\":\"doc_title\",\"bbox\":[10,20,110,60],\
+             \"content\":\"A \\\"quoted\\\" title\",\"image_path\":null},\
+             {\"index\":1,\"order_index\":null,\"label\":\"image\",\"bbox\":[0,70,200,300],\
+             \"content\":\"\",\"image_path\":\"imgs/img_in_image_box_0_70_200_300.jpg\"}\
+             ]}"
+        );
+        assert_eq!(
+            json,
+            parsing_to_json(&parsed_blocks(), 486, 423, Some("scan"))
+        );
+    }
+
+    /// The Markdown is not a field: it is a second representation, produced by
+    /// a separate documented conversion.
+    #[test]
+    fn the_parsing_document_carries_no_markdown() {
+        let json = parsing_to_json(&parsed_blocks(), 1, 1, None);
+        assert!(!json.contains("markdown"), "{json}");
+        assert!(json.contains("\"id\":null"), "{json}");
+    }
+
+    /// A parsed page is not a detection: the schemas are separate names.
+    #[test]
+    fn the_parsing_schema_is_distinct() {
+        assert!(PARSING_RESULT_SCHEMA_VERSION.ends_with("/v1"));
+        for other in [
+            LAYOUT_RESULT_SCHEMA_VERSION,
+            TABLE_RESULT_SCHEMA_VERSION,
+            DETECTION_RESULT_SCHEMA_VERSION,
+            crate::result_json::RESULT_SCHEMA_VERSION,
+        ] {
+            assert_ne!(PARSING_RESULT_SCHEMA_VERSION, other);
+        }
+        // A detection score has no meaning here: the ordering pass has already
+        // relabelled these blocks.
+        assert!(
+            !parsing_to_json(&parsed_blocks(), 1, 1, None).contains("score"),
+            "a parsed block must not carry a detector score"
+        );
     }
 
     /// The two schemas are distinct names, not versions of one.

@@ -130,6 +130,25 @@ pub struct StructureResult {
     pub continuation_flags: (bool, bool),
     /// The preprocessed page's width and height in pixels.
     pub page_size: (u32, u32),
+    /// The blocks as assembly produced them, kept for the JSON writer.
+    assembled: Vec<AssembledBlock>,
+}
+
+impl StructureResult {
+    /// Serialises the ordered blocks as `paddleocr-rust/parsing-result/v1`.
+    ///
+    /// Byte-deterministic, and the Markdown is deliberately not a field: it is
+    /// a second representation of the same blocks, and a document carrying
+    /// both would invite a consumer to treat them as independent.
+    #[must_use]
+    pub fn to_json(&self, id: Option<&str>) -> String {
+        crate::structure_json::parsing_to_json(
+            &self.assembled,
+            self.page_size.0,
+            self.page_size.1,
+            id,
+        )
+    }
 }
 
 /// Loaded structure models, usable from one thread.
@@ -455,6 +474,7 @@ impl StructureEngine {
             image_paths,
             continuation_flags: markdown.continuation_flags,
             page_size: (page_width, page_height),
+            assembled,
         })
     }
 }

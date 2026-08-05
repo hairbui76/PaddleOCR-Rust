@@ -131,6 +131,40 @@ impl TableImage {
         })
     }
 
+    /// Decodes an encoded PNG or JPEG into a table image.
+    ///
+    /// The result is **`BGR`**, which is what this crate's decoder produces
+    /// and what [`TableEngine::recognize_structure`] wants; the other two
+    /// models want `RGB`, which [`TableImage::with_swapped_channels`]
+    /// produces. Taking that step in the caller is the same choice
+    /// [`TableEngine::recognize_table`] makes for the same reason.
+    ///
+    /// # Errors
+    ///
+    /// The decoder's own: an unsupported signature, malformed bytes, or an
+    /// image outside the resource envelope.
+    pub fn decode(image: &[u8]) -> Result<Self> {
+        let encoded = crate::types::EncodedImage::new(image)?;
+        Ok(Self {
+            inner: crate::image::decode_classic_bgr(encoded)?,
+        })
+    }
+
+    /// The same image with its first and third channels exchanged.
+    ///
+    /// # Errors
+    ///
+    /// Only if the image is not three-channel, which its constructors forbid.
+    pub fn with_swapped_channels(&self) -> Result<Self> {
+        let mut pixels = self.inner.pixels().to_vec();
+        for pixel in pixels.chunks_exact_mut(3) {
+            pixel.swap(0, 2);
+        }
+        Ok(Self {
+            inner: InterleavedImage::new(self.inner.dimensions(), 3, pixels)?,
+        })
+    }
+
     /// The image's dimensions.
     #[must_use]
     pub fn dimensions(&self) -> crate::types::ImageDimensions {
@@ -525,6 +559,65 @@ impl TableEngine {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const BENCHMARK_PAGE: &[u8] =
+        include_bytes!("../tests/fixtures/classic-v1-benchmark-page/input.png");
+
+    /// A caller with an encoded file can reach a `TableImage` without the
+    /// crate's internal decoder, and the channel swap is its own inverse.
+    ///
+    /// Without `decode`, the only public constructor takes raw pixels, so a
+    /// consumer holding a PNG had no way to use this API at all — the gap the
+    /// command-line work found.
+    #[test]
+    fn an_encoded_page_decodes_and_swaps_back_to_itself() {
+        let bgr = match TableImage::decode(BENCHMARK_PAGE) {
+            Ok(image) => image,
+            Err(error) => panic!("decode: {error}"),
+        };
+        assert_eq!(bgr.dimensions().width(), 1280);
+        assert_eq!(bgr.dimensions().height(), 720);
+
+        let rgb = match bgr.with_swapped_channels() {
+            Ok(image) => image,
+            Err(error) => panic!("swap: {error}"),
+        };
+        assert_eq!(rgb.dimensions(), bgr.dimensions());
+        let back = match rgb.with_swapped_channels() {
+            Ok(image) => image,
+            Err(error) => panic!("swap back: {error}"),
+        };
+        assert_eq!(
+            back.inner().pixels(),
+            bgr.inner().pixels(),
+            "swapping twice must restore the original bytes"
+        );
+    }
+
+    /// The swap exchanges the first and third channels, and only those.
+    ///
+    /// Proved on hand-built pixels rather than on the benchmark page: that
+    /// page is grey, so `R == B` everywhere and a no-op implementation would
+    /// satisfy the round trip above.
+    #[test]
+    fn the_channel_swap_exchanges_the_outer_channels() {
+        let image = match TableImage::new(2, 1, vec![1, 2, 3, 4, 5, 6]) {
+            Ok(image) => image,
+            Err(error) => panic!("build: {error}"),
+        };
+        let swapped = match image.with_swapped_channels() {
+            Ok(image) => image,
+            Err(error) => panic!("swap: {error}"),
+        };
+        assert_eq!(swapped.inner().pixels(), &[3, 2, 1, 6, 5, 4]);
+    }
+
+    /// Bytes that are not an image are refused rather than decoded.
+    #[test]
+    fn decoding_refuses_bytes_that_are_not_an_image() {
+        assert!(TableImage::decode(b"not an image at all").is_err());
+        assert!(TableImage::decode(&[]).is_err());
+    }
 
     /// The committed dictionary must be what the artifact declares.
     ///
