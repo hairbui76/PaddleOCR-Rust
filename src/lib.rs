@@ -23,6 +23,7 @@ pub mod manifest;
 
 /// The versioned model manifest.
 mod markdown;
+mod markdown_v2;
 pub mod metrics;
 
 pub mod observability;

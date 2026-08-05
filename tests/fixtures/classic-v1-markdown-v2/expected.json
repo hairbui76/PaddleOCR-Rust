@@ -1,0 +1,601 @@
+{
+ "cases": [
+  {
+   "case": "single_column_text",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "doc_title",
+     [
+      60.2,
+      40.6,
+      340.8,
+      90.3
+     ],
+     0.98
+    ],
+    [
+     "paragraph_title",
+     [
+      20.4,
+      120.7,
+      380.2,
+      144.9
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      20.6,
+      160.2,
+      380.4,
+      400.8
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [],
+    "markdown_texts": "# The Title \n\n## Section one \n\nFirst paragraph line one and line two.",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [],
+    "markdown_texts": "# The Title \n\n## Section one \n\nFirst paragraph line one and line two.",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [],
+   "spans": [
+    [
+     [
+      70,
+      50,
+      330,
+      80
+     ],
+     "The Title"
+    ],
+    [
+     [
+      30,
+      125,
+      370,
+      140
+     ],
+     "Section one"
+    ],
+    [
+     [
+      30,
+      170,
+      370,
+      200
+     ],
+     "First paragraph line one"
+    ],
+    [
+     [
+      30,
+      210,
+      370,
+      240
+     ],
+     "and line two."
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "case": "table_and_formula",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "text",
+     [
+      20.3,
+      20.5,
+      380.7,
+      60.2
+     ],
+     0.97
+    ],
+    [
+     "table",
+     [
+      40.6,
+      80.4,
+      360.9,
+      260.8
+     ],
+     0.96
+    ],
+    [
+     "formula",
+     [
+      60.2,
+      280.6,
+      340.4,
+      320.9
+     ],
+     0.94
+    ],
+    [
+     "text",
+     [
+      20.8,
+      340.3,
+      380.1,
+      420.6
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [
+     "imgs/img_in_table_box_40_80_360_260.jpg",
+     "imgs/img_in_formula_box_60_280_340_320.jpg"
+    ],
+    "markdown_texts": "before the table \n\n\n\n<table><tr><td>cell</td></tr></table>\n\n![](imgs/img_in_formula_box_60_280_340_320.jpg)\n\nafter the formula ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [
+     "imgs/img_in_table_box_40_80_360_260.jpg",
+     "imgs/img_in_formula_box_60_280_340_320.jpg"
+    ],
+    "markdown_texts": "before the table \n\n\n<div style=\"text-align: center;\"><table border=\"1\"><tr><td>cell</td></tr></table></div>\n\n\n<div style=\"text-align: center;\"><img src=\"imgs/img_in_formula_box_60_280_340_320.jpg\" alt=\"Image\" width=\"70%\" /></div>\n\n\nafter the formula ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      30,
+      370,
+      50
+     ],
+     "before the table"
+    ],
+    [
+     [
+      70,
+      285,
+      330,
+      315
+     ],
+     "E = mc^2"
+    ],
+    [
+     [
+      30,
+      350,
+      370,
+      380
+     ],
+     "after the formula"
+    ]
+   ],
+   "tables": [
+    "<table><tr><td>cell</td></tr></table>"
+   ],
+   "threshold": 0.5
+  },
+  {
+   "case": "vision_footnote_relabel",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "image",
+     [
+      60.4,
+      110.2,
+      340.6,
+      360.8
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      150.3,
+      366.4,
+      250.7,
+      380.2
+     ],
+     0.9
+    ],
+    [
+     "text",
+     [
+      20.5,
+      420.6,
+      380.3,
+      560.9
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [
+     "imgs/img_in_image_box_60_110_340_360.jpg"
+    ],
+    "markdown_texts": "![](imgs/img_in_image_box_60_110_340_360.jpg)\n\nFig. 1\n\nbody text after the figure ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [
+     "imgs/img_in_image_box_60_110_340_360.jpg"
+    ],
+    "markdown_texts": "<div style=\"text-align: center;\"><img src=\"imgs/img_in_image_box_60_110_340_360.jpg\" alt=\"Image\" width=\"70%\" /></div>\n\n\nFig. 1\n\nbody text after the figure ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [],
+   "spans": [
+    [
+     [
+      160,
+      368,
+      240,
+      378
+     ],
+     "Fig. 1"
+    ],
+    [
+     [
+      30,
+      430,
+      370,
+      460
+     ],
+     "body text after the figure"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "case": "masked_labels_no_order_index",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "header",
+     [
+      20.2,
+      5.4,
+      380.6,
+      25.8
+     ],
+     0.9
+    ],
+    [
+     "text",
+     [
+      20.4,
+      60.2,
+      380.8,
+      500.6
+     ],
+     0.97
+    ],
+    [
+     "footnote",
+     [
+      20.6,
+      520.3,
+      380.2,
+      560.7
+     ],
+     0.9
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [],
+    "markdown_texts": "body ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [],
+    "markdown_texts": "body ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      8,
+      370,
+      22
+     ],
+     "running header"
+    ],
+    [
+     [
+      30,
+      70,
+      370,
+      100
+     ],
+     "body"
+    ],
+    [
+     [
+      30,
+      525,
+      370,
+      555
+     ],
+     "a footnote"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "case": "two_detected_regions",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "text",
+     [
+      20.3,
+      20.6,
+      190.8,
+      280.4
+     ],
+     0.97
+    ],
+    [
+     "text",
+     [
+      210.5,
+      20.2,
+      380.9,
+      280.7
+     ],
+     0.97
+    ],
+    [
+     "text",
+     [
+      20.7,
+      320.4,
+      380.5,
+      560.2
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [],
+    "markdown_texts": "left column \n\nright column \n\nbottom band ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [],
+    "markdown_texts": "left column \n\nright column \n\nbottom band ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [
+    [
+     "Region",
+     [
+      15.2,
+      15.6,
+      390.4,
+      290.8
+     ],
+     0.9
+    ],
+    [
+     "Region",
+     [
+      15.8,
+      310.2,
+      390.6,
+      570.4
+     ],
+     0.9
+    ]
+   ],
+   "spans": [
+    [
+     [
+      30,
+      30,
+      180,
+      60
+     ],
+     "left column"
+    ],
+    [
+     [
+      220,
+      30,
+      370,
+      60
+     ],
+     "right column"
+    ],
+    [
+     [
+      30,
+      330,
+      370,
+      360
+     ],
+     "bottom band"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  },
+  {
+   "case": "table_without_result",
+   "image_size": [
+    400,
+    600
+   ],
+   "layout": [
+    [
+     "table",
+     [
+      40.2,
+      40.8,
+      360.6,
+      220.3
+     ],
+     0.95
+    ],
+    [
+     "text",
+     [
+      20.4,
+      240.6,
+      380.8,
+      400.2
+     ],
+     0.97
+    ]
+   ],
+   "markdown_ignore_labels": [
+    "number",
+    "footnote",
+    "header",
+    "header_image",
+    "footer",
+    "footer_image",
+    "aside_text"
+   ],
+   "plain": {
+    "image_paths": [
+     "imgs/img_in_table_box_40_40_360_220.jpg"
+    ],
+    "markdown_texts": "\n\n\n\ntext under the bare table ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "pretty": {
+    "image_paths": [
+     "imgs/img_in_table_box_40_40_360_220.jpg"
+    ],
+    "markdown_texts": "\n<div style=\"text-align: center;\"></div>\n\n\ntext under the bare table ",
+    "page_continuation_flags": [
+     true,
+     true
+    ]
+   },
+   "regions": [],
+   "spans": [
+    [
+     [
+      30,
+      250,
+      370,
+      280
+     ],
+     "text under the bare table"
+    ]
+   ],
+   "tables": [],
+   "threshold": 0.5
+  }
+ ],
+ "schema_version": "paddleocr-rust/markdown-v2-oracle-capture/v1",
+ "upstream": "paddlex 3.7.2 layout_parsing/result_v2.py _to_markdown over common/result/converter/{markdown_converter,markdown_format_funcs}.py"
+}

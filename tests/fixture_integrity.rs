@@ -220,6 +220,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-region-order".to_owned(),
         "classic-v1-standardized-data".to_owned(),
         "classic-v1-layout-assembly".to_owned(),
+        "classic-v1-markdown-v2".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

@@ -1,0 +1,40 @@
+{
+ "fixture_id": "classic-v1-markdown-v2",
+ "kind": "markdown_v2_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/cases/*/layout,regions,spans,tables",
+  "sha256": "77822444e853e69aceb8f7a3920c0caffcc39d54d2028a6a4d1d04c36778376a",
+  "sha256_scope": "No image input beyond a zero-filled shape. The six scenarios are the same synthetic specs as classic-v1-layout-assembly; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_markdown_v2_oracle.py, importing the specs from tools/capture_layout_assembly_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/result_v2.py _to_markdown, _build_handle_funcs_dict",
+   "paddlex 3.7.2: inference/common/result/converter/markdown_converter.py MarkdownConverter.convert",
+   "paddlex 3.7.2: inference/common/result/converter/markdown_format_funcs.py build_handle_funcs_dict and the pretty-mode HTML helpers",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py get_seg_flag"
+  ],
+  "capture_method": "Each scenario ran the executed post-model chain (standardized_data, get_layout_parsing_objects, sort_layout_parsing_blocks, the order_index tail) and was wrapped in a real LayoutParsingResultV2; _to_markdown was executed for pretty=True and pretty=False under this port's supported model settings (table recognition on, formula/seal/chart off, default markdown_ignore_labels). Recorded per variant: the Markdown text, the page continuation flags, and the collected image-path keys.",
+  "environment": "python 3.12, paddlex 3.7.2, numpy 2.x, opencv-contrib-python 5.x (IO backend only)"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "77822444e853e69aceb8f7a3920c0caffcc39d54d2028a6a4d1d04c36778376a",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/markdown-v2-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "markdown_v2::tests::the_captured_markdown_pages_are_reproduced"
+ ],
+ "limitations": [
+  "Model settings are fixed to this port's supported mode; the use_table_recognition=False image fallback for table labels is implemented but not captured, since the port always runs with table recognition available.",
+  "markdown_images values are PIL crops upstream; the port records and compares the path keys only.",
+  "imgs_in_doc is empty: the pipeline-level extra image list belongs to the API slice."
+ ]
+}

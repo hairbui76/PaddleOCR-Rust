@@ -106,6 +106,9 @@ pub struct AssembledBlock {
     pub text_line_height: f64,
     /// Mean text-line width.
     pub text_line_width: f64,
+    /// The width frozen from the float detection coordinates, which the
+    /// paragraph-continuity check reads.
+    pub width: f64,
     /// `imgs/img_in_{label}_box_{x1}_{y1}_{x2}_{y2}.jpg` for visual labels.
     pub image_path: Option<String>,
 }
@@ -248,6 +251,7 @@ pub fn assemble_layout_parsing(
                 seg_end: block.seg_end,
                 text_line_height: block.text_line_height,
                 text_line_width: block.text_line_width,
+                width: block.width,
                 image_path: image_paths[global].clone(),
             });
         }

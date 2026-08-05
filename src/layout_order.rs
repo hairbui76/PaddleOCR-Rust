@@ -119,7 +119,7 @@ pub struct OrderBlock {
     /// The pre-union bbox, kept from the first child append.
     ori_bbox: Option<[i64; 4]>,
     /// Frozen at construction; see the module docs.
-    width: f64,
+    pub(crate) width: f64,
     /// Frozen at construction.
     height: f64,
     /// Frozen at construction.
