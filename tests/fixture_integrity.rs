@@ -211,6 +211,7 @@ fn committed_fixture_metadata_and_payloads_are_integrity_checked() {
         "classic-v1-config-reconciliation".to_owned(),
         "classic-v1-slow-score".to_owned(),
         "classic-v1-assembly".to_owned(),
+        "classic-v1-heuristic-primitives".to_owned(),
     ]);
     assert_eq!(
         fixture_ids, expected_ids,

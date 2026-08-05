@@ -1,0 +1,601 @@
+{
+ "manhattan": [
+  {
+   "distance": 8.0,
+   "point1": [
+    1.0,
+    2.0
+   ],
+   "point2": [
+    4.0,
+    6.0
+   ],
+   "weight_x": 2.0,
+   "weight_y": 0.5
+  }
+ ],
+ "overlaps": [
+  {
+   "case": "overlapping",
+   "edge_distance_unit": 0.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "horizontal": 0.3333333333333333,
+   "second": [
+    5,
+    5,
+    15,
+    15
+   ],
+   "vertical": 0.3333333333333333
+  },
+  {
+   "case": "disjoint_diagonal",
+   "edge_distance_unit": 20.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "horizontal": 0.0,
+   "second": [
+    20,
+    20,
+    30,
+    30
+   ],
+   "vertical": 0.0
+  },
+  {
+   "case": "right_of",
+   "edge_distance_unit": 10.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "horizontal": 0.0,
+   "second": [
+    20,
+    2,
+    30,
+    8
+   ],
+   "vertical": 0.6
+  },
+  {
+   "case": "left_of",
+   "edge_distance_unit": 10.0,
+   "first": [
+    20,
+    2,
+    30,
+    8
+   ],
+   "horizontal": 0.0,
+   "second": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "vertical": 0.6
+  },
+  {
+   "case": "below",
+   "edge_distance_unit": 10.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "horizontal": 0.6,
+   "second": [
+    2,
+    20,
+    8,
+    30
+   ],
+   "vertical": 0.0
+  },
+  {
+   "case": "above",
+   "edge_distance_unit": 10.0,
+   "first": [
+    2,
+    20,
+    8,
+    30
+   ],
+   "horizontal": 0.6,
+   "second": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "vertical": 0.0
+  },
+  {
+   "case": "touching_edges",
+   "edge_distance_unit": 0.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "horizontal": 0.0,
+   "second": [
+    10,
+    0,
+    20,
+    10
+   ],
+   "vertical": 1.0
+  },
+  {
+   "case": "contained",
+   "edge_distance_unit": 0.0,
+   "first": [
+    0,
+    0,
+    100,
+    100
+   ],
+   "horizontal": 0.1,
+   "second": [
+    10,
+    10,
+    20,
+    20
+   ],
+   "vertical": 0.1
+  },
+  {
+   "case": "same",
+   "edge_distance_unit": 0.0,
+   "first": [
+    3,
+    4,
+    13,
+    24
+   ],
+   "horizontal": 1.0,
+   "second": [
+    3,
+    4,
+    13,
+    24
+   ],
+   "vertical": 1.0
+  }
+ ],
+ "schema_version": "paddleocr-rust/heuristic-primitives-oracle-capture/v1",
+ "sorts": [
+  {
+   "boxes": [
+    [
+     0,
+     2,
+     10,
+     12
+    ],
+    [
+     40,
+     0,
+     50,
+     10
+    ],
+    [
+     20,
+     1,
+     30,
+     11
+    ]
+   ],
+   "case": "single_row/horizontal",
+   "direction": "horizontal",
+   "order": [
+    0,
+    2,
+    1
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  },
+  {
+   "boxes": [
+    [
+     0,
+     2,
+     10,
+     12
+    ],
+    [
+     40,
+     0,
+     50,
+     10
+    ],
+    [
+     20,
+     1,
+     30,
+     11
+    ]
+   ],
+   "case": "single_row/vertical",
+   "direction": "vertical",
+   "order": [
+    1,
+    2,
+    0
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  },
+  {
+   "boxes": [
+    [
+     40,
+     0,
+     50,
+     10
+    ],
+    [
+     0,
+     30,
+     10,
+     40
+    ],
+    [
+     20,
+     2,
+     30,
+     12
+    ],
+    [
+     30,
+     31,
+     44,
+     41
+    ]
+   ],
+   "case": "two_rows/horizontal",
+   "direction": "horizontal",
+   "order": [
+    2,
+    0,
+    1,
+    3
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  },
+  {
+   "boxes": [
+    [
+     40,
+     0,
+     50,
+     10
+    ],
+    [
+     0,
+     30,
+     10,
+     40
+    ],
+    [
+     20,
+     2,
+     30,
+     12
+    ],
+    [
+     30,
+     31,
+     44,
+     41
+    ]
+   ],
+   "case": "two_rows/vertical",
+   "direction": "vertical",
+   "order": [
+    0,
+    3,
+    2,
+    1
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  },
+  {
+   "boxes": [
+    [
+     5,
+     0,
+     15,
+     10
+    ],
+    [
+     5,
+     4,
+     15,
+     14
+    ],
+    [
+     5,
+     8,
+     15,
+     18
+    ]
+   ],
+   "case": "quantized_tie/horizontal",
+   "direction": "horizontal",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  },
+  {
+   "boxes": [
+    [
+     5,
+     0,
+     15,
+     10
+    ],
+    [
+     5,
+     4,
+     15,
+     14
+    ],
+    [
+     5,
+     8,
+     15,
+     18
+    ]
+   ],
+   "case": "quantized_tie/vertical",
+   "direction": "vertical",
+   "order": [
+    0,
+    1,
+    2
+   ],
+   "text_line_height": 10,
+   "text_line_width": 10
+  }
+ ],
+ "upstream": "paddlex 3.7.2 layout_parsing/utils.py and xycut_enhanced/utils.py leaf primitives",
+ "weighted_distances": [
+  {
+   "case": "below_doc_title",
+   "direction": "horizontal",
+   "edge_distance": 1.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "label": "doc_title",
+   "second": [
+    2,
+    20,
+    8,
+    30
+   ]
+  },
+  {
+   "case": "below_text",
+   "direction": "horizontal",
+   "edge_distance": 10.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "label": "text",
+   "second": [
+    2,
+    20,
+    8,
+    30
+   ]
+  },
+  {
+   "case": "right_paragraph_title",
+   "direction": "horizontal",
+   "edge_distance": 10.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "label": "paragraph_title",
+   "second": [
+    20,
+    2,
+    30,
+    8
+   ]
+  },
+  {
+   "case": "diagonal_doc_title_vertical",
+   "direction": "vertical",
+   "edge_distance": 12.0,
+   "first": [
+    0,
+    0,
+    10,
+    10
+   ],
+   "label": "doc_title",
+   "second": [
+    20,
+    20,
+    30,
+    30
+   ]
+  }
+ ],
+ "weights": [
+  {
+   "direction": "horizontal",
+   "label": "doc_title",
+   "weights": [
+    1,
+    0.1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "doc_title",
+   "weights": [
+    0.2,
+    0.1,
+    1,
+    1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "paragraph_title",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "paragraph_title",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "abstract",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "abstract",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "image",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "image",
+   "weights": [
+    1,
+    1,
+    0.1,
+    1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "text",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "text",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "vision_footnote",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "vision_footnote",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  },
+  {
+   "direction": "horizontal",
+   "label": "table",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  },
+  {
+   "direction": "vertical",
+   "label": "table",
+   "weights": [
+    1,
+    1,
+    1,
+    0.1
+   ]
+  }
+ ]
+}

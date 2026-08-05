@@ -324,8 +324,308 @@ pub(crate) fn recursive_xy_cut(
     Ok(())
 }
 
+/// A float box for the heuristic layer, `[left, top, right, bottom]`.
+pub(crate) type HeuristicBox = [f64; 4];
+
+/// Projection overlap of two boxes on one axis, over their union extent.
+///
+/// The heuristic layer's `calculate_projection_overlap_ratio` with its default
+/// `union` mode: intersection length over combined extent, `0` when disjoint.
+#[must_use]
+pub(crate) fn projection_overlap_ratio(
+    first: HeuristicBox,
+    second: HeuristicBox,
+    axis: Axis,
+) -> f64 {
+    let (start, end) = match axis {
+        Axis::Horizontal => (0, 2),
+        Axis::Vertical => (1, 3),
+    };
+    let overlap = first[end].min(second[end]) - first[start].max(second[start]);
+    if overlap <= 0.0 {
+        return 0.0;
+    }
+    let extent = first[end].max(second[end]) - first[start].min(second[start]);
+    overlap / extent
+}
+
+/// The per-label directional weights, `[left, right, up, down]`.
+///
+/// `doc_title` prefers matches to its left-and-down (or right-to-left when the
+/// region is vertical); titles and vision labels prefer downward matches; every
+/// other label prefers upward ones. The table is upstream's, entry for entry.
+#[must_use]
+pub(crate) fn label_weights(label: &str, vertical: bool) -> [f64; 4] {
+    match label {
+        "doc_title" => {
+            if vertical {
+                [0.2, 0.1, 1.0, 1.0]
+            } else {
+                [1.0, 0.1, 0.1, 1.0]
+            }
+        }
+        "paragraph_title" | "table_title" | "abstract" | "image" | "seal" | "chart" | "figure" => {
+            [1.0, 1.0, 0.1, 1.0]
+        }
+        _ => [1.0, 1.0, 1.0, 0.1],
+    }
+}
+
+/// Weighted nearest-edge distance between two boxes.
+///
+/// Zero when the boxes overlap on **both** projections. Otherwise the nearest
+/// horizontal gap weighted by `left`/`right` and the nearest vertical gap by
+/// `up`/`down` — where the side is chosen by which of the boxes leads, so a
+/// `doc_title` reaching downward pays a tenth of what it pays reaching up.
+#[must_use]
+pub(crate) fn nearest_edge_distance(
+    first: HeuristicBox,
+    second: HeuristicBox,
+    weight: [f64; 4],
+) -> f64 {
+    let horizontal = projection_overlap_ratio(first, second, Axis::Horizontal);
+    let vertical = projection_overlap_ratio(first, second, Axis::Vertical);
+    if horizontal > 0.0 && vertical > 0.0 {
+        return 0.0;
+    }
+    let mut distance = 0.0;
+    if horizontal == 0.0 {
+        let gap = (first[0] - second[2])
+            .abs()
+            .min((first[2] - second[0]).abs());
+        distance += gap
+            * if first[2] < second[0] {
+                weight[0]
+            } else {
+                weight[1]
+            };
+    }
+    if vertical == 0.0 {
+        let gap = (first[1] - second[3])
+            .abs()
+            .min((first[3] - second[1]).abs());
+        distance += gap
+            * if first[3] < second[1] {
+                weight[2]
+            } else {
+                weight[3]
+            };
+    }
+    distance
+}
+
+/// Weighted Manhattan distance between two points.
+#[must_use]
+pub(crate) fn manhattan_distance(
+    first: (f64, f64),
+    second: (f64, f64),
+    weight_x: f64,
+    weight_y: f64,
+) -> f64 {
+    weight_x * (first.0 - second.0).abs() + weight_y * (first.1 - second.1).abs()
+}
+
+/// Sorts plain blocks into reading order, returning the permutation.
+///
+/// Upstream's `sort_normal_blocks`: coordinates are quantized to text-line
+/// cells with **floor** division — Python's `//`, so a negative coordinate
+/// floors rather than truncates — and ties inside a cell fall back to the
+/// squared centroid distance from the origin (horizontal regions) or from the
+/// top-right (vertical ones, via the negated `x` term).
+#[must_use]
+pub(crate) fn sort_plain_blocks(
+    boxes: &[HeuristicBox],
+    text_line_height: f64,
+    text_line_width: f64,
+    vertical: bool,
+) -> Vec<usize> {
+    let centroid = |b: &HeuristicBox| ((b[0] + b[2]) / 2.0, (b[1] + b[3]) / 2.0);
+    let mut order: Vec<usize> = (0..boxes.len()).collect();
+    order.sort_by(|left, right| {
+        let (a, b) = (&boxes[*left], &boxes[*right]);
+        let (ac, bc) = (centroid(a), centroid(b));
+        let key = |b: &HeuristicBox, c: (f64, f64)| -> (f64, f64, f64) {
+            if vertical {
+                (
+                    (-b[2] / text_line_width).floor(),
+                    (b[1] / text_line_height).floor(),
+                    -c.0 * c.0 + c.1 * c.1,
+                )
+            } else {
+                (
+                    (b[1] / text_line_height).floor(),
+                    (b[0] / text_line_width).floor(),
+                    c.0 * c.0 + c.1 * c.1,
+                )
+            }
+        };
+        let (ka, kb) = (key(a, ac), key(b, bc));
+        ka.0.total_cmp(&kb.0)
+            .then(ka.1.total_cmp(&kb.1))
+            .then(ka.2.total_cmp(&kb.2))
+    });
+    order
+}
+
 #[cfg(test)]
 mod tests {
+    mod heuristics {
+        use super::super::*;
+
+        use serde_json::Value;
+
+        const FIXTURE: &str =
+            include_str!("../tests/fixtures/classic-v1-heuristic-primitives/expected.json");
+
+        fn fixture() -> Value {
+            match serde_json::from_str(FIXTURE) {
+                Ok(value) => value,
+                Err(error) => panic!("fixture: {error}"),
+            }
+        }
+
+        fn read_box(value: &Value) -> HeuristicBox {
+            let values = match value.as_array() {
+                Some(values) => values,
+                None => panic!("box"),
+            };
+            [
+                values[0].as_f64().unwrap_or(f64::NAN),
+                values[1].as_f64().unwrap_or(f64::NAN),
+                values[2].as_f64().unwrap_or(f64::NAN),
+                values[3].as_f64().unwrap_or(f64::NAN),
+            ]
+        }
+
+        #[test]
+        fn the_captured_overlaps_and_distances_are_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["overlaps"].as_array() {
+                Some(value) => value,
+                None => panic!("overlaps"),
+            };
+            assert_eq!(cases.len(), 9);
+            for case in cases {
+                let name = case["case"].as_str().unwrap_or("?");
+                let (a, b) = (read_box(&case["first"]), read_box(&case["second"]));
+                for (label, actual, key) in [
+                    (
+                        "horizontal",
+                        projection_overlap_ratio(a, b, Axis::Horizontal),
+                        "horizontal",
+                    ),
+                    (
+                        "vertical",
+                        projection_overlap_ratio(a, b, Axis::Vertical),
+                        "vertical",
+                    ),
+                    (
+                        "edge",
+                        nearest_edge_distance(a, b, [1.0; 4]),
+                        "edge_distance_unit",
+                    ),
+                ] {
+                    let expected = case[key].as_f64().unwrap_or(f64::NAN);
+                    assert!(
+                        (actual - expected).abs() < 1e-12,
+                        "{name}: {label}: {actual} vs {expected}"
+                    );
+                }
+            }
+        }
+
+        #[test]
+        fn the_captured_weight_table_is_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["weights"].as_array() {
+                Some(value) => value,
+                None => panic!("weights"),
+            };
+            assert_eq!(cases.len(), 14);
+            for case in cases {
+                let label = case["label"].as_str().unwrap_or("?");
+                let vertical = case["direction"].as_str() == Some("vertical");
+                let expected: Vec<f64> = match case["weights"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_f64().unwrap_or(f64::NAN))
+                        .collect(),
+                    None => panic!("{label}: weights"),
+                };
+                assert_eq!(
+                    label_weights(label, vertical).to_vec(),
+                    expected,
+                    "{label}/{vertical}"
+                );
+            }
+        }
+
+        #[test]
+        fn the_captured_weighted_distances_are_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["weighted_distances"].as_array() {
+                Some(value) => value,
+                None => panic!("weighted_distances"),
+            };
+            assert_eq!(cases.len(), 4);
+            for case in cases {
+                let name = case["case"].as_str().unwrap_or("?");
+                let (a, b) = (read_box(&case["first"]), read_box(&case["second"]));
+                let weights = label_weights(
+                    case["label"].as_str().unwrap_or(""),
+                    case["direction"].as_str() == Some("vertical"),
+                );
+                let actual = nearest_edge_distance(a, b, weights);
+                let expected = case["edge_distance"].as_f64().unwrap_or(f64::NAN);
+                assert!(
+                    (actual - expected).abs() < 1e-12,
+                    "{name}: {actual} vs {expected}"
+                );
+            }
+
+            let manhattan = &fixture["manhattan"][0];
+            let actual = manhattan_distance(
+                (1.0, 2.0),
+                (4.0, 6.0),
+                manhattan["weight_x"].as_f64().unwrap_or(1.0),
+                manhattan["weight_y"].as_f64().unwrap_or(1.0),
+            );
+            assert!((actual - manhattan["distance"].as_f64().unwrap_or(f64::NAN)).abs() < 1e-12);
+        }
+
+        /// The plain-block sort, in both region directions.
+        #[test]
+        fn the_captured_sorts_are_reproduced() {
+            let fixture = fixture();
+            let cases = match fixture["sorts"].as_array() {
+                Some(value) => value,
+                None => panic!("sorts"),
+            };
+            assert_eq!(cases.len(), 6);
+            for case in cases {
+                let name = case["case"].as_str().unwrap_or("?");
+                let boxes: Vec<HeuristicBox> = match case["boxes"].as_array() {
+                    Some(values) => values.iter().map(read_box).collect(),
+                    None => panic!("{name}: boxes"),
+                };
+                let order = sort_plain_blocks(
+                    &boxes,
+                    case["text_line_height"].as_f64().unwrap_or(10.0),
+                    case["text_line_width"].as_f64().unwrap_or(10.0),
+                    case["direction"].as_str() == Some("vertical"),
+                );
+                let expected: Vec<usize> = match case["order"].as_array() {
+                    Some(values) => values
+                        .iter()
+                        .map(|value| value.as_u64().unwrap_or(0) as usize)
+                        .collect(),
+                    None => panic!("{name}: order"),
+                };
+                assert_eq!(order, expected, "{name}");
+            }
+        }
+    }
+
     use super::*;
 
     use serde_json::Value;

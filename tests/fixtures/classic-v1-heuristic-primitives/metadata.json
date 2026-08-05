@@ -1,0 +1,41 @@
+{
+ "fixture_id": "classic-v1-heuristic-primitives",
+ "kind": "heuristic_primitives_oracle",
+ "reviewed_on": "2026-08-05",
+ "contains_personal_data": false,
+ "input": {
+  "path": "expected.json#/overlaps,#/weights,#/sorts",
+  "sha256": "3930b8b92afbc9c8cef4eef2c39033f4ba426e3a35c3714aaf586c5813b6bf8b",
+  "sha256_scope": "No image input. Every case is boxes, labels, or points written out in the capture tool; the expected file is both the input record and the expected record.",
+  "provenance": "Authored in tools/capture_heuristic_primitives_oracle.py.",
+  "license": "Apache-2.0"
+ },
+ "upstream": {
+  "commit": "2661c7c0ef5c613e8f93c6e93b2e052399f0f854",
+  "reference_paths": [
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/utils.py",
+   "paddlex 3.7.2: inference/pipelines/layout_parsing/xycut_enhanced/utils.py"
+  ],
+  "capture_method": "The pinned functions were imported and executed, not transcribed.",
+  "environment": "python 3.12, paddlex 3.7.2"
+ },
+ "artifacts": null,
+ "expected": {
+  "path": "expected.json",
+  "sha256": "3930b8b92afbc9c8cef4eef2c39033f4ba426e3a35c3714aaf586c5813b6bf8b",
+  "sha256_scope": "Exact UTF-8 JSON file.",
+  "schema_version": "paddleocr-rust/heuristic-primitives-oracle-capture/v1",
+  "comparison_profile": "m2-unit-v1"
+ },
+ "tests": [
+  "reading_order::tests::heuristics::the_captured_overlaps_and_distances_are_reproduced",
+  "reading_order::tests::heuristics::the_captured_weight_table_is_reproduced",
+  "reading_order::tests::heuristics::the_captured_weighted_distances_are_reproduced",
+  "reading_order::tests::heuristics::the_captured_sorts_are_reproduced"
+ ],
+ "limitations": [
+  "Leaf primitives only. The insert functions and child-block updaters above them require the LayoutBlock/LayoutRegion object model, which is the named next unit of STRUCT-001 work.",
+  "sort_normal_blocks quantizes with Python floor division; the Rust port floors on f64, which agrees for every finite input the pipeline can produce.",
+  "No model is run and no page is decoded."
+ ]
+}
