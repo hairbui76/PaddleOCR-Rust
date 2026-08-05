@@ -1,9 +1,13 @@
 # Remaining Port Roadmap and Next-Agent Handoff
 
-Status date: 2026-08-04
+Status date: 2026-08-05
 Canonical authority: [`ROADMAP.md`](../ROADMAP.md)
-Current delivery state: bounded PNG input decoding exists in Rust; no functional OCR pipeline, public OCR API, or OCR
-CLI exists yet
+Current delivery state: classic OCR, document preprocessing, layout detection,
+the three-model table pipeline, and the `PP-StructureV3` orchestration all run
+end to end over explicitly provisioned local ONNX artifacts, behind a typed Rust
+API, three frozen JSON schemas, and a CLI with three commands. Every remaining
+capability is blocked on something outside this repository, or closed by a
+recorded decision.
 
 ## How to use this handoff
 
@@ -14,164 +18,124 @@ architecture, read `AGENTS.md`, then `ROADMAP.md`, then the owner documents
 linked below. Update `ROADMAP.md` first if new work changes scope or resolves a
 decision.
 
-Do not state that PaddleOCR, PP-OCRv6, a detector, a recognizer, or an OCR CLI
-is supported until the corresponding roadmap gate is actually complete.
+This file is a **summary**, and a summary is the thing most likely to rot. An
+earlier revision of it, dated 2026-08-04, still said "no functional OCR
+pipeline, public OCR API, or OCR CLI exists yet" and that `src/main.rs` exits
+with status `2`, long after all three were delivered. If you find this file
+disagreeing with the item rows in `ROADMAP.md` section 10, the rows are right
+and this file is stale — fix it in the same change.
+
+State support from the gates that actually closed, not from this summary. No
+capability here carries an **accuracy** claim: every oracle in this repository
+pins preprocessing, postprocessing, and tensor construction, not detection
+quality.
 
 ## Exact stop point
 
-P0 and P1 are done. P2, P3, P4, and P13 are in progress. P5 through P12 and
-P14 remain planned. The implemented Rust foundations are private, bounded
-geometry/crop, DB thresholding/components, CTC greedy-index work, and bounded
-PNG decoding into the classic BGR convention; they are not a detector,
-recognizer, or end-to-end OCR implementation, and `src/main.rs` still exits
-with status `2`.
+P0 through P6 are complete. P7 has one item in progress. P8 through P14 are
+complete for every row whose dependencies exist; what is left in them is
+enumerated below. As of 2026-08-05 the item rows stand at `103` `Done`, `14`
+`Blocked`, `29` `Blocked by decision`, `4` `Superseded`, `1` `In progress`, and
+`1` `Answered`.
 
-The active critical path is P3 `RT-003`: establish a defensible independent
-static/Paddle raw-tensor reference for the selected PP-OCRv6 medium ONNX pair,
-then use that evidence to choose a runtime. The selected exact external model
-packages are:
+There is no active critical path that this repository can execute alone. The
+next real move is a **user decision or an external artifact**, not more code —
+see [Where the next move has to come from](#where-the-next-move-has-to-come-from).
 
-| Candidate key | External directory | Pinned revision |
+### What is delivered
+
+| Capability | Modules | Frozen contract |
 |---|---|---|
-| `m2-static-det-v6-medium` | `/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-static-det-v6-medium` | `8e0f56fb2ef86b461d99cfc7ac5c137738985f61` |
-| `m2-static-rec-v6-medium` | `/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-static-rec-v6-medium` | `e5a92bcbc5cc1b494628e458d267778f0704fd7c` |
-| `m2-onnx-det-v6-medium` | `/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-det-v6-medium` | `61323801669c338b7891481ec7bac61ce31b576a` |
-| `m2-onnx-rec-v6-medium` | `/mnt/ssdvolumes/models/paddleocr-v6-medium/m2-onnx-rec-v6-medium` | `50c7eacafc52fa7bcf4194e8cd08e46f8558504b` |
+| Classic OCR: decode → detect → order → crop → recognize → filter | `src/detector.rs`, `src/db.rs`, `src/recognizer.rs`, `src/ctc.rs`, `src/pipeline.rs`, `src/api.rs` | [`CLASSIC_OCR_CONTRACT.md`](CLASSIC_OCR_CONTRACT.md), [`DB_POSTPROCESS_SPEC.md`](DB_POSTPROCESS_SPEC.md) |
+| Text-line and page orientation, unwarping, composed preprocessing | `src/orientation.rs`, `src/document_orientation.rs`, `src/unwarp.rs`, `src/document_pipeline.rs` | [`ORIENTATION_CONTRACT.md`](ORIENTATION_CONTRACT.md), [`UNWARPING_CONTRACT.md`](UNWARPING_CONTRACT.md) |
+| Layout detection | `src/layout.rs`, `src/paddlex_detection.rs`, `src/resize_cubic.rs` | [`LAYOUT_CONTRACT.md`](LAYOUT_CONTRACT.md) |
+| Table recognition: classify → cells → structure → HTML | `src/table_classification.rs`, `src/table_cells.rs`, `src/table_structure.rs`, `src/table_pipeline.rs`, `src/table_engine.rs` | [`TABLE_PIPELINE_CONTRACT.md`](TABLE_PIPELINE_CONTRACT.md) and the three module contracts it names |
+| `PP-StructureV3`: ordering, block assembly, Markdown | `src/reading_order.rs`, `src/layout_order.rs`, `src/structure_assembly.rs`, `src/structure_engine.rs`, `src/markdown.rs`, `src/markdown_v2.rs` | [`READING_ORDER_CONTRACT.md`](READING_ORDER_CONTRACT.md), [`RECONSTRUCTION_CONTRACT.md`](RECONSTRUCTION_CONTRACT.md) |
+| Public surface: typed API, JSON schemas, CLI | `src/api.rs`, `src/result_json.rs`, `src/structure_json.rs`, `src/main.rs` | [`API_CONTRACT.md`](API_CONTRACT.md), [`SPECIALIZED_API.md`](SPECIALIZED_API.md) |
 
-Their external machine record is
-`/mnt/ssdvolumes/models/paddleocr-v6-medium/provisioning-evidence.json`.
-It is not a final manifest or an approval to bundle/distribute a model.
+The runtime is ONNX Runtime `1.24.0` reached through `ort` `load-dynamic`,
+selected in [`ADR_RT004_RUNTIME_SELECTION.md`](ADR_RT004_RUNTIME_SELECTION.md).
+Model artifacts are resolved from explicit local paths with declared digests;
+there is no downloader and no cache, because
+[`ADR_MODEL_DEC_001_ARTIFACT_POLICY.md`](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md)
+makes offline structural rather than a mode.
 
-## Static-versus-ONNX work left unfinished
+The model/runtime evidence that used to occupy this file is closed: `RT-003`
+completed with two fresh static/Paddle-versus-ONNX captures producing
+byte-identical aggregates and zero `m2-tensor-v1` violations across `7,057,864`
+elements. The history, including the earlier partial capture that is **not**
+retroactively relabelled as passing, stays in
+[`RUNTIME_PROOF_PLAN.md`](RUNTIME_PROOF_PLAN.md).
 
-The static pair has a confined terms review for this external oracle only;
-see [`LICENSE_REVIEW.md`](LICENSE_REVIEW.md). It is not selected as the Rust
-backend or release artifact.
+## Where the next move has to come from
 
-One isolated static/Paddle versus ONNX capture did complete all six declared
-LCG shapes. Its full aggregate evidence and limitations are in
-[`RUNTIME_PROOF_PLAN.md`](RUNTIME_PROOF_PLAN.md#first-staticpaddle-capture-partial-2026-08-04).
-The result must remain **partial**, for two independent reasons:
+Four blocker classes, and none of them is effort inside this repository.
 
-1. Only one fresh process completed. The required second fresh process and
-   determinism comparison were deliberately not run.
-2. All absolute errors were below `1e-4`, but the harness used an unapproved
-   relative denominator floor (`1e-12`), so its near-zero relative values failed
-   the then-undefined relative term.
+### 1. Upstream publishes no ONNX export (`5` rows, plus `4` that depend on them)
 
-`m2-tensor-v1` was amended on 2026-08-04 under an explicit user delegation. The
-predeclared rule is now
-`abs(candidate - reference) <= 1e-4 + 1e-4 * abs(reference)`, evaluated
-elementwise on `float64` promotions with the independent reference on the
-reference side; see
-[`FIXTURE_AND_TOLERANCE_PLAN.md`](FIXTURE_AND_TOLERANCE_PLAN.md#m2-tensor-v1-comparison-rule-resolved-2026-08-04).
-The earlier capture is **not** retroactively relabelled as passing: it still has
-only one fresh process and no determinism comparison.
+`FORM-001`, `SEAL-001`, `CHART-001`, `KIE-001`, and `CHART-002` need artifacts
+that upstream ships only as Paddle `inference.json` + `inference.pdiparams` or
+`model_state.pdparams`. `MODEL-DEC-001` does not permit converting them locally,
+so these are artifact-blocked, not unstarted. `FORMPIPE-001`, `SEALPIPE-001`,
+and the remaining slices of `STRUCT-001` and `RECON-001` are blocked only by
+this — the mode the provisioned artifacts do cover is done and matched. The
+per-artifact evidence is in
+[`P8_ARTIFACT_AVAILABILITY.md`](P8_ARTIFACT_AVAILABILITY.md).
 
-To resume this experiment, rebuild a disposable
-external harness, verify every model package file before loading it, run the
-six exact shapes twice in fresh processes, retain no raw tensors, and record
-only compact hashes and aggregate comparison data. Never run PaddleOCR or
-PaddleX during this direct static/Paddle reference experiment.
+`SR-001` is blocked more deeply: super-resolution has **no inference path in
+either pinned baseline**, so there is nothing to port even if an artifact
+appeared.
 
-## Ordered remaining execution plan
+To unblock any of these, an ONNX export must become available from upstream, or
+the user must change `MODEL-DEC-001`. Do not convert a model locally to make a
+row move.
 
-### 1. Close P3 model/runtime evidence before adding inference code
+### 2. The PDF renderer has no approved entry gate (`2` rows, plus `1` in progress)
 
-1. `RT-003` is **complete**: the predeclared `m2-tensor-v1` rule was fixed
-   first, then two fresh static/Paddle versus ONNX captures produced
-   byte-identical aggregates with zero violations across 7,057,864 elements.
-2. Complete `MOD-001` evidence: static graph/ABI inspection, actual runtime
-   dictionary behavior, and a written static-versus-ONNX disposition. Do not
-   treat a matching YAML or model name as equivalence. The static graph/ABI
-   half is now recorded in [`STATIC_ABI_INSPECTION.md`](STATIC_ABI_INSPECTION.md)
-   with a standard-library parse-only tool, together with the structural
-   static-versus-ONNX comparison; the runtime dictionary behaviour and the
-   numerical half of the disposition still depend on `RT-003`.
-3. Complete the unresolved `RT-002` evidence: baseline-CPU/no-AVX coverage,
-   resource/error behavior, longer reuse/soak, cancellation/concurrency policy,
-   native dependency and unsafe-boundary review, and supply-chain evidence.
-4. Resolve `RT-004` / `D-006` in an ADR. The choice must name the exact
-   artifact, backend version/features, CPU baseline, numerical results,
-   limitations, rejected alternatives, and migration path.
-5. Resolve `MODEL-DEC-001` / `D-007`, then implement `RT-005` and `MOD-002`
-   through `MOD-003`: a small internal backend-neutral adapter, explicit
-   hash-checked local model resolution, typed tensor/shape errors, resource
-   bounds, and offline behavior. `MOD-004` download support remains later and
-   opt-in only.
+`PDF-001` and `MPAGE-001` wait on the five-part entry gate in
+[`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md).
+Only the piece needing no renderer exists: the render-scale planner in
+`src/pdf_render_plan.rs`, with the renderer contract measured in
+[`PDF_RENDER_CONTRACT.md`](PDF_RENDER_CONTRACT.md).
 
-Do not add `ort`, Paddle, Python, a model path, a downloader, or a runtime
-feature to the project merely to make a smoke test pass. The backend decision
-must precede that integration.
+This is the **only** `In progress` row in the roadmap: `DOC-E2E-001`'s blank,
+corrupt, oversized, rotated, and unwarp-refusal cases pass in
+`tests/end_to_end.rs`; its multipage and password cases need that renderer.
+Office formats are decided against, not pending.
 
-### 2. Finish P2/P4 input and tensor foundations
+### 3. Hardware this project does not have (`2` rows)
 
-1. Complete remaining `FIX-001`, `TOL-001`, and `COMP-002` fixture/ledger
-   work: detector thresholds and tensor representatives. The `m2-tensor-v1`
-   comparison rule and the `classic-v1-image-inputs` exact/unsupported
-   classification are now resolved.
-2. `D-008` (M2 image portion) and `IMG-DEC-001` are resolved: PNG-only via
-   `png` 0.18.1, recorded in [`IMAGE_DECODER_DECISION.md`](IMAGE_DECODER_DECISION.md).
-   JPEG is deferred to the new `IMG-003` item, whose entry gate is a
-   tensor-level measurement of the recorded component delta `36`.
-3. `IMG-001` is implemented in `src/image.rs`. `IMG-002`, `TEN-001`, and
-   `PRE-001` remain: exact per-model scale/mean/std policy,
-   resize/pad/normalization/layout, and reproducible model input tensors.
-4. Complete `CROP-001` pixel evidence and `SEC-IMG-001` malformed/fuzzing
-   coverage. Existing crop/geometry work is only a bounded precursor, not a
-   universal OpenCV or decoded-image parity claim.
+`ACCEL-001` needs a GPU or accelerator to qualify a backend through the raw
+tensor, component, E2E, determinism, security, license, and platform gates.
+`PLAT-001` needs the platforms themselves. Neither may be claimed from a
+type-check — but `tools/gate.sh` does cross-type-check
+`x86_64-pc-windows-msvc` and `wasm32-unknown-unknown` on every run, so
+portability is a standing property rather than a measurement that decays.
 
-### 3. Build verified OCR components (P5)
+### 4. Closed by a recorded decision (`29` rows)
 
-1. `REC-001` through `REC-004`: freeze resize/pad/batching and dictionary
-   semantics, integrate the approved runtime, safely bind CTC indexes to the
-   verified dictionary, then test text, scores, Unicode, invalid outputs, and
-   resource limits.
-2. `DET-001` through `DET-004`: freeze preprocessing and DB policy, integrate
-   detector inference, implement contour/geometry/unclip/scoring/postprocess,
-   then test no-text, rotations, edges, thresholds, degenerate regions, and
-   ordering.
-3. Implement orientation only if the approved scope requires it; do not make a
-   generic orientation or multilingual claim from the chosen pair.
-4. Expose standalone module APIs only after their component-level golden and
-   differential requirements pass.
+These are **decided against**, not waiting. Do not reopen one without a recorded
+user decision in `ROADMAP.md`.
 
-### 4. Deliver the first usable M2 slice (P6)
+| Decision | Outcome | Evidence |
+|---|---|---|
+| `D-007` / `MODEL-DEC-001` | No downloads, no local conversion; explicit local paths with digests | [`ADR_MODEL_DEC_001_ARTIFACT_POLICY.md`](ADR_MODEL_DEC_001_ARTIFACT_POLICY.md) |
+| `D-008` / `DOCIO-DEC-001` | DOCX/XLSX/PPTX input rejected; structured export follows it | [`ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md`](ADR_DOCIO_DEC_001_PDF_AND_OFFICE.md) |
+| `D-010` / `VLM-DEC-001` | Remote VLM adapters rejected permanently; local VLM in scope but artifact-blocked | [`VLM_DEC_001_EVIDENCE.md`](VLM_DEC_001_EVIDENCE.md) |
+| `D-011` / `TRAIN-DEC-001` | Training permanently out of scope — no bit-level oracle exists for a stochastic surface | [`TRAIN_DEC_001_EVIDENCE.md`](TRAIN_DEC_001_EVIDENCE.md) |
+| `D-012` / `DEPLOY-DEC-001` | Release targets are the Rust library and CLI on desktop; service, C ABI, mobile, accelerator, ecosystem out of scope | [`DEPLOY_DEC_001_EVIDENCE.md`](DEPLOY_DEC_001_EVIDENCE.md) |
+| `REL-001` | No external effects: nothing tagged, packaged, or published; `publish = false` stays set | [`RC_001_RELEASE_EVIDENCE.md`](RC_001_RELEASE_EVIDENCE.md) |
 
-Implement and verify the complete classic sequence:
-
-```text
-decode -> detector -> stable reading order -> perspective crop -> tall rotation
--> optional orientation -> aspect-sorted recognition batch -> restore order
--> inclusive score filter -> typed Rust API -> versioned JSON/JSONL -> CLI
-```
-
-`OCR-001` through `E2E-001` require offline, explicitly provisioned models;
-deterministic results; typed errors; bounded batches/resources; missing/corrupt
-model checks; and no Python or upstream checkout at build, test, or runtime.
-Only after that may `DOC-USER-001` document a supported first release.
-
-### 5. Continue only through the pinned remaining scope
-
-After a verified M2 release, follow the already-declared dependency order:
-
-| Phases | Remaining target |
-|---|---|
-| P7 | Document input/preprocessing and bounded multipage handling (`M3`). |
-| P8–P9 | Scoped structure/specialized modules and structured document pipelines (`M4`). |
-| P10 | Scoped VLM/GenAI capabilities. |
-| P11 | Service, deployment, and ecosystem targets (`M5`). |
-| P12 | Native training, evaluation, export, and optimization (`M6`). |
-| P13 | Security, licensing, performance, reliability, and platform final gates. |
-| P14 | Compatibility closeout and user-approved release (`M7`). |
-
-Do not collapse or silently mark any of these areas out of scope. A direct user
-decision may change scope, but it must be recorded in `ROADMAP.md` first.
+`USER-GATE-001` was answered *continue* on 2026-08-04, which is why work went
+past `M2`. Gate P14 (`M7`) remains the only gate that can formally complete the
+roadmap, and it needs the blocked rows above resolved or explicitly excluded by
+the user.
 
 ## Non-negotiable operating constraints
 
-- `PaddleOCR/` is a read-only symlink to the upstream Python checkout. Never
-  modify, stage, format, test, install in, or otherwise write through it.
+- `PaddleOCR/` is a read-only symlink to the upstream Python checkout, and
+  `PaddleX 3.7.2` is the second read-only baseline. Never modify, stage, format,
+  test, install in, or otherwise write through either.
 - Keep all model weights, caches, raw outputs, temporary runtime builds, and
   external harnesses outside the repository. Do not commit them.
 - Preserve the user-owned untracked file `0.3`; do not stage, edit, delete, or
@@ -181,8 +145,10 @@ decision may change scope, but it must be recorded in `ROADMAP.md` first.
 - Public conversational replies are Vietnamese by default. Source, docs,
   comments, commands, commit messages, errors, and all repository artifacts
   remain English.
-- Use the normal locked gates after a code change and report only checks that
-  actually ran. Use `/usr/bin/gcc` as the Cargo linker in this environment.
+- Run `tools/gate.sh` as a **separate command** before committing, and quote
+  only figures it printed. Writing the gate and the commit in one shell
+  invocation has already produced a pushed commit whose message claimed a green
+  gate over a red one.
 
 ## Handoff verification checklist
 
@@ -192,7 +158,17 @@ Before resuming implementation, the next agent should run read-only checks:
 git status --short
 git -C PaddleOCR status --short
 git log --oneline -5
+tools/gate.sh
 ```
+
+The gate is offline and locked, needs no model, network, GPU, or upstream
+checkout, and sets `/usr/bin/gcc` as the Cargo linker — this environment has
+another program named `cc` earlier in `PATH`, so a bare `cargo run` fails at
+link time without
+`CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/gcc`. On 2026-08-05 it
+printed `fmt` and `clippy` clean and `477`/`495`/`483` tests passed across the
+default, `--all-features`, and `--features fuzzing` configurations, plus both
+cross-target type-checks.
 
 Then read the exact owner documents for the next roadmap item. A clean Rust
 test suite does not prove any model/runtime, OCR, or release gate that it does
